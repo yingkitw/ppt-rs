@@ -17,7 +17,7 @@ graph TB
     A --> H[dml]
     A --> I[enums]
     A --> J[presentation]
-    A --> K[slide]
+    A --> K[slide]car
     A --> L[table]
     B --> M[Package]
     B --> N[Part]

@@ -14,11 +14,32 @@ pub struct Relationship {
     pub target_part: Option<Box<dyn Part>>,
 }
 
+impl Clone for Relationship {
+    fn clone(&self) -> Self {
+        Self {
+            r_id: self.r_id.clone(),
+            rel_type: self.rel_type.clone(),
+            target: self.target.clone(),
+            is_external: self.is_external,
+            target_part: None, // Cannot clone trait object
+        }
+    }
+}
+
 /// Collection of relationships
 pub struct Relationships {
     relationships: HashMap<String, Relationship>,
     #[allow(dead_code)]
     base_uri: String,
+}
+
+impl Clone for Relationships {
+    fn clone(&self) -> Self {
+        Self {
+            relationships: self.relationships.clone(),
+            base_uri: self.base_uri.clone(),
+        }
+    }
 }
 
 impl Relationships {

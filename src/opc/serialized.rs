@@ -83,31 +83,37 @@ impl PackageWriter {
         content_types.push(r#"<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>"#.to_string());
         content_types.push(r#"<Default Extension="xml" ContentType="application/xml"/>"#.to_string());
         
+        // Track which extensions we've already added as defaults
+        let mut added_extensions = std::collections::HashSet::new();
+        
         // Add content types for each part
         for part in parts {
             let ext = part.uri().ext();
             let content_type = part.content_type();
-            if ext.is_empty() || ext == "xml" {
-                // Use override for XML parts
-                content_types.push(format!(
-                    r#"<Override PartName="{}" ContentType="{}"/>"#,
-                    part.uri().membername(),
-                    content_type
-                ));
-            } else {
-                // Use default for non-XML parts
-                content_types.push(format!(
-                    r#"<Default Extension="{}" ContentType="{}"/>"#,
-                    ext,
-                    content_type
-                ));
+            let membername = part.uri().membername();
+            
+            // Always use Override for specific parts (required by OPC spec)
+            // Override takes precedence over Default
+            content_types.push(format!(
+                r#"<Override PartName="{}" ContentType="{}"/>"#,
+                membername,
+                content_type
+            ));
+            
+            // Add default extension if not already added and not xml/rels
+            if !ext.is_empty() && ext != "xml" && ext != "rels" && !added_extensions.contains(ext) {
+                // Only add default if we have a reasonable content type
+                // For now, skip adding defaults for non-standard extensions
+                added_extensions.insert(ext);
             }
         }
         
         content_types.push("</Types>".to_string());
         let content_types_xml = content_types.join("");
         
-        zip.start_file(CONTENT_TYPES_URI.trim_start_matches('/'), options)?;
+        // CONTENT_TYPES_URI is "/[Content_Types].xml", need to remove leading slash
+        let content_types_filename = CONTENT_TYPES_URI.trim_start_matches('/');
+        zip.start_file(content_types_filename, options)?;
         zip.write_all(content_types_xml.as_bytes())?;
 
         // Generate package relationships XML

@@ -72,11 +72,24 @@ impl Presentation {
             false,
         );
         
+        // Add core properties relationship if it exists
+        if let Ok(core_props) = self.core_properties() {
+            use crate::opc::part::Part;
+            let core_props_uri = Part::uri(&core_props);
+            pkg_rels.add(
+                "rId2".to_string(),
+                RELATIONSHIP_TYPE::CORE_PROPERTIES.to_string(),
+                core_props_uri.membername().to_string(),
+                false,
+            );
+        }
+        
         // Get the blob and URI directly instead of using trait objects
         use crate::opc::part::Part;
         let blob = Part::blob(&self.part)?;
         let uri = Part::uri(&self.part).clone();
         let content_type = Part::content_type(&self.part);
+        let relationships = self.part.relationships().clone();
         
         // Create a simple part wrapper that owns its data
         struct OwnedPart {
@@ -111,15 +124,26 @@ impl Presentation {
             }
         }
         
-        let part = OwnedPart {
+        let mut parts: Vec<Box<dyn crate::opc::part::Part>> = vec![Box::new(OwnedPart {
             content_type: content_type.to_string(),
             uri,
             blob,
-            relationships: Relationships::new(), // Empty relationships for now
-        };
+            relationships,
+        })];
         
-        // Collect parts as trait objects
-        let parts: Vec<Box<dyn crate::opc::part::Part>> = vec![Box::new(part)];
+        // Add core properties part if it exists
+        if let Ok(core_props) = self.core_properties() {
+            use crate::opc::part::Part;
+            let core_blob = Part::blob(&core_props)?;
+            let core_uri = Part::uri(&core_props).clone();
+            let core_content_type = Part::content_type(&core_props);
+            parts.push(Box::new(OwnedPart {
+                content_type: core_content_type.to_string(),
+                uri: core_uri,
+                blob: core_blob,
+                relationships: Relationships::new(),
+            }));
+        }
         
         // Write the package
         PackageWriter::write(writer, &pkg_rels, &parts)
