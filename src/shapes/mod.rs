@@ -6,6 +6,8 @@ pub mod picture;
 pub mod connector;
 pub mod graphfrm;
 pub mod group;
+pub mod xml;
+pub mod hyperlink;
 
 pub use base::{BaseShape, Shape};
 pub use autoshape::{AutoShape, AutoShapeType};
@@ -13,6 +15,8 @@ pub use picture::Picture;
 pub use connector::Connector;
 pub use graphfrm::{GraphicFrame, GraphicFrameContentType};
 pub use group::GroupShape;
+pub use xml::{parse_shapes_from_xml, shape_to_xml, next_shape_id};
+pub use hyperlink::{Hyperlink, hyperlink_to_xml, parse_hyperlink_from_xml};
 
 #[cfg(test)]
 mod tests {
@@ -115,5 +119,42 @@ mod tests {
         let shape1 = Box::new(AutoShape::new(2, "Rect1".to_string(), AutoShapeType::Rectangle));
         group.add_shape(shape1);
         assert_eq!(group.shape_count(), 1);
+    }
+
+    #[test]
+    fn test_autoshape_hyperlink() {
+        let mut shape = AutoShape::new(1, "Link".to_string(), AutoShapeType::Rectangle);
+        assert!(shape.hyperlink().is_none());
+        
+        let mut hlink = crate::shapes::hyperlink::Hyperlink::with_address("https://example.com".to_string());
+        hlink.set_screen_tip(Some("Example".to_string()));
+        shape.set_hyperlink(Some(hlink));
+        
+        assert!(shape.hyperlink().is_some());
+        assert_eq!(shape.hyperlink().unwrap().address(), Some("https://example.com"));
+        assert_eq!(shape.hyperlink().unwrap().screen_tip(), Some("Example"));
+    }
+
+    #[test]
+    fn test_picture_hyperlink() {
+        let mut pic = Picture::new(1, "Pic".to_string());
+        assert!(pic.hyperlink().is_none());
+        
+        let hlink = crate::shapes::hyperlink::Hyperlink::with_address("https://example.com".to_string());
+        pic.set_hyperlink(Some(hlink));
+        
+        assert!(pic.hyperlink().is_some());
+        assert_eq!(pic.hyperlink().unwrap().address(), Some("https://example.com"));
+    }
+
+    #[test]
+    fn test_autoshape_remove_hyperlink() {
+        let mut shape = AutoShape::new(1, "Shape".to_string(), AutoShapeType::Rectangle);
+        let hlink = crate::shapes::hyperlink::Hyperlink::with_address("https://example.com".to_string());
+        shape.set_hyperlink(Some(hlink));
+        assert!(shape.hyperlink().is_some());
+        
+        shape.set_hyperlink(None);
+        assert!(shape.hyperlink().is_none());
     }
 }

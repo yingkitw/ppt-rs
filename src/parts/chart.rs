@@ -19,9 +19,10 @@ impl ChartPart {
     }
 
     /// Create a new chart part with XML content
-    pub fn with_xml(partname: PackURI, _xml_content: String) -> Result<Self> {
-        let base = BasePart::new(CONTENT_TYPE::DML_CHART, partname)?;
-        // TODO: Parse and store XML element
+    pub fn with_xml(partname: PackURI, xml_content: String) -> Result<Self> {
+        let mut base = BasePart::new(CONTENT_TYPE::DML_CHART, partname)?;
+        // Store XML content as blob
+        base.set_blob(xml_content.as_bytes().to_vec());
         Ok(Self { base })
     }
 }
@@ -51,10 +52,12 @@ impl Part for ChartPart {
         self.base.to_xml()
     }
 
-    fn from_xml<R: std::io::Read>(reader: R) -> Result<Self> {
-        let _xml_str = crate::oxml::parser::parse_xml(reader)?;
-        // TODO: Parse XML and create ChartPart
-        Self::new(PackURI::new("/ppt/charts/chart1.xml")?)
+    fn from_xml<R: std::io::Read>(mut reader: R) -> Result<Self> {
+        use std::io::Read;
+        let xml_str = crate::oxml::parser::parse_xml(&mut reader)?;
+        // Parse XML and create ChartPart
+        let partname = PackURI::new("/ppt/charts/chart1.xml")?;
+        Self::with_xml(partname, xml_str)
     }
 }
 

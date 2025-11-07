@@ -1,6 +1,7 @@
 //! AutoShape functionality
 
 use crate::shapes::base::{BaseShape, Shape};
+use crate::shapes::hyperlink::Hyperlink;
 use crate::text::TextFrame;
 
 /// AutoShape - predefined shapes like rectangles, circles, etc.
@@ -8,26 +9,173 @@ pub struct AutoShape {
     base: BaseShape,
     shape_type: AutoShapeType,
     text_frame: Option<TextFrame>,
+    hyperlink: Option<Hyperlink>,
 }
 
 /// AutoShape types
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AutoShapeType {
+    // Basic shapes
     Rectangle,
+    RoundedRectangle,
     Oval,
     Line,
-    RoundedRectangle,
+    
+    // Triangles
     Triangle,
     RightTriangle,
+    IsoscelesTriangle,
+    
+    // Quadrilaterals
     Parallelogram,
     Trapezoid,
     Diamond,
+    
+    // Polygons
     Pentagon,
     Hexagon,
     Octagon,
+    Decagon,
+    Dodecagon,
+    
+    // Stars and arrows
     Star,
+    Star4,
+    Star5,
+    Star6,
+    Star8,
+    Star16,
+    Star24,
+    Star32,
     Arrow,
-    // TODO: Add more shape types
+    UpArrow,
+    DownArrow,
+    LeftArrow,
+    RightArrow,
+    LeftRightArrow,
+    UpDownArrow,
+    QuadArrow,
+    LeftRightUpArrow,
+    BentArrow,
+    BentUpArrow,
+    UTurnArrow,
+    LeftUpArrow,
+    RightUpArrow,
+    LeftRightUpArrow2,
+    CurvedRightArrow,
+    CurvedLeftArrow,
+    CurvedUpArrow,
+    CurvedDownArrow,
+    StripedRightArrow,
+    NotchedRightArrow,
+    PentagonArrow,
+    ChevronArrow,
+    RightArrowCallout,
+    LeftArrowCallout,
+    UpArrowCallout,
+    DownArrowCallout,
+    LeftRightArrowCallout,
+    UpDownArrowCallout,
+    QuadArrowCallout,
+    CircularArrow,
+    
+    // Flowchart shapes
+    FlowchartProcess,
+    FlowchartAlternateProcess,
+    FlowchartDecision,
+    FlowchartData,
+    FlowchartPredefinedProcess,
+    FlowchartInternalStorage,
+    FlowchartDocument,
+    FlowchartMultidocument,
+    FlowchartTerminator,
+    FlowchartPreparation,
+    FlowchartManualInput,
+    FlowchartManualOperation,
+    FlowchartConnector,
+    FlowchartOffpageConnector,
+    FlowchartCard,
+    FlowchartPunchedCard,
+    FlowchartPunchedTape,
+    FlowchartSummingJunction,
+    FlowchartOr,
+    FlowchartCollate,
+    FlowchartSort,
+    FlowchartExtract,
+    FlowchartMerge,
+    FlowchartOfflineStorage,
+    FlowchartOnlineStorage,
+    FlowchartMagneticTape,
+    FlowchartMagneticDisk,
+    FlowchartMagneticDrum,
+    FlowchartDisplay,
+    FlowchartDelay,
+    
+    // Callouts
+    RectangularCallout,
+    RoundedRectangularCallout,
+    OvalCallout,
+    CloudCallout,
+    LineCallout1,
+    LineCallout2,
+    LineCallout3,
+    LineCallout4,
+    BentLineCallout1,
+    BentLineCallout2,
+    BentLineCallout3,
+    AccentCallout1,
+    AccentCallout2,
+    AccentCallout3,
+    
+    // Action buttons
+    ActionButtonCustom,
+    ActionButtonHome,
+    ActionButtonHelp,
+    ActionButtonInformation,
+    ActionButtonForwardNext,
+    ActionButtonBackPrevious,
+    ActionButtonBeginning,
+    ActionButtonEnd,
+    ActionButtonReturn,
+    ActionButtonDocument,
+    ActionButtonSound,
+    ActionButtonMovie,
+    
+    // Other shapes
+    Arc,
+    Bevel,
+    BlockArc,
+    Can,
+    Chord,
+    Cube,
+    CurvedConnector2,
+    CurvedConnector3,
+    CurvedConnector4,
+    CurvedConnector5,
+    Donut,
+    DoubleBracket,
+    DoubleWave,
+    Funnel,
+    Heart,
+    Hexagon2,
+    HomePlate,
+    LightningBolt,
+    Moon,
+    NoSymbol,
+    Plaque,
+    Plus,
+    Ring,
+    SmileyFace,
+    Snip1Rect,
+    Snip2Rect,
+    SnipRoundRect,
+    Snip2SameRect,
+    Sun,
+    Teardrop,
+    Wave,
+    WedgeEllipseCallout,
+    WedgeRectCallout,
+    WedgeRRectCallout,
 }
 
 impl AutoShape {
@@ -37,6 +185,7 @@ impl AutoShape {
             base: BaseShape::new(id, name),
             shape_type,
             text_frame: None,
+            hyperlink: None,
         }
     }
     
@@ -46,6 +195,7 @@ impl AutoShape {
             base: BaseShape::new(id, name),
             shape_type,
             text_frame: Some(TextFrame::new()),
+            hyperlink: None,
         }
     }
     
@@ -115,6 +265,73 @@ impl Shape for AutoShape {
     
     fn text_frame_mut(&mut self) -> Option<&mut TextFrame> {
         self.text_frame.as_mut()
+    }
+    
+    fn hyperlink(&self) -> Option<&Hyperlink> {
+        self.hyperlink.as_ref()
+    }
+    
+    fn hyperlink_mut(&mut self) -> Option<&mut Hyperlink> {
+        self.hyperlink.as_mut()
+    }
+    
+    fn set_hyperlink(&mut self, hyperlink: Option<Hyperlink>) {
+        self.hyperlink = hyperlink;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_autoshape_type_equality() {
+        assert_eq!(AutoShapeType::Rectangle, AutoShapeType::Rectangle);
+        assert_ne!(AutoShapeType::Rectangle, AutoShapeType::Oval);
+    }
+
+    #[test]
+    fn test_autoshape_type_copy() {
+        let st1 = AutoShapeType::Star;
+        let st2 = st1;
+        assert_eq!(st1, st2);
+    }
+
+    #[test]
+    fn test_autoshape_type_debug() {
+        let st = AutoShapeType::Triangle;
+        let debug_str = format!("{:?}", st);
+        assert!(debug_str.contains("Triangle"));
+    }
+
+    #[test]
+    fn test_autoshape_shape_type() {
+        let mut shape = AutoShape::new(1, "Shape".to_string(), AutoShapeType::Rectangle);
+        assert_eq!(shape.shape_type(), AutoShapeType::Rectangle);
+        
+        shape.set_shape_type(AutoShapeType::Oval);
+        assert_eq!(shape.shape_type(), AutoShapeType::Oval);
+    }
+
+    #[test]
+    fn test_autoshape_all_types() {
+        let types = vec![
+            AutoShapeType::Rectangle,
+            AutoShapeType::Oval,
+            AutoShapeType::Triangle,
+            AutoShapeType::Star,
+            AutoShapeType::Arrow,
+            AutoShapeType::Heart,
+            AutoShapeType::LightningBolt,
+            AutoShapeType::FlowchartProcess,
+            AutoShapeType::RectangularCallout,
+            AutoShapeType::ActionButtonCustom,
+        ];
+        
+        for shape_type in types {
+            let shape = AutoShape::new(1, "Test".to_string(), shape_type);
+            assert_eq!(shape.shape_type(), shape_type);
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 //! Picture shape functionality
 
 use crate::shapes::base::{BaseShape, Shape};
+use crate::shapes::hyperlink::Hyperlink;
 
 /// Picture shape - contains an image
 pub struct Picture {
@@ -10,6 +11,7 @@ pub struct Picture {
     crop_right: f64,
     crop_top: f64,
     crop_bottom: f64,
+    hyperlink: Option<Hyperlink>,
 }
 
 impl Picture {
@@ -22,6 +24,7 @@ impl Picture {
             crop_right: 0.0,
             crop_top: 0.0,
             crop_bottom: 0.0,
+            hyperlink: None,
         }
     }
     
@@ -34,6 +37,7 @@ impl Picture {
             crop_right: 0.0,
             crop_top: 0.0,
             crop_bottom: 0.0,
+            hyperlink: None,
         }
     }
     
@@ -131,6 +135,18 @@ impl Shape for Picture {
     
     fn set_height(&mut self, height: u32) {
         self.base.set_height(height);
+    }
+    
+    fn hyperlink(&self) -> Option<&Hyperlink> {
+        self.hyperlink.as_ref()
+    }
+    
+    fn hyperlink_mut(&mut self) -> Option<&mut Hyperlink> {
+        self.hyperlink.as_mut()
+    }
+    
+    fn set_hyperlink(&mut self, hyperlink: Option<Hyperlink>) {
+        self.hyperlink = hyperlink;
     }
 }
 

@@ -64,6 +64,7 @@ impl Part for MediaPart {
     }
 
     fn from_xml<R: std::io::Read>(_reader: R) -> Result<Self> {
+        // Media parts are binary, not XML - this is correct behavior
         Err(crate::error::PptError::NotImplemented(
             "MediaPart::from_xml - media files are binary, not XML".to_string(),
         ))

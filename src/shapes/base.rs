@@ -1,6 +1,7 @@
 //! Base shape functionality
 
 use crate::text::TextFrame;
+use crate::shapes::hyperlink::Hyperlink;
 
 /// Base trait for all shapes
 pub trait Shape: Send + Sync {
@@ -55,6 +56,22 @@ pub trait Shape: Send + Sync {
     /// Check if this shape is a placeholder
     fn is_placeholder(&self) -> bool {
         false
+    }
+    
+    /// Get the hyperlink (if available)
+    fn hyperlink(&self) -> Option<&Hyperlink> {
+        None
+    }
+    
+    /// Get mutable hyperlink (if available)
+    fn hyperlink_mut(&mut self) -> Option<&mut Hyperlink> {
+        None
+    }
+    
+    /// Set the hyperlink
+    fn set_hyperlink(&mut self, _hyperlink: Option<Hyperlink>) {
+        // Default implementation does nothing
+        // Shapes that support hyperlinks should override this
     }
 }
 

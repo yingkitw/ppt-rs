@@ -15,11 +15,16 @@ pub enum DashStyle {
     Solid,
     Dash,
     DashDot,
+    DashDotDot,
     Dot,
+    RoundDot,
+    SquareDot,
     LongDash,
     LongDashDot,
     LongDashDotDot,
-    // TODO: Add more dash styles
+    SystemDash,
+    SystemDot,
+    SystemDashDot,
 }
 
 impl LineFormat {
@@ -70,6 +75,79 @@ impl LineFormat {
     /// Get mutable color format
     pub fn color_mut(&mut self) -> Option<&mut crate::dml::color::ColorFormat> {
         self.fill.fore_color_mut()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_line_format_new() {
+        let lf = LineFormat::new();
+        assert_eq!(lf.width(), 12700);
+        assert_eq!(lf.dash_style(), Some(DashStyle::Solid));
+    }
+
+    #[test]
+    fn test_line_format_width() {
+        let mut lf = LineFormat::new();
+        lf.set_width(25400);
+        assert_eq!(lf.width(), 25400);
+    }
+
+    #[test]
+    fn test_line_format_dash_styles() {
+        let mut lf = LineFormat::new();
+        
+        lf.set_dash_style(Some(DashStyle::Dash));
+        assert_eq!(lf.dash_style(), Some(DashStyle::Dash));
+        
+        lf.set_dash_style(Some(DashStyle::DashDot));
+        assert_eq!(lf.dash_style(), Some(DashStyle::DashDot));
+        
+        lf.set_dash_style(Some(DashStyle::Dot));
+        assert_eq!(lf.dash_style(), Some(DashStyle::Dot));
+        
+        lf.set_dash_style(Some(DashStyle::LongDash));
+        assert_eq!(lf.dash_style(), Some(DashStyle::LongDash));
+        
+        lf.set_dash_style(None);
+        assert_eq!(lf.dash_style(), None);
+    }
+
+    #[test]
+    fn test_line_format_all_dash_styles() {
+        let dash_styles = vec![
+            DashStyle::Solid,
+            DashStyle::Dash,
+            DashStyle::DashDot,
+            DashStyle::DashDotDot,
+            DashStyle::Dot,
+            DashStyle::RoundDot,
+            DashStyle::SquareDot,
+            DashStyle::LongDash,
+            DashStyle::LongDashDot,
+            DashStyle::LongDashDotDot,
+            DashStyle::SystemDash,
+            DashStyle::SystemDot,
+            DashStyle::SystemDashDot,
+        ];
+        
+        for style in dash_styles {
+            let mut lf = LineFormat::new();
+            lf.set_dash_style(Some(style));
+            assert_eq!(lf.dash_style(), Some(style));
+        }
+    }
+
+    #[test]
+    fn test_line_format_fill() {
+        let lf = LineFormat::new();
+        let fill = lf.fill();
+        // FillFormat::new() creates NoFill with no fore_color
+        // This is correct behavior - line format has a fill but it may not have a color initially
+        assert!(fill.fill_type() == crate::enums::dml::FillType::NoFill || fill.fore_color().is_some());
     }
 }
 

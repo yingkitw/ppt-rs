@@ -102,11 +102,14 @@ impl ColorFormat {
     }
 
     /// Set brightness adjustment
-    pub fn set_brightness(&mut self, brightness: f64) {
+    pub fn set_brightness(&mut self, brightness: f64) -> crate::error::Result<()> {
         if brightness < -1.0 || brightness > 1.0 {
-            return; // TODO: Return error
+            return Err(crate::error::PptError::ValueError(
+                format!("Brightness must be between -1.0 and 1.0, got {}", brightness)
+            ));
         }
         self.brightness = brightness;
+        Ok(())
     }
 }
 

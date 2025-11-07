@@ -11,16 +11,23 @@ use std::path::Path;
 /// or `None`, the built-in default presentation "template" is loaded.
 pub fn Presentation(pptx: Option<&str>) -> Result<PresentationImpl> {
     let path = pptx.unwrap_or_else(|| {
-        // TODO: Return path to built-in default template
-        "templates/default.pptx"
+        // Return path to built-in default template
+        // For now, return None which will create a new presentation
+        // In full implementation, would return path to bundled template
+        return "";
     });
+
+    if path.is_empty() {
+        // Create new presentation when no path provided
+        return PresentationImpl::new();
+    }
 
     if Path::new(path).exists() {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
         PresentationImpl::open(reader)
     } else {
-        // Create new presentation
+        // Create new presentation if file doesn't exist
         PresentationImpl::new()
     }
 }

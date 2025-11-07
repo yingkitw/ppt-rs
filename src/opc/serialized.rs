@@ -75,18 +75,61 @@ impl PackageWriter {
         let options = FileOptions::default()
             .compression_method(zip::CompressionMethod::Deflated);
 
-        // Write [Content_Types].xml
-        // TODO: Generate content types XML
-        let content_types_xml = b"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"></Types>";
+        // Generate Content_Types.xml
+        let mut content_types = Vec::new();
+        content_types.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">"#.to_string());
+        
+        // Add default extensions
+        content_types.push(r#"<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>"#.to_string());
+        content_types.push(r#"<Default Extension="xml" ContentType="application/xml"/>"#.to_string());
+        
+        // Add content types for each part
+        for part in parts {
+            let ext = part.uri().ext();
+            let content_type = part.content_type();
+            if ext.is_empty() || ext == "xml" {
+                // Use override for XML parts
+                content_types.push(format!(
+                    r#"<Override PartName="{}" ContentType="{}"/>"#,
+                    part.uri().membername(),
+                    content_type
+                ));
+            } else {
+                // Use default for non-XML parts
+                content_types.push(format!(
+                    r#"<Default Extension="{}" ContentType="{}"/>"#,
+                    ext,
+                    content_type
+                ));
+            }
+        }
+        
+        content_types.push("</Types>".to_string());
+        let content_types_xml = content_types.join("");
+        
         zip.start_file(CONTENT_TYPES_URI.trim_start_matches('/'), options)?;
-        zip.write_all(content_types_xml)?;
+        zip.write_all(content_types_xml.as_bytes())?;
 
-        // Write package relationships
-        // TODO: Generate relationships XML
+        // Generate package relationships XML
+        let mut rels_xml = Vec::new();
+        rels_xml.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"#.to_string());
+        
+        // Iterate over relationships using iter() method
+        for (r_id, rel) in pkg_rels.iter() {
+            rels_xml.push(format!(
+                r#"<Relationship Id="{}" Type="{}" Target="{}"/>"#,
+                r_id,
+                rel.rel_type,
+                rel.target
+            ));
+        }
+        
+        rels_xml.push("</Relationships>".to_string());
+        let pkg_rels_xml = rels_xml.join("");
+        
         let pkg_rels_uri = PackURI::new("/_rels/.rels")?;
-        let rels_xml = b"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"></Relationships>";
         zip.start_file(pkg_rels_uri.membername(), options)?;
-        zip.write_all(rels_xml)?;
+        zip.write_all(pkg_rels_xml.as_bytes())?;
 
         // Write parts
         for part in parts {
@@ -99,15 +142,173 @@ impl PackageWriter {
             let rels = part.relationships();
             if !rels.is_empty() {
                 let rels_uri = uri.rels_uri()?;
-                // TODO: Generate relationships XML
-                let rels_xml = b"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?><Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"></Relationships>";
+                let mut part_rels_xml = Vec::new();
+                part_rels_xml.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"#.to_string());
+                
+                // Iterate over relationships using iter() method
+                for (r_id, rel) in rels.iter() {
+                    part_rels_xml.push(format!(
+                        r#"<Relationship Id="{}" Type="{}" Target="{}"/>"#,
+                        r_id,
+                        rel.rel_type,
+                        rel.target
+                    ));
+                }
+                
+                part_rels_xml.push("</Relationships>".to_string());
+                let part_rels_xml_str = part_rels_xml.join("");
+                
                 zip.start_file(rels_uri.membername(), options)?;
-                zip.write_all(rels_xml)?;
+                zip.write_all(part_rels_xml_str.as_bytes())?;
             }
         }
 
         zip.finish()?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::opc::part::Part;
+    use crate::opc::packuri::PackURI;
+    use crate::opc::constants::CONTENT_TYPE;
+    use std::io::Cursor;
+
+    #[test]
+    fn test_package_writer_writes_content_types() {
+        let mut pkg_rels = Relationships::new();
+        pkg_rels.add(
+            "rId1".to_string(),
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument".to_string(),
+            "ppt/presentation.xml".to_string(),
+            false,
+        );
+        
+        // Create a simple test part
+        struct TestPart {
+            uri: PackURI,
+            blob: Vec<u8>,
+        }
+        
+        impl Part for TestPart {
+            fn content_type(&self) -> &str {
+                CONTENT_TYPE::PML_PRESENTATION_MAIN
+            }
+            fn uri(&self) -> &PackURI {
+                &self.uri
+            }
+            fn relationships(&self) -> &Relationships {
+                use std::sync::OnceLock;
+                static EMPTY: OnceLock<Relationships> = OnceLock::new();
+                EMPTY.get_or_init(Relationships::new)
+            }
+            fn relationships_mut(&mut self) -> &mut Relationships {
+                panic!("Not implemented")
+            }
+            fn blob(&self) -> Result<Vec<u8>> {
+                Ok(self.blob.clone())
+            }
+            fn to_xml(&self) -> Result<String> {
+                Ok(String::from_utf8(self.blob.clone()).unwrap())
+            }
+            fn from_xml<R: std::io::Read>(_reader: R) -> Result<Self> {
+                Err(PptError::NotImplemented("TestPart::from_xml".to_string()))
+            }
+        }
+        
+        let part = TestPart {
+            uri: PackURI::new("/ppt/presentation.xml").unwrap(),
+            blob: b"<test>content</test>".to_vec(),
+        };
+        
+        let parts: Vec<Box<dyn Part>> = vec![Box::new(part)];
+        let mut cursor = Cursor::new(Vec::new());
+        
+        let result = PackageWriter::write(&mut cursor, &pkg_rels, &parts);
+        assert!(result.is_ok());
+        
+        // Verify ZIP structure
+        let data = cursor.into_inner();
+        let cursor = Cursor::new(&data);
+        let archive = ZipArchive::new(cursor);
+        assert!(archive.is_ok());
+        
+        let mut archive = archive.unwrap();
+        
+        // Check Content_Types.xml exists
+        let content_types = archive.by_name("[Content_Types].xml");
+        assert!(content_types.is_ok());
+        
+        let mut content_types_file = content_types.unwrap();
+        let mut content = String::new();
+        std::io::Read::read_to_string(&mut content_types_file, &mut content).unwrap();
+        assert!(content.contains("Types"));
+        assert!(content.contains("ppt/presentation.xml"));
+    }
+
+    #[test]
+    fn test_package_writer_writes_relationships() {
+        let mut pkg_rels = Relationships::new();
+        pkg_rels.add(
+            "rId1".to_string(),
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument".to_string(),
+            "ppt/presentation.xml".to_string(),
+            false,
+        );
+        
+        let parts: Vec<Box<dyn Part>> = vec![];
+        let mut cursor = Cursor::new(Vec::new());
+        
+        let result = PackageWriter::write(&mut cursor, &pkg_rels, &parts);
+        assert!(result.is_ok());
+        
+        // Verify ZIP structure
+        let data = cursor.into_inner();
+        let cursor = Cursor::new(&data);
+        let archive = ZipArchive::new(cursor);
+        assert!(archive.is_ok());
+        
+        let mut archive = archive.unwrap();
+        
+        // Check _rels/.rels exists
+        let rels = archive.by_name("_rels/.rels");
+        assert!(rels.is_ok());
+        
+        let mut rels_file = rels.unwrap();
+        let mut content = String::new();
+        std::io::Read::read_to_string(&mut rels_file, &mut content).unwrap();
+        assert!(content.contains("Relationships"));
+        assert!(content.contains("rId1"));
+        assert!(content.contains("ppt/presentation.xml"));
+    }
+
+    #[test]
+    fn test_package_reader_new() {
+        // Create a minimal ZIP file
+        let mut cursor = Cursor::new(Vec::new());
+        {
+            let mut zip = ZipWriter::new(&mut cursor);
+            let options = FileOptions::default()
+                .compression_method(zip::CompressionMethod::Deflated);
+            
+            zip.start_file("test.txt", options).unwrap();
+            zip.write_all(b"test content").unwrap();
+            zip.finish().unwrap();
+        }
+        
+        cursor.set_position(0);
+        let reader = PackageReader::new(cursor);
+        assert!(reader.is_ok());
+        
+        let reader = reader.unwrap();
+        let uri = PackURI::new("/test.txt").unwrap();
+        assert!(reader.contains(&uri));
+        
+        let blob = reader.get(&uri);
+        assert!(blob.is_ok());
+        assert_eq!(blob.unwrap(), b"test content");
     }
 }
 

@@ -34,23 +34,5 @@ pub enum PlaceholderType {
     VerticalTitle,
 }
 
-/// AutoShape types (subset - can be expanded)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AutoShapeType {
-    Rectangle,
-    Oval,
-    Line,
-    RoundedRectangle,
-    Triangle,
-    RightTriangle,
-    Parallelogram,
-    Trapezoid,
-    Diamond,
-    Pentagon,
-    Hexagon,
-    Octagon,
-    Star,
-    Arrow,
-    // TODO: Add more shape types
-}
+// Note: AutoShapeType is defined in shapes/autoshape.rs to avoid duplication
 

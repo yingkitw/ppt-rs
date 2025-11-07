@@ -30,10 +30,18 @@ impl TextFrame {
     /// Set the text content
     pub fn set_text(&mut self, text: &str) {
         self.text = text.to_string();
-        // TODO: Parse text into paragraphs
-        self.paragraphs = vec![Paragraph::new()];
-        if let Some(p) = self.paragraphs.first_mut() {
-            p.set_text(text);
+        // Parse text into paragraphs (split by newlines)
+        self.paragraphs = text.split('\n')
+            .map(|line| {
+                let mut para = Paragraph::new();
+                para.set_text(line);
+                para
+            })
+            .collect();
+        
+        // If no paragraphs, ensure at least one empty paragraph
+        if self.paragraphs.is_empty() {
+            self.paragraphs.push(Paragraph::new());
         }
     }
 

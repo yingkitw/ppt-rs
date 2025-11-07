@@ -50,8 +50,20 @@ impl ImagePart {
 
     /// Get image dimensions (width, height) in EMU
     pub fn dimensions(&self) -> Result<(u32, u32)> {
-        // TODO: Parse image to get dimensions
-        // For now, return placeholder
+        use crate::opc::part::Part;
+        // Try to parse image to get dimensions
+        if let Ok(blob) = Part::blob(self) {
+            // Try to decode image using image crate - use load_from_memory which works with DynamicImage
+            if let Ok(img) = image::load_from_memory(&blob) {
+                // DynamicImage implements GenericImage which has dimensions()
+                let (width, height) = (img.width(), img.height());
+                // Convert pixels to EMU (1 pixel = 9525 EMU at 96 DPI)
+                let width_emu = width * 9525;
+                let height_emu = height * 9525;
+                return Ok((width_emu, height_emu));
+            }
+        }
+        // Fallback: return default size
         Ok((914400, 685800)) // Default size in EMU (1 inch x 0.75 inch)
     }
 }

@@ -58,6 +58,12 @@ impl BasePart {
         })
     }
 
+    pub fn with_xml(content_type: &str, uri: PackURI, xml_content: String) -> Result<Self> {
+        let mut base = Self::new(content_type, uri)?;
+        base.set_blob(xml_content.as_bytes().to_vec());
+        Ok(base)
+    }
+
     pub fn set_blob(&mut self, blob: Vec<u8>) {
         self.blob_data = Some(blob);
     }
@@ -89,10 +95,17 @@ impl Part for BasePart {
         Ok(String::new())
     }
 
-    fn from_xml<R: Read>(_reader: R) -> Result<Self> {
-        Err(crate::error::PptError::NotImplemented(
-            "BasePart::from_xml not implemented".to_string(),
-        ))
+    fn from_xml<R: Read>(mut reader: R) -> Result<Self> {
+        use std::io::Read;
+        let mut content = String::new();
+        reader.read_to_string(&mut content)
+            .map_err(|e| crate::error::PptError::ValueError(format!("Failed to read XML: {}", e)))?;
+        
+        // Create BasePart with XML content
+        // Use default URI - caller should set proper URI
+        let uri = crate::opc::packuri::PackURI::new("/part.xml")?;
+        let content_type = crate::opc::constants::CONTENT_TYPE::XML;
+        Self::with_xml(content_type, uri, content)
     }
 }
 

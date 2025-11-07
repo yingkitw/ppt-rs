@@ -9,15 +9,15 @@ use crate::opc::relationships::Relationships;
 /// Core properties part - contains Dublin Core metadata
 pub struct CorePropertiesPart {
     base: BasePart,
-    title: Option<String>,
-    subject: Option<String>,
-    creator: Option<String>,
-    keywords: Option<String>,
-    description: Option<String>,
-    last_modified_by: Option<String>,
-    revision: Option<u32>,
-    created: Option<String>,
-    modified: Option<String>,
+    pub(crate) title: Option<String>,
+    pub(crate) subject: Option<String>,
+    pub(crate) creator: Option<String>,
+    pub(crate) keywords: Option<String>,
+    pub(crate) description: Option<String>,
+    pub(crate) last_modified_by: Option<String>,
+    pub(crate) revision: Option<u32>,
+    pub(crate) created: Option<String>,
+    pub(crate) modified: Option<String>,
 }
 
 impl CorePropertiesPart {
@@ -87,18 +87,140 @@ impl Part for CorePropertiesPart {
     }
 
     fn blob(&self) -> Result<Vec<u8>> {
-        // TODO: Serialize core properties to XML
-        self.base.blob()
+        // Serialize core properties to XML
+        let xml = self.to_xml()?;
+        Ok(xml.as_bytes().to_vec())
     }
 
     fn to_xml(&self) -> Result<String> {
-        // TODO: Generate core properties XML
-        Ok(String::new())
+        // Generate core properties XML
+        let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+                   xmlns:dc="http://purl.org/dc/elements/1.1/"
+                   xmlns:dcterms="http://purl.org/dc/terms/"
+                   xmlns:dcmitype="http://purl.org/dc/dcmitype/"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">"#.to_string();
+        
+        if let Some(ref title) = self.title {
+            xml.push_str(&format!("\n  <dc:title>{}</dc:title>", escape_xml(title)));
+        }
+        if let Some(ref subject) = self.subject {
+            xml.push_str(&format!("\n  <dc:subject>{}</dc:subject>", escape_xml(subject)));
+        }
+        if let Some(ref creator) = self.creator {
+            xml.push_str(&format!("\n  <dc:creator>{}</dc:creator>", escape_xml(creator)));
+        }
+        if let Some(ref keywords) = self.keywords {
+            xml.push_str(&format!("\n  <cp:keywords>{}</cp:keywords>", escape_xml(keywords)));
+        }
+        if let Some(ref description) = self.description {
+            xml.push_str(&format!("\n  <dc:description>{}</dc:description>", escape_xml(description)));
+        }
+        if let Some(ref last_modified_by) = self.last_modified_by {
+            xml.push_str(&format!("\n  <cp:lastModifiedBy>{}</cp:lastModifiedBy>", escape_xml(last_modified_by)));
+        }
+        if let Some(revision) = self.revision {
+            xml.push_str(&format!("\n  <cp:revision>{}</cp:revision>", revision));
+        }
+        if let Some(ref created) = self.created {
+            xml.push_str(&format!("\n  <dcterms:created xsi:type=\"dcterms:W3CDTF\">{}</dcterms:created>", escape_xml(created)));
+        }
+        if let Some(ref modified) = self.modified {
+            xml.push_str(&format!("\n  <dcterms:modified xsi:type=\"dcterms:W3CDTF\">{}</dcterms:modified>", escape_xml(modified)));
+        }
+        
+        xml.push_str("\n</cp:coreProperties>");
+        Ok(xml)
     }
 
-    fn from_xml<R: std::io::Read>(_reader: R) -> Result<Self> {
-        // TODO: Parse core properties XML
-        Self::new(PackURI::new("/docProps/core.xml")?)
+    fn from_xml<R: std::io::Read>(mut reader: R) -> Result<Self> {
+        use std::io::Read;
+        let mut content = String::new();
+        reader.read_to_string(&mut content)
+            .map_err(|e| crate::error::PptError::ValueError(format!("Failed to read XML: {}", e)))?;
+        
+        // Parse core properties XML
+        let mut part = Self::new(PackURI::new("/docProps/core.xml")?)?;
+        
+        // Extract values using regex (simplified parsing)
+        let title_re = regex::Regex::new(r#"<dc:title>([^<]+)</dc:title>"#).ok();
+        let subject_re = regex::Regex::new(r#"<dc:subject>([^<]+)</dc:subject>"#).ok();
+        let creator_re = regex::Regex::new(r#"<dc:creator>([^<]+)</dc:creator>"#).ok();
+        let keywords_re = regex::Regex::new(r#"<cp:keywords>([^<]+)</cp:keywords>"#).ok();
+        let description_re = regex::Regex::new(r#"<dc:description>([^<]+)</dc:description>"#).ok();
+        let last_modified_by_re = regex::Regex::new(r#"<cp:lastModifiedBy>([^<]+)</cp:lastModifiedBy>"#).ok();
+        let revision_re = regex::Regex::new(r#"<cp:revision>(\d+)</cp:revision>"#).ok();
+        
+        if let Some(re) = title_re {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(title) = cap.get(1) {
+                    part.set_title(unescape_xml(title.as_str()));
+                }
+            }
+        }
+        if let Some(re) = subject_re {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(subject) = cap.get(1) {
+                    part.set_subject(unescape_xml(subject.as_str()));
+                }
+            }
+        }
+        if let Some(re) = creator_re {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(creator) = cap.get(1) {
+                    part.set_creator(unescape_xml(creator.as_str()));
+                }
+            }
+        }
+        if let Some(re) = keywords_re {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(keywords) = cap.get(1) {
+                    part.keywords = Some(unescape_xml(keywords.as_str()));
+                }
+            }
+        }
+        if let Some(re) = description_re {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(description) = cap.get(1) {
+                    part.description = Some(unescape_xml(description.as_str()));
+                }
+            }
+        }
+        if let Some(re) = last_modified_by_re {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(lmb) = cap.get(1) {
+                    part.last_modified_by = Some(unescape_xml(lmb.as_str()));
+                }
+            }
+        }
+        if let Some(re) = revision_re {
+            if let Some(cap) = re.captures(&content) {
+                if let Some(rev_str) = cap.get(1) {
+                    if let Ok(rev) = rev_str.as_str().parse::<u32>() {
+                        part.revision = Some(rev);
+                    }
+                }
+            }
+        }
+        
+        Ok(part)
     }
+}
+
+// Helper functions for XML escaping
+fn escape_xml(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&apos;")
+}
+
+fn unescape_xml(s: &str) -> String {
+    s.replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
 }
 
