@@ -104,9 +104,20 @@ impl PresentationPart {
             xml = xml.replace("<p:sldSz", &format!("<p:sldIdLst>\n    {}\n  </p:sldIdLst>\n  <p:sldSz", sld_id_entry));
         }
         
-        // Store updated XML
+        // Store updated XML while preserving relationships
         let uri = Part::uri(self).clone();
-        *self = Self::with_xml(uri, xml)?;
+        let old_rels = self.relationships_mut().clone();
+        let mut new_part = Self::with_xml(uri, xml)?;
+        // Copy relationships to the new part
+        for (r_id, rel) in old_rels.iter() {
+            new_part.relationships_mut().add(
+                r_id.clone(),
+                rel.rel_type.clone(),
+                rel.target.clone(),
+                rel.is_external,
+            );
+        }
+        *self = new_part;
         
         Ok(r_id)
     }
@@ -118,7 +129,7 @@ impl PresentationPart {
         let slide_count = if let Ok(blob) = Part::blob(self) {
             if let Ok(xml) = String::from_utf8(blob) {
                 // Count <p:sldId> tags (not <p:sldIdLst>)
-                let pattern = r#"<p:sldId\s"#;
+                let pattern = "<p:sldId ";
                 xml.matches(pattern).count()
             } else {
                 0

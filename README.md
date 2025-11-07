@@ -102,7 +102,7 @@ graph TB
 - ⚠️ XML serialization (in progress)
 - ⚠️ Advanced features (placeholders, effects)
 
-**Test Coverage:** **128 tests passing** ✅
+**Test Coverage:** **143 tests passing** ✅
 
 ## Documentation
 

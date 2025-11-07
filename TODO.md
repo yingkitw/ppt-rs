@@ -20,7 +20,7 @@
 - [x] **Implement Hyperlink support** - Hyperlink struct with address and screen_tip, integrated into AutoShape and Picture
 - [x] **Implement Shape XML parsing** - parse_shapes_from_xml, shape_to_xml, next_shape_id functions
 - [x] **Implement Slide shape operations** - Slide::shapes() and Slide::add_shape() with XML parsing/generation
-- [x] Migrate tests and ensure cargo test passes - Comprehensive tests added: **128 tests passing**
+- [x] Migrate tests and ensure cargo test passes - Comprehensive tests added: **143 tests passing**
 
 ## Current Task
 
@@ -50,8 +50,16 @@
   - SlidePart::update_xml() - Update slide part XML content
 
 - ✅ **Test Coverage:**
-  - Increased from 84 to **128 tests** (+52%)
-  - Added tests for hyperlinks, shape XML operations, expanded enums, LineFormat, and Slide operations
+  - Increased from 84 to **143 tests** (+70%)
+  - Added tests for hyperlinks, shape XML operations, expanded enums, LineFormat, Slide operations, and image handling
+
+- ✅ **Recent Bug Fixes (Nov 8, 2025):**
+  - Fixed regex pattern matching in Slides::len() and PresentationPart::next_slide_partname()
+  - Fixed relationship preservation in PresentationPart::add_slide()
+  - Fixed relationship preservation in SlidePart::update_xml()
+  - Fixed picture shape XML generation with image references
+  - Fixed slide blob updates when adding images to slides
+  - All 143 tests now passing
 
 ## Notes
 
@@ -70,7 +78,7 @@
 - **13+ Line dash styles** available
 - Enums expanded with ShapeType, PlaceholderType, TextAlign, ChartType, ColorType, FillType
 - API entry point functions available
-- **128 tests passing** covering:
+- **143 tests passing** covering:
   - PackURI (9 tests)
   - Relationships (6 tests)
   - TextFrame (5 tests)
@@ -85,7 +93,7 @@
   - Enums (7 tests): ChartType, AutoShapeType equality and operations
   - Slide (5 tests): Basic operations, masters, layouts
   - Hyperlink (10 tests): Creation, XML generation/parsing, escape/unescape
-  - Presentation (8+ tests): Save, open, slide dimensions
+  - Presentation (11+ tests): Save, open, slide dimensions, image handling, slide collection
 
 ## Pending Features
 

@@ -73,6 +73,11 @@ pub trait Shape: Send + Sync {
         // Default implementation does nothing
         // Shapes that support hyperlinks should override this
     }
+    
+    /// Get the image part ID (if this is a picture shape)
+    fn image_part_id(&self) -> Option<&str> {
+        None
+    }
 }
 
 /// Base shape implementation

@@ -148,5 +148,9 @@ impl Shape for Picture {
     fn set_hyperlink(&mut self, hyperlink: Option<Hyperlink>) {
         self.hyperlink = hyperlink;
     }
+    
+    fn image_part_id(&self) -> Option<&str> {
+        self.image_part_id.as_deref()
+    }
 }
 
