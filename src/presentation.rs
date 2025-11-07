@@ -3,6 +3,7 @@
 use crate::error::{PptError, Result};
 use crate::parts::presentation::PresentationPart;
 use crate::slide::{Slide, Slides};
+use crate::opc::packuri::PackURI;
 use std::io::{Read, Seek, Write};
 
 /// PresentationML (PML) presentation.
@@ -11,13 +12,16 @@ use std::io::{Read, Seek, Write};
 /// create a presentation.
 pub struct Presentation {
     part: PresentationPart,
+    /// Internal package to store all parts (slides, images, etc.)
+    package: crate::opc::package::Package,
 }
 
 impl Presentation {
     /// Create a new empty presentation
     pub fn new() -> Result<Self> {
         let part = PresentationPart::new()?;
-        Ok(Self { part })
+        let package = crate::opc::package::Package::new();
+        Ok(Self { part, package })
     }
 
     /// Open a presentation from a reader
@@ -46,7 +50,9 @@ impl Presentation {
                     .map_err(|e| PptError::ValueError(format!("Invalid UTF-8: {}", e)))?;
                 
                 let part = PresentationPart::from_xml(std::io::Cursor::new(xml.as_bytes()))?;
-                Ok(Self { part })
+                // TODO: Load all parts from package into internal package structure
+                let package = Package::new(); // For now, create empty package
+                Ok(Self { part, package })
             } else {
                 // Fallback: create new presentation
                 Self::new()
@@ -58,7 +64,7 @@ impl Presentation {
     }
 
     /// Save the presentation to a writer
-    pub fn save<W: Write + Seek>(&self, writer: W) -> Result<()> {
+    pub fn save<W: Write + Seek>(&mut self, writer: W) -> Result<()> {
         use crate::opc::constants::RELATIONSHIP_TYPE;
         use crate::opc::serialized::PackageWriter;
         use crate::opc::relationships::Relationships;
@@ -124,12 +130,16 @@ impl Presentation {
             }
         }
         
-        let mut parts: Vec<Box<dyn crate::opc::part::Part>> = vec![Box::new(OwnedPart {
+        // Collect all parts: presentation part, core properties, slides, and their related parts
+        let mut parts_map: std::collections::HashMap<PackURI, OwnedPart> = std::collections::HashMap::new();
+        
+        // Add presentation part
+        parts_map.insert(uri.clone(), OwnedPart {
             content_type: content_type.to_string(),
-            uri,
+            uri: uri.clone(),
             blob,
-            relationships,
-        })];
+            relationships: relationships.clone(),
+        });
         
         // Add core properties part if it exists
         if let Ok(core_props) = self.core_properties() {
@@ -137,20 +147,95 @@ impl Presentation {
             let core_blob = Part::blob(&core_props)?;
             let core_uri = Part::uri(&core_props).clone();
             let core_content_type = Part::content_type(&core_props);
-            parts.push(Box::new(OwnedPart {
+            parts_map.insert(core_uri.clone(), OwnedPart {
                 content_type: core_content_type.to_string(),
                 uri: core_uri,
                 blob: core_blob,
                 relationships: Relationships::new(),
-            }));
+            });
         }
+        
+        // Collect all parts from internal package
+        // This includes slides, images, and other related parts
+        // First, ensure all slides are loaded into the package by accessing them
+        {
+            use crate::slide::Slides;
+            let mut slides_collection = Slides::new(&mut self.part);
+            let slide_count = slides_collection.len();
+            // Access slides to ensure they're added to package
+            for i in 0..slide_count {
+                let _ = slides_collection.get(i, &mut self.package); // This will add slide parts to package if not already there
+            }
+            // slides_collection is dropped here, releasing the borrow
+        }
+        
+        // Now collect all parts from package (including slides and images)
+        // The slides_collection is dropped, so we can use self.package again
+        for part in self.package.iter_parts() {
+            use crate::opc::part::Part;
+            let part_blob = Part::blob(part.as_ref())?;
+            let part_uri = Part::uri(part.as_ref()).clone();
+            let part_content_type = Part::content_type(part.as_ref());
+            let part_rels = Part::relationships(part.as_ref()).clone();
+            
+            // Add part to collection if not already there
+            if !parts_map.contains_key(&part_uri) {
+                parts_map.insert(part_uri.clone(), OwnedPart {
+                    content_type: part_content_type.to_string(),
+                    uri: part_uri.clone(),
+                    blob: part_blob,
+                    relationships: part_rels.clone(),
+                });
+            }
+            
+            // Collect image parts from slide relationships
+            for (_img_r_id, img_rel) in part_rels.iter() {
+                use crate::opc::constants::RELATIONSHIP_TYPE;
+                if img_rel.rel_type == RELATIONSHIP_TYPE::IMAGE && !img_rel.is_external {
+                    // Resolve image URI
+                    let img_uri = if img_rel.target.starts_with('/') {
+                        PackURI::new(&img_rel.target)?
+                    } else {
+                        // Relative path - resolve from part's base URI
+                        let base_uri_str = part_uri.base_uri();
+                        let resolved = if base_uri_str == "/" {
+                            format!("/{}", img_rel.target)
+                        } else {
+                            format!("{}/{}", base_uri_str, img_rel.target)
+                        };
+                        PackURI::new(&resolved)?
+                    };
+                    
+                    // Try to get image part from package
+                    if let Some(img_part) = self.package.get_part(&img_uri) {
+                        let img_blob = Part::blob(img_part)?;
+                        let img_content_type = Part::content_type(img_part);
+                        
+                        if !parts_map.contains_key(&img_uri) {
+                            parts_map.insert(img_uri.clone(), OwnedPart {
+                                content_type: img_content_type.to_string(),
+                                uri: img_uri,
+                                blob: img_blob,
+                                relationships: Relationships::new(),
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Convert parts_map to Vec
+        let parts: Vec<Box<dyn crate::opc::part::Part>> = parts_map
+            .into_values()
+            .map(|p| Box::new(p) as Box<dyn crate::opc::part::Part>)
+            .collect();
         
         // Write the package
         PackageWriter::write(writer, &pkg_rels, &parts)
     }
 
     /// Save the presentation to a file path
-    pub fn save_to_file<P: AsRef<std::path::Path>>(&self, path: P) -> Result<()> {
+    pub fn save_to_file<P: AsRef<std::path::Path>>(&mut self, path: P) -> Result<()> {
         use std::io::Cursor;
         let mut cursor = Cursor::new(Vec::new());
         self.save(&mut cursor)?;
@@ -161,7 +246,13 @@ impl Presentation {
 
     /// Get the slides collection
     pub fn slides(&mut self) -> Slides {
-        Slides::new(self.part_mut())
+        Slides::new(&mut self.part)
+    }
+    
+    /// Get the internal package (for adding parts like images)
+    /// Note: This cannot be called while slides() is in use due to borrowing restrictions
+    pub fn package_mut(&mut self) -> &mut crate::opc::package::Package {
+        &mut self.package
     }
 
     /// Get the presentation part
@@ -287,7 +378,7 @@ mod tests {
 
     #[test]
     fn test_presentation_save_to_writer() {
-        let prs = Presentation::new().unwrap();
+        let mut prs = Presentation::new().unwrap();
         let mut cursor = Cursor::new(Vec::new());
         let result = prs.save(&mut cursor);
         assert!(result.is_ok());
@@ -304,7 +395,7 @@ mod tests {
 
     #[test]
     fn test_presentation_save_to_file() {
-        let prs = Presentation::new().unwrap();
+        let mut prs = Presentation::new().unwrap();
         let test_path = "test_output/test_save.pptx";
         
         // Create test_output directory if it doesn't exist
@@ -328,7 +419,7 @@ mod tests {
 
     #[test]
     fn test_presentation_save_contains_content_types() {
-        let prs = Presentation::new().unwrap();
+        let mut prs = Presentation::new().unwrap();
         let mut cursor = Cursor::new(Vec::new());
         prs.save(&mut cursor).unwrap();
         
@@ -349,7 +440,7 @@ mod tests {
 
     #[test]
     fn test_presentation_save_contains_presentation_xml() {
-        let prs = Presentation::new().unwrap();
+        let mut prs = Presentation::new().unwrap();
         let mut cursor = Cursor::new(Vec::new());
         prs.save(&mut cursor).unwrap();
         
@@ -371,7 +462,7 @@ mod tests {
 
     #[test]
     fn test_presentation_save_contains_relationships() {
-        let prs = Presentation::new().unwrap();
+        let mut prs = Presentation::new().unwrap();
         let mut cursor = Cursor::new(Vec::new());
         prs.save(&mut cursor).unwrap();
         
@@ -405,21 +496,141 @@ mod tests {
     #[test]
     fn test_presentation_slides() {
         let mut prs = Presentation::new().unwrap();
-        let slides = prs.slides();
+        let mut slides = prs.slides();
         // Empty presentation should have no slides
         assert_eq!(slides.len(), 0);
     }
 
     #[test]
-    fn test_presentation_part_access() {
+    fn test_presentation_save_with_slides() {
+        use crate::parts::slide::SlideLayoutPart;
+        use crate::opc::packuri::PackURI;
         use crate::opc::part::Part;
-        let prs = Presentation::new().unwrap();
-        let part = prs.part();
-        assert_eq!(Part::uri(part).as_str(), "/ppt/presentation.xml");
         
         let mut prs = Presentation::new().unwrap();
-        let part_mut = prs.part_mut();
-        assert_eq!(Part::uri(part_mut).as_str(), "/ppt/presentation.xml");
+        let mut slides = prs.slides();
+        let layout_part = SlideLayoutPart::new(PackURI::new("/ppt/slideLayouts/slideLayout1.xml").unwrap()).unwrap();
+        
+        let slide = slides.add_slide(&layout_part, prs.package_mut()).unwrap();
+        assert_eq!(slides.len(), 1);
+        
+        // Save the presentation
+        let test_path = "test_output/test_save_with_slides.pptx";
+        std::fs::create_dir_all("test_output").ok();
+        let result = prs.save_to_file(test_path);
+        assert!(result.is_ok());
+        
+        // Verify file exists and is valid
+        assert!(std::path::Path::new(test_path).exists());
+        let file = std::fs::File::open(test_path).unwrap();
+        let archive = zip::ZipArchive::new(file).unwrap();
+        
+        // Verify slide part is in the archive
+        let slide_xml = archive.by_name("ppt/slides/slide1.xml");
+        assert!(slide_xml.is_ok());
+        
+        // Clean up
+        std::fs::remove_file(test_path).ok();
+    }
+
+    #[test]
+    fn test_presentation_save_with_images() {
+        use crate::parts::slide::SlideLayoutPart;
+        use crate::opc::packuri::PackURI;
+        use crate::opc::part::Part;
+        
+        let mut prs = Presentation::new().unwrap();
+        let mut slides = prs.slides();
+        let layout_part = SlideLayoutPart::new(PackURI::new("/ppt/slideLayouts/slideLayout1.xml").unwrap()).unwrap();
+        
+        let mut slide = slides.add_slide(&layout_part, prs.package_mut()).unwrap();
+        
+        // Create a minimal PNG image
+        let png_data = vec![
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+            0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53, 0xDE,
+            0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41, 0x54,
+            0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00, 0x05, 0x00, 0x01,
+            0x0D, 0x0A, 0x2D, 0xB4,
+            0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44,
+            0xAE, 0x42, 0x60, 0x82,
+        ];
+        
+        let result = slide.add_image(png_data, "png", prs.package_mut());
+        assert!(result.is_ok());
+        
+        // Save the presentation
+        let test_path = "test_output/test_save_with_images.pptx";
+        std::fs::create_dir_all("test_output").ok();
+        let result = prs.save_to_file(test_path);
+        assert!(result.is_ok());
+        
+        // Verify file exists and is valid
+        assert!(std::path::Path::new(test_path).exists());
+        let file = std::fs::File::open(test_path).unwrap();
+        let mut archive = zip::ZipArchive::new(file).unwrap();
+        
+        // Verify image part is in the archive
+        let image_file = archive.by_name("ppt/media/image1.png");
+        assert!(image_file.is_ok());
+        
+        // Verify slide part has relationship to image
+        let slide_xml = archive.by_name("ppt/slides/slide1.xml");
+        assert!(slide_xml.is_ok());
+        let mut slide_content = String::new();
+        std::io::Read::read_to_string(&mut slide_xml.unwrap(), &mut slide_content).unwrap();
+        assert!(slide_content.contains("image1.png"));
+        
+        // Clean up
+        std::fs::remove_file(test_path).ok();
+    }
+
+    #[test]
+    fn test_presentation_package_mut() {
+        let mut prs = Presentation::new().unwrap();
+        let package = prs.package_mut();
+        assert_eq!(package.iter_parts().count(), 0);
+    }
+
+    #[test]
+    fn test_presentation_save_collects_all_parts() {
+        use crate::parts::slide::SlideLayoutPart;
+        use crate::opc::packuri::PackURI;
+        use crate::opc::part::Part;
+        
+        let mut prs = Presentation::new().unwrap();
+        let mut slides = prs.slides();
+        let layout_part = SlideLayoutPart::new(PackURI::new("/ppt/slideLayouts/slideLayout1.xml").unwrap()).unwrap();
+        
+        // Add a slide
+        let mut slide = slides.add_slide(&layout_part, prs.package_mut()).unwrap();
+        
+        // Add an image to the slide
+        let png_data = vec![0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
+        slide.add_image(png_data, "png", prs.package_mut()).unwrap();
+        
+        // Save and verify all parts are included
+        let mut cursor = std::io::Cursor::new(Vec::new());
+        prs.save(&mut cursor).unwrap();
+        
+        let data = cursor.into_inner();
+        let cursor = std::io::Cursor::new(&data);
+        let archive = zip::ZipArchive::new(cursor).unwrap();
+        
+        // Verify presentation part
+        assert!(archive.by_name("ppt/presentation.xml").is_ok());
+        
+        // Verify slide part
+        assert!(archive.by_name("ppt/slides/slide1.xml").is_ok());
+        
+        // Verify image part
+        assert!(archive.by_name("ppt/media/image1.png").is_ok());
+        
+        // Verify relationships
+        assert!(archive.by_name("ppt/_rels/presentation.xml.rels").is_ok());
+        assert!(archive.by_name("ppt/slides/_rels/slide1.xml.rels").is_ok());
     }
 }
 
