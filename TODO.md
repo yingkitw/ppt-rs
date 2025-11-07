@@ -20,7 +20,7 @@
 - [x] **Implement Hyperlink support** - Hyperlink struct with address and screen_tip, integrated into AutoShape and Picture
 - [x] **Implement Shape XML parsing** - parse_shapes_from_xml, shape_to_xml, next_shape_id functions
 - [x] **Implement Slide shape operations** - Slide::shapes() and Slide::add_shape() with XML parsing/generation
-- [x] Migrate tests and ensure cargo test passes - Comprehensive tests added: **143 tests passing**
+- [x] Migrate tests and ensure cargo test passes - Comprehensive tests added: **144 tests passing**
 
 ## Current Task
 
@@ -50,16 +50,22 @@
   - SlidePart::update_xml() - Update slide part XML content
 
 - ✅ **Test Coverage:**
-  - Increased from 84 to **143 tests** (+70%)
-  - Added tests for hyperlinks, shape XML operations, expanded enums, LineFormat, Slide operations, and image handling
+  - Increased from 84 to **144 tests** (+71%)
+  - Added tests for hyperlinks, shape XML operations, expanded enums, LineFormat, Slide operations, image handling, and PPTX save validation
 
-- ✅ **Recent Bug Fixes (Nov 8, 2025):**
+- ✅ **Recent Bug Fixes and Enhancements (Nov 8, 2025):**
   - Fixed regex pattern matching in Slides::len() and PresentationPart::next_slide_partname()
   - Fixed relationship preservation in PresentationPart::add_slide()
   - Fixed relationship preservation in SlidePart::update_xml()
   - Fixed picture shape XML generation with image references
   - Fixed slide blob updates when adding images to slides
-  - All 143 tests now passing
+  - Added explicit flush() call in PackageWriter to ensure all data is written
+  - Added comprehensive test_save_and_validate_pptx() test that validates:
+    - PPTX files can be saved and opened as valid ZIP archives
+    - [Content_Types].xml is properly generated
+    - _rels/.rels contains correct relationships
+    - presentation.xml has proper XML structure and namespaces
+  - All 144 tests now passing
 
 ## Notes
 
@@ -78,7 +84,7 @@
 - **13+ Line dash styles** available
 - Enums expanded with ShapeType, PlaceholderType, TextAlign, ChartType, ColorType, FillType
 - API entry point functions available
-- **143 tests passing** covering:
+- **144 tests passing** covering:
   - PackURI (9 tests)
   - Relationships (6 tests)
   - TextFrame (5 tests)
@@ -94,6 +100,7 @@
   - Slide (5 tests): Basic operations, masters, layouts
   - Hyperlink (10 tests): Creation, XML generation/parsing, escape/unescape
   - Presentation (11+ tests): Save, open, slide dimensions, image handling, slide collection
+  - OPC Serialization (4 tests): Content types, relationships, package reader, save and validate PPTX
 
 ## Pending Features
 

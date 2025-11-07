@@ -169,7 +169,10 @@ impl PackageWriter {
             }
         }
 
-        zip.finish()?;
+        // Finish writing the ZIP archive
+        let mut finished_writer = zip.finish()?;
+        // Ensure all data is flushed to the underlying writer
+        finished_writer.flush()?;
         Ok(())
     }
 }
@@ -288,6 +291,59 @@ mod tests {
         assert!(content.contains("Relationships"));
         assert!(content.contains("rId1"));
         assert!(content.contains("ppt/presentation.xml"));
+    }
+
+    #[test]
+    fn test_save_and_validate_pptx() {
+        // Create a presentation and save it
+        use crate::presentation::Presentation;
+        
+        let mut prs = Presentation::new().unwrap();
+        
+        // Save to memory
+        let mut cursor = Cursor::new(Vec::new());
+        let result = prs.save(&mut cursor);
+        assert!(result.is_ok(), "Failed to save presentation");
+        
+        // Validate the saved file can be opened as ZIP
+        cursor.set_position(0);
+        let archive = ZipArchive::new(cursor);
+        assert!(archive.is_ok(), "Saved file is not a valid ZIP");
+        
+        let mut archive = archive.unwrap();
+        
+        // Verify essential files exist
+        assert!(archive.by_name("[Content_Types].xml").is_ok(), "Missing [Content_Types].xml");
+        assert!(archive.by_name("_rels/.rels").is_ok(), "Missing _rels/.rels");
+        assert!(archive.by_name("ppt/presentation.xml").is_ok(), "Missing ppt/presentation.xml");
+        
+        // Verify Content_Types.xml contains proper entries
+        {
+            let mut file = archive.by_name("[Content_Types].xml").unwrap();
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut file, &mut content).unwrap();
+            assert!(content.contains("ppt/presentation.xml"), "Content_Types.xml missing presentation entry");
+        }
+        
+        // Verify _rels/.rels contains proper relationships
+        {
+            let mut file = archive.by_name("_rels/.rels").unwrap();
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut file, &mut content).unwrap();
+            assert!(content.contains("ppt/presentation.xml"), "_rels/.rels missing presentation relationship");
+            assert!(content.contains("officeDocument"), "_rels/.rels missing officeDocument relationship type");
+        }
+        
+        // Verify presentation.xml has valid structure
+        {
+            let mut file = archive.by_name("ppt/presentation.xml").unwrap();
+            let mut content = String::new();
+            std::io::Read::read_to_string(&mut file, &mut content).unwrap();
+            assert!(content.contains("<?xml"), "presentation.xml missing XML declaration");
+            assert!(content.contains("<p:presentation"), "presentation.xml missing presentation element");
+            assert!(content.contains("xmlns:p="), "presentation.xml missing namespace");
+        }
+        
     }
 
     #[test]
