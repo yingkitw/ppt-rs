@@ -1,0 +1,18 @@
+//! Open Packaging Convention (OPC) module
+//!
+//! Handles the ZIP-based package structure of .pptx files
+
+pub mod package;
+pub mod part;
+pub mod constants;
+pub mod packuri;
+pub mod relationships;
+pub mod serialized;
+pub mod spec;
+
+pub use package::Package;
+pub use part::Part;
+pub use constants::*;
+pub use packuri::PackURI;
+pub use serialized::{PackageReader, PackageWriter};
+

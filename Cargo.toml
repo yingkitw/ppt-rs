@@ -1,0 +1,54 @@
+[package]
+name = "ppt-rs"
+version = "0.1.0"
+edition = "2024"
+authors = ["Ying Kit WONG"]
+description = "Create, read, and update PowerPoint 2007+ (.pptx) files in Rust"
+license = "Apache-2.0"
+repository = "https://github.com/yingkitw/ppt-rs"
+keywords = ["powerpoint", "ppt", "pptx", "openxml", "office"]
+categories = ["office", "text-processing"]
+readme = "README.md"
+documentation = "https://docs.rs/ppt-rs"
+homepage = "https://github.com/yingkitw/ppt-rs"
+exclude = [
+    "target/",
+    "*.pptx",
+    "test_output/",
+    ".git/",
+    ".gitignore",
+    "TODO.md",
+    "MIGRATION_STATUS.md",
+]
+
+[dependencies]
+# XML processing
+quick-xml = { version = "0.36", features = ["serialize"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# ZIP/OPC package handling
+zip = "0.6"
+
+# Image processing
+image = "0.25"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# JSON repair
+anyrepair = "0.1"
+
+# Markdown processing
+pulldown-cmark = "0.9"
+
+# Utilities
+lazy_static = "1.5"
+regex = "1.10"
+
+[dev-dependencies]
+# Testing
+insta = "1.40"
+tokio = { version = "1.0", features = ["full"] }
+

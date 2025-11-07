@@ -1,0 +1,137 @@
+//! Font functionality
+
+/// Font properties
+pub struct Font {
+    name: String,
+    size: u32,      // in points
+    bold: bool,
+    italic: bool,
+    underline: bool,
+    color: Option<String>, // RGB color as hex string
+}
+
+impl Font {
+    /// Create a new font with default properties
+    pub fn new() -> Self {
+        Self {
+            name: "Calibri".to_string(),
+            size: 18,
+            bold: false,
+            italic: false,
+            underline: false,
+            color: None,
+        }
+    }
+
+    /// Create a new font with name and size
+    pub fn with_name_size(name: String, size: u32) -> Self {
+        Self {
+            name,
+            size,
+            bold: false,
+            italic: false,
+            underline: false,
+            color: None,
+        }
+    }
+
+    /// Get the font name
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Set the font name
+    pub fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    /// Get the font size in points
+    pub fn size(&self) -> u32 {
+        self.size
+    }
+
+    /// Set the font size in points
+    pub fn set_size(&mut self, size: u32) {
+        self.size = size;
+    }
+
+    /// Check if font is bold
+    pub fn is_bold(&self) -> bool {
+        self.bold
+    }
+
+    /// Set bold
+    pub fn set_bold(&mut self, bold: bool) {
+        self.bold = bold;
+    }
+
+    /// Check if font is italic
+    pub fn is_italic(&self) -> bool {
+        self.italic
+    }
+
+    /// Set italic
+    pub fn set_italic(&mut self, italic: bool) {
+        self.italic = italic;
+    }
+
+    /// Check if font is underlined
+    pub fn is_underline(&self) -> bool {
+        self.underline
+    }
+
+    /// Set underline
+    pub fn set_underline(&mut self, underline: bool) {
+        self.underline = underline;
+    }
+
+    /// Get the font color (RGB hex string)
+    pub fn color(&self) -> Option<&str> {
+        self.color.as_deref()
+    }
+
+    /// Set the font color (RGB hex string, e.g., "FF0000" for red)
+    pub fn set_color(&mut self, color: String) {
+        self.color = Some(color);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_font_new() {
+        let font = Font::new();
+        assert_eq!(font.name(), "Calibri");
+        assert_eq!(font.size(), 18);
+        assert!(!font.is_bold());
+        assert!(!font.is_italic());
+        assert!(!font.is_underline());
+    }
+
+    #[test]
+    fn test_font_with_name_size() {
+        let font = Font::with_name_size("Arial".to_string(), 24);
+        assert_eq!(font.name(), "Arial");
+        assert_eq!(font.size(), 24);
+    }
+
+    #[test]
+    fn test_font_properties() {
+        let mut font = Font::new();
+        font.set_name("Times New Roman".to_string());
+        font.set_size(12);
+        font.set_bold(true);
+        font.set_italic(true);
+        font.set_underline(true);
+        font.set_color("FF0000".to_string());
+        
+        assert_eq!(font.name(), "Times New Roman");
+        assert_eq!(font.size(), 12);
+        assert!(font.is_bold());
+        assert!(font.is_italic());
+        assert!(font.is_underline());
+        assert_eq!(font.color(), Some("FF0000"));
+    }
+}

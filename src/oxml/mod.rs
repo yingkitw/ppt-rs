@@ -1,0 +1,12 @@
+//! OpenXML processing module
+//!
+//! Handles XML parsing and generation for OpenXML elements
+
+pub mod parser;
+pub mod writer;
+pub mod ns;
+
+pub use parser::parse_xml;
+pub use writer::serialize_xml;
+pub use ns::*;
+

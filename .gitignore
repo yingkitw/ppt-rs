@@ -1,0 +1,55 @@
+# Rust build artifacts
+target/
+Cargo.lock
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Documentation
+target/doc/
+
+# Test artifacts
+*.pptx
+test_output/
+*.pptm
+
+# Backup files
+*.bak
+*.backup
+
+# Rust-specific
+**/*.rs.bk
+*.pdb
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Coverage reports
+tarpaulin-report.html
+coverage/
+*.gcda
+*.gcno
+*.gcov
+
+# Profiling data
+*.profdata
+perf.data*
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
