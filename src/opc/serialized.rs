@@ -77,11 +77,14 @@ impl PackageWriter {
 
         // Generate Content_Types.xml
         let mut content_types = Vec::new();
-        content_types.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">"#.to_string());
+        content_types.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#.to_string());
+        content_types.push(r#"<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">"#.to_string());
         
-        // Add default extensions
-        content_types.push(r#"<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>"#.to_string());
-        content_types.push(r#"<Default Extension="xml" ContentType="application/xml"/>"#.to_string());
+        // Add default extensions (must match python-pptx)
+        content_types.push(r#"  <Default Extension="bin" ContentType="application/vnd.openxmlformats-officedocument.presentationml.printerSettings"/>"#.to_string());
+        content_types.push(r#"  <Default Extension="jpeg" ContentType="image/jpeg"/>"#.to_string());
+        content_types.push(r#"  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>"#.to_string());
+        content_types.push(r#"  <Default Extension="xml" ContentType="application/xml"/>"#.to_string());
         
         // Track which extensions we've already added as defaults
         let mut added_extensions = std::collections::HashSet::new();
@@ -95,7 +98,7 @@ impl PackageWriter {
             // Always use Override for specific parts (required by OPC spec)
             // Override takes precedence over Default
             content_types.push(format!(
-                r#"<Override PartName="{}" ContentType="{}"/>"#,
+                r#"  <Override PartName="{}" ContentType="{}"/>"#,
                 membername,
                 content_type
             ));
@@ -109,7 +112,7 @@ impl PackageWriter {
         }
         
         content_types.push("</Types>".to_string());
-        let content_types_xml = content_types.join("");
+        let content_types_xml = content_types.join("\n");
         
         // CONTENT_TYPES_URI is "/[Content_Types].xml", need to remove leading slash
         let content_types_filename = CONTENT_TYPES_URI.trim_start_matches('/');
@@ -118,12 +121,13 @@ impl PackageWriter {
 
         // Generate package relationships XML
         let mut rels_xml = Vec::new();
-        rels_xml.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"#.to_string());
+        rels_xml.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#.to_string());
+        rels_xml.push(r#"<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"#.to_string());
         
         // Iterate over relationships using iter() method
         for (r_id, rel) in pkg_rels.iter() {
             rels_xml.push(format!(
-                r#"<Relationship Id="{}" Type="{}" Target="{}"/>"#,
+                r#"  <Relationship Id="{}" Type="{}" Target="{}"/>"#,
                 r_id,
                 rel.rel_type,
                 rel.target
@@ -131,7 +135,7 @@ impl PackageWriter {
         }
         
         rels_xml.push("</Relationships>".to_string());
-        let pkg_rels_xml = rels_xml.join("");
+        let pkg_rels_xml = rels_xml.join("\n");
         
         let pkg_rels_uri = PackURI::new("/_rels/.rels")?;
         zip.start_file(pkg_rels_uri.membername(), options)?;
@@ -149,12 +153,13 @@ impl PackageWriter {
             if !rels.is_empty() {
                 let rels_uri = uri.rels_uri()?;
                 let mut part_rels_xml = Vec::new();
-                part_rels_xml.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"#.to_string());
+                part_rels_xml.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#.to_string());
+                part_rels_xml.push(r#"<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"#.to_string());
                 
                 // Iterate over relationships using iter() method
                 for (r_id, rel) in rels.iter() {
                     part_rels_xml.push(format!(
-                        r#"<Relationship Id="{}" Type="{}" Target="{}"/>"#,
+                        r#"  <Relationship Id="{}" Type="{}" Target="{}"/>"#,
                         r_id,
                         rel.rel_type,
                         rel.target
@@ -162,7 +167,7 @@ impl PackageWriter {
                 }
                 
                 part_rels_xml.push("</Relationships>".to_string());
-                let part_rels_xml_str = part_rels_xml.join("");
+                let part_rels_xml_str = part_rels_xml.join("\n");
                 
                 zip.start_file(rels_uri.membername(), options)?;
                 zip.write_all(part_rels_xml_str.as_bytes())?;

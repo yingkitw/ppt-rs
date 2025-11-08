@@ -23,6 +23,22 @@
 //! prs.save_to_file("output.pptx").unwrap();
 //! ```
 //!
+//! ## Validating Edited Presentations
+//!
+//! To ensure that edits to a presentation don't corrupt the file, use the validation utilities:
+//!
+//! ```rust,no_run
+//! use ppt_rs::new_presentation;
+//! use ppt_rs::util::validation::validate_presentation;
+//!
+//! // Create and edit a presentation
+//! let mut prs = new_presentation().unwrap();
+//! // ... make edits ...
+//!
+//! // Validate that the presentation is not corrupted
+//! validate_presentation(&mut prs).unwrap();
+//! ```
+//!
 //! ## Status
 //!
 //! 🚧 **Work in Progress** - This library is currently under active development.

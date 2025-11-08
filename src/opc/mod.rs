@@ -9,10 +9,12 @@ pub mod packuri;
 pub mod relationships;
 pub mod serialized;
 pub mod spec;
+pub mod content_types;
 
 pub use package::Package;
 pub use part::Part;
 pub use constants::*;
 pub use packuri::PackURI;
 pub use serialized::{PackageReader, PackageWriter};
+pub use content_types::ContentTypesManager;
 

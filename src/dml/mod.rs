@@ -3,10 +3,16 @@
 pub mod color;
 pub mod fill;
 pub mod line;
+pub mod gradient;
+pub mod pattern;
+pub mod picture_fill;
 
 pub use color::ColorFormat;
 pub use fill::FillFormat;
 pub use line::LineFormat;
+pub use gradient::{GradientFill, GradientStop, GradientType};
+pub use pattern::{PatternFill, PatternType};
+pub use picture_fill::{PictureFill, PictureFillManager};
 
 #[cfg(test)]
 mod tests {
@@ -81,5 +87,80 @@ mod tests {
         line.set_dash_style(Some(DashStyle::Dash));
         assert_eq!(line.width(), 25400);
         assert_eq!(line.dash_style(), Some(DashStyle::Dash));
+    }
+
+    #[test]
+    fn test_gradient_linear() {
+        use crate::dml::gradient::{GradientFill, GradientType};
+        
+        let start = RGBColor::new(255, 0, 0);
+        let end = RGBColor::new(0, 0, 255);
+        let gradient = GradientFill::linear_with_colors(start, end).unwrap();
+        
+        assert_eq!(gradient.gradient_type(), GradientType::Linear);
+        assert_eq!(gradient.stop_count(), 2);
+        assert!(gradient.is_valid());
+    }
+
+    #[test]
+    fn test_gradient_radial() {
+        use crate::dml::gradient::{GradientFill, GradientType};
+        
+        let gradient = GradientFill::radial();
+        assert_eq!(gradient.gradient_type(), GradientType::Radial);
+    }
+
+    #[test]
+    fn test_fill_with_gradient() {
+        use crate::dml::gradient::GradientFill;
+        
+        let mut fill = FillFormat::new();
+        let start = RGBColor::new(255, 0, 0);
+        let end = RGBColor::new(0, 0, 255);
+        
+        fill.set_gradient_linear(start, end).unwrap();
+        assert_eq!(fill.fill_type(), FillType::Gradient);
+        assert!(fill.gradient().is_some());
+    }
+
+    #[test]
+    fn test_pattern_fill() {
+        use crate::dml::pattern::PatternType;
+        
+        let mut fill = FillFormat::new();
+        fill.set_pattern_fill(
+            PatternType::Horizontal,
+            RGBColor::new(255, 0, 0),
+            RGBColor::new(0, 0, 255),
+        );
+        
+        assert_eq!(fill.fill_type(), FillType::Pattern);
+        assert!(fill.pattern().is_some());
+    }
+
+    #[test]
+    fn test_pattern_fill_types() {
+        use crate::dml::pattern::PatternType;
+        
+        let patterns = vec![
+            PatternType::Horizontal,
+            PatternType::Vertical,
+            PatternType::DiagonalDown,
+            PatternType::DiagonalUp,
+            PatternType::Cross,
+            PatternType::Checker,
+        ];
+        
+        for pattern_type in patterns {
+            let mut fill = FillFormat::new();
+            fill.set_pattern_fill(
+                pattern_type,
+                RGBColor::new(255, 0, 0),
+                RGBColor::new(0, 0, 255),
+            );
+            
+            assert_eq!(fill.fill_type(), FillType::Pattern);
+            assert_eq!(fill.pattern().unwrap().pattern_type(), pattern_type);
+        }
     }
 }

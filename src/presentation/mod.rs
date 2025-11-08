@@ -4,6 +4,8 @@ mod dimensions;
 mod open;
 mod save;
 mod presentation;
+mod relationships;
 
 pub use presentation::Presentation;
+pub use relationships::PresentationRelationshipManager;
 

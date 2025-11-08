@@ -3,11 +3,15 @@
 use crate::error::Result;
 use crate::parts::slide::SlidePart;
 use crate::shapes::Shape;
+use crate::slide::background::SlideBackground;
+use crate::slide::transition::SlideTransition;
 
 /// Individual slide
 pub struct Slide {
     part: Option<SlidePart>,
     name: String,
+    background: SlideBackground,
+    transition: SlideTransition,
 }
 
 impl Slide {
@@ -15,6 +19,8 @@ impl Slide {
         Self {
             part: None,
             name: String::new(),
+            background: SlideBackground::new(),
+            transition: SlideTransition::new(),
         }
     }
 
@@ -22,6 +28,8 @@ impl Slide {
         Self {
             part: Some(part),
             name: String::new(),
+            background: SlideBackground::new(),
+            transition: SlideTransition::new(),
         }
     }
 
@@ -43,6 +51,26 @@ impl Slide {
     /// Get mutable slide part
     pub fn part_mut(&mut self) -> Option<&mut SlidePart> {
         self.part.as_mut()
+    }
+
+    /// Get the slide background
+    pub fn background(&self) -> &SlideBackground {
+        &self.background
+    }
+
+    /// Get mutable slide background
+    pub fn background_mut(&mut self) -> &mut SlideBackground {
+        &mut self.background
+    }
+
+    /// Get the slide transition
+    pub fn transition(&self) -> &SlideTransition {
+        &self.transition
+    }
+
+    /// Get mutable slide transition
+    pub fn transition_mut(&mut self) -> &mut SlideTransition {
+        &mut self.transition
     }
 
     /// Get shapes on this slide
@@ -106,6 +134,7 @@ impl Slide {
         }
         Ok(())
     }
+
     
     /// Add an image to the slide
     /// This creates an ImagePart, adds it to the package, creates a relationship, and adds a Picture shape

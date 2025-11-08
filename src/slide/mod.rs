@@ -5,12 +5,26 @@ mod slides;
 mod iterator;
 mod masters;
 mod layouts;
+mod background;
+mod transition;
+mod master;
+mod layout;
+mod slide_layouts;
+mod slide_id;
+mod animation;
 
 pub use slide::Slide;
 pub use slides::Slides;
 pub use iterator::SlideIterator;
 pub use masters::SlideMasters;
 pub use layouts::SlideLayouts;
+pub use background::SlideBackground;
+pub use transition::{SlideTransition, TransitionType, TransitionDirection};
+pub use master::SlideMaster;
+pub use layout::{SlideLayout, LayoutType};
+pub use slide_layouts::SlideLayouts as PredefinedLayouts;
+pub use slide_id::{SlideId, SlideIdManager};
+pub use animation::{Animation, AnimationType, AnimationManager, EntranceEffect, ExitEffect, EmphasisEffect};
 
 #[cfg(test)]
 mod tests {
@@ -29,6 +43,51 @@ mod tests {
         let mut slide = Slide::new();
         slide.set_name("Test Slide".to_string());
         assert_eq!(slide.name(), "Test Slide");
+    }
+
+    #[test]
+    fn test_slide_background() {
+        let slide = Slide::new();
+        assert!(slide.background().fill().fill_type() == crate::enums::dml::FillType::NoFill);
+    }
+
+    #[test]
+    fn test_slide_background_solid() {
+        let mut slide = Slide::new();
+        use crate::dml::color::RGBColor;
+        slide.background_mut().set_solid(RGBColor::new(255, 0, 0));
+        assert!(slide.background().fill().fill_type() == crate::enums::dml::FillType::Solid);
+    }
+
+    #[test]
+    fn test_slide_background_gradient() {
+        let mut slide = Slide::new();
+        use crate::dml::color::RGBColor;
+        slide.background_mut().set_gradient_linear(
+            RGBColor::new(255, 0, 0),
+            RGBColor::new(0, 0, 255),
+        ).unwrap();
+        assert!(slide.background().fill().fill_type() == crate::enums::dml::FillType::Gradient);
+    }
+
+    #[test]
+    fn test_slide_transition() {
+        let slide = Slide::new();
+        assert_eq!(slide.transition().transition_type(), TransitionType::None);
+    }
+
+    #[test]
+    fn test_slide_transition_set() {
+        let mut slide = Slide::new();
+        slide.transition_mut().set_transition_type(TransitionType::Fade);
+        assert_eq!(slide.transition().transition_type(), TransitionType::Fade);
+    }
+
+    #[test]
+    fn test_slide_transition_duration() {
+        let mut slide = Slide::new();
+        slide.transition_mut().set_duration(1000).unwrap();
+        assert_eq!(slide.transition().duration(), 1000);
     }
 
     #[test]

@@ -1,12 +1,14 @@
 //! Text layout functionality
 
 use crate::enums::text::TextAlign;
+use crate::text::run::Run;
 
 /// Paragraph in a text frame
 pub struct Paragraph {
     text: String,
     alignment: TextAlign,
     level: u32,
+    runs: Vec<Run>,
 }
 
 impl Paragraph {
@@ -16,6 +18,7 @@ impl Paragraph {
             text: String::new(),
             alignment: TextAlign::Left,
             level: 0,
+            runs: Vec::new(),
         }
     }
 
@@ -52,6 +55,43 @@ impl Paragraph {
     /// Set the paragraph level
     pub fn set_level(&mut self, level: u32) {
         self.level = level;
+    }
+
+    /// Add a text run to this paragraph
+    pub fn add_run(&mut self, text: &str) -> &mut Run {
+        let run = Run::new(text);
+        self.runs.push(run);
+        self.runs.last_mut().unwrap()
+    }
+
+    /// Get all runs in this paragraph
+    pub fn runs(&self) -> &[Run] {
+        &self.runs
+    }
+
+    /// Get mutable runs
+    pub fn runs_mut(&mut self) -> &mut [Run] {
+        &mut self.runs
+    }
+
+    /// Get a specific run by index
+    pub fn run(&self, index: usize) -> Option<&Run> {
+        self.runs.get(index)
+    }
+
+    /// Get a mutable run by index
+    pub fn run_mut(&mut self, index: usize) -> Option<&mut Run> {
+        self.runs.get_mut(index)
+    }
+
+    /// Clear all runs
+    pub fn clear_runs(&mut self) {
+        self.runs.clear();
+    }
+
+    /// Get the number of runs
+    pub fn run_count(&self) -> usize {
+        self.runs.len()
     }
 }
 
@@ -97,5 +137,41 @@ mod tests {
         para.set_text("Hello");
         para.clear();
         assert_eq!(para.text(), "");
+    }
+
+    #[test]
+    fn test_paragraph_add_run() {
+        let mut para = Paragraph::new();
+        para.add_run("Hello");
+        para.add_run("World");
+        
+        assert_eq!(para.run_count(), 2);
+        assert_eq!(para.run(0).unwrap().text(), "Hello");
+        assert_eq!(para.run(1).unwrap().text(), "World");
+    }
+
+    #[test]
+    fn test_paragraph_run_with_hyperlink() {
+        use crate::shapes::hyperlink::Hyperlink;
+        
+        let mut para = Paragraph::new();
+        let run = para.add_run("Click here");
+        
+        let hyperlink = Hyperlink::with_address("https://example.com".to_string());
+        run.add_hyperlink(hyperlink);
+        
+        assert!(para.run(0).unwrap().has_hyperlink());
+        assert_eq!(para.run(0).unwrap().hyperlink_address(), Some("https://example.com"));
+    }
+
+    #[test]
+    fn test_paragraph_clear_runs() {
+        let mut para = Paragraph::new();
+        para.add_run("Hello");
+        para.add_run("World");
+        
+        assert_eq!(para.run_count(), 2);
+        para.clear_runs();
+        assert_eq!(para.run_count(), 0);
     }
 }

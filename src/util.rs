@@ -1,5 +1,7 @@
 //! Utility functions and helpers
 
+pub mod validation;
+
 use std::cell::Cell;
 
 /// Lazy property implementation
