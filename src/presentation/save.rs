@@ -415,11 +415,38 @@ pub fn save<W: Write + Seek>(
         // slides_collection is dropped here, releasing the borrow
     }
     
-    // Generate slide relationship files for each slide
+    // Generate slide XML files and relationship files for each slide
     {
         let slide_count = part.slide_id_manager().all().len();
         for i in 0..slide_count {
             let slide_index = i + 1;
+            let slide_uri_str = format!("/ppt/slides/slide{}.xml", slide_index);
+            let slide_uri = PackURI::new(&slide_uri_str)?;
+            
+            // Try to get slide content from package if it exists
+            let slide_xml = if let Some(slide_part) = package.get_part(&slide_uri) {
+                use crate::opc::part::Part;
+                // Use existing slide XML if available
+                match Part::to_xml(slide_part) {
+                    Ok(xml) => xml,
+                    Err(_) => {
+                        // Fall back to blank slide
+                        generate_blank_slide_xml()
+                    }
+                }
+            } else {
+                // Generate minimal slide XML with blank layout
+                generate_blank_slide_xml()
+            };
+            
+            parts_map.insert(slide_uri.clone(), OwnedPart {
+                content_type: "application/vnd.openxmlformats-officedocument.presentationml.slide+xml".to_string(),
+                uri: slide_uri.clone(),
+                blob: slide_xml.as_bytes().to_vec(),
+                relationships: Relationships::new(),
+            });
+            
+            // Generate slide relationship file
             let slide_rels_xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
@@ -432,6 +459,13 @@ pub fn save<W: Write + Seek>(
                 relationships: Relationships::new(),
             });
         }
+    }
+    
+    // Helper function to generate blank slide XML matching python-pptx format
+    fn generate_blank_slide_xml() -> String {
+        // Compact format matching python-pptx exactly
+        r#"<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>"#.to_string()
     }
     
     // Now collect all parts from package (including slides and images)

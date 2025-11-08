@@ -2,6 +2,7 @@
 
 use crate::shapes::hyperlink::Hyperlink;
 use crate::text::fonts::Font;
+use crate::dml::color::RGBColor;
 
 /// A run of text with consistent formatting
 /// 
@@ -11,6 +12,11 @@ pub struct Run {
     text: String,
     font: Font,
     hyperlink: Option<Hyperlink>,
+    bold: bool,
+    italic: bool,
+    underline: bool,
+    color: Option<RGBColor>,
+    font_size: Option<u32>,
 }
 
 impl Run {
@@ -20,6 +26,11 @@ impl Run {
             text: text.to_string(),
             font: Font::new(),
             hyperlink: None,
+            bold: false,
+            italic: false,
+            underline: false,
+            color: None,
+            font_size: None,
         }
     }
 
@@ -89,6 +100,56 @@ impl Run {
             h.set_screen_tip(Some(screen_tip.to_string()));
         }
     }
+
+    /// Set bold formatting
+    pub fn set_bold(&mut self, bold: bool) {
+        self.bold = bold;
+    }
+
+    /// Get bold formatting
+    pub fn is_bold(&self) -> bool {
+        self.bold
+    }
+
+    /// Set italic formatting
+    pub fn set_italic(&mut self, italic: bool) {
+        self.italic = italic;
+    }
+
+    /// Get italic formatting
+    pub fn is_italic(&self) -> bool {
+        self.italic
+    }
+
+    /// Set underline formatting
+    pub fn set_underline(&mut self, underline: bool) {
+        self.underline = underline;
+    }
+
+    /// Get underline formatting
+    pub fn is_underline(&self) -> bool {
+        self.underline
+    }
+
+    /// Set text color
+    pub fn set_color(&mut self, color: RGBColor) {
+        self.color = Some(color);
+    }
+
+    /// Get text color
+    pub fn color(&self) -> Option<&RGBColor> {
+        self.color.as_ref()
+    }
+
+    /// Set font size (in points)
+    pub fn set_font_size(&mut self, size: u32) {
+        self.font_size = Some(size);
+    }
+
+    /// Get font size
+    pub fn font_size(&self) -> Option<u32> {
+        self.font_size
+    }
 }
 
 #[cfg(test)]
@@ -128,6 +189,47 @@ mod tests {
         assert!(run.has_hyperlink());
         run.remove_hyperlink();
         assert!(!run.has_hyperlink());
+    }
+
+    #[test]
+    fn test_run_bold() {
+        let mut run = Run::new("Bold text");
+        assert!(!run.is_bold());
+        run.set_bold(true);
+        assert!(run.is_bold());
+    }
+
+    #[test]
+    fn test_run_italic() {
+        let mut run = Run::new("Italic text");
+        assert!(!run.is_italic());
+        run.set_italic(true);
+        assert!(run.is_italic());
+    }
+
+    #[test]
+    fn test_run_underline() {
+        let mut run = Run::new("Underlined text");
+        assert!(!run.is_underline());
+        run.set_underline(true);
+        assert!(run.is_underline());
+    }
+
+    #[test]
+    fn test_run_color() {
+        let mut run = Run::new("Colored text");
+        assert!(run.color().is_none());
+        let color = RGBColor::new(255, 0, 0);
+        run.set_color(color);
+        assert!(run.color().is_some());
+    }
+
+    #[test]
+    fn test_run_font_size() {
+        let mut run = Run::new("Sized text");
+        assert!(run.font_size().is_none());
+        run.set_font_size(24);
+        assert_eq!(run.font_size(), Some(24));
     }
 
     #[test]

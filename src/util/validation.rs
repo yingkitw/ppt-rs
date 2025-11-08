@@ -11,6 +11,9 @@ use crate::presentation::Presentation;
 use std::io::Cursor;
 use zip::ZipArchive;
 
+/// Validation result type
+pub type ValidationResult = Result<()>;
+
 /// Validate a presentation by saving and reopening it
 /// 
 /// This ensures that edits to a presentation don't corrupt the file.
