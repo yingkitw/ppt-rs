@@ -5,12 +5,12 @@ use crate::opc::constants::CONTENT_TYPE;
 use crate::opc::part::{BasePart, Part};
 use crate::opc::packuri::PackURI;
 use crate::opc::relationships::Relationships;
+use crate::slide::SlideIdManager;
 
 /// Presentation part - the main document part
 pub struct PresentationPart {
     base: BasePart,
-    /// Slide ID manager for tracking slides
-    slide_id_manager: crate::slide::SlideIdManager,
+    slide_id_manager: SlideIdManager,
 }
 
 impl PresentationPart {
@@ -18,9 +18,9 @@ impl PresentationPart {
     pub fn new() -> Result<Self> {
         let uri = PackURI::new("/ppt/presentation.xml")?;
         let base = BasePart::new(CONTENT_TYPE::PML_PRESENTATION_MAIN, uri)?;
-        Ok(Self {
+        Ok(Self { 
             base,
-            slide_id_manager: crate::slide::SlideIdManager::new(),
+            slide_id_manager: SlideIdManager::new(),
         })
     }
 
@@ -29,9 +29,9 @@ impl PresentationPart {
         let mut base = BasePart::new(CONTENT_TYPE::PML_PRESENTATION_MAIN, uri)?;
         // Store XML content as blob
         base.set_blob(xml_content.as_bytes().to_vec());
-        Ok(Self {
+        Ok(Self { 
             base,
-            slide_id_manager: crate::slide::SlideIdManager::new(),
+            slide_id_manager: SlideIdManager::new(),
         })
     }
 
@@ -57,72 +57,6 @@ impl PresentationPart {
             // Return default core properties
             crate::parts::coreprops::CorePropertiesPart::new(PackURI::new("/docProps/core.xml")?)
         }
-    }
-
-    /// Get the slide ID manager
-    pub fn slide_id_manager(&self) -> &crate::slide::SlideIdManager {
-        &self.slide_id_manager
-    }
-
-    /// Get mutable slide ID manager
-    pub fn slide_id_manager_mut(&mut self) -> &mut crate::slide::SlideIdManager {
-        &mut self.slide_id_manager
-    }
-
-    /// Generate presentation.xml with slide IDs
-    pub fn generate_presentation_xml(&self) -> String {
-        let mut xml = String::new();
-        xml.push_str(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#);
-        xml.push('\n');
-        xml.push_str(r#"<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main""#);
-        xml.push('\n');
-        xml.push_str(r#"                xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships""#);
-        xml.push('\n');
-        xml.push_str(r#"                xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main""#);
-        xml.push('\n');
-        xml.push_str(r#"                saveSubsetFonts="1" autoCompressPictures="0">"#);
-        xml.push('\n');
-        
-        // Slide master ID list
-        xml.push_str(r#"  <p:sldMasterIdLst>"#);
-        xml.push('\n');
-        xml.push_str(r#"    <p:sldMasterId id="2147483648" r:id="rId1"/>"#);
-        xml.push('\n');
-        xml.push_str(r#"  </p:sldMasterIdLst>"#);
-        xml.push('\n');
-        
-        // Slide ID list
-        xml.push_str(&self.slide_id_manager.to_xml());
-        xml.push('\n');
-        
-        // Slide size
-        xml.push_str(r#"  <p:sldSz cx="9144000" cy="6858000" type="screen4x3"/>"#);
-        xml.push('\n');
-        xml.push_str(r#"  <p:notesSz cx="6858000" cy="9144000"/>"#);
-        xml.push('\n');
-        
-        // Default text style
-        xml.push_str(r#"  <p:defaultTextStyle>"#);
-        xml.push('\n');
-        xml.push_str(r#"    <a:defPPr><a:defRPr lang="en-US"/></a:defPPr>"#);
-        xml.push('\n');
-        
-        // Text levels (1-9)
-        for level in 1..=9 {
-            let margin = (level - 1) * 457200;
-            let size = if level == 1 { 1800 } else { 1800 };
-            xml.push_str(&format!(
-                r#"    <a:lvl{}pPr marL="{}" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="{}" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl{}pPr>"#,
-                level, margin, size, level
-            ));
-            xml.push('\n');
-        }
-        
-        xml.push_str(r#"  </p:defaultTextStyle>"#);
-        xml.push('\n');
-        xml.push_str(r#"</p:presentation>"#);
-        
-        xml
     }
 
     /// Add a slide to the presentation
@@ -178,20 +112,9 @@ impl PresentationPart {
             xml = xml.replace("<p:sldSz", &format!("<p:sldIdLst>\n    {}\n  </p:sldIdLst>\n  <p:sldSz", sld_id_entry));
         }
         
-        // Store updated XML while preserving relationships
+        // Store updated XML
         let uri = Part::uri(self).clone();
-        let old_rels = self.relationships_mut().clone();
-        let mut new_part = Self::with_xml(uri, xml)?;
-        // Copy relationships to the new part
-        for (r_id, rel) in old_rels.iter() {
-            new_part.relationships_mut().add(
-                r_id.clone(),
-                rel.rel_type.clone(),
-                rel.target.clone(),
-                rel.is_external,
-            );
-        }
-        *self = new_part;
+        *self = Self::with_xml(uri, xml)?;
         
         Ok(r_id)
     }
@@ -203,7 +126,7 @@ impl PresentationPart {
         let slide_count = if let Ok(blob) = Part::blob(self) {
             if let Ok(xml) = String::from_utf8(blob) {
                 // Count <p:sldId> tags (not <p:sldIdLst>)
-                let pattern = "<p:sldId ";
+                let pattern = r#"<p:sldId\s"#;
                 xml.matches(pattern).count()
             } else {
                 0
@@ -213,6 +136,22 @@ impl PresentationPart {
         };
         
         PackURI::new(&format!("/ppt/slides/slide{}.xml", slide_count + 1))
+    }
+
+    /// Get the slide ID manager
+    pub fn slide_id_manager(&self) -> &SlideIdManager {
+        &self.slide_id_manager
+    }
+
+    /// Get mutable slide ID manager
+    pub fn slide_id_manager_mut(&mut self) -> &mut SlideIdManager {
+        &mut self.slide_id_manager
+    }
+
+    /// Generate presentation XML
+    pub fn generate_presentation_xml(&mut self) -> Result<String> {
+        use crate::opc::part::Part;
+        Part::to_xml(self)
     }
 }
 
@@ -240,8 +179,8 @@ impl Part for PresentationPart {
             return Ok(base_blob);
         }
         
-        // Generate minimal valid presentation.xml with slide master reference
-        let xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        // Generate presentation.xml with slide IDs from SlideIdManager
+        let mut xml = String::from(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"
                 xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
                 xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"
@@ -249,107 +188,35 @@ impl Part for PresentationPart {
   <p:sldMasterIdLst>
     <p:sldMasterId id="2147483648" r:id="rId1"/>
   </p:sldMasterIdLst>
-  <p:sldIdLst/>
-  <p:sldSz cx="9144000" cy="6858000" type="screen4x3"/>
+"#);
+        
+        // Add slide IDs from manager
+        let slide_ids = self.slide_id_manager.all();
+        if !slide_ids.is_empty() {
+            xml.push_str("  <p:sldIdLst>\n");
+            for slide_id in slide_ids {
+                xml.push_str(&format!("    <p:sldId id=\"{}\" r:id=\"{}\"/>\n", 
+                    slide_id.id(), slide_id.rel_id()));
+            }
+            xml.push_str("  </p:sldIdLst>\n");
+        }
+        
+        xml.push_str(r#"  <p:sldSz cx="9144000" cy="6858000" type="screen4x3"/>
   <p:notesSz cx="6858000" cy="9144000"/>
   <p:defaultTextStyle>
-    <a:defPPr>
-      <a:defRPr lang="en-US"/>
-    </a:defPPr>
-    <a:lvl1pPr marL="0" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1">
-      <a:defRPr sz="1800" kern="1200">
-        <a:solidFill>
-          <a:schemeClr val="tx1"/>
-        </a:solidFill>
-        <a:latin typeface="+mn-lt"/>
-        <a:ea typeface="+mn-ea"/>
-        <a:cs typeface="+mn-cs"/>
-      </a:defRPr>
-    </a:lvl1pPr>
-    <a:lvl2pPr marL="457200" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1">
-      <a:defRPr sz="1800" kern="1200">
-        <a:solidFill>
-          <a:schemeClr val="tx1"/>
-        </a:solidFill>
-        <a:latin typeface="+mn-lt"/>
-        <a:ea typeface="+mn-ea"/>
-        <a:cs typeface="+mn-cs"/>
-      </a:defRPr>
-    </a:lvl2pPr>
-    <a:lvl3pPr marL="914400" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1">
-      <a:defRPr sz="1800" kern="1200">
-        <a:solidFill>
-          <a:schemeClr val="tx1"/>
-        </a:solidFill>
-        <a:latin typeface="+mn-lt"/>
-        <a:ea typeface="+mn-ea"/>
-        <a:cs typeface="+mn-cs"/>
-      </a:defRPr>
-    </a:lvl3pPr>
-    <a:lvl4pPr marL="1371600" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1">
-      <a:defRPr sz="1800" kern="1200">
-        <a:solidFill>
-          <a:schemeClr val="tx1"/>
-        </a:solidFill>
-        <a:latin typeface="+mn-lt"/>
-        <a:ea typeface="+mn-ea"/>
-        <a:cs typeface="+mn-cs"/>
-      </a:defRPr>
-    </a:lvl4pPr>
-    <a:lvl5pPr marL="1828800" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1">
-      <a:defRPr sz="1800" kern="1200">
-        <a:solidFill>
-          <a:schemeClr val="tx1"/>
-        </a:solidFill>
-        <a:latin typeface="+mn-lt"/>
-        <a:ea typeface="+mn-ea"/>
-        <a:cs typeface="+mn-cs"/>
-      </a:defRPr>
-    </a:lvl5pPr>
-    <a:lvl6pPr marL="2286000" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1">
-      <a:defRPr sz="1800" kern="1200">
-        <a:solidFill>
-          <a:schemeClr val="tx1"/>
-        </a:solidFill>
-        <a:latin typeface="+mn-lt"/>
-        <a:ea typeface="+mn-ea"/>
-        <a:cs typeface="+mn-cs"/>
-      </a:defRPr>
-    </a:lvl6pPr>
-    <a:lvl7pPr marL="2743200" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1">
-      <a:defRPr sz="1800" kern="1200">
-        <a:solidFill>
-          <a:schemeClr val="tx1"/>
-        </a:solidFill>
-        <a:latin typeface="+mn-lt"/>
-        <a:ea typeface="+mn-ea"/>
-        <a:cs typeface="+mn-cs"/>
-      </a:defRPr>
-    </a:lvl7pPr>
-    <a:lvl8pPr marL="3200400" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1">
-      <a:defRPr sz="1800" kern="1200">
-        <a:solidFill>
-          <a:schemeClr val="tx1"/>
-        </a:solidFill>
-        <a:latin typeface="+mn-lt"/>
-        <a:ea typeface="+mn-ea"/>
-        <a:cs typeface="+mn-cs"/>
-      </a:defRPr>
-    </a:lvl8pPr>
-    <a:lvl9pPr marL="3657600" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1">
-      <a:defRPr sz="1800" kern="1200">
-        <a:solidFill>
-          <a:schemeClr val="tx1"/>
-        </a:solidFill>
-        <a:latin typeface="+mn-lt"/>
-        <a:ea typeface="+mn-ea"/>
-        <a:cs typeface="+mn-cs"/>
-      </a:defRPr>
-    </a:lvl9pPr>
+    <a:defPPr><a:defRPr lang="en-US"/></a:defPPr>
+    <a:lvl1pPr marL="0" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl1pPr>
+    <a:lvl2pPr marL="457200" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl2pPr>
+    <a:lvl3pPr marL="914400" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl3pPr>
+    <a:lvl4pPr marL="1371600" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl4pPr>
+    <a:lvl5pPr marL="1828800" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl5pPr>
+    <a:lvl6pPr marL="2286000" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl6pPr>
+    <a:lvl7pPr marL="2743200" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl7pPr>
+    <a:lvl8pPr marL="3200400" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl8pPr>
+    <a:lvl9pPr marL="3657600" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl9pPr>
   </p:defaultTextStyle>
-  <p:notesMasterIdLst/>
-  <p:handoutMasterIdLst/>
-</p:presentation>"#;
+</p:presentation>"#);
+        
         Ok(xml.as_bytes().to_vec())
     }
 

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
+  <p:cSld>
+    <p:bg>
+      <p:bgPr>
+        <a:solidFill><a:schemeClr val="bg1"/></a:solidFill>
+        <a:effectLst/>
+      </p:bgPr>
+      <p:bgPr><a:solidFill><a:schemeClr val="bg1"/></a:solidFill><a:effectLst/></p:bgPr>
+    </p:bg>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name="Title Master"/>
+        <p:cNvGrpSpPr/>
+        <p:nvPr/>
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm><a:off x="0" y="0"/><a:ext cx="9144000" cy="6858000"/><a:chOff x="0" y="0"/><a:chExt cx="9144000" cy="6858000"/></a:xfrm>
+      </p:grpSpPr>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMap accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" dk1="dk1" dk2="dk2" folHyperlink="folHyperlink" hyperlink="hyperlink" lt1="lt1" lt2="lt2"/>
+  <p:sldLayoutIdLst>
+    <p:sldLayoutId id="256" r:id="rId2"/>
+    <p:sldLayoutId id="257" r:id="rId3"/>
+    <p:sldLayoutId id="258" r:id="rId4"/>
+    <p:sldLayoutId id="259" r:id="rId5"/>
+    <p:sldLayoutId id="260" r:id="rId6"/>
+    <p:sldLayoutId id="261" r:id="rId7"/>
+    <p:sldLayoutId id="262" r:id="rId8"/>
+    <p:sldLayoutId id="263" r:id="rId9"/>
+    <p:sldLayoutId id="264" r:id="rId10"/>
+    <p:sldLayoutId id="265" r:id="rId11"/>
+    <p:sldLayoutId id="266" r:id="rId12"/>
+  </p:sldLayoutIdLst>
+  <p:txStyles>
+    <p:titleStyle><a:lvl1pPr algn="ctr" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="4400" kern="1200"><a:solidFill><a:schemeClr val="accent1"/></a:solidFill><a:latin typeface="+mj-lt"/><a:ea typeface="+mj-ea"/><a:cs typeface="+mj-cs"/></a:defRPr></a:lvl1pPr></p:titleStyle>
+    <p:bodyStyle><a:lvl1pPr marL="0" marR="0" lvlIndent="0" algn="l" defTabSz="457200" rtl="0" eaLnBrk="1" latinLnBrk="0" hangingPunct="1"><a:defRPr sz="2400" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:lvl1pPr></p:bodyStyle>
+    <p:otherStyle><a:defPPr><a:defRPr lang="en-US" sz="1800" kern="1200"><a:solidFill><a:schemeClr val="tx1"/></a:solidFill><a:latin typeface="+mn-lt"/><a:ea typeface="+mn-ea"/><a:cs typeface="+mn-cs"/></a:defRPr></a:defPPr></p:otherStyle>
+  </p:txStyles>
+</p:sldMaster>

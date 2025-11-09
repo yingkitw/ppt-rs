@@ -109,18 +109,7 @@ impl SlidePart {
     /// Update the slide part XML
     pub fn update_xml(&mut self, xml: String) -> Result<()> {
         let uri = Part::uri(self).clone();
-        let old_rels = self.base.relationships().clone();
-        let mut new_base = BaseSlidePart::with_xml(CONTENT_TYPE::PML_SLIDE, uri, xml)?;
-        // Copy relationships to the new base
-        for (r_id, rel) in old_rels.iter() {
-            new_base.relationships_mut().add(
-                r_id.clone(),
-                rel.rel_type.clone(),
-                rel.target.clone(),
-                rel.is_external,
-            );
-        }
-        self.base = new_base;
+        self.base = BaseSlidePart::with_xml(CONTENT_TYPE::PML_SLIDE, uri, xml)?;
         Ok(())
     }
 

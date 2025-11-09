@@ -66,6 +66,9 @@ pub struct GradientFill {
     stops: Vec<GradientStop>,
 }
 
+/// Type alias for convenience
+pub type Gradient = GradientFill;
+
 impl GradientFill {
     /// Create a new linear gradient fill
     pub fn linear() -> Self {
@@ -88,6 +91,14 @@ impl GradientFill {
     /// Create a linear gradient with two colors
     pub fn linear_with_colors(start_color: RGBColor, end_color: RGBColor) -> crate::error::Result<Self> {
         let mut gradient = Self::linear();
+        gradient.add_stop(0.0, ColorFormat::from_rgb(start_color))?;
+        gradient.add_stop(1.0, ColorFormat::from_rgb(end_color))?;
+        Ok(gradient)
+    }
+
+    /// Create a radial gradient with two colors
+    pub fn radial_with_colors(start_color: RGBColor, end_color: RGBColor) -> crate::error::Result<Self> {
+        let mut gradient = Self::radial();
         gradient.add_stop(0.0, ColorFormat::from_rgb(start_color))?;
         gradient.add_stop(1.0, ColorFormat::from_rgb(end_color))?;
         Ok(gradient)

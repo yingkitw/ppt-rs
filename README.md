@@ -102,12 +102,11 @@ graph TB
 - ⚠️ XML serialization (in progress)
 - ⚠️ Advanced features (placeholders, effects)
 
-**Test Coverage:** **208 tests passing** ✅
+**Test Coverage:** **128 tests passing** ✅
 
 ## Documentation
 
 - [API Documentation](https://docs.rs/ppt-rs)
-- [Examples and Test Cases](EXAMPLES.md)
 - [Migration Status](MIGRATION_STATUS.md)
 - [Architecture](ARCHITECTURE.md)
 - [TODO](TODO.md)

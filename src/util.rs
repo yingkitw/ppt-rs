@@ -1,18 +1,18 @@
 //! Utility functions and helpers
 
-pub mod validation;
 pub mod cache;
 pub mod error_context;
-pub mod roundtrip;
 pub mod performance;
+pub mod roundtrip;
 pub mod shape_content;
+pub mod validation;
 
 pub use cache::LazyCache;
-pub use error_context::{ErrorContext, Validator};
-pub use validation::ValidationResult;
-pub use roundtrip::RoundTrip;
+pub use error_context::Validator;
 pub use performance::{PerformanceMetrics, Timer, BatchProcessor};
+pub use roundtrip::RoundTrip;
 pub use shape_content::{ShapeContent, ShapeContentType, PlaceholderType, ShapeContentLoader};
+pub use validation::validate_presentation;
 
 use std::cell::Cell;
 

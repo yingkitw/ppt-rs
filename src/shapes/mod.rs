@@ -8,15 +8,6 @@ pub mod graphfrm;
 pub mod group;
 pub mod xml;
 pub mod hyperlink;
-pub mod placeholder;
-pub mod shadow;
-pub mod freeform;
-pub mod ole;
-pub mod smartart;
-pub mod text_shape;
-pub mod picture_shape;
-pub mod chart_shape;
-pub mod animation_shape;
 
 pub use base::{BaseShape, Shape};
 pub use autoshape::{AutoShape, AutoShapeType};
@@ -26,15 +17,6 @@ pub use graphfrm::{GraphicFrame, GraphicFrameContentType};
 pub use group::GroupShape;
 pub use xml::{parse_shapes_from_xml, shape_to_xml, next_shape_id};
 pub use hyperlink::{Hyperlink, hyperlink_to_xml, parse_hyperlink_from_xml};
-pub use placeholder::{Placeholder, PlaceholderType, PlaceholderManager};
-pub use shadow::{Shadow, ShadowType, ShadowManager};
-pub use freeform::{Freeform, PathSegment, PathSegmentType, FreeformManager};
-pub use ole::{OleObject, OleObjectType, OleObjectManager};
-pub use smartart::{SmartArt, SmartArtLayoutType, SmartArtDataPoint, SmartArtManager};
-pub use text_shape::{TextShape, TextShapeManager};
-pub use picture_shape::{PictureShape, PictureShapeManager};
-pub use chart_shape::{ChartShape, ChartShapeManager};
-pub use animation_shape::{AnimatedShape, AnimationShapeManager};
 
 #[cfg(test)]
 mod tests {

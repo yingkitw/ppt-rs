@@ -1,17 +1,18 @@
 //! DrawingML fill functionality
 
 use crate::dml::color::ColorFormat;
-use crate::dml::gradient::GradientFill;
-use crate::dml::pattern::PatternFill;
 use crate::enums::dml::FillType;
+use crate::dml::gradient::Gradient;
+use crate::dml::pattern::Pattern;
+use crate::error::Result;
 
 /// Fill format - provides access to fill properties
 pub struct FillFormat {
     fill_type: FillType,
     fore_color: Option<ColorFormat>,
     back_color: Option<ColorFormat>,
-    gradient: Option<GradientFill>,
-    pattern: Option<PatternFill>,
+    gradient: Option<Gradient>,
+    pattern: Option<Pattern>,
 }
 
 impl FillFormat {
@@ -75,63 +76,49 @@ impl FillFormat {
         self.back_color.as_mut()
     }
 
-    /// Set fill type to gradient
-    pub fn set_gradient(&mut self, gradient: GradientFill) {
+    /// Set gradient fill (linear)
+    pub fn set_gradient_linear(&mut self, start_color: crate::dml::color::RGBColor, end_color: crate::dml::color::RGBColor) -> Result<()> {
+        let gradient = Gradient::linear_with_colors(start_color, end_color)?;
         self.fill_type = FillType::Gradient;
         self.gradient = Some(gradient);
-        self.fore_color = None;
-        self.back_color = None;
+        self.pattern = None;
+        Ok(())
     }
 
-    /// Get gradient fill
-    pub fn gradient(&self) -> Option<&GradientFill> {
+    /// Set gradient fill (radial)
+    pub fn set_gradient_radial(&mut self, start_color: crate::dml::color::RGBColor, end_color: crate::dml::color::RGBColor) -> Result<()> {
+        let gradient = Gradient::radial_with_colors(start_color, end_color)?;
+        self.fill_type = FillType::Gradient;
+        self.gradient = Some(gradient);
+        self.pattern = None;
+        Ok(())
+    }
+
+    /// Get gradient
+    pub fn gradient(&self) -> Option<&Gradient> {
         self.gradient.as_ref()
     }
 
-    /// Get mutable gradient fill
-    pub fn gradient_mut(&mut self) -> Option<&mut GradientFill> {
+    /// Get mutable gradient
+    pub fn gradient_mut(&mut self) -> Option<&mut Gradient> {
         self.gradient.as_mut()
     }
 
-    /// Create a linear gradient fill
-    pub fn set_gradient_linear(&mut self, start_color: crate::dml::color::RGBColor, end_color: crate::dml::color::RGBColor) -> crate::error::Result<()> {
-        let gradient = GradientFill::linear_with_colors(start_color, end_color)?;
-        self.set_gradient(gradient);
-        Ok(())
-    }
-
-    /// Create a radial gradient fill
-    pub fn set_gradient_radial(&mut self, start_color: crate::dml::color::RGBColor, end_color: crate::dml::color::RGBColor) -> crate::error::Result<()> {
-        let mut gradient = GradientFill::radial();
-        gradient.add_stop(0.0, ColorFormat::from_rgb(start_color))?;
-        gradient.add_stop(1.0, ColorFormat::from_rgb(end_color))?;
-        self.set_gradient(gradient);
-        Ok(())
-    }
-
-    /// Set fill type to pattern
-    pub fn set_pattern(&mut self, pattern: PatternFill) {
+    /// Set pattern fill
+    pub fn set_pattern_fill(&mut self, pattern: Pattern) {
         self.fill_type = FillType::Pattern;
         self.pattern = Some(pattern);
-        self.fore_color = None;
-        self.back_color = None;
         self.gradient = None;
     }
 
-    /// Get pattern fill
-    pub fn pattern(&self) -> Option<&PatternFill> {
+    /// Get pattern
+    pub fn pattern(&self) -> Option<&Pattern> {
         self.pattern.as_ref()
     }
 
-    /// Get mutable pattern fill
-    pub fn pattern_mut(&mut self) -> Option<&mut PatternFill> {
+    /// Get mutable pattern
+    pub fn pattern_mut(&mut self) -> Option<&mut Pattern> {
         self.pattern.as_mut()
-    }
-
-    /// Create a pattern fill
-    pub fn set_pattern_fill(&mut self, pattern_type: crate::dml::pattern::PatternType, fore_color: crate::dml::color::RGBColor, back_color: crate::dml::color::RGBColor) {
-        let pattern = PatternFill::with_rgb(pattern_type, fore_color, back_color);
-        self.set_pattern(pattern);
     }
 }
 

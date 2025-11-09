@@ -193,49 +193,7 @@ pub fn shape_to_xml(shape: &dyn Shape, next_shape_id: u32) -> String {
     let shape_id = if shape.id() > 0 { shape.id() } else { next_shape_id };
     let name = shape.name();
     
-    // Check if this is a Picture shape
-    if let Some(image_r_id) = shape.image_part_id() {
-        // Generate picture XML with image reference
-        // Include image filename in the name for test compatibility
-        let pic_name = if name.is_empty() {
-            format!("Picture {}", shape_id)
-        } else {
-            name.to_string()
-        };
-        return format!(
-            r#"<p:pic>
-      <p:nvPicPr>
-        <p:cNvPr id="{}" name="{}"/>
-        <p:cNvPicPr/>
-        <p:nvPr/>
-      </p:nvPicPr>
-      <p:blipFill>
-        <a:blip r:embed="{}"/>
-        <a:stretch>
-          <a:fillRect/>
-        </a:stretch>
-      </p:blipFill>
-      <p:spPr>
-        <a:xfrm>
-          <a:off x="{}" y="{}"/>
-          <a:ext cx="{}" cy="{}"/>
-        </a:xfrm>
-        <a:prstGeom prst="rect">
-          <a:avLst/>
-        </a:prstGeom>
-      </p:spPr>
-    </p:pic>"#,
-            shape_id,
-            pic_name,
-            image_r_id,
-            shape.left(),
-            shape.top(),
-            shape.width(),
-            shape.height()
-        );
-    }
-    
-    // Generate basic shape XML for non-picture shapes
+    // Generate basic shape XML based on shape type
     // This is a simplified version - full implementation would handle all shape types
     format!(
         r#"<p:sp>

@@ -54,6 +54,9 @@ pub struct PatternFill {
     back_color: ColorFormat,
 }
 
+/// Type alias for convenience
+pub type Pattern = PatternFill;
+
 impl PatternFill {
     /// Create a new pattern fill
     pub fn new(pattern_type: PatternType, fore_color: ColorFormat, back_color: ColorFormat) -> Self {

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:viewPr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" lastView="sldThumbnail">
+  <p:normalViewPr>
+    <p:restoredLeft sz="15616"/>
+    <p:restoredTop sz="94595"/>
+  </p:normalViewPr>
+  <p:slideViewPr/>
+  <p:outlineViewPr/>
+  <p:notesViewPr/>
+  <p:handoutViewPr/>
+  <p:forceOffscreen val="0"/>
+</p:viewPr>

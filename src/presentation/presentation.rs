@@ -99,6 +99,59 @@ impl Presentation {
     pub fn set_slide_height(&mut self, height: u32) -> Result<()> {
         dimensions::set_slide_height(&mut self.part, height)
     }
+
+    /// Add a new blank slide to the presentation
+    /// Returns the index of the newly added slide
+    pub fn add_slide(&mut self) -> Result<usize> {
+        use crate::opc::packuri::PackURI;
+        use crate::parts::slide::{SlideLayoutPart, SlidePart};
+        use crate::opc::part::Part;
+        use crate::opc::constants::RELATIONSHIP_TYPE;
+        
+        // Create a default slide layout (blank layout)
+        let layout_uri = PackURI::new("/ppt/slideLayouts/slideLayout1.xml")?;
+        let layout_part = SlideLayoutPart::new(layout_uri)?;
+        
+        // Get current slide count before adding
+        let slide_count = self.part.slide_id_manager().all().len();
+        
+        // Create a new slide URI
+        let slide_uri = PackURI::new(&format!("/ppt/slides/slide{}.xml", slide_count + 1))?;
+        let mut slide_part = SlidePart::new(slide_uri.clone(), &layout_part as &dyn Part)?;
+        
+        // Initialize slide part with proper XML content
+        let slide_xml = format!(
+            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:cSld>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name=""/>
+        <p:cNvGrpSpPr/>
+        <p:nvPr/>
+      </p:nvGrpSpPr>
+      <p:grpSpPr/>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr>
+    <a:masterClrMapping/>
+  </p:clrMapOvr>
+</p:sld>"#
+        );
+        slide_part.update_xml(slide_xml)?;
+        
+        // Generate relationship ID for this slide
+        // rId6 onwards for slides (rId1-5 reserved for core parts)
+        let r_id = format!("rId{}", 6 + slide_count);
+        
+        // Add slide ID to manager (relationships will be generated during save)
+        self.part.slide_id_manager_mut().add_slide(r_id);
+        
+        // Note: The slide part and relationships will be generated during save() 
+        // based on SlideIdManager. Don't add relationships here to avoid duplicates.
+        
+        Ok(slide_count)
+    }
 }
 
 #[cfg(test)]

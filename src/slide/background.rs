@@ -50,7 +50,8 @@ impl SlideBackground {
 
     /// Set pattern background
     pub fn set_pattern(&mut self, pattern_type: crate::dml::pattern::PatternType, fore_color: crate::dml::color::RGBColor, back_color: crate::dml::color::RGBColor) {
-        self.fill.set_pattern_fill(pattern_type, fore_color, back_color);
+        let pattern = crate::dml::pattern::Pattern::with_rgb(pattern_type, fore_color, back_color);
+        self.fill.set_pattern_fill(pattern);
     }
 
     /// Clear background (set to no fill)
