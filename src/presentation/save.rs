@@ -540,6 +540,17 @@ pub fn save<W: Write + Seek>(
         }
     }
     
+    // Add thumbnail image (docProps/thumbnail.jpeg)
+    use crate::util::generate_thumbnail_jpeg;
+    let thumbnail_jpeg = generate_thumbnail_jpeg()?;
+    let thumbnail_uri = PackURI::new("/docProps/thumbnail.jpeg")?;
+    parts_map.insert(thumbnail_uri.clone(), OwnedPart {
+        content_type: "image/jpeg".to_string(),
+        uri: thumbnail_uri,
+        blob: thumbnail_jpeg,
+        relationships: Relationships::new(),
+    });
+    
     // Convert parts_map to Vec
     let parts: Vec<Box<dyn crate::opc::part::Part>> = parts_map
         .into_values()

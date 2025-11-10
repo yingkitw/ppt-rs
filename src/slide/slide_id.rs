@@ -57,6 +57,16 @@ impl SlideIdManager {
         slide_id
     }
 
+    /// Remove a slide by relationship ID
+    pub fn remove_slide(&mut self, rel_id: &SlideId) -> bool {
+        if let Some(pos) = self.slide_ids.iter().position(|s| s.rel_id == rel_id.rel_id) {
+            self.slide_ids.remove(pos);
+            true
+        } else {
+            false
+        }
+    }
+
     /// Get all slide IDs
     pub fn all(&self) -> &[SlideId] {
         &self.slide_ids

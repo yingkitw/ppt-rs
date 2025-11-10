@@ -292,6 +292,32 @@ impl Presentation {
         Ok(slide_count)
     }
 
+    /// Remove a slide by index
+    /// Returns true if slide was removed, false if index is out of bounds
+    pub fn remove_slide(&mut self, index: usize) -> Result<bool> {
+        let slide_count = self.part.slide_id_manager().all().len();
+        
+        if index >= slide_count {
+            return Ok(false);
+        }
+        
+        // Get the relationship ID for this slide
+        let slide_ids = self.part.slide_id_manager().all();
+        if let Some(slide_id) = slide_ids.get(index) {
+            let slide_id_clone = slide_id.clone();
+            
+            // Remove from slide ID manager
+            self.part.slide_id_manager_mut().remove_slide(&slide_id_clone);
+            
+            // Note: Actual file removal happens during save()
+            // For now, we just update the relationships
+            
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+
     // ============================================================================
     // FLUENT API METHODS (Phase 2)
     // ============================================================================

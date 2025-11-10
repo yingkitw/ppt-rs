@@ -10,6 +10,7 @@ pub mod xml;
 pub mod hyperlink;
 pub mod xml_traits;
 pub mod custom_geometry;
+pub mod shadow;
 
 pub use base::{BaseShape, Shape};
 pub use autoshape::{AutoShape, AutoShapeType};
@@ -21,6 +22,7 @@ pub use xml::{parse_shapes_from_xml, shape_to_xml, next_shape_id};
 pub use hyperlink::{Hyperlink, hyperlink_to_xml, parse_hyperlink_from_xml};
 pub use xml_traits::{ShapeXmlSerializer, ShapeXmlExt};
 pub use custom_geometry::{CustomGeometry, GeometryPoint, CurveType, CurveInfo};
+pub use shadow::{Shadow, ShadowType, ShadowManager};
 
 #[cfg(test)]
 mod tests {

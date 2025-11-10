@@ -29,6 +29,10 @@ pub struct PresentationBuilder {
     author: Option<String>,
     subject: Option<String>,
     company: Option<String>,
+    keywords: Option<String>,
+    comments: Option<String>,
+    slide_width: Option<u32>,
+    slide_height: Option<u32>,
 }
 
 impl PresentationBuilder {
@@ -39,6 +43,10 @@ impl PresentationBuilder {
             author: None,
             subject: None,
             company: None,
+            keywords: None,
+            comments: None,
+            slide_width: None,
+            slide_height: None,
         }
     }
 
@@ -66,9 +74,47 @@ impl PresentationBuilder {
         self
     }
 
+    /// Set the presentation keywords
+    pub fn keywords(mut self, keywords: impl Into<String>) -> Self {
+        self.keywords = Some(keywords.into());
+        self
+    }
+
+    /// Set the presentation comments/description
+    pub fn comments(mut self, comments: impl Into<String>) -> Self {
+        self.comments = Some(comments.into());
+        self
+    }
+
+    /// Set custom slide width in EMU (English Metric Units)
+    /// 
+    /// Default is 9144000 EMU (10 inches)
+    /// 1 inch = 914400 EMU
+    pub fn slide_width(mut self, width: u32) -> Self {
+        self.slide_width = Some(width);
+        self
+    }
+
+    /// Set custom slide height in EMU (English Metric Units)
+    /// 
+    /// Default is 6858000 EMU (7.5 inches)
+    /// 1 inch = 914400 EMU
+    pub fn slide_height(mut self, height: u32) -> Self {
+        self.slide_height = Some(height);
+        self
+    }
+
     /// Build the presentation
-    pub fn build(self) -> Result<Presentation> {
-        let prs = Presentation::new()?;
+    pub fn build(mut self) -> Result<Presentation> {
+        let mut prs = Presentation::new()?;
+        
+        // Set custom dimensions if provided
+        if let Some(width) = self.slide_width {
+            prs.set_slide_width(width)?;
+        }
+        if let Some(height) = self.slide_height {
+            prs.set_slide_height(height)?;
+        }
         
         // Note: Properties are set via CoreProperties in the presentation
         // This is a simplified builder that creates a valid presentation
