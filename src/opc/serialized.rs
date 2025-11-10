@@ -142,8 +142,71 @@ impl PackageWriter {
         zip.start_file(pkg_rels_uri.membername(), options)?;
         zip.write_all(pkg_rels_xml.as_bytes())?;
 
-        // STEP 4: Write all parts with proper compression
-        for part in parts {
+        // STEP 4: Sort and write all parts in PowerPoint-compatible order
+        // PowerPoint requires a specific file order for compatibility
+        let mut sorted_parts: Vec<_> = parts.iter().collect();
+        sorted_parts.sort_by(|a, b| {
+            let a_path = a.uri().as_str();
+            let b_path = b.uri().as_str();
+            
+            // Define priority order for PowerPoint compatibility
+            let get_priority = |path: &str| -> (u32, u32) {
+                match path {
+                    // 1. Core properties files
+                    "/docProps/core.xml" => (1, 0),
+                    "/docProps/app.xml" => (2, 0),
+                    
+                    // 2. Presentation files
+                    "/ppt/presentation.xml" => (3, 0),
+                    "/ppt/presProps.xml" => (4, 0),
+                    "/ppt/viewProps.xml" => (5, 0),
+                    
+                    // 3. Theme
+                    path if path.starts_with("/ppt/theme/") => (6, 0),
+                    
+                    // 4. Table styles
+                    "/ppt/tableStyles.xml" => (7, 0),
+                    
+                    // 5. Slide masters
+                    path if path.starts_with("/ppt/slideMasters/") => (8, 0),
+                    
+                    // 6. Slide layouts
+                    path if path.starts_with("/ppt/slideLayouts/") => (9, 0),
+                    
+                    // 7. Printer settings
+                    "/ppt/printerSettings/printerSettings1.bin" => (10, 0),
+                    
+                    // 8. Slides (in order)
+                    path if path.starts_with("/ppt/slides/slide") && path.ends_with(".xml") => {
+                        // Extract slide number for proper ordering
+                        if let Some(num_str) = path.strip_prefix("/ppt/slides/slide")
+                            .and_then(|s| s.strip_suffix(".xml"))
+                            .and_then(|s| s.parse::<u32>().ok()) {
+                            (11, num_str)
+                        } else {
+                            (11, 0)
+                        }
+                    }
+                    
+                    // 9. Everything else
+                    _ => (99, 0),
+                }
+            };
+            
+            let (a_pri, a_num) = get_priority(a_path);
+            let (b_pri, b_num) = get_priority(b_path);
+            
+            if a_pri != b_pri {
+                a_pri.cmp(&b_pri)
+            } else if a_num != b_num {
+                a_num.cmp(&b_num)
+            } else {
+                a_path.cmp(b_path)
+            }
+        });
+        
+        // Write parts in sorted order
+        for part in sorted_parts {
             let uri = part.uri();
             zip.start_file(uri.membername(), options)?;
             let blob = part.blob()?;
