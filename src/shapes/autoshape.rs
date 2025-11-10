@@ -2,6 +2,7 @@
 
 use crate::shapes::base::{BaseShape, Shape};
 use crate::shapes::hyperlink::Hyperlink;
+use crate::shapes::custom_geometry::CustomGeometry;
 use crate::text::TextFrame;
 
 /// AutoShape - predefined shapes like rectangles, circles, etc.
@@ -10,6 +11,7 @@ pub struct AutoShape {
     shape_type: AutoShapeType,
     text_frame: Option<TextFrame>,
     hyperlink: Option<Hyperlink>,
+    custom_geometry: Option<CustomGeometry>,
 }
 
 /// AutoShape types
@@ -186,6 +188,7 @@ impl AutoShape {
             shape_type,
             text_frame: None,
             hyperlink: None,
+            custom_geometry: None,
         }
     }
     
@@ -196,6 +199,7 @@ impl AutoShape {
             shape_type,
             text_frame: Some(TextFrame::new()),
             hyperlink: None,
+            custom_geometry: None,
         }
     }
     
@@ -207,6 +211,39 @@ impl AutoShape {
     /// Set the shape type
     pub fn set_shape_type(&mut self, shape_type: AutoShapeType) {
         self.shape_type = shape_type;
+    }
+
+    /// Get custom geometry
+    pub fn custom_geometry(&self) -> Option<&CustomGeometry> {
+        self.custom_geometry.as_ref()
+    }
+
+    /// Get mutable custom geometry
+    pub fn custom_geometry_mut(&mut self) -> Option<&mut CustomGeometry> {
+        self.custom_geometry.as_mut()
+    }
+
+    /// Set custom geometry
+    pub fn set_custom_geometry(&mut self, geometry: CustomGeometry) {
+        self.custom_geometry = Some(geometry);
+    }
+
+    /// Create custom geometry if not exists
+    pub fn create_custom_geometry(&mut self) -> &mut CustomGeometry {
+        if self.custom_geometry.is_none() {
+            self.custom_geometry = Some(CustomGeometry::new());
+        }
+        self.custom_geometry.as_mut().unwrap()
+    }
+
+    /// Clear custom geometry
+    pub fn clear_custom_geometry(&mut self) {
+        self.custom_geometry = None;
+    }
+
+    /// Check if has custom geometry
+    pub fn has_custom_geometry(&self) -> bool {
+        self.custom_geometry.is_some()
     }
 }
 
@@ -332,6 +369,87 @@ mod tests {
             let shape = AutoShape::new(1, "Test".to_string(), shape_type);
             assert_eq!(shape.shape_type(), shape_type);
         }
+    }
+
+    #[test]
+    fn test_autoshape_custom_geometry_none() {
+        let shape = AutoShape::new(1, "Shape".to_string(), AutoShapeType::Rectangle);
+        assert!(shape.custom_geometry().is_none());
+        assert!(!shape.has_custom_geometry());
+    }
+
+    #[test]
+    fn test_autoshape_create_custom_geometry() {
+        let mut shape = AutoShape::new(1, "Shape".to_string(), AutoShapeType::Rectangle);
+        assert!(!shape.has_custom_geometry());
+        
+        let geom = shape.create_custom_geometry();
+        geom.add_simple_point(0.0, 0.0).unwrap();
+        
+        assert!(shape.has_custom_geometry());
+        assert_eq!(shape.custom_geometry().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn test_autoshape_set_custom_geometry() {
+        let mut shape = AutoShape::new(1, "Shape".to_string(), AutoShapeType::Rectangle);
+        let mut geom = CustomGeometry::new();
+        geom.add_simple_point(0.5, 0.5).unwrap();
+        geom.close_path();
+        
+        shape.set_custom_geometry(geom);
+        assert!(shape.has_custom_geometry());
+        assert_eq!(shape.custom_geometry().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn test_autoshape_custom_geometry_mutable() {
+        let mut shape = AutoShape::new(1, "Shape".to_string(), AutoShapeType::Rectangle);
+        let geom = shape.create_custom_geometry();
+        geom.add_simple_point(0.0, 0.0).unwrap();
+        geom.add_simple_point(1.0, 1.0).unwrap();
+        geom.close_path();
+        
+        assert_eq!(shape.custom_geometry().unwrap().len(), 3);
+    }
+
+    #[test]
+    fn test_autoshape_clear_custom_geometry() {
+        let mut shape = AutoShape::new(1, "Shape".to_string(), AutoShapeType::Rectangle);
+        let geom = shape.create_custom_geometry();
+        geom.add_simple_point(0.5, 0.5).unwrap();
+        
+        assert!(shape.has_custom_geometry());
+        shape.clear_custom_geometry();
+        assert!(!shape.has_custom_geometry());
+    }
+
+    #[test]
+    fn test_autoshape_custom_geometry_triangle() {
+        let mut shape = AutoShape::new(1, "Triangle".to_string(), AutoShapeType::Triangle);
+        let geom = shape.create_custom_geometry();
+        
+        geom.add_simple_point(0.0, 0.0).unwrap();
+        geom.add_simple_point(1.0, 0.0).unwrap();
+        geom.add_simple_point(0.5, 1.0).unwrap();
+        geom.close_path();
+        
+        assert!(geom.validate().is_ok());
+        assert_eq!(geom.len(), 4);
+    }
+
+    #[test]
+    fn test_autoshape_custom_geometry_with_curves() {
+        let mut shape = AutoShape::new(1, "Wavy".to_string(), AutoShapeType::Rectangle);
+        let geom = shape.create_custom_geometry();
+        
+        geom.add_simple_point(0.0, 0.0).unwrap();
+        geom.add_quadratic_point(0.5, 1.0, 0.25, 0.5).unwrap();
+        geom.add_simple_point(1.0, 0.0).unwrap();
+        geom.close_path();
+        
+        assert!(geom.validate().is_ok());
+        assert!(geom.points()[1].curve.is_some());
     }
 }
 

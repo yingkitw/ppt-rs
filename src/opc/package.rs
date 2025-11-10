@@ -6,12 +6,13 @@ use crate::opc::part::Part;
 use crate::opc::packuri::PackURI;
 use crate::opc::relationships::Relationships;
 use crate::opc::serialized::PackageReader;
+use linked_hash_map::LinkedHashMap;
 use std::collections::HashMap;
 use std::io::{Read, Seek, Write};
 
 /// OPC Package - represents a .pptx file
 pub struct Package {
-    parts: HashMap<PackURI, Box<dyn Part>>,
+    parts: LinkedHashMap<PackURI, Box<dyn Part>>,
     relationships: Relationships,
 }
 
@@ -19,7 +20,7 @@ impl Package {
     /// Create a new empty package
     pub fn new() -> Self {
         Self {
-            parts: HashMap::new(),
+            parts: LinkedHashMap::new(),
             relationships: Relationships::new(),
         }
     }
@@ -71,7 +72,7 @@ impl Package {
         }
         
         // 3. Load main presentation part
-        let mut parts: HashMap<PackURI, Box<dyn Part>> = HashMap::new();
+        let mut parts: LinkedHashMap<PackURI, Box<dyn Part>> = LinkedHashMap::new();
         
         // Find main document part from package relationships
         if let Some(rel) = pkg_rels.iter().find(|(_, r)| r.rel_type == RELATIONSHIP_TYPE::OFFICE_DOCUMENT) {

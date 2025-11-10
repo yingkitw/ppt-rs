@@ -5,6 +5,8 @@ use crate::parts::slide::SlidePart;
 use crate::shapes::Shape;
 use crate::slide::background::SlideBackground;
 use crate::slide::transition::SlideTransition;
+use crate::slide::placeholders::Placeholders;
+use crate::slide::notes::NotesSlide;
 
 /// Individual slide
 pub struct Slide {
@@ -12,6 +14,8 @@ pub struct Slide {
     name: String,
     background: SlideBackground,
     transition: SlideTransition,
+    placeholders: Placeholders,
+    notes_slide: NotesSlide,
 }
 
 impl Slide {
@@ -21,6 +25,8 @@ impl Slide {
             name: String::new(),
             background: SlideBackground::new(),
             transition: SlideTransition::new(),
+            placeholders: Placeholders::new(),
+            notes_slide: NotesSlide::new(),
         }
     }
 
@@ -30,6 +36,8 @@ impl Slide {
             name: String::new(),
             background: SlideBackground::new(),
             transition: SlideTransition::new(),
+            placeholders: Placeholders::new(),
+            notes_slide: NotesSlide::new(),
         }
     }
 
@@ -71,6 +79,26 @@ impl Slide {
     /// Get mutable slide transition
     pub fn transition_mut(&mut self) -> &mut SlideTransition {
         &mut self.transition
+    }
+
+    /// Get placeholders on this slide
+    pub fn placeholders(&self) -> &Placeholders {
+        &self.placeholders
+    }
+
+    /// Get mutable placeholders on this slide
+    pub fn placeholders_mut(&mut self) -> &mut Placeholders {
+        &mut self.placeholders
+    }
+
+    /// Get notes slide
+    pub fn notes_slide(&self) -> &NotesSlide {
+        &self.notes_slide
+    }
+
+    /// Get mutable notes slide
+    pub fn notes_slide_mut(&mut self) -> &mut NotesSlide {
+        &mut self.notes_slide
     }
 
     /// Get shapes on this slide

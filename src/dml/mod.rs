@@ -10,7 +10,7 @@ pub mod theme;
 
 pub use color::ColorFormat;
 pub use fill::FillFormat;
-pub use line::LineFormat;
+pub use line::{LineFormat, DashStyle, ArrowType};
 pub use gradient::{Gradient, GradientStop, GradientType};
 pub use pattern::{Pattern, PatternType};
 pub use picture_fill::PictureFill;

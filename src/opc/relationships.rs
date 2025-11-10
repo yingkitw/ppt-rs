@@ -4,6 +4,8 @@ use crate::error::{PptError, Result};
 use crate::opc::part::Part;
 use crate::opc::packuri::PackURI;
 use std::collections::HashMap;
+use indexmap::IndexMap;
+use linked_hash_map::LinkedHashMap;
 
 /// Relationship between parts
 pub struct Relationship {
@@ -28,7 +30,7 @@ impl Clone for Relationship {
 
 /// Collection of relationships
 pub struct Relationships {
-    relationships: HashMap<String, Relationship>,
+    relationships: IndexMap<String, Relationship>,
     #[allow(dead_code)]
     base_uri: String,
 }
@@ -45,14 +47,14 @@ impl Clone for Relationships {
 impl Relationships {
     pub fn new() -> Self {
         Self {
-            relationships: HashMap::new(),
+            relationships: IndexMap::new(),
             base_uri: "/".to_string(),
         }
     }
 
     pub fn with_base_uri(base_uri: String) -> Self {
         Self {
-            relationships: HashMap::new(),
+            relationships: IndexMap::new(),
             base_uri,
         }
     }
@@ -127,7 +129,7 @@ impl Relationships {
         self.relationships.remove(r_id);
     }
 
-    pub fn part_with_reltype<'a>(&self, rel_type: &str, parts: &'a HashMap<PackURI, Box<dyn Part>>) -> Result<&'a dyn Part> {
+    pub fn part_with_reltype<'a>(&self, rel_type: &str, parts: &'a LinkedHashMap<PackURI, Box<dyn Part>>) -> Result<&'a dyn Part> {
         let mut matches: Vec<&Relationship> = self
             .relationships
             .values()

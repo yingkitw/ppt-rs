@@ -11,7 +11,7 @@ pub fn save<W: Write + Seek>(
     package: &mut crate::opc::package::Package,
     writer: W,
 ) -> Result<()> {
-    use crate::opc::constants::RELATIONSHIP_TYPE;
+    use crate::opc::constants::{CONTENT_TYPE, RELATIONSHIP_TYPE};
     use crate::opc::serialized::PackageWriter;
     use crate::opc::relationships::Relationships;
     
@@ -83,48 +83,60 @@ pub fn save<W: Write + Seek>(
     // Collect all parts: presentation part, core properties, slides, and their related parts
     let mut parts_map: std::collections::HashMap<PackURI, OwnedPart> = std::collections::HashMap::new();
     
-    // Clear existing relationships and add core relationships to presentation part (rId1-rId5)
-    // Note: Skipping printerSettings (rId2) as it's optional and requires binary file
+    // Clear existing relationships and add relationships in python-pptx order
+    // Order: rId1=slideMaster, rId2=printerSettings, rId3-6=properties, rId7+=slides
     *part.relationships_mut() = Relationships::new();
+    
+    // rId1: Slide Master (always first)
     part.relationships_mut().add(
         "rId1".to_string(),
         RELATIONSHIP_TYPE::SLIDE_MASTER.to_string(),
         "slideMasters/slideMaster1.xml".to_string(),
         false,
     );
+    
+    // rId2: Printer Settings (python-pptx always includes this)
     part.relationships_mut().add(
         "rId2".to_string(),
+        RELATIONSHIP_TYPE::PRINTER_SETTINGS.to_string(),
+        "printerSettings/printerSettings1.bin".to_string(),
+        false,
+    );
+    
+    // rId3-6: Core properties (python-pptx order)
+    part.relationships_mut().add(
+        "rId3".to_string(),
         RELATIONSHIP_TYPE::PRES_PROPS.to_string(),
         "presProps.xml".to_string(),
         false,
     );
     part.relationships_mut().add(
-        "rId3".to_string(),
+        "rId4".to_string(),
         RELATIONSHIP_TYPE::VIEW_PROPS.to_string(),
         "viewProps.xml".to_string(),
         false,
     );
     part.relationships_mut().add(
-        "rId4".to_string(),
+        "rId5".to_string(),
         RELATIONSHIP_TYPE::THEME.to_string(),
         "theme/theme1.xml".to_string(),
         false,
     );
     part.relationships_mut().add(
-        "rId5".to_string(),
+        "rId6".to_string(),
         RELATIONSHIP_TYPE::TABLE_STYLES.to_string(),
         "tableStyles.xml".to_string(),
         false,
     );
     
-    // Add slide relationships to presentation part based on SlideIdManager (rId6 onwards)
-    // Clone slide IDs to avoid borrowing issues
-    let slide_ids: Vec<_> = part.slide_id_manager().all().iter().map(|sid| sid.rel_id().to_string()).collect();
-    for (index, r_id) in slide_ids.iter().enumerate() {
+    // rId7+: Slides (python-pptx puts slides AFTER properties)
+    let slide_count = part.slide_id_manager().all().len();
+    for i in 0..slide_count {
+        let r_id = format!("rId{}", i + 7); // rId7, rId8, rId9, ...
         part.relationships_mut().add(
-            r_id.clone(),
+            r_id,
             RELATIONSHIP_TYPE::SLIDE.to_string(),
-            format!("slides/slide{}.xml", index + 1),
+            format!("slides/slide{}.xml", i + 1),
             false,
         );
     }
@@ -153,6 +165,19 @@ pub fn save<W: Write + Seek>(
             relationships: Relationships::new(),
         });
     }
+    
+    // Add printer settings (printerSettings/printerSettings1.bin)
+    // Minimal binary file to match python-pptx structure
+    let printer_settings_bin: Vec<u8> = vec![
+        0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    ];
+    let printer_settings_uri = PackURI::new("/ppt/printerSettings/printerSettings1.bin")?;
+    parts_map.insert(printer_settings_uri.clone(), OwnedPart {
+        content_type: CONTENT_TYPE::PML_PRINTER_SETTINGS.to_string(),
+        uri: printer_settings_uri,
+        blob: printer_settings_bin,
+        relationships: Relationships::new(),
+    });
     
     // Add presentation properties (presProps.xml)
     let pres_props_xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -380,9 +405,26 @@ pub fn save<W: Write + Seek>(
             let slide_index = i + 1;
             let slide_uri = PackURI::new(&format!("/ppt/slides/slide{}.xml", slide_index))?;
             
-            // Generate minimal slide XML
-            let slide_xml = r#"<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
-<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>"#;
+            // Try to get slide from package first (which has placeholders), otherwise use default
+            let slide_xml = if let Some(slide_part) = package.get_part(&slide_uri) {
+                // Use the slide from package (which has placeholders from add_slide)
+                use crate::opc::part::Part;
+                if let Ok(blob) = Part::blob(slide_part) {
+                    if let Ok(xml_str) = String::from_utf8(blob) {
+                        // Compact the XML (remove newlines and extra spaces)
+                        xml_str.lines().map(|l| l.trim()).collect::<Vec<_>>().join("")
+                    } else {
+                        // Fallback to default
+                        r#"<?xml version='1.0' encoding='UTF-8' standalone='yes'?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>"#.to_string()
+                    }
+                } else {
+                    // Fallback to default
+                    r#"<?xml version='1.0' encoding='UTF-8' standalone='yes'?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>"#.to_string()
+                }
+            } else {
+                // Fallback to default
+                r#"<?xml version='1.0' encoding='UTF-8' standalone='yes'?><p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>"#.to_string()
+            };
             
             parts_map.insert(slide_uri.clone(), OwnedPart {
                 content_type: "application/vnd.openxmlformats-officedocument.presentationml.slide+xml".to_string(),

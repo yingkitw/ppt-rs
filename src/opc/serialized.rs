@@ -75,7 +75,7 @@ impl PackageWriter {
         let options = FileOptions::default()
             .compression_method(zip::CompressionMethod::Deflated);
 
-        // Generate Content_Types.xml
+        // STEP 1: Generate Content_Types.xml
         let mut content_types = Vec::new();
         content_types.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">"#.to_string());
         
@@ -92,7 +92,12 @@ impl PackageWriter {
             let content_type = part.content_type();
             let partname = part.uri().as_str(); // PartName must include leading slash per OPC spec
             
-            // Always use Override for specific parts (required by OPC spec)
+            // Skip relationship files - they use the Default entry for .rels extension
+            if ext == "rels" {
+                continue;
+            }
+            
+            // Use Override for specific parts (required by OPC spec)
             // Override takes precedence over Default
             content_types.push(format!(
                 r#"<Override PartName="{}" ContentType="{}"/>"#,
@@ -111,12 +116,12 @@ impl PackageWriter {
         content_types.push("</Types>".to_string());
         let content_types_xml = content_types.join("");
         
-        // CONTENT_TYPES_URI is "/[Content_Types].xml", need to remove leading slash
+        // STEP 2: Write [Content_Types].xml FIRST (must be first in ZIP)
         let content_types_filename = CONTENT_TYPES_URI.trim_start_matches('/');
         zip.start_file(content_types_filename, options)?;
         zip.write_all(content_types_xml.as_bytes())?;
 
-        // Generate package relationships XML
+        // STEP 3: Generate and write package relationships XML SECOND
         let mut rels_xml = Vec::new();
         rels_xml.push(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"#.to_string());
         
@@ -137,7 +142,7 @@ impl PackageWriter {
         zip.start_file(pkg_rels_uri.membername(), options)?;
         zip.write_all(pkg_rels_xml.as_bytes())?;
 
-        // Write parts
+        // STEP 4: Write all parts with proper compression
         for part in parts {
             let uri = part.uri();
             zip.start_file(uri.membername(), options)?;
@@ -169,6 +174,7 @@ impl PackageWriter {
             }
         }
 
+        // STEP 5: Finalize ZIP archive
         zip.finish()?;
         Ok(())
     }

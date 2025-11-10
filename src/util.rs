@@ -6,6 +6,7 @@ pub mod performance;
 pub mod roundtrip;
 pub mod shape_content;
 pub mod validation;
+pub mod media_formats;
 
 pub use cache::LazyCache;
 pub use error_context::Validator;
@@ -13,6 +14,7 @@ pub use performance::{PerformanceMetrics, Timer, BatchProcessor};
 pub use roundtrip::RoundTrip;
 pub use shape_content::{ShapeContent, ShapeContentType, PlaceholderType, ShapeContentLoader};
 pub use validation::validate_presentation;
+pub use media_formats::{MediaFormat, SVGConfig, GIFConfig, YouTubeConfig};
 
 use std::cell::Cell;
 

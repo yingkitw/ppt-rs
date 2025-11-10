@@ -10,6 +10,9 @@ pub mod relationships;
 pub mod serialized;
 pub mod spec;
 pub mod content_types;
+pub mod namespace;
+pub mod properties_enhanced;
+pub mod document;
 
 pub use package::Package;
 pub use part::Part;
@@ -17,4 +20,7 @@ pub use constants::*;
 pub use packuri::PackURI;
 pub use serialized::{PackageReader, PackageWriter};
 pub use content_types::ContentTypesManager;
+pub use namespace::Namespaces;
+pub use properties_enhanced::{CoreProperties, AppProperties, CustomProperties};
+pub use document::{OpenXmlDocument, DocumentFormat};
 

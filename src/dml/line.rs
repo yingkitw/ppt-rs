@@ -7,6 +7,8 @@ pub struct LineFormat {
     width: u32, // in EMU
     dash_style: Option<DashStyle>,
     fill: FillFormat,
+    begin_arrow_type: Option<ArrowType>,
+    end_arrow_type: Option<ArrowType>,
 }
 
 /// Line dash styles
@@ -27,6 +29,19 @@ pub enum DashStyle {
     SystemDashDot,
 }
 
+/// Arrow types for line ends
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ArrowType {
+    None,
+    Triangle,
+    Diamond,
+    Oval,
+    Arrow,
+    Stealth,
+    Chevron,
+    DoubleChevron,
+}
+
 impl LineFormat {
     /// Create a new line format
     pub fn new() -> Self {
@@ -34,6 +49,8 @@ impl LineFormat {
             width: 12700, // Default 1 point
             dash_style: Some(DashStyle::Solid),
             fill: FillFormat::new(),
+            begin_arrow_type: None,
+            end_arrow_type: None,
         }
     }
 
@@ -76,6 +93,26 @@ impl LineFormat {
     pub fn color_mut(&mut self) -> Option<&mut crate::dml::color::ColorFormat> {
         self.fill.fore_color_mut()
     }
+
+    /// Get begin arrow type
+    pub fn begin_arrow_type(&self) -> Option<ArrowType> {
+        self.begin_arrow_type
+    }
+
+    /// Set begin arrow type
+    pub fn set_begin_arrow_type(&mut self, arrow_type: Option<ArrowType>) {
+        self.begin_arrow_type = arrow_type;
+    }
+
+    /// Get end arrow type
+    pub fn end_arrow_type(&self) -> Option<ArrowType> {
+        self.end_arrow_type
+    }
+
+    /// Set end arrow type
+    pub fn set_end_arrow_type(&mut self, arrow_type: Option<ArrowType>) {
+        self.end_arrow_type = arrow_type;
+    }
 }
 
 #[cfg(test)]
@@ -113,7 +150,67 @@ mod tests {
         assert_eq!(lf.dash_style(), Some(DashStyle::LongDash));
         
         lf.set_dash_style(None);
-        assert_eq!(lf.dash_style(), None);
+    }
+
+    #[test]
+    fn test_line_format_begin_arrow() {
+        let mut lf = LineFormat::new();
+        assert_eq!(lf.begin_arrow_type(), None);
+        
+        lf.set_begin_arrow_type(Some(ArrowType::Triangle));
+        assert_eq!(lf.begin_arrow_type(), Some(ArrowType::Triangle));
+        
+        lf.set_begin_arrow_type(Some(ArrowType::Diamond));
+        assert_eq!(lf.begin_arrow_type(), Some(ArrowType::Diamond));
+        
+        lf.set_begin_arrow_type(None);
+        assert_eq!(lf.begin_arrow_type(), None);
+    }
+
+    #[test]
+    fn test_line_format_end_arrow() {
+        let mut lf = LineFormat::new();
+        assert_eq!(lf.end_arrow_type(), None);
+        
+        lf.set_end_arrow_type(Some(ArrowType::Oval));
+        assert_eq!(lf.end_arrow_type(), Some(ArrowType::Oval));
+        
+        lf.set_end_arrow_type(Some(ArrowType::Stealth));
+        assert_eq!(lf.end_arrow_type(), Some(ArrowType::Stealth));
+        
+        lf.set_end_arrow_type(None);
+        assert_eq!(lf.end_arrow_type(), None);
+    }
+
+    #[test]
+    fn test_line_format_both_arrows() {
+        let mut lf = LineFormat::new();
+        
+        lf.set_begin_arrow_type(Some(ArrowType::Triangle));
+        lf.set_end_arrow_type(Some(ArrowType::Arrow));
+        
+        assert_eq!(lf.begin_arrow_type(), Some(ArrowType::Triangle));
+        assert_eq!(lf.end_arrow_type(), Some(ArrowType::Arrow));
+    }
+
+    #[test]
+    fn test_arrow_type_variants() {
+        let arrow_types = vec![
+            ArrowType::None,
+            ArrowType::Triangle,
+            ArrowType::Diamond,
+            ArrowType::Oval,
+            ArrowType::Arrow,
+            ArrowType::Stealth,
+            ArrowType::Chevron,
+            ArrowType::DoubleChevron,
+        ];
+        
+        for arrow_type in arrow_types {
+            let mut lf = LineFormat::new();
+            lf.set_end_arrow_type(Some(arrow_type));
+            assert_eq!(lf.end_arrow_type(), Some(arrow_type));
+        }
     }
 
     #[test]

@@ -46,6 +46,10 @@ pulldown-cmark = "0.9"
 # Utilities
 lazy_static = "1.5"
 regex = "1.10"
+indexmap = "2.0"
+linked-hash-map = { version = "0.5", features = ["serde_impl"] }
+chrono = { version = "0.4", features = ["serde"] }
+mime = "0.3"
 
 [dev-dependencies]
 # Testing
