@@ -33,6 +33,7 @@ pub struct PresentationBuilder {
     comments: Option<String>,
     slide_width: Option<u32>,
     slide_height: Option<u32>,
+    custom_properties: Vec<(String, String)>,
 }
 
 impl PresentationBuilder {
@@ -47,6 +48,7 @@ impl PresentationBuilder {
             comments: None,
             slide_width: None,
             slide_height: None,
+            custom_properties: Vec::new(),
         }
     }
 
@@ -104,6 +106,12 @@ impl PresentationBuilder {
         self
     }
 
+    /// Add a custom property (user-defined metadata)
+    pub fn custom_property(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.custom_properties.push((key.into(), value.into()));
+        self
+    }
+
     /// Build the presentation
     pub fn build(mut self) -> Result<Presentation> {
         let mut prs = Presentation::new()?;
@@ -114,6 +122,11 @@ impl PresentationBuilder {
         }
         if let Some(height) = self.slide_height {
             prs.set_slide_height(height)?;
+        }
+        
+        // Set custom properties if provided
+        for (key, value) in self.custom_properties {
+            prs.custom_props_mut().set(key, value);
         }
         
         // Note: Properties are set via CoreProperties in the presentation

@@ -11,6 +11,7 @@ pub mod hyperlink;
 pub mod xml_traits;
 pub mod custom_geometry;
 pub mod shadow;
+pub mod shapes_3d;
 
 pub use base::{BaseShape, Shape};
 pub use autoshape::{AutoShape, AutoShapeType};
@@ -23,6 +24,9 @@ pub use hyperlink::{Hyperlink, hyperlink_to_xml, parse_hyperlink_from_xml};
 pub use xml_traits::{ShapeXmlSerializer, ShapeXmlExt};
 pub use custom_geometry::{CustomGeometry, GeometryPoint, CurveType, CurveInfo};
 pub use shadow::{Shadow, ShadowType, ShadowManager};
+pub use shapes_3d::{
+    Shape3D, Shape3DType, Material3D, Lighting3D, Rotation3D, Camera3D, Light3D,
+};
 
 #[cfg(test)]
 mod tests {

@@ -8,6 +8,8 @@ pub mod shape_content;
 pub mod validation;
 pub mod media_formats;
 pub mod thumbnail;
+pub mod ole_embedding;
+pub mod media_embedding;
 
 pub use cache::LazyCache;
 pub use error_context::Validator;
@@ -17,6 +19,8 @@ pub use shape_content::{ShapeContent, ShapeContentType, PlaceholderType, ShapeCo
 pub use validation::validate_presentation;
 pub use media_formats::{MediaFormat, SVGConfig, GIFConfig, YouTubeConfig};
 pub use thumbnail::generate_thumbnail_jpeg;
+pub use ole_embedding::{OLEObjectType, OLEEmbeddedObject, OLEObjectManager};
+pub use media_embedding::{MediaType, MediaPlayback, EmbeddedMedia, MediaManager};
 
 use std::cell::Cell;
 

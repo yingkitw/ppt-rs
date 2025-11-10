@@ -14,6 +14,8 @@ mod slide_id;
 mod animation;
 mod placeholders;
 mod notes;
+mod numbering;
+mod advanced_animations;
 pub mod options;
 
 pub use slide::Slide;
@@ -30,6 +32,12 @@ pub use slide_id::{SlideId, SlideIdManager};
 pub use animation::{Animation, AnimationType, AnimationManager, EntranceEffect, ExitEffect, EmphasisEffect};
 pub use placeholders::{Placeholder, Placeholders, PlaceholderType};
 pub use notes::{NotesSlide, NotesTextFrame};
+pub use numbering::{SlideNumbering, NumberingFormat};
+pub use advanced_animations::{
+    AdvancedAnimation, AnimationTiming, AnimationSpeed, AnimationType as AdvAnimationType,
+    EntranceEffect as AdvEntranceEffect, EmphasisEffect as AdvEmphasisEffect,
+    ExitEffect as AdvExitEffect, RepeatBehavior, AnimationCollection,
+};
 pub use options::{TextOptions, ShapeOptions, ImageOptions};
 
 #[cfg(test)]
