@@ -30,6 +30,7 @@
 //! See [MIGRATION_STATUS.md](../MIGRATION_STATUS.md) for detailed migration progress.
 
 pub mod api;
+pub mod builder;
 pub mod chart;
 pub mod dml;
 pub mod enums;
@@ -45,6 +46,7 @@ pub mod text;
 pub mod util;
 
 pub use api::{new_presentation, open_presentation, Presentation};
+pub use builder::PresentationBuilder;
 pub use error::{PptError, Result};
 pub use presentation::Presentation as PresentationStruct;
 

@@ -1,22 +1,24 @@
-//! Example 3: Validate file integrity
+//! Example 3: Validate file integrity (Fluent API)
 //! 
 //! This example demonstrates how to:
-//! - Create a presentation
-//! - Make multiple edits
-//! - Validate file integrity after each edit
+//! - Create a presentation using fluent builder
+//! - Validate file integrity
 //! - Verify ZIP structure
 //! - Confirm roundtrip save/open
 
-use ppt_rs::new_presentation;
+use ppt_rs::PresentationBuilder;
 use ppt_rs::util::validation::{validate_presentation, validate_pptx_file, validate_roundtrip};
 use std::io::Cursor;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Validating file integrity...");
+    println!("Validating file integrity with Fluent API...\n");
     
-    // Create a new presentation
-    let mut prs = new_presentation()?;
-    println!("✓ Created new presentation");
+    // Create a new presentation using fluent builder
+    let mut prs = PresentationBuilder::new()
+        .title("Validation Test")
+        .author("Fluent API")
+        .build()?;
+    println!("✓ Created presentation with PresentationBuilder");
     
     // Test 1: Validate new presentation
     println!("\nTest 1: Validate new presentation");

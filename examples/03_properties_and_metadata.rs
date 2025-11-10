@@ -8,14 +8,13 @@
 //! - Access properties through the generic OpenXmlDocument trait
 //! - Leverage the new OOXML-RS adoption features
 
-use ppt_rs::new_presentation;
+use ppt_rs::PresentationBuilder;
 use ppt_rs::opc::{OpenXmlDocument, DocumentFormat, Namespaces};
 use ppt_rs::oxml::OpenXmlElementType;
 use chrono::Utc;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("=== OOXML-RS Adoption Example ===");
-    println!("Creating a presentation with properties and metadata...\n");
+    println!("=== Presentation with Properties and Metadata (Fluent API) ===\n");
     
     // Demonstrate namespace management
     println!("--- Namespace Management ---");
@@ -25,10 +24,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n--- XML Element Traits ---");
     demonstrate_xml_traits();
     
-    // Create a new presentation
+    // Create a new presentation using fluent builder
     println!("\n--- Creating Presentation ---");
-    let mut prs = new_presentation()?;
-    println!("✓ Created new presentation");
+    let mut prs = PresentationBuilder::new()
+        .title("Q1 2025 Business Proposal")
+        .author("John Doe")
+        .build()?;
+    println!("✓ Created presentation with PresentationBuilder");
     
     // Set core properties with builder pattern
     println!("\n--- Setting Core Properties ---");

@@ -67,6 +67,36 @@ ppt-rs = "0.1.0"
 
 ## Quick Start
 
+### Using the Fluent API (Recommended)
+
+```rust
+use ppt_rs::PresentationBuilder;
+use ppt_rs::slide::options::TextOptions;
+
+// 1. Create a presentation
+let mut prs = PresentationBuilder::new()
+    .title("My Presentation")
+    .author("John Doe")
+    .build()?;
+
+// 2. Add a slide
+let mut slides = prs.slides();
+let mut slide = slides.add_slide(&layout, &mut prs.package_mut())?;
+
+// 3. Add content with intuitive options
+let opts = TextOptions::new()
+    .position(1.0, 1.0)
+    .font_size(24)
+    .color("FF0000");
+
+// 4. Save
+prs.save_to_file("output.pptx")?;
+```
+
+See [FLUENT_API.md](FLUENT_API.md) for complete fluent API documentation.
+
+### Traditional API
+
 ```rust
 use ppt_rs::new_presentation;
 

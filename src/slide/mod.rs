@@ -14,6 +14,7 @@ mod slide_id;
 mod animation;
 mod placeholders;
 mod notes;
+pub mod options;
 
 pub use slide::Slide;
 pub use slides::Slides;
@@ -29,6 +30,7 @@ pub use slide_id::{SlideId, SlideIdManager};
 pub use animation::{Animation, AnimationType, AnimationManager, EntranceEffect, ExitEffect, EmphasisEffect};
 pub use placeholders::{Placeholder, Placeholders, PlaceholderType};
 pub use notes::{NotesSlide, NotesTextFrame};
+pub use options::{TextOptions, ShapeOptions, ImageOptions};
 
 #[cfg(test)]
 mod tests {

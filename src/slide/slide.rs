@@ -325,5 +325,27 @@ impl Slide {
             r_id,
         ))
     }
+
+    // ============================================================================
+    // FLUENT API METHODS (Phase 2)
+    // ============================================================================
+    
+    /// Set the slide name with fluent API
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.name = name.into();
+        self
+    }
+    
+    /// Set the slide background with fluent API
+    pub fn with_background(mut self, background: SlideBackground) -> Self {
+        self.background = background;
+        self
+    }
+    
+    /// Set the slide transition with fluent API
+    pub fn with_transition(mut self, transition: SlideTransition) -> Self {
+        self.transition = transition;
+        self
+    }
 }
 

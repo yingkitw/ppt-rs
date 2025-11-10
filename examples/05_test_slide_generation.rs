@@ -1,36 +1,31 @@
-//! Test: Create presentation with actual slides
+//! Example 5: Create presentation with multiple slides (Fluent API)
 //! 
-//! This example creates a presentation with 3 slides to verify
-//! that our slide generation matches python-pptx output.
+//! This example creates a presentation with multiple slides using
+//! the fluent API to demonstrate slide generation.
 
-use ppt_rs::new_presentation;
-use ppt_rs::parts::slide::SlidePart;
-use ppt_rs::opc::packuri::PackURI;
-use ppt_rs::opc::part::Part;
+use ppt_rs::PresentationBuilder;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Creating presentation with 3 slides...");
+    println!("Creating presentation with multiple slides using Fluent API...\n");
     
-    let mut prs = new_presentation()?;
+    // Create presentation with fluent builder
+    let mut prs = PresentationBuilder::new()
+        .title("Multi-Slide Test")
+        .author("Fluent API Example")
+        .build()?;
+    println!("✓ Created presentation with PresentationBuilder");
     
-    // Add 3 slides
-    for i in 1..=3 {
-        // Create slide part
-        let slide_uri = PackURI::new(&format!("/ppt/slides/slide{}.xml", i))?;
-        let slide_part = SlidePart::new(slide_uri, prs.part() as &dyn Part)?;
-        
-        // Add slide to presentation
-        unsafe {
-            let prs_ptr: *mut _ = &mut prs;
-            let slides = &mut (*prs_ptr).slides();
-            let package = &mut (*prs_ptr).package_mut();
-            slides.add_slide(&slide_part, package)?;
-        }
-        
-        println!("✓ Added slide {}", i);
+    // Add 5 slides
+    println!("\n--- Adding Slides ---");
+    for i in 1..=5 {
+        let slide_idx = prs.add_slide()?;
+        println!("✓ Added slide {} (index: {})", i, slide_idx);
     }
     
-    println!("✓ Total slides: {}", prs.slides().len());
+    // Get final slide count
+    let final_count = prs.part().slide_id_manager().all().len();
+    println!("\n--- Summary ---");
+    println!("✓ Total slides created: {}", final_count);
     
     // Save
     let output_path = "examples/output/05_test_slides.pptx";
@@ -43,6 +38,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let file_size = std::fs::metadata(output_path)?.len();
         println!("✓ File size: {} bytes", file_size);
     }
+    
+    println!("\n✅ Multi-slide presentation created successfully!");
+    println!("\nUsing Fluent API:");
+    println!("  • PresentationBuilder for configuration");
+    println!("  • Simple add_slide() method");
+    println!("  • Type-safe and ergonomic");
     
     Ok(())
 }

@@ -291,6 +291,22 @@ impl Presentation {
         
         Ok(slide_count)
     }
+
+    // ============================================================================
+    // FLUENT API METHODS (Phase 2)
+    // ============================================================================
+    
+    /// Set the slide width in EMU with fluent API
+    pub fn with_slide_width(mut self, width: u32) -> Result<Self> {
+        self.set_slide_width(width)?;
+        Ok(self)
+    }
+    
+    /// Set the slide height in EMU with fluent API
+    pub fn with_slide_height(mut self, height: u32) -> Result<Self> {
+        self.set_slide_height(height)?;
+        Ok(self)
+    }
 }
 
 /// Implement OpenXmlDocument trait for Presentation
