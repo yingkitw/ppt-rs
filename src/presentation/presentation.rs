@@ -78,7 +78,7 @@ impl Presentation {
 
     /// Save the presentation to a writer
     pub fn save<W: Write + Seek>(&mut self, writer: W) -> Result<()> {
-        save::save(&mut self.part, &mut self.package, writer)
+        save::save(&mut self.part, &mut self.package, writer, &self.core_properties)
     }
 
     /// Save the presentation to a file path

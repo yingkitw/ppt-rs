@@ -10,6 +10,7 @@ pub fn save<W: Write + Seek>(
     part: &mut PresentationPart,
     package: &mut crate::opc::package::Package,
     writer: W,
+    core_properties: &crate::opc::properties_enhanced::CoreProperties,
 ) -> Result<()> {
     use crate::opc::constants::{CONTENT_TYPE, RELATIONSHIP_TYPE};
     use crate::opc::serialized::PackageWriter;
@@ -152,19 +153,15 @@ pub fn save<W: Write + Seek>(
         relationships: part.relationships().clone(),
     });
     
-    // Add core properties part if it exists
-    if let Ok(core_props) = part.core_properties() {
-        use crate::opc::part::Part;
-        let core_blob = Part::blob(&core_props)?;
-        let core_uri = Part::uri(&core_props).clone();
-        let core_content_type = Part::content_type(&core_props);
-        parts_map.insert(core_uri.clone(), OwnedPart {
-            content_type: core_content_type.to_string(),
-            uri: core_uri,
-            blob: core_blob,
-            relationships: Relationships::new(),
-        });
-    }
+    // Add core properties part with metadata from CoreProperties
+    let core_props_xml = generate_core_properties_xml(core_properties);
+    let core_props_uri = PackURI::new("/docProps/core.xml")?;
+    parts_map.insert(core_props_uri.clone(), OwnedPart {
+        content_type: CONTENT_TYPE::OPC_CORE_PROPERTIES.to_string(),
+        uri: core_props_uri,
+        blob: core_props_xml.as_bytes().to_vec(),
+        relationships: Relationships::new(),
+    });
     
     // Add printer settings (printerSettings/printerSettings1.bin)
     // Minimal binary file to match python-pptx structure
@@ -556,4 +553,46 @@ pub fn save<W: Write + Seek>(
     
     // Write the package
     PackageWriter::write(writer, &pkg_rels, &parts)
+}
+
+/// Generate core properties XML from CoreProperties struct
+fn generate_core_properties_xml(props: &crate::opc::properties_enhanced::CoreProperties) -> String {
+    let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+                   xmlns:dc="http://purl.org/dc/elements/1.1/"
+                   xmlns:dcterms="http://purl.org/dc/terms/"
+                   xmlns:dcmitype="http://purl.org/dc/dcmitype/"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">"#.to_string();
+    
+    if let Some(ref title) = props.title {
+        xml.push_str(&format!("\n  <dc:title>{}</dc:title>", escape_xml(title)));
+    }
+    if let Some(ref subject) = props.subject {
+        xml.push_str(&format!("\n  <dc:subject>{}</dc:subject>", escape_xml(subject)));
+    }
+    if let Some(ref creator) = props.creator {
+        xml.push_str(&format!("\n  <dc:creator>{}</dc:creator>", escape_xml(creator)));
+    }
+    if let Some(ref keywords) = props.keywords {
+        xml.push_str(&format!("\n  <cp:keywords>{}</cp:keywords>", escape_xml(keywords)));
+    }
+    if let Some(ref description) = props.description {
+        xml.push_str(&format!("\n  <dc:description>{}</dc:description>", escape_xml(description)));
+    }
+    if let Some(ref last_modified_by) = props.last_modified_by {
+        xml.push_str(&format!("\n  <cp:lastModifiedBy>{}</cp:lastModifiedBy>", escape_xml(last_modified_by)));
+    }
+    
+    xml.push_str("\n  <cp:revision>1</cp:revision>");
+    xml.push_str("\n</cp:coreProperties>");
+    xml
+}
+
+/// Escape XML special characters
+fn escape_xml(s: &str) -> String {
+    s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
+        .replace("'", "&apos;")
 }

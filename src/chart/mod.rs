@@ -129,17 +129,18 @@ mod tests {
     #[test]
     fn test_chart_data_table_options() {
         use crate::enums::chart::ChartType;
-        let mut chart = Chart::new(ChartType::ColumnClustered);
-        let mut table = DataTable::new();
-        table.set_show_legend_keys(false);
-        table.set_show_h_border(false);
+        let chart = Chart::new(ChartType::ColumnClustered);
+        let table = DataTable::new()
+            .show_legend_keys(false)
+            .show_h_border(false);
         
+        let mut chart = chart;
         chart.set_data_table(table);
         
         if let Some(dt) = chart.data_table() {
-            assert!(!dt.show_legend_keys());
-            assert!(!dt.show_h_border());
-            assert!(dt.show_v_border());
+            assert!(!dt.has_legend_keys());
+            assert!(!dt.has_h_border());
+            assert!(dt.has_v_border());
         }
     }
 }

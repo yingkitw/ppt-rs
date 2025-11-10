@@ -116,6 +116,26 @@ impl PresentationBuilder {
     pub fn build(self) -> Result<Presentation> {
         let mut prs = Presentation::new()?;
         
+        // Set metadata properties
+        if let Some(title) = self.title {
+            prs.core_props_mut().title = Some(title);
+        }
+        if let Some(author) = self.author {
+            prs.core_props_mut().creator = Some(author);
+        }
+        if let Some(subject) = self.subject {
+            prs.core_props_mut().subject = Some(subject);
+        }
+        if let Some(keywords) = self.keywords {
+            prs.core_props_mut().keywords = Some(keywords);
+        }
+        if let Some(comments) = self.comments {
+            prs.core_props_mut().description = Some(comments);
+        }
+        if let Some(company) = self.company {
+            prs.core_props_mut().last_modified_by = Some(company);
+        }
+        
         // Set custom dimensions if provided
         if let Some(width) = self.slide_width {
             prs.set_slide_width(width)?;
@@ -128,10 +148,6 @@ impl PresentationBuilder {
         for (key, value) in self.custom_properties {
             prs.custom_props_mut().set(key, value);
         }
-        
-        // Note: Properties are set via CoreProperties in the presentation
-        // This is a simplified builder that creates a valid presentation
-        // Additional properties can be set after building if needed
         
         Ok(prs)
     }
