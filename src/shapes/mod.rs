@@ -12,6 +12,7 @@ pub mod xml_traits;
 pub mod custom_geometry;
 pub mod shadow;
 pub mod shapes_3d;
+pub mod shape_effects;
 
 pub use base::{BaseShape, Shape};
 pub use autoshape::{AutoShape, AutoShapeType};
@@ -27,6 +28,7 @@ pub use shadow::{Shadow, ShadowType, ShadowManager};
 pub use shapes_3d::{
     Shape3D, Shape3DType, Material3D, Lighting3D, Rotation3D, Camera3D, Light3D,
 };
+pub use shape_effects::{ShapeEffects, GlowEffect, ReflectionEffect, BevelEffect, BevelType};
 
 #[cfg(test)]
 mod tests {

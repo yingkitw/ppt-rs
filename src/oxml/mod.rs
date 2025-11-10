@@ -7,6 +7,7 @@ pub mod writer;
 pub mod ns;
 pub mod traits;
 pub mod builder;
+pub mod streaming;
 
 pub use parser::parse_xml;
 pub use writer::serialize_xml;
@@ -16,4 +17,5 @@ pub use traits::{
     OpenXmlRootElement, OpenXmlSerialize, OpenXmlDeserialize,
 };
 pub use builder::{XmlBuilder, generate_slide_xml, generate_presentation_xml};
+pub use streaming::{StreamingXmlReader, StreamingXmlWriter, XmlEvent};
 

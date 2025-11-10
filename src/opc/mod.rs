@@ -13,6 +13,7 @@ pub mod content_types;
 pub mod namespace;
 pub mod properties_enhanced;
 pub mod document;
+pub mod part_container;
 
 pub use package::Package;
 pub use part::Part;
@@ -23,4 +24,5 @@ pub use content_types::ContentTypesManager;
 pub use namespace::Namespaces;
 pub use properties_enhanced::{CoreProperties, AppProperties, CustomProperties};
 pub use document::{OpenXmlDocument, DocumentFormat};
+pub use part_container::PartContainer;
 

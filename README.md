@@ -8,6 +8,12 @@ A Rust library for creating, reading, and updating PowerPoint (.pptx) files.
 
 This is a Rust port of the [python-pptx](https://github.com/scanny/python-pptx) library, providing a safe and efficient way to work with PowerPoint files in Rust.
 
+## Standard
+
+ISO/IEC 29500 (Office Open XML)
+https://learn.microsoft.com/en-us/office/open-xml/
+
+
 ## Features
 
 ### Core Features

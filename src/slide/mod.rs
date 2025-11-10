@@ -2,9 +2,6 @@
 
 mod slide;
 mod slides;
-mod iterator;
-mod masters;
-mod layouts;
 mod background;
 mod transition;
 mod master;
@@ -17,12 +14,12 @@ mod notes;
 mod numbering;
 mod advanced_animations;
 pub mod options;
+pub mod slide_builder;
 
 pub use slide::Slide;
-pub use slides::Slides;
-pub use iterator::SlideIterator;
-pub use masters::SlideMasters;
-pub use layouts::SlideLayouts;
+pub use slides::{Slides, SlideIterator};
+pub use master::SlideMasters;
+pub use layout::SlideLayouts;
 pub use background::SlideBackground;
 pub use transition::{SlideTransition, TransitionType, TransitionDirection};
 pub use master::SlideMaster;
@@ -33,8 +30,8 @@ pub use animation::{Animation, AnimationType, AnimationManager, EntranceEffect, 
 pub use placeholders::{Placeholder, Placeholders, PlaceholderType};
 pub use notes::{NotesSlide, NotesTextFrame};
 pub use numbering::{SlideNumbering, NumberingFormat};
-pub use advanced_animations::{
-    AdvancedAnimation, AnimationTiming, AnimationSpeed, AnimationType as AdvAnimationType,
+pub use slide_builder::SlideBuilder;
+pub use advanced_animations::{AdvancedAnimation, AnimationTiming, AnimationSpeed, AnimationType as AdvAnimationType,
     EntranceEffect as AdvEntranceEffect, EmphasisEffect as AdvEmphasisEffect,
     ExitEffect as AdvExitEffect, RepeatBehavior, AnimationCollection,
 };
@@ -110,17 +107,6 @@ mod tests {
         let masters = SlideMasters::new(&part);
         assert_eq!(masters.len(), 0);
         assert!(masters.is_empty());
-    }
-
-    #[test]
-    fn test_slide_layouts_new() {
-        use crate::parts::slide::SlideMasterPart;
-        use crate::opc::packuri::PackURI;
-        
-        let master_part = SlideMasterPart::new(PackURI::new("/ppt/slideMasters/slideMaster1.xml").unwrap()).unwrap();
-        let layouts = SlideLayouts::new(&master_part);
-        assert_eq!(layouts.len(), 0);
-        assert!(layouts.is_empty());
     }
 
     #[test]

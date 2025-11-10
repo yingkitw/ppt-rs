@@ -1,5 +1,71 @@
 //! Slide Layout - Predefined layout templates for slides
 
+/// Collection of all 11 predefined slide layouts
+#[derive(Clone, Debug)]
+pub struct SlideLayouts {
+    layouts: Vec<SlideLayout>,
+}
+
+impl SlideLayouts {
+    /// Create a new collection with all 11 predefined layouts
+    pub fn new() -> Self {
+        let layouts = vec![
+            SlideLayout::new(LayoutType::TitleSlide),
+            SlideLayout::new(LayoutType::TitleAndContent),
+            SlideLayout::new(LayoutType::TitleOnly),
+            SlideLayout::new(LayoutType::CenteredTitle),
+            SlideLayout::new(LayoutType::TitleAndTwoContent),
+            SlideLayout::new(LayoutType::Blank),
+            SlideLayout::new(LayoutType::Comparison),
+            SlideLayout::new(LayoutType::TitleContentCaption),
+            SlideLayout::new(LayoutType::PictureCaption),
+            SlideLayout::new(LayoutType::BlankWithTitle),
+            SlideLayout::new(LayoutType::TitleAndVerticalContent),
+        ];
+
+        Self { layouts }
+    }
+
+    /// Get layout by index (1-11)
+    pub fn get(&self, index: u32) -> Option<&SlideLayout> {
+        if index >= 1 && index <= 11 {
+            self.layouts.get((index - 1) as usize)
+        } else {
+            None
+        }
+    }
+
+    /// Get layout by type
+    pub fn get_by_type(&self, layout_type: &LayoutType) -> Option<&SlideLayout> {
+        self.layouts.iter().find(|l| l.layout_type() == layout_type)
+    }
+
+    /// Get all layouts
+    pub fn all(&self) -> &[SlideLayout] {
+        &self.layouts
+    }
+
+    /// Get number of layouts
+    pub fn len(&self) -> usize {
+        self.layouts.len()
+    }
+
+    /// Check if empty
+    pub fn is_empty(&self) -> bool {
+        self.layouts.is_empty()
+    }
+
+    /// Get layout IDs for master
+    pub fn layout_ids(&self) -> Vec<u32> {
+        self.layouts.iter().map(|l| 256 + l.index() - 1).collect()
+    }
+}
+
+impl Default for SlideLayouts {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 /// Slide layout type
 #[derive(Clone, Debug, PartialEq, Eq)]

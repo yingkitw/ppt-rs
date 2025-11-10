@@ -75,6 +75,85 @@ pub trait Collection<T> {
     fn remove(&mut self, index: usize) -> Result<bool>;
 }
 
+/// Generic collection base implementation
+/// 
+/// Provides a reusable collection implementation for common patterns.
+/// Reduces code duplication across different collection types.
+#[derive(Clone, Debug)]
+pub struct CollectionBase<T> {
+    items: Vec<T>,
+}
+
+impl<T: Clone> CollectionBase<T> {
+    /// Create a new collection
+    pub fn new() -> Self {
+        Self {
+            items: Vec::new(),
+        }
+    }
+
+    /// Get item by index
+    pub fn get(&self, index: usize) -> Option<&T> {
+        self.items.get(index)
+    }
+
+    /// Get mutable item by index
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        self.items.get_mut(index)
+    }
+
+    /// Get all items
+    pub fn all(&self) -> &[T] {
+        &self.items
+    }
+
+    /// Get mutable all items
+    pub fn all_mut(&mut self) -> &mut [T] {
+        &mut self.items
+    }
+
+    /// Iterate over items
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.items.iter()
+    }
+
+    /// Mutable iterate over items
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.items.iter_mut()
+    }
+
+    /// Clear all items
+    pub fn clear(&mut self) {
+        self.items.clear();
+    }
+}
+
+impl<T: Clone> Default for CollectionBase<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T: Clone> Collection<T> for CollectionBase<T> {
+    fn len(&self) -> usize {
+        self.items.len()
+    }
+
+    fn add(&mut self, item: T) -> Result<usize> {
+        self.items.push(item);
+        Ok(self.items.len() - 1)
+    }
+
+    fn remove(&mut self, index: usize) -> Result<bool> {
+        if index < self.items.len() {
+            self.items.remove(index);
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

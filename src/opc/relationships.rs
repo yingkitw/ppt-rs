@@ -128,6 +128,37 @@ impl Relationships {
         self.relationships.shift_remove(r_id);
     }
 
+    /// Get all relationships of a specific type
+    pub fn get_by_type(&self, rel_type: &str) -> Vec<&Relationship> {
+        self.relationships
+            .values()
+            .filter(|r| r.rel_type == rel_type)
+            .collect()
+    }
+
+    /// Get all internal relationships of a specific type
+    pub fn get_by_type_internal(&self, rel_type: &str) -> Vec<&Relationship> {
+        self.relationships
+            .values()
+            .filter(|r| r.rel_type == rel_type && !r.is_external)
+            .collect()
+    }
+
+    /// Get all external relationships of a specific type
+    pub fn get_by_type_external(&self, rel_type: &str) -> Vec<&Relationship> {
+        self.relationships
+            .values()
+            .filter(|r| r.rel_type == rel_type && r.is_external)
+            .collect()
+    }
+
+    /// Get relationship by target
+    pub fn get_by_target(&self, target: &str) -> Option<&Relationship> {
+        self.relationships
+            .values()
+            .find(|r| r.target == target)
+    }
+
     pub fn part_with_reltype<'a>(&self, rel_type: &str, parts: &'a LinkedHashMap<PackURI, Box<dyn Part>>) -> Result<&'a dyn Part> {
         let matches: Vec<&Relationship> = self
             .relationships
@@ -248,5 +279,61 @@ mod tests {
         );
         assert_eq!(r_id1, r_id2);
         assert_eq!(rels.len(), 1);
+    }
+
+    #[test]
+    fn test_relationships_get_by_type() {
+        let mut rels = Relationships::new();
+        let rel_type = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide".to_string();
+        
+        rels.add("rId1".to_string(), rel_type.clone(), "/ppt/slides/slide1.xml".to_string(), false);
+        rels.add("rId2".to_string(), rel_type.clone(), "/ppt/slides/slide2.xml".to_string(), false);
+        rels.add("rId3".to_string(), "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout".to_string(), "/ppt/slideLayouts/slideLayout1.xml".to_string(), false);
+        
+        let slide_rels = rels.get_by_type(&rel_type);
+        assert_eq!(slide_rels.len(), 2);
+        assert!(slide_rels.iter().all(|r| r.rel_type == rel_type));
+    }
+
+    #[test]
+    fn test_relationships_get_by_type_internal() {
+        let mut rels = Relationships::new();
+        let rel_type = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink".to_string();
+        
+        rels.add("rId1".to_string(), rel_type.clone(), "http://example.com".to_string(), true);
+        rels.add("rId2".to_string(), rel_type.clone(), "http://example.com/page".to_string(), true);
+        rels.add("rId3".to_string(), rel_type.clone(), "/ppt/slides/slide1.xml".to_string(), false);
+        
+        let internal_rels = rels.get_by_type_internal(&rel_type);
+        assert_eq!(internal_rels.len(), 1);
+        assert!(internal_rels.iter().all(|r| !r.is_external));
+    }
+
+    #[test]
+    fn test_relationships_get_by_type_external() {
+        let mut rels = Relationships::new();
+        let rel_type = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink".to_string();
+        
+        rels.add("rId1".to_string(), rel_type.clone(), "http://example.com".to_string(), true);
+        rels.add("rId2".to_string(), rel_type.clone(), "http://example.com/page".to_string(), true);
+        rels.add("rId3".to_string(), rel_type.clone(), "/ppt/slides/slide1.xml".to_string(), false);
+        
+        let external_rels = rels.get_by_type_external(&rel_type);
+        assert_eq!(external_rels.len(), 2);
+        assert!(external_rels.iter().all(|r| r.is_external));
+    }
+
+    #[test]
+    fn test_relationships_get_by_target() {
+        let mut rels = Relationships::new();
+        rels.add("rId1".to_string(), "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide".to_string(), "/ppt/slides/slide1.xml".to_string(), false);
+        rels.add("rId2".to_string(), "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide".to_string(), "/ppt/slides/slide2.xml".to_string(), false);
+        
+        let rel = rels.get_by_target("/ppt/slides/slide1.xml").unwrap();
+        assert_eq!(rel.r_id, "rId1");
+        assert_eq!(rel.target, "/ppt/slides/slide1.xml");
+        
+        let not_found = rels.get_by_target("/ppt/slides/slide99.xml");
+        assert!(not_found.is_none());
     }
 }
