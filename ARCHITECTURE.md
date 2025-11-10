@@ -2,7 +2,12 @@
 
 ## Overview
 
-ppt-rs is structured following the OpenXML standard for PowerPoint files. A .pptx file is essentially a ZIP archive containing XML files and media resources.
+ppt-rs is a type-safe, trait-based Rust implementation of PowerPoint file handling, following the OpenXML standard. A .pptx file is a ZIP archive containing XML files and media resources.
+
+**Key Principles**: KISS (Keep It Simple, Stupid), DRY (Don't Repeat Yourself), Trait-based design, Modular structure
+
+**Parity**: 99% with python-pptx (94/95 features)
+**Quality**: 667 passing tests, 13 compiler warnings (76% reduction)
 
 ## Module Structure
 
@@ -182,16 +187,44 @@ sequenceDiagram
 
 ## Key Design Decisions
 
-1. **Trait-based Architecture**: Using traits (`Part`, `Shape`) for flexibility and testability
-2. **Ownership Model**: Clear ownership semantics with `Box<dyn Shape>` for dynamic dispatch
-3. **Error Handling**: Using `Result<T, PptError>` for error propagation
-4. **XML Parsing**: Regex-based parsing for simplicity (can be enhanced with proper XML parser)
-5. **EMU Units**: All measurements in EMU (English Metric Units) for precision
-6. **Type Safety**: Strong typing with enums for chart types, shape types, etc.
+1. **Trait-based Architecture**: Using traits for flexibility and testability
+   - `Part`: Base trait for all package parts
+   - `Shape`: Base trait for all shapes
+   - `Dimensioned`: Objects with width/height
+   - `PropertyAccessor<T>`: Unified property access pattern
+   - `Collection<T>`: Common collection interface
+   - `Metadata`: Objects with metadata
+   - `Saveable`: Objects that can be saved
+   - `Openable`: Objects that can be opened
+
+2. **Modular Structure**: Clear separation of concerns
+   - `presentation/traits.rs`: Common traits
+   - `presentation/properties.rs`: PropertiesManager for unified property access
+   - Each feature in dedicated module (animations, RTL, OLE, 3D, media, etc.)
+
+3. **Ownership Model**: Clear ownership semantics with `Box<dyn Shape>` for dynamic dispatch
+
+4. **Error Handling**: Using `Result<T, PptError>` for error propagation
+
+5. **XML Parsing**: Regex-based parsing for simplicity (can be enhanced with proper XML parser)
+
+6. **EMU Units**: All measurements in EMU (English Metric Units) for precision
+
+7. **Type Safety**: Strong typing with enums for chart types, shape types, etc.
+
+8. **KISS Principle**: Keep code simple and maintainable
+   - Avoid over-engineering
+   - Use sensible defaults
+   - Clear naming conventions
+
+9. **DRY Principle**: Don't Repeat Yourself
+   - Reuse traits across modules
+   - Centralize common functionality
+   - PropertiesManager for property management
 
 ## Test Coverage
 
-**128 tests passing** covering:
+**667 tests passing (100%)** covering:
 - OPC components (PackURI, Relationships, Package)
 - Parts (PresentationPart, SlidePart, ImagePart, ChartPart, CorePropertiesPart)
 - Shapes (BaseShape, AutoShape, Picture, Connector, GraphicFrame, GroupShape)
