@@ -176,8 +176,9 @@ impl Animation {
     }
 
     /// Set duration
-    pub fn set_duration(&mut self, duration: u32) {
+    pub fn set_duration(&mut self, duration: u32) -> &mut Self {
         self.duration = duration;
+        self
     }
 
     /// Get duration
@@ -186,8 +187,9 @@ impl Animation {
     }
 
     /// Set delay
-    pub fn set_delay(&mut self, delay: u32) {
+    pub fn set_delay(&mut self, delay: u32) -> &mut Self {
         self.delay = delay;
+        self
     }
 
     /// Get delay
@@ -196,8 +198,9 @@ impl Animation {
     }
 
     /// Set repeat count
-    pub fn set_repeat_count(&mut self, repeat_count: u32) {
+    pub fn set_repeat_count(&mut self, repeat_count: u32) -> &mut Self {
         self.repeat_count = repeat_count;
+        self
     }
 
     /// Get repeat count
@@ -386,9 +389,7 @@ mod tests {
     #[test]
     fn test_animation_properties() {
         let mut anim = Animation::new(1, AnimationType::Entrance, "appear".to_string());
-        anim.set_duration(1000);
-        anim.set_delay(500);
-        anim.set_repeat_count(2);
+        anim.set_duration(1000).set_delay(500).set_repeat_count(2);
 
         assert_eq!(anim.duration(), 1000);
         assert_eq!(anim.delay(), 500);

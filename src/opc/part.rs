@@ -95,8 +95,7 @@ impl Part for BasePart {
         Ok(String::new())
     }
 
-    fn from_xml<R: Read>(mut reader: R) -> Result<Self> {
-        use std::io::Read;
+    fn from_xml<R: std::io::Read>(mut reader: R) -> Result<Self> {
         let mut content = String::new();
         reader.read_to_string(&mut content)
             .map_err(|e| crate::error::PptError::ValueError(format!("Failed to read XML: {}", e)))?;

@@ -3,7 +3,7 @@
 //! Provides a reusable container for managing collections of parts
 //! with relationship tracking and type-based queries.
 
-use crate::error::{PptError, Result};
+use crate::error::Result;
 use crate::opc::part::Part;
 use crate::opc::packuri::PackURI;
 use crate::opc::relationships::Relationships;
@@ -162,7 +162,7 @@ mod tests {
         }
 
         fn from_xml<R: std::io::Read>(_reader: R) -> Result<Self> {
-            Err(PptError::NotImplemented("MockPart::from_xml".to_string()))
+            Err(crate::error::PptError::NotImplemented("MockPart::from_xml".to_string()))
         }
     }
 

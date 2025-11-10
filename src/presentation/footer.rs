@@ -260,7 +260,8 @@ impl FooterHeader {
                 if let Some(text) = &self.date_text {
                     xml.push_str(&escape_xml(text));
                 } else {
-                    xml.push_str(&format!("{}", chrono::Local::now().format("%Y-%m-%d")));
+                    // Use to_string() instead of format!() to avoid format string interpretation
+                    xml.push_str(&chrono::Local::now().format("%Y-%m-%d").to_string());
                 }
                 xml.push('"');
             }

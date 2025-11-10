@@ -180,7 +180,7 @@ impl Part for PresentationPart {
         }
         
         // Generate presentation.xml with slide IDs from SlideIdManager (compact format like PowerPoint)
-        let mut xml = String::from(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" saveSubsetFonts="1" autoCompressPictures="0"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst>"#);
+        let mut xml = String::from(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" saveSubsetFonts="1" autoCompressPictures="0"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:notesMasterIdLst/><p:handoutMasterIdLst/>"#);
         
         // Add slide IDs from manager (compact format)
         let slide_ids = self.slide_id_manager.all();
@@ -206,7 +206,6 @@ impl Part for PresentationPart {
     }
 
     fn from_xml<R: std::io::Read>(mut reader: R) -> Result<Self> {
-        use std::io::Read;
         let mut content = String::new();
         reader.read_to_string(&mut content)
             .map_err(|e| crate::error::PptError::ValueError(format!("Failed to read XML: {}", e)))?;

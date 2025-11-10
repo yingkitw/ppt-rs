@@ -1,7 +1,7 @@
 //! XML parsing and generation for shapes
 
 use crate::error::Result;
-use crate::shapes::{AutoShape, AutoShapeType, Connector, Picture, Shape, BaseShape};
+use crate::shapes::{AutoShape, AutoShapeType, Connector, Picture, Shape};
 use regex::Regex;
 
 /// Parse shapes from slide XML spTree
@@ -374,6 +374,7 @@ mod tests {
 
     #[test]
     fn test_shape_to_xml_uses_next_id() {
+        use crate::shapes::base::BaseShape;
         let shape = BaseShape::new(0, "Shape".to_string());
         let xml = shape_to_xml(&shape, 99);
         assert!(xml.contains("id=\"99\""));

@@ -95,17 +95,6 @@ impl GeometryPoint {
         }
     }
 
-    /// Clamp value to 0.0-1.0 range
-    fn clamp(value: f64) -> f64 {
-        if value < 0.0 {
-            0.0
-        } else if value > 1.0 {
-            1.0
-        } else {
-            value
-        }
-    }
-
     /// Check if this is a valid point
     pub fn is_valid(&self) -> bool {
         if self.close {

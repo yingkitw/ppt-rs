@@ -3,15 +3,11 @@
 use crate::parts::presentation::PresentationPart;
 
 /// Slide masters collection
-pub struct SlideMasters {
-    presentation_part: *const PresentationPart, // Using raw pointer to avoid lifetime issues
-}
+pub struct SlideMasters;
 
 impl SlideMasters {
     pub fn new(_presentation_part: &PresentationPart) -> Self {
-        Self {
-            presentation_part: std::ptr::null(),
-        }
+        Self
     }
     
     /// Get the number of slide masters
