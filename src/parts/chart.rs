@@ -53,7 +53,7 @@ impl Part for ChartPart {
     }
 
     fn from_xml<R: std::io::Read>(mut reader: R) -> Result<Self> {
-        use std::io::Read;
+        
         let xml_str = crate::oxml::parser::parse_xml(&mut reader)?;
         // Parse XML and create ChartPart
         let partname = PackURI::new("/ppt/charts/chart1.xml")?;

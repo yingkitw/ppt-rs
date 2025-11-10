@@ -3,7 +3,6 @@
 //! Placeholders are special shapes that hold content like titles, subtitles, and body text.
 //! They are defined in the slide layout and can be accessed and modified on slides.
 
-use crate::error::Result;
 use crate::shapes::Shape;
 use std::collections::HashMap;
 

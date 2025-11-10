@@ -1,7 +1,7 @@
 //! XML parsing and generation for shapes
 
-use crate::error::{PptError, Result};
-use crate::shapes::{AutoShape, AutoShapeType, BaseShape, Connector, Picture, Shape};
+use crate::error::Result;
+use crate::shapes::{AutoShape, AutoShapeType, Connector, Picture, Shape, BaseShape};
 use regex::Regex;
 
 /// Parse shapes from slide XML spTree

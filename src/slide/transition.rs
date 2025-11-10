@@ -213,7 +213,7 @@ impl SlideTransition {
             String::new()
         };
 
-        let on_click = if self.advance_on_click { "1" } else { "0" };
+        let _on_click = if self.advance_on_click { "1" } else { "0" };
 
         format!(
             r#"<p:transition spd="med" dur="{}" advTm="{}" spd="med"{}{}>

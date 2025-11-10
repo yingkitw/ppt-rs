@@ -1,6 +1,5 @@
 //! Slide Layout - Predefined layout templates for slides
 
-use crate::error::Result;
 
 /// Slide layout type
 #[derive(Clone, Debug, PartialEq, Eq)]

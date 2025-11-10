@@ -6,8 +6,6 @@
 //! - Paragraph alignment for RTL
 //! - Bidirectional text handling
 
-use crate::error::Result;
-
 /// RTL language types
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RTLLanguage {

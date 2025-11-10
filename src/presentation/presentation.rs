@@ -237,7 +237,7 @@ impl Presentation {
         use crate::opc::packuri::PackURI;
         use crate::parts::slide::{SlideLayoutPart, SlidePart};
         use crate::opc::part::Part;
-        use crate::opc::constants::RELATIONSHIP_TYPE;
+        
         
         // Create a default slide layout (blank layout)
         let layout_uri = PackURI::new("/ppt/slideLayouts/slideLayout1.xml")?;

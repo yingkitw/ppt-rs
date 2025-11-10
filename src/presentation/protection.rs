@@ -1,6 +1,5 @@
 //! Document Protection - Password protection and editing restrictions
 
-use crate::error::Result;
 
 /// Document protection settings
 #[derive(Clone, Debug)]

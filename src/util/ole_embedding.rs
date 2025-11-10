@@ -6,7 +6,6 @@
 //! - Object relationships and references
 //! - Embedded object metadata
 
-use crate::error::Result;
 use std::collections::HashMap;
 
 /// OLE object type

@@ -1,7 +1,6 @@
 //! Theme Customization - Custom color schemes and fonts
 
 use crate::dml::color::RGBColor;
-use crate::error::Result;
 
 /// Color scheme
 #[derive(Clone, Debug)]

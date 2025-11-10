@@ -1,7 +1,7 @@
 //! Package URI handling
 
 use crate::error::{PptError, Result};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use regex::Regex;
 use lazy_static::lazy_static;
 

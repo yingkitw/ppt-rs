@@ -1,6 +1,5 @@
 //! Chart Data Table - Display data table in chart
 
-use crate::error::Result;
 
 /// Data table display options
 #[derive(Clone, Debug)]

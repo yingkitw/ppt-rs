@@ -3,7 +3,6 @@
 use crate::error::{PptError, Result};
 use crate::opc::part::Part;
 use crate::opc::packuri::PackURI;
-use std::collections::HashMap;
 use indexmap::IndexMap;
 use linked_hash_map::LinkedHashMap;
 
@@ -126,11 +125,11 @@ impl Relationships {
     }
 
     pub fn remove(&mut self, r_id: &str) {
-        self.relationships.remove(r_id);
+        self.relationships.shift_remove(r_id);
     }
 
     pub fn part_with_reltype<'a>(&self, rel_type: &str, parts: &'a LinkedHashMap<PackURI, Box<dyn Part>>) -> Result<&'a dyn Part> {
-        let mut matches: Vec<&Relationship> = self
+        let matches: Vec<&Relationship> = self
             .relationships
             .values()
             .filter(|r| r.rel_type == rel_type && !r.is_external)

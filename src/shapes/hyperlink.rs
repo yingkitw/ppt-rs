@@ -1,6 +1,5 @@
 //! Hyperlink functionality for shapes and text
 
-use regex::Regex;
 
 /// Hyperlink - represents a hyperlink on a shape or text run
 pub struct Hyperlink {
@@ -59,7 +58,7 @@ impl Default for Hyperlink {
 
 /// Generate hyperlink XML for shape
 pub fn hyperlink_to_xml(hyperlink: &Hyperlink, r_id: &str) -> String {
-    if let Some(ref address) = hyperlink.address {
+    if let Some(ref _address) = hyperlink.address {
         let screen_tip_attr = hyperlink.screen_tip
             .as_ref()
             .map(|tip| format!(r#" tooltip="{}"#, escape_xml(tip)))

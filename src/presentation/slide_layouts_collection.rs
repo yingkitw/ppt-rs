@@ -2,7 +2,6 @@
 //!
 //! Provides access to all available slide layouts in a presentation.
 
-use crate::error::Result;
 use std::collections::HashMap;
 
 /// Slide layout information

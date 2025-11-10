@@ -3,7 +3,6 @@
 use crate::chart::Chart;
 use crate::shapes::base::{BaseShape, Shape};
 use crate::table::Table;
-use crate::enums::shapes::ShapeType;
 
 /// GraphicFrame - container shape for table, chart, smart art, and media objects
 pub struct GraphicFrame {

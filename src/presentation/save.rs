@@ -44,8 +44,8 @@ pub fn save<W: Write + Seek>(
     use crate::opc::part::Part;
     let uri = Part::uri(part).clone();
     let content_type = Part::content_type(part).to_string();
-    let relationships = Part::relationships(part).clone();
-    let blob = Part::blob(part)?;
+    let _relationships = Part::relationships(part).clone();
+    let _blob = Part::blob(part)?;
     
     // Create a simple part wrapper that owns its data
     struct OwnedPart {

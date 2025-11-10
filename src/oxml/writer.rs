@@ -1,6 +1,6 @@
 //! XML writer for OpenXML
 
-use crate::error::{PptError, Result};
+use crate::error::Result;
 use std::io::Write;
 
 /// Serialize XML string to a writer

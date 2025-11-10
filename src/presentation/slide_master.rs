@@ -2,7 +2,6 @@
 //!
 //! Provides access to the slide master which controls overall presentation design.
 
-use crate::error::Result;
 
 /// Slide master information
 #[derive(Debug, Clone)]

@@ -2,7 +2,6 @@
 
 use crate::shapes::hyperlink::Hyperlink;
 use crate::text::fonts::{Font, UnderlineStyle};
-use crate::dml::color::RGBColor;
 
 /// A run of text with consistent formatting
 /// 
@@ -74,7 +73,7 @@ impl Run {
         if let Some(ref mut h) = self.hyperlink {
             h.set_address(Some(address.to_string()));
         } else {
-            let mut h = Hyperlink::with_address(address.to_string());
+            let h = Hyperlink::with_address(address.to_string());
             self.hyperlink = Some(h);
         }
     }

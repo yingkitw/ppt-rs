@@ -1,7 +1,6 @@
 //! Image part
 
 use crate::error::Result;
-use crate::opc::constants::CONTENT_TYPE;
 use crate::opc::part::{BasePart, Part};
 use crate::opc::packuri::PackURI;
 use crate::opc::relationships::Relationships;

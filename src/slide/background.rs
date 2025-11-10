@@ -1,6 +1,5 @@
 //! Slide background formatting
 
-use crate::dml::color::ColorFormat;
 use crate::dml::fill::FillFormat;
 
 /// Slide background - provides access to background properties
@@ -91,7 +90,7 @@ impl SlideBackground {
                 // Gradient background XML
                 if let Some(gradient) = self.fill.gradient() {
                     let mut stops_xml = String::new();
-                    for (idx, stop) in gradient.stops().iter().enumerate() {
+                    for (_idx, stop) in gradient.stops().iter().enumerate() {
                         let position = (stop.position() * 100000.0) as u32;
                         if let Some(rgb) = stop.color().rgb() {
                             stops_xml.push_str(&format!(

@@ -1,6 +1,5 @@
 //! Picture Fill - Picture fill support for shapes
 
-use crate::error::Result;
 
 /// Picture Fill - represents a picture fill for shapes
 #[derive(Clone, Debug)]

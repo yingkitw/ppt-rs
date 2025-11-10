@@ -7,8 +7,6 @@
 //! - Animation timing and sequencing
 //! - Animation effects and options
 
-use crate::error::Result;
-
 /// Animation entrance effects
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum EntranceEffect {

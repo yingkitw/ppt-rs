@@ -30,7 +30,7 @@ impl Package {
         use crate::opc::constants::RELATIONSHIP_TYPE;
         use crate::opc::packuri::CONTENT_TYPES_URI;
         use crate::parts::presentation::PresentationPart;
-        use std::io::Seek;
+        
         
         let pkg_reader = PackageReader::new(&mut reader)?;
         

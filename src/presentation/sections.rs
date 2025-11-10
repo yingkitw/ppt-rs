@@ -3,7 +3,6 @@
 //! Sections allow grouping slides together for better organization.
 //! Based on PptxGenJS sections support.
 
-use std::collections::HashMap;
 
 /// A section containing slides
 #[derive(Debug, Clone)]

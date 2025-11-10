@@ -1,6 +1,5 @@
 //! Presentation Relationship Management - Manages all presentation relationships
 
-use crate::opc::relationships::Relationships;
 
 /// Presentation Relationship Manager
 #[derive(Clone, Debug)]
@@ -14,7 +13,7 @@ pub struct PresentationRelationshipManager {
 impl PresentationRelationshipManager {
     /// Create a new presentation relationship manager
     pub fn new() -> Self {
-        let mut core_rels = vec![
+        let core_rels = vec![
             ("rId1".to_string(), "slideMaster".to_string(), "slideMasters/slideMaster1.xml".to_string()),
             ("rId2".to_string(), "printerSettings".to_string(), "printerSettings/printerSettings1.bin".to_string()),
             ("rId3".to_string(), "presProps".to_string(), "presProps.xml".to_string()),

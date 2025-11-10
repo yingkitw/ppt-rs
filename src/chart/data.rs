@@ -1,6 +1,5 @@
 //! Chart Data Management - Data series and values for charts
 
-use crate::error::Result;
 
 /// Data point in a series
 #[derive(Clone, Debug)]

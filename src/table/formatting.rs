@@ -8,7 +8,6 @@
 //! - Table-wide formatting
 
 use crate::dml::color::RGBColor;
-use crate::error::Result;
 
 /// Border style for table cells
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

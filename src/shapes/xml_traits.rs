@@ -3,9 +3,8 @@
 //! Provides OpenXmlSerialize and OpenXmlDeserialize implementations for shapes
 //! using the XML builder pattern.
 
-use crate::oxml::{XmlBuilder, OpenXmlSerialize, OpenXmlDeserialize};
+use crate::oxml::XmlBuilder;
 use crate::shapes::base::Shape;
-use crate::error::Result;
 
 /// Shape XML serializer using builder pattern
 pub struct ShapeXmlSerializer;

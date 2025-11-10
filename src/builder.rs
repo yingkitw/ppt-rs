@@ -113,7 +113,7 @@ impl PresentationBuilder {
     }
 
     /// Build the presentation
-    pub fn build(mut self) -> Result<Presentation> {
+    pub fn build(self) -> Result<Presentation> {
         let mut prs = Presentation::new()?;
         
         // Set custom dimensions if provided

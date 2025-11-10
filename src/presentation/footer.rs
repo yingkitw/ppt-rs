@@ -7,7 +7,6 @@
 //! - Date/time
 //! - Applied to all slides or specific slides
 
-use crate::error::Result;
 
 /// Footer and header configuration
 #[derive(Debug, Clone)]

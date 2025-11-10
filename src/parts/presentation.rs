@@ -69,7 +69,7 @@ impl PresentationPart {
         let slide_partname = self.next_slide_partname()?;
         
         // 2. Create a new SlidePart
-        let slide_part = SlidePart::new(slide_partname.clone(), slide_layout_part)?;
+        let _slide_part = SlidePart::new(slide_partname.clone(), slide_layout_part)?;
         
         // 3. Add relationship to the slide part
         let r_id = self.relationships_mut().next_r_id();
