@@ -1,0 +1,33 @@
+[package]
+name = "pptx"
+version = "1.0.2"
+edition = "2021"
+authors = ["Steve Canny <stcanny@gmail.com>"]
+description = "Create, read, and update PowerPoint 2007+ (.pptx) files."
+license = "MIT"
+repository = "https://github.com/scanny/python-pptx"
+keywords = ["powerpoint", "ppt", "pptx", "openxml", "office"]
+
+[dependencies]
+zip = "0.6"
+xml-rs = "0.8"
+image = "0.24"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+regex = "1.10"
+thiserror = "1.0"
+lazy_static = "1.4"
+chrono = "0.4"
+anyrepair = "0.1"
+
+[dev-dependencies]
+insta = "1.34"
+
+[[bin]]
+name = "pptx-cli"
+path = "src/bin/pptx-cli.rs"
+
+[profile.release]
+opt-level = 3
+lto = true

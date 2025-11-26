@@ -1,0 +1,1 @@
+//! Core properties XML elements
