@@ -1,11 +1,11 @@
 [package]
-name = "pptx"
-version = "1.0.2"
-edition = "2021"
-authors = ["Steve Canny <stcanny@gmail.com>"]
+name = "pptx-rs"
+version = "0.1.0"
+edition = "2024"
+authors = ["Ying Kit WONG"]
 description = "Create, read, and update PowerPoint 2007+ (.pptx) files."
-license = "MIT"
-repository = "https://github.com/scanny/python-pptx"
+license = "Apache-2.0"
+repository = "https://github.com/yingkitw/pptx-rs"
 keywords = ["powerpoint", "ppt", "pptx", "openxml", "office"]
 
 [dependencies]
