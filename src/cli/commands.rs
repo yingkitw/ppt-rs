@@ -2,6 +2,7 @@
 
 use std::fs;
 use std::path::PathBuf;
+use crate::generator;
 
 pub struct CreateCommand;
 pub struct InfoCommand;
@@ -11,7 +12,7 @@ impl CreateCommand {
         output: &str,
         title: Option<&str>,
         slides: usize,
-        template: Option<&str>,
+        _template: Option<&str>,
     ) -> Result<(), String> {
         // Create output directory if needed
         if let Some(parent) = PathBuf::from(output).parent() {
@@ -23,28 +24,12 @@ impl CreateCommand {
 
         let title = title.unwrap_or("Presentation");
 
-        // Build presentation metadata
-        let mut content = String::new();
-        content.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        content.push_str("<presentation>\n");
-        content.push_str(&format!("  <title>{}</title>\n", escape_xml(title)));
-        content.push_str(&format!("  <slides count=\"{}\">\n", slides));
-
-        for i in 1..=slides {
-            content.push_str(&format!("    <slide number=\"{}\">\n", i));
-            content.push_str(&format!("      <title>Slide {}</title>\n", i));
-            content.push_str("      <content></content>\n");
-            content.push_str("    </slide>\n");
-        }
-
-        content.push_str("  </slides>\n");
-        if let Some(tmpl) = template {
-            content.push_str(&format!("  <template>{}</template>\n", escape_xml(tmpl)));
-        }
-        content.push_str("</presentation>\n");
+        // Generate proper PPTX file
+        let pptx_data = generator::create_pptx(title, slides)
+            .map_err(|e| format!("Failed to generate PPTX: {}", e))?;
 
         // Write to file
-        fs::write(output, content)
+        fs::write(output, pptx_data)
             .map_err(|e| format!("Failed to write file: {}", e))?;
 
         Ok(())
@@ -96,6 +81,7 @@ impl InfoCommand {
     }
 }
 
+#[allow(dead_code)]
 fn escape_xml(s: &str) -> String {
     s.replace("&", "&amp;")
         .replace("<", "&lt;")

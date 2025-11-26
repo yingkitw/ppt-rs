@@ -44,6 +44,54 @@ cargo build --release
 cargo test
 ```
 
+## Usage
+
+### Creating a Presentation
+
+#### Using the CLI
+
+```bash
+# Create a simple presentation
+cargo run -- create my_presentation.pptx
+
+# Create with custom title and slides
+cargo run -- create my_presentation.pptx --title "My Title" --slides 5
+```
+
+#### Using the Library
+
+```rust
+use pptx_rs::generator;
+use std::fs;
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Generate a PPTX with 5 slides
+    let pptx_data = generator::create_pptx("My Presentation", 5)?;
+    
+    // Write to file
+    fs::write("presentation.pptx", pptx_data)?;
+    
+    Ok(())
+}
+```
+
+### PPTX Generation Approach
+
+The library generates proper Microsoft PowerPoint 2007+ (.pptx) files by:
+
+1. **Creating a complete ZIP package** with all required ECMA-376 compliant components
+2. **Generating XML documents** for presentation, slides, layouts, masters, and themes
+3. **Managing relationships** between all package parts
+4. **Including metadata** (title, creation date, slide count, etc.)
+5. **Packaging into ZIP** with proper compression and structure
+
+The generated files are:
+- Valid Microsoft PowerPoint 2007+ format (recognized by `file` command)
+- Readable by PowerPoint, LibreOffice, Google Slides, and other Office applications
+- Fully compliant with ECMA-376 Office Open XML standard
+
+See [ARCHITECTURE.md](ARCHITECTURE.md#pptx-generation-approach) for detailed technical documentation.
+
 ## Translation Status
 
 See [TRANSLATION_PROGRESS.md](TRANSLATION_PROGRESS.md) for detailed progress on the translation of all 101 Python files.

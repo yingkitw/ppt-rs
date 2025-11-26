@@ -1,6 +1,7 @@
 //! OPC package constants
 
 /// Content types for various package parts
+#[allow(non_snake_case)]
 pub mod CONTENT_TYPE {
     pub const PML_PRESENTATION_MAIN: &str = "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml";
     pub const PML_PRES_MACRO_MAIN: &str = "application/vnd.openxmlformats-officedocument.presentationml.presentation.macroEnabled.main+xml";
@@ -34,6 +35,7 @@ pub mod CONTENT_TYPE {
 }
 
 /// Relationship types
+#[allow(non_snake_case)]
 pub mod RELATIONSHIP_TYPE {
     pub const SLIDE: &str = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide";
     pub const SLIDE_LAYOUT: &str = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout";
@@ -49,6 +51,7 @@ pub mod RELATIONSHIP_TYPE {
 }
 
 /// XML namespaces
+#[allow(non_snake_case)]
 pub mod NAMESPACE {
     pub const PRESENTATION_ML: &str = "http://schemas.openxmlformats.org/presentationml/2006/main";
     pub const DRAWING_ML: &str = "http://schemas.openxmlformats.org/drawingml/2006/main";

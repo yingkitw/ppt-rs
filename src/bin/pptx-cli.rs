@@ -1,6 +1,6 @@
 //! PPTX CLI - Command-line tool for creating PowerPoint presentations
 
-use pptx::cli::{Parser, Command, CreateCommand, InfoCommand};
+use pptx_rs::cli::{Parser, Command, CreateCommand, InfoCommand};
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();

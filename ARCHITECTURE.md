@@ -237,6 +237,110 @@ src/
 └── media.rs            # Media handling
 ```
 
+## PPTX Generation Approach
+
+### Overview
+
+The library generates proper Microsoft PowerPoint 2007+ (.pptx) files by creating a complete ZIP-based package structure that conforms to the ECMA-376 Office Open XML standard.
+
+### Generation Process
+
+#### 1. Package Structure Creation
+The generator creates a complete PPTX package with the following structure:
+
+```
+presentation.pptx (ZIP file)
+├── [Content_Types].xml          # Content type declarations
+├── _rels/
+│   └── .rels                    # Package relationships
+├── ppt/
+│   ├── presentation.xml         # Main presentation document
+│   ├── _rels/
+│   │   └── presentation.xml.rels # Presentation relationships
+│   ├── slides/
+│   │   ├── slide1.xml           # Individual slides
+│   │   ├── slide2.xml
+│   │   └── _rels/
+│   │       ├── slide1.xml.rels  # Slide relationships
+│   │       └── slide2.xml.rels
+│   ├── slideLayouts/
+│   │   ├── slideLayout1.xml     # Slide layout templates
+│   │   └── _rels/
+│   │       └── slideLayout1.xml.rels
+│   ├── slideMasters/
+│   │   ├── slideMaster1.xml     # Slide master
+│   │   └── _rels/
+│   │       └── slideMaster1.xml.rels
+│   └── theme/
+│       └── theme1.xml           # Color theme definitions
+└── docProps/
+    ├── core.xml                 # Document properties (title, author, etc.)
+    └── app.xml                  # Application-specific properties
+```
+
+#### 2. XML Generation
+
+Each component is generated with proper Office Open XML structure:
+
+- **[Content_Types].xml**: Declares MIME types for all package parts
+- **Relationships (.rels)**: Define connections between package parts
+- **presentation.xml**: Root presentation document with slide references
+- **slide*.xml**: Individual slide content with shapes and text
+- **slideLayout*.xml**: Layout templates defining slide structure
+- **slideMaster*.xml**: Master slide with default formatting
+- **theme*.xml**: Color schemes and fonts
+- **core.xml**: Document metadata (title, creation date, etc.)
+- **app.xml**: Application properties (slide count, etc.)
+
+#### 3. ZIP Packaging
+
+All XML files are compressed into a single ZIP archive with:
+- Proper compression levels
+- Correct file ordering
+- Valid ZIP headers and footers
+- No extra metadata
+
+#### 4. Generator Module (`generator.rs`)
+
+The `generator::create_pptx()` function:
+
+```rust
+pub fn create_pptx(title: &str, slides: usize) -> Result<Vec<u8>>
+```
+
+This function:
+1. Creates all required XML documents with proper namespaces
+2. Generates the specified number of slides
+3. Creates relationships between all parts
+4. Packages everything into a ZIP archive
+5. Returns the complete PPTX as a byte vector
+
+### Key Features
+
+- **Proper ZIP Structure**: Uses the `zip` crate to create valid ZIP files
+- **XML Namespaces**: Correctly declares all Office Open XML namespaces
+- **Relationships**: Properly manages part relationships and IDs
+- **Metadata**: Includes document properties (title, creation date, etc.)
+- **Themes**: Includes default color theme for consistent formatting
+- **Layouts**: Provides slide layout templates for proper slide structure
+
+### Validation
+
+Generated PPTX files are validated as:
+- Proper ZIP archives (recognized by `file` command as "Microsoft PowerPoint 2007+")
+- Readable by Microsoft PowerPoint, LibreOffice, and other Office applications
+- Containing all required ECMA-376 compliant components
+
+### Usage
+
+```rust
+// Generate a PPTX with 5 slides
+let pptx_data = generator::create_pptx("My Presentation", 5)?;
+
+// Write to file
+std::fs::write("presentation.pptx", pptx_data)?;
+```
+
 ## Translation Notes
 
 This is a port of python-pptx to Rust. Key differences:

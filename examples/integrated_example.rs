@@ -3,9 +3,9 @@
 //! Run with: cargo run --example integrated_example
 
 use std::fs;
-use pptx::integration::{PresentationBuilder, SlideBuilder, PresentationMetadata};
-use pptx::integration::utils;
-use pptx::enums;
+use pptx_rs::integration::{PresentationBuilder, SlideBuilder, PresentationMetadata};
+use pptx_rs::integration::utils;
+use pptx_rs::enums;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("╔════════════════════════════════════════════════════════════╗");
