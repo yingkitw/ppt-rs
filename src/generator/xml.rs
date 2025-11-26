@@ -1,8 +1,4 @@
-//! PPTX file generator - creates proper ZIP-based PPTX files
-
-use std::io::{Write, Cursor};
-use zip::ZipWriter;
-use zip::write::FileOptions;
+//! XML generation for PPTX components
 
 /// Slide content for more complex presentations
 #[derive(Clone, Debug)]
@@ -25,180 +21,21 @@ impl SlideContent {
     }
 }
 
-/// Create a minimal but valid PPTX file
-pub fn create_pptx(title: &str, slides: usize) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    let buffer = Vec::new();
-    let cursor = Cursor::new(buffer);
-    let mut zip = ZipWriter::new(cursor);
-    let options = FileOptions::default();
-
-    // 1. Create [Content_Types].xml - must include all slides
-    let content_types = create_content_types_xml(slides);
-    zip.start_file("[Content_Types].xml", options)?;
-    zip.write_all(content_types.as_bytes())?;
-
-    // 2. Create _rels/.rels
-    let rels = create_rels_xml();
-    zip.start_file("_rels/.rels", options)?;
-    zip.write_all(rels.as_bytes())?;
-
-    // 3. Create ppt/_rels/presentation.xml.rels
-    let pres_rels = create_presentation_rels_xml(slides);
-    zip.start_file("ppt/_rels/presentation.xml.rels", options)?;
-    zip.write_all(pres_rels.as_bytes())?;
-
-    // 4. Create ppt/presentation.xml
-    let presentation = create_presentation_xml(title, slides);
-    zip.start_file("ppt/presentation.xml", options)?;
-    zip.write_all(presentation.as_bytes())?;
-
-    // 5. Create ppt/slides/slide1.xml through slideN.xml
-    for i in 1..=slides {
-        let slide_xml = create_slide_xml(i, title);
-        zip.start_file(&format!("ppt/slides/slide{}.xml", i), options)?;
-        zip.write_all(slide_xml.as_bytes())?;
-    }
-
-    // 6. Create ppt/slides/_rels/slide1.xml.rels through slideN.xml.rels
-    for i in 1..=slides {
-        let slide_rels = create_slide_rels_xml();
-        zip.start_file(&format!("ppt/slides/_rels/slide{}.xml.rels", i), options)?;
-        zip.write_all(slide_rels.as_bytes())?;
-    }
-
-    // 7. Create ppt/slideLayouts/slideLayout1.xml
-    let slide_layout = create_slide_layout_xml();
-    zip.start_file("ppt/slideLayouts/slideLayout1.xml", options)?;
-    zip.write_all(slide_layout.as_bytes())?;
-
-    // 8. Create ppt/slideLayouts/_rels/slideLayout1.xml.rels
-    let layout_rels = create_layout_rels_xml();
-    zip.start_file("ppt/slideLayouts/_rels/slideLayout1.xml.rels", options)?;
-    zip.write_all(layout_rels.as_bytes())?;
-
-    // 9. Create ppt/slideMasters/slideMaster1.xml
-    let slide_master = create_slide_master_xml();
-    zip.start_file("ppt/slideMasters/slideMaster1.xml", options)?;
-    zip.write_all(slide_master.as_bytes())?;
-
-    // 10. Create ppt/slideMasters/_rels/slideMaster1.xml.rels
-    let master_rels = create_master_rels_xml();
-    zip.start_file("ppt/slideMasters/_rels/slideMaster1.xml.rels", options)?;
-    zip.write_all(master_rels.as_bytes())?;
-
-    // 11. Create ppt/theme/theme1.xml
-    let theme = create_theme_xml();
-    zip.start_file("ppt/theme/theme1.xml", options)?;
-    zip.write_all(theme.as_bytes())?;
-
-    // 12. Create docProps/core.xml
-    let core_props = create_core_props_xml(title);
-    zip.start_file("docProps/core.xml", options)?;
-    zip.write_all(core_props.as_bytes())?;
-
-    // 13. Create docProps/app.xml
-    let app_props = create_app_props_xml(slides);
-    zip.start_file("docProps/app.xml", options)?;
-    zip.write_all(app_props.as_bytes())?;
-
-    let cursor = zip.finish()?;
-    Ok(cursor.into_inner())
+pub fn escape_xml(s: &str) -> String {
+    s.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace("\"", "&quot;")
+        .replace("'", "&apos;")
 }
 
-/// Create a PPTX file with custom slide content
-pub fn create_pptx_with_content(
-    title: &str,
-    slides: Vec<SlideContent>,
-) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
-    let buffer = Vec::new();
-    let cursor = Cursor::new(buffer);
-    let mut zip = ZipWriter::new(cursor);
-    let options = FileOptions::default();
-
-    let slide_count = slides.len();
-
-    // 1. Create [Content_Types].xml
-    let content_types = create_content_types_xml(slide_count);
-    zip.start_file("[Content_Types].xml", options)?;
-    zip.write_all(content_types.as_bytes())?;
-
-    // 2. Create _rels/.rels
-    let rels = create_rels_xml();
-    zip.start_file("_rels/.rels", options)?;
-    zip.write_all(rels.as_bytes())?;
-
-    // 3. Create ppt/_rels/presentation.xml.rels
-    let pres_rels = create_presentation_rels_xml(slide_count);
-    zip.start_file("ppt/_rels/presentation.xml.rels", options)?;
-    zip.write_all(pres_rels.as_bytes())?;
-
-    // 4. Create ppt/presentation.xml
-    let presentation = create_presentation_xml(title, slide_count);
-    zip.start_file("ppt/presentation.xml", options)?;
-    zip.write_all(presentation.as_bytes())?;
-
-    // 5. Create ppt/slides/slide*.xml with custom content
-    for (i, slide) in slides.iter().enumerate() {
-        let slide_num = i + 1;
-        let slide_xml = create_slide_xml_with_content(slide_num, slide);
-        zip.start_file(&format!("ppt/slides/slide{}.xml", slide_num), options)?;
-        zip.write_all(slide_xml.as_bytes())?;
-    }
-
-    // 6. Create ppt/slides/_rels/slide*.xml.rels
-    for i in 1..=slide_count {
-        let slide_rels = create_slide_rels_xml();
-        zip.start_file(&format!("ppt/slides/_rels/slide{}.xml.rels", i), options)?;
-        zip.write_all(slide_rels.as_bytes())?;
-    }
-
-    // 7. Create ppt/slideLayouts/slideLayout1.xml
-    let slide_layout = create_slide_layout_xml();
-    zip.start_file("ppt/slideLayouts/slideLayout1.xml", options)?;
-    zip.write_all(slide_layout.as_bytes())?;
-
-    // 8. Create ppt/slideLayouts/_rels/slideLayout1.xml.rels
-    let layout_rels = create_layout_rels_xml();
-    zip.start_file("ppt/slideLayouts/_rels/slideLayout1.xml.rels", options)?;
-    zip.write_all(layout_rels.as_bytes())?;
-
-    // 9. Create ppt/slideMasters/slideMaster1.xml
-    let slide_master = create_slide_master_xml();
-    zip.start_file("ppt/slideMasters/slideMaster1.xml", options)?;
-    zip.write_all(slide_master.as_bytes())?;
-
-    // 10. Create ppt/slideMasters/_rels/slideMaster1.xml.rels
-    let master_rels = create_master_rels_xml();
-    zip.start_file("ppt/slideMasters/_rels/slideMaster1.xml.rels", options)?;
-    zip.write_all(master_rels.as_bytes())?;
-
-    // 11. Create ppt/theme/theme1.xml
-    let theme = create_theme_xml();
-    zip.start_file("ppt/theme/theme1.xml", options)?;
-    zip.write_all(theme.as_bytes())?;
-
-    // 12. Create docProps/core.xml
-    let core_props = create_core_props_xml(title);
-    zip.start_file("docProps/core.xml", options)?;
-    zip.write_all(core_props.as_bytes())?;
-
-    // 13. Create docProps/app.xml
-    let app_props = create_app_props_xml(slide_count);
-    zip.start_file("docProps/app.xml", options)?;
-    zip.write_all(app_props.as_bytes())?;
-
-    let cursor = zip.finish()?;
-    Ok(cursor.into_inner())
-}
-
-fn create_content_types_xml(slides: usize) -> String {
+pub fn create_content_types_xml(slides: usize) -> String {
     let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
 <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
 <Default Extension="xml" ContentType="application/xml"/>
 <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>"#.to_string();
 
-    // Add each slide
     for i in 1..=slides {
         xml.push_str(&format!(
             "\n<Override PartName=\"/ppt/slides/slide{}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.slide+xml\"/>",
@@ -216,7 +53,7 @@ fn create_content_types_xml(slides: usize) -> String {
     xml
 }
 
-fn create_rels_xml() -> String {
+pub fn create_rels_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="ppt/presentation.xml"/>
@@ -225,7 +62,7 @@ fn create_rels_xml() -> String {
 </Relationships>"#.to_string()
 }
 
-fn create_presentation_rels_xml(slides: usize) -> String {
+pub fn create_presentation_rels_xml(slides: usize) -> String {
     let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
     <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
@@ -243,7 +80,7 @@ fn create_presentation_rels_xml(slides: usize) -> String {
     xml
 }
 
-fn create_presentation_xml(_title: &str, slides: usize) -> String {
+pub fn create_presentation_xml(_title: &str, slides: usize) -> String {
     let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" saveSubsetFonts="1">
 <p:sldMasterIdLst>
@@ -267,7 +104,7 @@ fn create_presentation_xml(_title: &str, slides: usize) -> String {
     xml
 }
 
-fn create_slide_xml(slide_num: usize, title: &str) -> String {
+pub fn create_slide_xml(slide_num: usize, title: &str) -> String {
     let slide_title = if slide_num == 1 {
         title.to_string()
     } else {
@@ -325,7 +162,7 @@ fn create_slide_xml(slide_num: usize, title: &str) -> String {
     )
 }
 
-fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent) -> String {
+pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent) -> String {
     let mut xml = format!(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
@@ -377,7 +214,6 @@ fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent) -> S
         escape_xml(&content.title)
     );
 
-    // Add content text box with bullet points
     if !content.content.is_empty() {
         xml.push_str(
             r#"
@@ -400,18 +236,16 @@ fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent) -> S
 <a:lstStyle/>"#
         );
 
-        for (i, bullet) in content.content.iter().enumerate() {
-            let level = if i == 0 { 0 } else { 0 };
+        for bullet in content.content.iter() {
             xml.push_str(&format!(
                 r#"
 <a:p>
-<a:pPr lvl="{}"/>
+<a:pPr lvl="0"/>
 <a:r>
 <a:rPr lang="en-US" sz="2800"/>
 <a:t>{}</a:t>
 </a:r>
 </a:p>"#,
-                level,
                 escape_xml(bullet)
             ));
         }
@@ -436,22 +270,14 @@ fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent) -> S
     xml
 }
 
-fn escape_xml(s: &str) -> String {
-    s.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\"", "&quot;")
-        .replace("'", "&apos;")
-}
-
-fn create_slide_rels_xml() -> String {
+pub fn create_slide_rels_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
     <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
 </Relationships>"#.to_string()
 }
 
-fn create_slide_layout_xml() -> String {
+pub fn create_slide_layout_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="blank" preserve="1">
 <p:cSld name="Blank">
@@ -477,14 +303,14 @@ fn create_slide_layout_xml() -> String {
 </p:sldLayout>"#.to_string()
 }
 
-fn create_layout_rels_xml() -> String {
+pub fn create_layout_rels_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
     <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster1.xml"/>
 </Relationships>"#.to_string()
 }
 
-fn create_slide_master_xml() -> String {
+pub fn create_slide_master_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
 <p:cSld>
@@ -516,7 +342,7 @@ fn create_slide_master_xml() -> String {
 </p:sldMaster>"#.to_string()
 }
 
-fn create_master_rels_xml() -> String {
+pub fn create_master_rels_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
@@ -524,7 +350,7 @@ fn create_master_rels_xml() -> String {
 </Relationships>"#.to_string()
 }
 
-fn create_theme_xml() -> String {
+pub fn create_theme_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Office Theme">
 <a:themeElements>
@@ -582,7 +408,7 @@ fn create_theme_xml() -> String {
 </a:theme>"#.to_string()
 }
 
-fn create_core_props_xml(title: &str) -> String {
+pub fn create_core_props_xml(title: &str) -> String {
     format!(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -595,7 +421,7 @@ fn create_core_props_xml(title: &str) -> String {
     )
 }
 
-fn create_app_props_xml(slides: usize) -> String {
+pub fn create_app_props_xml(slides: usize) -> String {
     format!(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">

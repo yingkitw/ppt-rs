@@ -1,10 +1,24 @@
 //! Public API module
-
-pub use crate::presentation::Presentation;
+//!
+//! This module provides the main public API for working with presentations.
+//! Currently, it's a placeholder for future expansion.
 
 use crate::exc::Result;
 use std::io::Read;
 use std::path::Path;
+
+/// Represents a PowerPoint presentation
+#[derive(Debug, Clone, Default)]
+pub struct Presentation {
+    // Implementation will be added
+}
+
+impl Presentation {
+    /// Create a new presentation
+    pub fn new() -> Self {
+        Presentation {}
+    }
+}
 
 pub fn presentation<P: AsRef<Path>>(path: Option<P>) -> Result<Presentation> {
     match path {
