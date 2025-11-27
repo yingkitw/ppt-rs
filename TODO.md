@@ -2,6 +2,26 @@
 
 ## Recently Completed
 
+### Code Modularization (v1.0.4)
+- [x] Modularized `generator/layouts/` - Atomic slide layout generators
+  - `common.rs` - SlideXmlBuilder, generate_text_props
+  - `blank.rs` - BlankLayout
+  - `title_only.rs` - TitleOnlyLayout
+  - `centered_title.rs` - CenteredTitleLayout
+  - `title_content.rs` - TitleContentLayout, TitleBigContentLayout
+  - `two_column.rs` - TwoColumnLayout
+- [x] Modularized `generator/text/` - Atomic text components
+  - `format.rs` - TextFormat, FormattedText
+  - `run.rs` - Run (text span with formatting)
+  - `paragraph.rs` - Paragraph (alignment, bullets, spacing)
+  - `frame.rs` - TextFrame (container for paragraphs)
+- [x] Modularized `generator/charts/` - Atomic chart components
+  - `types.rs` - ChartType enum
+  - `data.rs` - Chart, ChartSeries
+  - `builder.rs` - ChartBuilder
+  - `xml.rs` - Chart XML generation with shared helpers
+- [x] All 303 tests passing
+
 ### Code Optimization (v1.0.3)
 - [x] Fixed failing test (file size check too strict)
 - [x] Created core module with trait-based XML generation (`ToXml`, `Positioned`, `Styled`)

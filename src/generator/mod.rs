@@ -7,20 +7,28 @@ pub mod slide_xml;
 pub mod theme_xml;
 pub mod props_xml;
 
+// Modular layout system
+pub mod layouts;
+
 // Re-export module for backward compatibility
 pub mod xml;
 
 // Builder and content modules
 pub mod builder;
+
+// Text module (modularized)
 pub mod text;
+
 pub mod shapes;
 pub mod shapes_xml;
 pub mod tables;
 pub mod tables_xml;
 pub mod images;
 pub mod images_xml;
+
+// Charts module (modularized)
+#[path = "charts/mod.rs"]
 pub mod charts;
-pub mod charts_xml;
 
 pub use builder::{create_pptx, create_pptx_with_content};
 pub use xml::{SlideContent, SlideLayout};
@@ -30,8 +38,7 @@ pub use shapes_xml::{generate_shape_xml, generate_shapes_xml, generate_connector
 pub use tables::{Table, TableRow, TableCell, TableBuilder};
 pub use images::{Image, ImageBuilder};
 pub use images_xml::{generate_image_xml, generate_image_relationship, generate_image_content_type};
-pub use charts::{Chart, ChartType, ChartSeries, ChartBuilder};
-pub use charts_xml::generate_chart_xml;
+pub use charts::{Chart, ChartType, ChartSeries, ChartBuilder, generate_chart_xml};
 
 #[cfg(test)]
 mod tests {
