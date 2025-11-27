@@ -13,7 +13,7 @@ fn generate_text_props(
     color: Option<&str>,
 ) -> String {
     let mut props = format!(
-        r#"<a:rPr lang="en-US" sz="{}" b="{}" i="{}""#,
+        r#"<a:rPr lang="en-US" sz="{}" b="{}" i="{}" dirty="0""#,
         size,
         if bold { "1" } else { "0" },
         if italic { "1" } else { "0" }
@@ -26,9 +26,10 @@ fn generate_text_props(
     props.push('>');
 
     if let Some(hex_color) = color {
+        let clean_color = hex_color.trim_start_matches('#').to_uppercase();
         props.push_str(&format!(
             r#"<a:solidFill><a:srgbClr val="{}"/></a:solidFill>"#,
-            hex_color
+            clean_color
         ));
     }
 

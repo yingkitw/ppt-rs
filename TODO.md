@@ -179,12 +179,14 @@
 - [x] Connectors with arrow heads
 - [x] Example: `shapes_demo.rs`
 
-### 5. Text Implementation
-- [ ] `text/text.rs` - TextFrame, Paragraph, Run
-- [ ] `text/fonts.rs` - Font handling
-- [ ] `text/layout.rs` - Text layout
-- [ ] Implement text formatting
-- [ ] Implement paragraph formatting
+### 5. Text Implementation ✓
+- [x] `generator/text.rs` - TextFrame, Paragraph, Run
+- [x] TextAlign (Left, Center, Right, Justify)
+- [x] TextAnchor (Top, Middle, Bottom)
+- [x] Run with formatting (bold, italic, underline, color, size, font)
+- [x] Paragraph with alignment, bullets, spacing
+- [x] TextFrame with margins and anchor
+- [x] Font family support
 
 ### 6. OXML Element Implementations
 - [ ] `oxml/presentation.rs` - Presentation elements

@@ -24,7 +24,7 @@ pub mod charts_xml;
 
 pub use builder::{create_pptx, create_pptx_with_content};
 pub use xml::{SlideContent, SlideLayout};
-pub use text::{TextFormat, FormattedText};
+pub use text::{TextFormat, FormattedText, TextFrame, Paragraph, Run, TextAlign, TextAnchor};
 pub use shapes::{Shape, ShapeType, ShapeFill, ShapeLine, emu_to_inches, inches_to_emu, cm_to_emu};
 pub use shapes_xml::{generate_shape_xml, generate_shapes_xml, generate_connector_xml};
 pub use tables::{Table, TableRow, TableCell, TableBuilder};
