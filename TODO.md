@@ -329,6 +329,36 @@
 - [ ] Test with LibreOffice
 - [ ] Test with Google Slides
 
+## Learnings from ppt-rs1 & ppt-rs2
+
+See [LEARNING_ANALYSIS.md](LEARNING_ANALYSIS.md) for detailed analysis.
+
+### High Priority Improvements
+- [ ] Add alignment testing framework (from ppt-rs1)
+  - Create `scripts/validate_parity.py` or Rust equivalent
+  - Add alignment examples in `examples/alignment/`
+  - Document alignment status in `docs/ALIGNMENT.md`
+- [ ] Add validation command to CLI (from ppt-rs2)
+  - Add `pptcli validate <file>` command
+  - Check ZIP integrity, XML validity, relationships
+  - Report compliance issues clearly
+- [ ] Extract layout constants (from ppt-rs2)
+  - Create shared constants module
+  - Move layout constants from `generator/layouts/`
+  - Document EMU conversions clearly
+
+### Medium Priority Improvements
+- [ ] Improve test coverage (from ppt-rs1)
+  - Review test structure from ppt-rs1
+  - Add more integration tests
+  - Focus on PPTX generation validation
+- [ ] Review CLI help text (from ppt-rs2)
+  - Add more examples to help text
+  - Improve command descriptions
+- [ ] Consider JSON configuration support (from ppt-rs2)
+  - Evaluate if JSON config would complement Markdown
+  - Useful for programmatic generation
+
 ## Future Enhancements
 
 - [ ] Animation support
