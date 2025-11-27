@@ -3,7 +3,7 @@
 use clap::{Parser as ClapParser, Subcommand};
 
 #[derive(ClapParser, Debug)]
-#[command(name = "pptx-cli")]
+#[command(name = "pptcli")]
 #[command(about = "PowerPoint Generator - Create, read, and update PowerPoint 2007+ (.pptx) files")]
 #[command(version)]
 pub struct Cli {
@@ -141,7 +141,7 @@ pub struct LegacyParser;
 
 impl LegacyParser {
     pub fn parse(args: &[String]) -> Result<Command, String> {
-        let cli = Cli::parse_from(std::iter::once(&"pptx-cli".to_string()).chain(args.iter()));
+        let cli = Cli::parse_from(std::iter::once(&"pptcli".to_string()).chain(args.iter()));
         Ok(cli.command.into())
     }
 }
@@ -156,7 +156,7 @@ mod tests {
     #[test]
     fn test_parse_create() {
         let args = vec![
-            "pptx-cli".to_string(),
+            "pptcli".to_string(),
             "create".to_string(),
             "test.pptx".to_string(),
             "--title".to_string(),
@@ -175,7 +175,7 @@ mod tests {
     #[test]
     fn test_parse_md2ppt_with_output() {
         let args = vec![
-            "pptx-cli".to_string(),
+            "pptcli".to_string(),
             "md2ppt".to_string(),
             "input.md".to_string(),
             "output.pptx".to_string(),
@@ -196,7 +196,7 @@ mod tests {
     #[test]
     fn test_parse_md2ppt_auto_output() {
         let args = vec![
-            "pptx-cli".to_string(),
+            "pptcli".to_string(),
             "md2ppt".to_string(),
             "input.md".to_string(),
             "--title".to_string(),
@@ -216,7 +216,7 @@ mod tests {
     #[test]
     fn test_parse_from_md_alias() {
         let args = vec![
-            "pptx-cli".to_string(),
+            "pptcli".to_string(),
             "from-md".to_string(),
             "input.md".to_string(),
             "output.pptx".to_string(),
@@ -234,7 +234,7 @@ mod tests {
     #[test]
     fn test_parse_info() {
         let args = vec![
-            "pptx-cli".to_string(),
+            "pptcli".to_string(),
             "info".to_string(),
             "test.pptx".to_string(),
         ];

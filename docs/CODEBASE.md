@@ -162,7 +162,7 @@ lib.rs
 
 1. Add command parsing in `src/cli/parser.rs`
 2. Implement command in `src/cli/commands.rs`
-3. Add help text in `src/bin/pptx-cli.rs`
+3. Add help text in `src/bin/pptcli.rs`
 4. Add tests
 
 ## Testing

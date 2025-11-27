@@ -316,7 +316,7 @@
   - [x] Fixed `oxml/dml/mod.rs`
   - [x] Fixed `oxml/presentation.rs`
   - [x] Fixed `cli/commands.rs`
-  - [x] Fixed `bin/pptx-cli.rs`
+  - [x] Fixed `bin/pptcli.rs`
   - [ ] Remaining: ~38 warnings in other files (cosmetic)
 - [ ] Improve error messages
 - [ ] Add more comprehensive error handling

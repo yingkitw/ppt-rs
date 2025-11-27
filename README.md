@@ -41,13 +41,13 @@ The easiest way to create presentations: write Markdown, get PowerPoint.
 
 ```bash
 # Auto-generates slides.pptx
-pptx-cli md2ppt slides.md
+pptcli md2ppt slides.md
 
 # Or specify output
-pptx-cli md2ppt slides.md presentation.pptx
+pptcli md2ppt slides.md presentation.pptx
 
 # With custom title
-pptx-cli md2ppt slides.md --title "My Presentation"
+pptcli md2ppt slides.md --title "My Presentation"
 ```
 
 That's it! You now have a valid PowerPoint file that opens in PowerPoint, Google Slides, LibreOffice, and more.
@@ -110,7 +110,7 @@ The Markdown format is simple and intuitive:
 - Q&A
 ```
 
-Convert with: `pptx-cli md2ppt presentation.md` → `presentation.pptx`
+Convert with: `pptcli md2ppt presentation.md` → `presentation.pptx`
 
 ## Installation
 

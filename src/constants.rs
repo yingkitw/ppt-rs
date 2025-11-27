@@ -70,7 +70,7 @@ pub mod fonts {
 
 /// CLI defaults
 pub mod cli {
-    pub const APP_NAME: &str = "pptx-cli";
+    pub const APP_NAME: &str = "pptcli";
     pub const AUTHOR: &str = "PPTX Generator";
     pub const DEFAULT_SLIDES_CLI: usize = 1;
 }

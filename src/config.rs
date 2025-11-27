@@ -55,7 +55,7 @@ impl CliConfig {
     /// Create CLI configuration
     pub fn default() -> Self {
         CliConfig {
-            app_name: "pptx-cli".to_string(),
+            app_name: "pptcli".to_string(),
             version: "1.0.2".to_string(),
             author: "PPTX Generator".to_string(),
         }

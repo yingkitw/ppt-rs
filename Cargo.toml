@@ -30,8 +30,8 @@ name = "ppt_rs"
 path = "src/lib.rs"
 
 [[bin]]
-name = "pptx-cli"
-path = "src/bin/pptx-cli.rs"
+name = "pptcli"
+path = "src/bin/pptcli.rs"
 
 [profile.release]
 opt-level = 3
