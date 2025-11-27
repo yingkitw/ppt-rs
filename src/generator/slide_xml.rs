@@ -704,6 +704,51 @@ fn create_title_and_content_slide(content: &SlideContent) -> String {
         xml.push_str(&generate_shape_xml(shape, (i + 10) as u32));
     }
 
+    // Note: Images require actual image data embedded in ppt/media/ and 
+    // corresponding relationships. For now, we add a placeholder shape showing
+    // where the image would be placed.
+    let image_start_id = 20 + content.shapes.len();
+    for (i, image) in content.images.iter().enumerate() {
+        xml.push('\n');
+        // Create a placeholder rectangle showing image location
+        xml.push_str(&format!(
+            r#"<p:sp>
+<p:nvSpPr>
+<p:cNvPr id="{}" name="Image Placeholder: {}"/>
+<p:cNvSpPr/>
+<p:nvPr/>
+</p:nvSpPr>
+<p:spPr>
+<a:xfrm>
+<a:off x="{}" y="{}"/>
+<a:ext cx="{}" cy="{}"/>
+</a:xfrm>
+<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+<a:solidFill><a:srgbClr val="E0E0E0"/></a:solidFill>
+<a:ln w="12700"><a:solidFill><a:srgbClr val="808080"/></a:solidFill></a:ln>
+</p:spPr>
+<p:txBody>
+<a:bodyPr wrap="square" rtlCol="0" anchor="ctr"/>
+<a:lstStyle/>
+<a:p>
+<a:pPr algn="ctr"/>
+<a:r>
+<a:rPr lang="en-US" sz="1400"/>
+<a:t>📷 {}</a:t>
+</a:r>
+</a:p>
+</p:txBody>
+</p:sp>"#,
+            image_start_id + i,
+            image.filename,
+            image.x,
+            image.y,
+            image.width,
+            image.height,
+            image.filename
+        ));
+    }
+
     xml.push_str(
         r#"
 </p:spTree>

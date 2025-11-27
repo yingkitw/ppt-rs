@@ -2,6 +2,7 @@
 
 use super::tables::Table;
 use super::shapes::Shape;
+use super::images::Image;
 
 /// Slide layout types
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
@@ -54,6 +55,7 @@ pub struct SlideContent {
     pub layout: SlideLayout,
     pub table: Option<Table>,
     pub shapes: Vec<Shape>,
+    pub images: Vec<Image>,
 }
 
 impl SlideContent {
@@ -77,6 +79,7 @@ impl SlideContent {
             layout: SlideLayout::TitleAndContent,
             table: None,
             shapes: Vec::new(),
+            images: Vec::new(),
         }
     }
 
@@ -170,6 +173,20 @@ impl SlideContent {
     /// Add multiple shapes to the slide
     pub fn with_shapes(mut self, shapes: Vec<Shape>) -> Self {
         self.shapes.extend(shapes);
+        self
+    }
+
+    /// Add an image to the slide
+    pub fn add_image(mut self, image: Image) -> Self {
+        self.images.push(image);
+        self.has_image = true;
+        self
+    }
+
+    /// Add multiple images to the slide
+    pub fn with_images(mut self, images: Vec<Image>) -> Self {
+        self.images.extend(images);
+        self.has_image = true;
         self
     }
 }

@@ -243,14 +243,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     let image_slides = vec![
         SlideContent::new("Image Support")
-            .with_image()
             .add_bullet("PNG, JPG, GIF, BMP, TIFF formats")
-            .add_bullet("Custom positioning (x, y)")
-            .add_bullet("Flexible sizing (width, height)")
-            .add_bullet("Scale to width/height")
-            .add_bullet("Aspect ratio preservation"),
+            .add_bullet("Custom positioning and sizing")
+            .add_bullet("Aspect ratio preservation")
+            .add_image(logo_image)
+            .add_image(photo_image),
     ];
-    println!("   ✓ Created {} image slides", image_slides.len());
+    println!("   ✓ Created {} image slides with embedded images", image_slides.len());
 
     // =========================================================================
     // PART 6: Shapes
