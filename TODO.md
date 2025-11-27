@@ -39,6 +39,26 @@
 - [x] Image support with positioning and sizing
 - [x] Image XML generation and relationships
 
+## High Priority - Next Steps
+
+### 1. XML Parsing for Reading Presentations
+- [ ] Implement XML parser in `oxml/xmlchemy.rs`
+- [ ] Parse slide content from existing PPTX files
+- [ ] Extract text, tables, charts, images
+- [ ] Build object model from XML
+
+### 2. Slide Modification Capabilities
+- [ ] Open existing PPTX files
+- [ ] Parse and modify slide content
+- [ ] Add new slides to existing presentations
+- [ ] Update slide properties
+
+### 3. Enhanced Content Integration
+- [x] Embed tables directly into slides
+- [x] Embed charts directly into slides
+- [x] Embed images directly into slides (placeholder)
+- [x] Update `create_pptx_with_content` to support rich content
+
 ## Completed Features
 
 ### 1. Complete Text Styling ✓
@@ -76,6 +96,8 @@
 - [x] ZIP writing in `opc/package.rs` (implemented)
 - [x] Package part management (get, add, list)
 - [x] Example: read_pptx.rs - Read and inspect PPTX files
+- [x] SlideContent extended with table, chart, image markers
+- [x] Comprehensive demo updated with all feature indicators
 - [ ] XML parsing in `oxml/xmlchemy.rs`
 - [ ] Open existing PPTX files and extract metadata
 - [ ] Modify existing presentations

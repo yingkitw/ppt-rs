@@ -15,6 +15,9 @@ pub struct SlideContent {
     pub content_underline: bool,
     pub title_color: Option<String>,  // RGB hex color (e.g., "FF0000")
     pub content_color: Option<String>, // RGB hex color
+    pub has_table: bool,              // Indicates if slide should include a table
+    pub has_chart: bool,              // Indicates if slide should include a chart
+    pub has_image: bool,              // Indicates if slide should include an image
 }
 
 impl SlideContent {
@@ -32,6 +35,9 @@ impl SlideContent {
             content_underline: false,
             title_color: None,
             content_color: None,
+            has_table: false,
+            has_chart: false,
+            has_image: false,
         }
     }
 
@@ -97,6 +103,24 @@ impl SlideContent {
     /// Set content color (RGB hex format)
     pub fn content_color(mut self, color: &str) -> Self {
         self.content_color = Some(color.trim_start_matches('#').to_uppercase());
+        self
+    }
+
+    /// Mark slide to include a table
+    pub fn with_table(mut self) -> Self {
+        self.has_table = true;
+        self
+    }
+
+    /// Mark slide to include a chart
+    pub fn with_chart(mut self) -> Self {
+        self.has_chart = true;
+        self
+    }
+
+    /// Mark slide to include an image
+    pub fn with_image(mut self) -> Self {
+        self.has_image = true;
         self
     }
 }

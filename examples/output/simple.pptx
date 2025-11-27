@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<presentation>
+  <title>My First Presentation</title>
+  <slides count="1">
+    <slide number="1">
+      <title>Slide 1</title>
+      <content></content>
+    </slide>
+  </slides>
+</presentation>
