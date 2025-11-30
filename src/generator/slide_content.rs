@@ -3,6 +3,9 @@
 use super::tables::Table;
 use super::shapes::Shape;
 use super::images::Image;
+use super::connectors::Connector;
+use super::media::{Video, Audio};
+use super::charts::Chart;
 
 /// Slide layout types
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
@@ -58,6 +61,14 @@ pub struct SlideContent {
     pub images: Vec<Image>,
     /// Speaker notes for the slide
     pub notes: Option<String>,
+    /// Connectors between shapes
+    pub connectors: Vec<Connector>,
+    /// Videos embedded in slide
+    pub videos: Vec<Video>,
+    /// Audio files embedded in slide
+    pub audios: Vec<Audio>,
+    /// Charts embedded in slide
+    pub charts: Vec<Chart>,
 }
 
 impl SlideContent {
@@ -83,6 +94,10 @@ impl SlideContent {
             shapes: Vec::new(),
             images: Vec::new(),
             notes: None,
+            connectors: Vec::new(),
+            videos: Vec::new(),
+            audios: Vec::new(),
+            charts: Vec::new(),
         }
     }
 
@@ -202,5 +217,65 @@ impl SlideContent {
     /// Check if slide has speaker notes
     pub fn has_notes(&self) -> bool {
         self.notes.is_some()
+    }
+
+    /// Add a connector to the slide
+    pub fn add_connector(mut self, connector: Connector) -> Self {
+        self.connectors.push(connector);
+        self
+    }
+
+    /// Add multiple connectors to the slide
+    pub fn with_connectors(mut self, connectors: Vec<Connector>) -> Self {
+        self.connectors.extend(connectors);
+        self
+    }
+
+    /// Add a video to the slide
+    pub fn add_video(mut self, video: Video) -> Self {
+        self.videos.push(video);
+        self
+    }
+
+    /// Add multiple videos to the slide
+    pub fn with_videos(mut self, videos: Vec<Video>) -> Self {
+        self.videos.extend(videos);
+        self
+    }
+
+    /// Add an audio file to the slide
+    pub fn add_audio(mut self, audio: Audio) -> Self {
+        self.audios.push(audio);
+        self
+    }
+
+    /// Add multiple audio files to the slide
+    pub fn with_audios(mut self, audios: Vec<Audio>) -> Self {
+        self.audios.extend(audios);
+        self
+    }
+
+    /// Add a chart to the slide
+    pub fn add_chart(mut self, chart: Chart) -> Self {
+        self.charts.push(chart);
+        self.has_chart = true;
+        self
+    }
+
+    /// Add multiple charts to the slide
+    pub fn with_charts(mut self, charts: Vec<Chart>) -> Self {
+        self.charts.extend(charts);
+        self.has_chart = true;
+        self
+    }
+
+    /// Check if slide has any media
+    pub fn has_media(&self) -> bool {
+        !self.videos.is_empty() || !self.audios.is_empty()
+    }
+
+    /// Check if slide has connectors
+    pub fn has_connectors(&self) -> bool {
+        !self.connectors.is_empty()
     }
 }

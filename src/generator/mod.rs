@@ -36,6 +36,12 @@ pub mod charts;
 // Notes module for speaker notes
 pub mod notes_xml;
 
+// New element modules
+pub mod connectors;
+pub mod hyperlinks;
+pub mod gradients;
+pub mod media;
+
 pub use builder::{create_pptx, create_pptx_with_content};
 pub use notes_xml::{create_notes_xml, create_notes_rels_xml, create_notes_master_xml, create_notes_master_rels_xml};
 pub use xml::{SlideContent, SlideLayout};
@@ -46,6 +52,12 @@ pub use tables::{Table, TableRow, TableCell, TableBuilder};
 pub use images::{Image, ImageBuilder};
 pub use images_xml::{generate_image_xml, generate_image_relationship, generate_image_content_type};
 pub use charts::{Chart, ChartType, ChartSeries, ChartBuilder, generate_chart_xml};
+
+// New element exports
+pub use connectors::{Connector, ConnectorType, ConnectorLine, ArrowType, ArrowSize, ConnectionSite, LineDash, generate_connector_xml as generate_cxn_xml};
+pub use hyperlinks::{Hyperlink, HyperlinkAction, generate_text_hyperlink_xml, generate_shape_hyperlink_xml, generate_hyperlink_relationship_xml};
+pub use gradients::{GradientFill, GradientType, GradientDirection, GradientStop, PresetGradients, generate_gradient_fill_xml};
+pub use media::{Video, Audio, VideoFormat, AudioFormat, VideoOptions, AudioOptions, generate_video_xml, generate_audio_xml};
 
 #[cfg(test)]
 mod tests {

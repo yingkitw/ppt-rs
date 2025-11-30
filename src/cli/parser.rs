@@ -6,7 +6,7 @@ use clap::{Parser as ClapParser, Subcommand};
 #[command(name = "pptcli")]
 #[command(about = "PowerPoint Generator - Create, read, and update PowerPoint 2007+ (.pptx) files")]
 #[command(
-    long_about = "pptcli - A command-line tool for generating PowerPoint presentations from Markdown or programmatically.
+    long_about = "pptcli - A command-line tool for generating PowerPoint presentations from Markdown, webpages, or programmatically.
 
 Examples:
   # Create a simple presentation
@@ -17,6 +17,9 @@ Examples:
 
   # Auto-generate output filename from Markdown
   pptcli md2ppt slides.md
+
+  # Convert webpage to PowerPoint (requires --features web2ppt)
+  pptcli web2ppt https://example.com -o output.pptx
 
   # Validate a PPTX file
   pptcli validate presentation.pptx
@@ -124,6 +127,69 @@ Example:
         #[arg(value_name = "FILE", help = "Path to the PPTX file to validate")]
         file: String,
     },
+    
+    /// Convert a webpage to PowerPoint (requires web2ppt feature)
+    #[command(
+        name = "web2ppt",
+        alias = "from-url",
+        alias = "url2ppt",
+        long_about = "Convert a webpage to a PowerPoint presentation.
+
+Fetches the webpage, extracts content (headings, paragraphs, lists, code, tables),
+and generates slides grouped by headings.
+
+Requires the 'web2ppt' feature to be enabled.
+
+Examples:
+  pptcli web2ppt https://example.com
+  pptcli web2ppt https://example.com -o output.pptx
+  pptcli web2ppt https://example.com --max-slides 10 --no-images"
+    )]
+    Web2Ppt {
+        /// URL of the webpage to convert
+        #[arg(value_name = "URL", help = "URL of the webpage to convert")]
+        url: String,
+        
+        /// Output file path
+        #[arg(short, long, default_value = "output.pptx", help = "Path to the output PPTX file")]
+        output: String,
+        
+        /// Custom presentation title (overrides page title)
+        #[arg(short, long, help = "Custom title for the presentation")]
+        title: Option<String>,
+        
+        /// Maximum number of slides
+        #[arg(long, default_value = "20", help = "Maximum number of slides to generate")]
+        max_slides: usize,
+        
+        /// Maximum bullets per slide
+        #[arg(long, default_value = "6", help = "Maximum bullet points per slide")]
+        max_bullets: usize,
+        
+        /// Exclude images from the presentation
+        #[arg(long, help = "Don't include images from the webpage")]
+        no_images: bool,
+        
+        /// Exclude tables from the presentation
+        #[arg(long, help = "Don't include tables from the webpage")]
+        no_tables: bool,
+        
+        /// Exclude code blocks from the presentation
+        #[arg(long, help = "Don't include code blocks from the webpage")]
+        no_code: bool,
+        
+        /// Don't include source URL in presentation
+        #[arg(long, help = "Don't add source URL to the title slide")]
+        no_source_url: bool,
+        
+        /// Request timeout in seconds
+        #[arg(long, default_value = "30", help = "HTTP request timeout in seconds")]
+        timeout: u64,
+        
+        /// Verbose output
+        #[arg(short, long, help = "Show detailed progress")]
+        verbose: bool,
+    },
 }
 
 // Legacy types for backward compatibility with existing command execution code
@@ -160,12 +226,28 @@ pub struct ValidateArgs {
 }
 
 #[derive(Debug, Clone)]
+pub struct Web2PptArgs {
+    pub url: String,
+    pub output: String,
+    pub title: Option<String>,
+    pub max_slides: usize,
+    pub max_bullets: usize,
+    pub no_images: bool,
+    pub no_tables: bool,
+    pub no_code: bool,
+    pub no_source_url: bool,
+    pub timeout: u64,
+    pub verbose: bool,
+}
+
+#[derive(Debug, Clone)]
 pub enum Command {
     Create(CreateArgs),
     FromMarkdown(FromMarkdownArgs),
     Md2Ppt(Md2PptArgs),
     Info(InfoArgs),
     Validate(ValidateArgs),
+    Web2Ppt(Web2PptArgs),
 }
 
 impl From<Commands> for Command {
@@ -210,6 +292,21 @@ impl From<Commands> for Command {
             }
             Commands::Validate { file } => {
                 Command::Validate(ValidateArgs { file })
+            }
+            Commands::Web2Ppt { url, output, title, max_slides, max_bullets, no_images, no_tables, no_code, no_source_url, timeout, verbose } => {
+                Command::Web2Ppt(Web2PptArgs {
+                    url,
+                    output,
+                    title,
+                    max_slides,
+                    max_bullets,
+                    no_images,
+                    no_tables,
+                    no_code,
+                    no_source_url,
+                    timeout,
+                    verbose,
+                })
             }
         }
     }

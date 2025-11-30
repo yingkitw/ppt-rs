@@ -2,6 +2,28 @@
 
 ## Recently Completed
 
+### Web2PPT Feature (v1.0.9)
+- [x] Added `web2ppt` optional feature for converting webpages to PPTX
+- [x] Created `WebFetcher` for fetching HTML from URLs
+- [x] Created `WebParser` for extracting content from HTML (headings, paragraphs, lists, code, tables, images)
+- [x] Created `Web2Ppt` converter with configurable options
+- [x] Added `Web2PptConfig` for customizing conversion (max slides, bullets, include/exclude content types)
+- [x] Added `ConversionOptions` for presentation metadata
+- [x] Integrated `web2ppt` command into `pptcli` (with aliases: `from-url`, `url2ppt`)
+- [x] High-level functions: `url_to_pptx()`, `html_to_pptx()` with options variants
+- [x] Added example `web2ppt_demo.rs`
+- [x] All tests passing
+
+### Enhanced PPT Elements (v1.0.8)
+- [x] Added 18 new chart types (Area, Scatter, Doughnut, Radar, Bubble, Stock, Combo, etc.)
+- [x] Added connector support (`Connector`, `ConnectorType`, `ArrowType`, `ConnectionSite`)
+- [x] Added hyperlink support (`Hyperlink`, `HyperlinkAction` for URLs, slides, email)
+- [x] Added gradient fill support (`GradientFill`, `GradientType`, `PresetGradients`)
+- [x] Added video/audio embedding (`Video`, `Audio`, `VideoFormat`, `AudioFormat`)
+- [x] Updated `SlideContent` to support connectors, videos, audio, and charts
+- [x] Added 42 new tests for new elements
+- [x] All 250 tests passing
+
 ### PPTX Repair Capability (v1.0.7)
 - [x] Added `PptxRepair` struct for opening and repairing PPTX files
 - [x] Added `RepairIssue` enum with 9 issue types (MissingPart, InvalidXml, BrokenRelationship, etc.)

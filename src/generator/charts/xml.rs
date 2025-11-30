@@ -7,9 +7,24 @@ use super::escape_xml;
 /// Generate chart XML for a slide
 pub fn generate_chart_xml(chart: &Chart, shape_id: usize) -> String {
     match chart.chart_type {
-        ChartType::Bar => generate_bar_chart_xml(chart, shape_id),
-        ChartType::Line => generate_line_chart_xml(chart, shape_id),
+        ChartType::Bar | ChartType::BarHorizontal | ChartType::BarStacked | ChartType::BarStacked100 => {
+            generate_bar_chart_xml(chart, shape_id)
+        }
+        ChartType::Line | ChartType::LineMarkers | ChartType::LineStacked => {
+            generate_line_chart_xml(chart, shape_id)
+        }
         ChartType::Pie => generate_pie_chart_xml(chart, shape_id),
+        ChartType::Doughnut => generate_doughnut_chart_xml(chart, shape_id),
+        ChartType::Area | ChartType::AreaStacked | ChartType::AreaStacked100 => {
+            generate_area_chart_xml(chart, shape_id)
+        }
+        ChartType::Scatter | ChartType::ScatterLines | ChartType::ScatterSmooth => {
+            generate_scatter_chart_xml(chart, shape_id)
+        }
+        ChartType::Bubble => generate_bubble_chart_xml(chart, shape_id),
+        ChartType::Radar | ChartType::RadarFilled => generate_radar_chart_xml(chart, shape_id),
+        ChartType::StockHLC | ChartType::StockOHLC => generate_stock_chart_xml(chart, shape_id),
+        ChartType::Combo => generate_combo_chart_xml(chart, shape_id),
     }
 }
 
@@ -312,6 +327,373 @@ fn generate_pie_chart_xml(chart: &Chart, shape_id: usize) -> String {
     }
 
     xml.push_str("</c:pieChart>");
+    xml.push_str(chart_frame_footer());
+
+    xml
+}
+
+/// Generate doughnut chart XML
+fn generate_doughnut_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    let mut xml = chart_frame_header(chart, shape_id);
+    
+    xml.push_str(r#"<c:doughnutChart>
+<c:varyColors val="1"/>
+<c:holeSize val="50"/>"#);
+
+    // Doughnut chart uses first series only (like pie)
+    if let Some(series) = chart.series.first() {
+        xml.push_str(&format!(
+            r#"
+<c:ser>
+<c:idx val="0"/>
+<c:order val="0"/>
+<c:tx>
+<c:strRef>
+<c:f>Sheet1!$B$1</c:f>
+<c:strCache>
+<c:ptCount val="1"/>
+<c:pt idx="0"><c:v>{}</c:v></c:pt>
+</c:strCache>
+</c:strRef>
+</c:tx>
+<c:dLbls>
+<c:showCatName val="1"/>
+<c:showPercent val="1"/>
+</c:dLbls>
+<c:val>
+<c:numRef>
+<c:f>Sheet1!$B$2:$B${}</c:f>
+<c:numCache>
+<c:formatCode>General</c:formatCode>"#,
+            escape_xml(&series.name),
+            1 + series.values.len()
+        ));
+
+        for (idx, value) in series.values.iter().enumerate() {
+            xml.push_str(&format!(
+                r#"
+<c:pt idx="{}">
+<c:v>{}</c:v>
+</c:pt>"#,
+                idx, value
+            ));
+        }
+
+        xml.push_str(&format!(
+            r#"
+</c:numCache>
+</c:numRef>
+</c:val>
+<c:cat>
+<c:strRef>
+<c:f>Sheet1!$A$2:$A${}</c:f>
+<c:strCache>
+<c:ptCount val="{}"/>"#,
+            1 + chart.category_count(),
+            chart.category_count()
+        ));
+
+        for (idx, cat) in chart.categories.iter().enumerate() {
+            xml.push_str(&format!(
+                r#"
+<c:pt idx="{}">
+<c:v>{}</c:v>
+</c:pt>"#,
+                idx, escape_xml(cat)
+            ));
+        }
+
+        xml.push_str(
+            r#"
+</c:strCache>
+</c:strRef>
+</c:cat>
+</c:ser>"#
+        );
+    }
+
+    xml.push_str("</c:doughnutChart>");
+    xml.push_str(chart_frame_footer());
+
+    xml
+}
+
+/// Generate area chart XML
+fn generate_area_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    let mut xml = chart_frame_header(chart, shape_id);
+    
+    let grouping = chart.chart_type.grouping().unwrap_or("standard");
+    xml.push_str(&format!(r#"<c:areaChart>
+<c:grouping val="{}"/>"#, grouping));
+
+    for (idx, series) in chart.series.iter().enumerate() {
+        xml.push_str(&generate_series_data(chart, idx, &series.name, &series.values));
+    }
+
+    xml.push_str(&generate_category_axis(chart, "b"));
+    xml.push_str(&generate_value_axis("l"));
+    xml.push_str("</c:areaChart>");
+    xml.push_str(chart_frame_footer());
+
+    xml
+}
+
+/// Generate scatter chart XML
+fn generate_scatter_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    let mut xml = chart_frame_header(chart, shape_id);
+    
+    let scatter_style = chart.chart_type.scatter_style().unwrap_or("lineMarker");
+    xml.push_str(&format!(r#"<c:scatterChart>
+<c:scatterStyle val="{}"/>"#, scatter_style));
+
+    for (idx, series) in chart.series.iter().enumerate() {
+        xml.push_str(&format!(
+            r#"
+<c:ser>
+<c:idx val="{}"/>
+<c:order val="{}"/>
+<c:tx>
+<c:strRef>
+<c:f>Sheet1!$B$1</c:f>
+<c:strCache>
+<c:ptCount val="1"/>
+<c:pt idx="0"><c:v>{}</c:v></c:pt>
+</c:strCache>
+</c:strRef>
+</c:tx>
+<c:xVal>
+<c:numRef>
+<c:f>Sheet1!$A$2:$A${}</c:f>
+<c:numCache>
+<c:formatCode>General</c:formatCode>"#,
+            idx, idx, escape_xml(&series.name), 1 + series.values.len()
+        ));
+
+        // X values (use index as X)
+        for (i, _) in series.values.iter().enumerate() {
+            xml.push_str(&format!(
+                r#"
+<c:pt idx="{}">
+<c:v>{}</c:v>
+</c:pt>"#,
+                i, i + 1
+            ));
+        }
+
+        xml.push_str(&format!(
+            r#"
+</c:numCache>
+</c:numRef>
+</c:xVal>
+<c:yVal>
+<c:numRef>
+<c:f>Sheet1!$B$2:$B${}</c:f>
+<c:numCache>
+<c:formatCode>General</c:formatCode>"#,
+            1 + series.values.len()
+        ));
+
+        for (i, value) in series.values.iter().enumerate() {
+            xml.push_str(&format!(
+                r#"
+<c:pt idx="{}">
+<c:v>{}</c:v>
+</c:pt>"#,
+                i, value
+            ));
+        }
+
+        xml.push_str(
+            r#"
+</c:numCache>
+</c:numRef>
+</c:yVal>
+</c:ser>"#
+        );
+    }
+
+    xml.push_str(&generate_value_axis("b"));
+    xml.push_str(&generate_value_axis("l"));
+    xml.push_str("</c:scatterChart>");
+    xml.push_str(chart_frame_footer());
+
+    xml
+}
+
+/// Generate bubble chart XML
+fn generate_bubble_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    let mut xml = chart_frame_header(chart, shape_id);
+    
+    xml.push_str(r#"<c:bubbleChart>
+<c:varyColors val="0"/>
+<c:bubbleScale val="100"/>"#);
+
+    for (idx, series) in chart.series.iter().enumerate() {
+        xml.push_str(&format!(
+            r#"
+<c:ser>
+<c:idx val="{}"/>
+<c:order val="{}"/>
+<c:tx>
+<c:strRef>
+<c:f>Sheet1!$B$1</c:f>
+<c:strCache>
+<c:ptCount val="1"/>
+<c:pt idx="0"><c:v>{}</c:v></c:pt>
+</c:strCache>
+</c:strRef>
+</c:tx>
+<c:xVal>
+<c:numRef>
+<c:f>Sheet1!$A$2:$A${}</c:f>
+<c:numCache>
+<c:formatCode>General</c:formatCode>"#,
+            idx, idx, escape_xml(&series.name), 1 + series.values.len()
+        ));
+
+        for (i, _) in series.values.iter().enumerate() {
+            xml.push_str(&format!(
+                r#"
+<c:pt idx="{}">
+<c:v>{}</c:v>
+</c:pt>"#,
+                i, i + 1
+            ));
+        }
+
+        xml.push_str(&format!(
+            r#"
+</c:numCache>
+</c:numRef>
+</c:xVal>
+<c:yVal>
+<c:numRef>
+<c:f>Sheet1!$B$2:$B${}</c:f>
+<c:numCache>
+<c:formatCode>General</c:formatCode>"#,
+            1 + series.values.len()
+        ));
+
+        for (i, value) in series.values.iter().enumerate() {
+            xml.push_str(&format!(
+                r#"
+<c:pt idx="{}">
+<c:v>{}</c:v>
+</c:pt>"#,
+                i, value
+            ));
+        }
+
+        xml.push_str(&format!(
+            r#"
+</c:numCache>
+</c:numRef>
+</c:yVal>
+<c:bubbleSize>
+<c:numRef>
+<c:f>Sheet1!$C$2:$C${}</c:f>
+<c:numCache>
+<c:formatCode>General</c:formatCode>"#,
+            1 + series.values.len()
+        ));
+
+        // Bubble sizes (use values as sizes)
+        for (i, value) in series.values.iter().enumerate() {
+            xml.push_str(&format!(
+                r#"
+<c:pt idx="{}">
+<c:v>{}</c:v>
+</c:pt>"#,
+                i, value.abs()
+            ));
+        }
+
+        xml.push_str(
+            r#"
+</c:numCache>
+</c:numRef>
+</c:bubbleSize>
+</c:ser>"#
+        );
+    }
+
+    xml.push_str(&generate_value_axis("b"));
+    xml.push_str(&generate_value_axis("l"));
+    xml.push_str("</c:bubbleChart>");
+    xml.push_str(chart_frame_footer());
+
+    xml
+}
+
+/// Generate radar chart XML
+fn generate_radar_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    let mut xml = chart_frame_header(chart, shape_id);
+    
+    let radar_style = chart.chart_type.radar_style().unwrap_or("marker");
+    xml.push_str(&format!(r#"<c:radarChart>
+<c:radarStyle val="{}"/>"#, radar_style));
+
+    for (idx, series) in chart.series.iter().enumerate() {
+        xml.push_str(&generate_series_data(chart, idx, &series.name, &series.values));
+    }
+
+    xml.push_str(&generate_category_axis(chart, "b"));
+    xml.push_str(&generate_value_axis("l"));
+    xml.push_str("</c:radarChart>");
+    xml.push_str(chart_frame_footer());
+
+    xml
+}
+
+/// Generate stock chart XML
+fn generate_stock_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    let mut xml = chart_frame_header(chart, shape_id);
+    
+    xml.push_str(r#"<c:stockChart>"#);
+
+    // Stock charts need High, Low, Close (and optionally Open) series
+    for (idx, series) in chart.series.iter().enumerate() {
+        xml.push_str(&generate_series_data(chart, idx, &series.name, &series.values));
+    }
+
+    xml.push_str(&generate_category_axis(chart, "b"));
+    xml.push_str(&generate_value_axis("l"));
+    xml.push_str("</c:stockChart>");
+    xml.push_str(chart_frame_footer());
+
+    xml
+}
+
+/// Generate combo chart XML (bar + line)
+fn generate_combo_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    let mut xml = chart_frame_header(chart, shape_id);
+    
+    // First half of series as bars
+    xml.push_str(r#"<c:barChart>
+<c:barDir val="col"/>
+<c:grouping val="clustered"/>"#);
+
+    let mid = chart.series.len() / 2;
+    for (idx, series) in chart.series.iter().take(mid.max(1)).enumerate() {
+        xml.push_str(&generate_series_data(chart, idx, &series.name, &series.values));
+    }
+
+    xml.push_str(&generate_category_axis(chart, "b"));
+    xml.push_str(&generate_value_axis("l"));
+    xml.push_str("</c:barChart>");
+
+    // Second half as lines
+    if chart.series.len() > 1 {
+        xml.push_str(r#"<c:lineChart>
+<c:grouping val="standard"/>"#);
+
+        for (idx, series) in chart.series.iter().skip(mid.max(1)).enumerate() {
+            xml.push_str(&generate_series_data(chart, mid + idx, &series.name, &series.values));
+        }
+
+        xml.push_str("</c:lineChart>");
+    }
+
     xml.push_str(chart_frame_footer());
 
     xml

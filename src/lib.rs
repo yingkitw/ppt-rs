@@ -46,6 +46,10 @@ pub mod api;
 pub mod types;
 pub mod shared;
 
+// Web2PPT module (optional feature)
+#[cfg(feature = "web2ppt")]
+pub mod web2ppt;
+
 // Re-exports for convenience
 pub use api::Presentation;
 pub use core::{ToXml, escape_xml};
@@ -57,8 +61,21 @@ pub use generator::{
     Shape, ShapeType, ShapeFill, ShapeLine,
     Image, ImageBuilder,
     Chart, ChartType, ChartSeries, ChartBuilder,
+    // New element types
+    Connector, ConnectorType, ConnectorLine, ArrowType, ArrowSize, ConnectionSite, LineDash,
+    Hyperlink, HyperlinkAction,
+    GradientFill, GradientType, GradientDirection, GradientStop, PresetGradients,
+    Video, Audio, VideoFormat, AudioFormat, VideoOptions, AudioOptions,
 };
 pub use integration::{PresentationBuilder, SlideBuilder, PresentationMetadata};
 pub use oxml::repair::{PptxRepair, RepairIssue, RepairResult};
+
+// Web2PPT re-exports
+#[cfg(feature = "web2ppt")]
+pub use web2ppt::{
+    Web2Ppt, WebFetcher, WebParser, WebContent, ContentBlock, ContentType,
+    Web2PptConfig, ConversionOptions, Web2PptError,
+    html_to_pptx, html_to_pptx_with_options, url_to_pptx, url_to_pptx_with_options,
+};
 
 pub const VERSION: &str = "1.0.3";
