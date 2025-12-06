@@ -17,7 +17,7 @@ fn escape_xml(s: &str) -> String {
 pub fn generate_shape_xml(shape: &Shape, shape_id: u32) -> String {
     let fill_xml = generate_fill_xml(&shape.fill);
     let line_xml = generate_line_xml(&shape.line);
-    let text_xml = generate_text_xml(&shape.text);
+    let text_xml = generate_text_xml_with_autofit(&shape.text, shape.width, shape.height);
     
     format!(
         r#"<p:sp>
@@ -87,8 +87,44 @@ fn generate_line_xml(line: &Option<ShapeLine>) -> String {
     }
 }
 
-/// Generate text body XML for shape
-fn generate_text_xml(text: &Option<String>) -> String {
+/// Calculate optimal font size based on shape dimensions and text content
+fn calculate_font_size(text: &str, width_emu: u32, height_emu: u32) -> u32 {
+    // Convert EMU to approximate character width
+    // 1 inch = 914400 EMU, average char width at 18pt ≈ 0.1 inch
+    let width_inches = width_emu as f64 / 914400.0;
+    let height_inches = height_emu as f64 / 914400.0;
+    
+    // Account for padding (roughly 10% on each side)
+    let usable_width = width_inches * 0.8;
+    let usable_height = height_inches * 0.8;
+    
+    // Get text metrics
+    let lines: Vec<&str> = text.lines().collect();
+    let num_lines = lines.len().max(1);
+    let max_line_len = lines.iter().map(|l| l.chars().count()).max().unwrap_or(1);
+    
+    // Calculate font size based on width constraint
+    // At 18pt (1800 hundredths), average char is ~0.1 inch
+    // So chars_per_inch ≈ 10 at 18pt, scales inversely with font size
+    let chars_that_fit_width = usable_width * 10.0; // at 18pt
+    let width_scale = chars_that_fit_width / max_line_len as f64;
+    let font_from_width = (1800.0 * width_scale).min(4400.0); // max 44pt
+    
+    // Calculate font size based on height constraint
+    // At 18pt, line height ≈ 0.25 inch
+    let lines_that_fit = usable_height / 0.25;
+    let height_scale = lines_that_fit / num_lines as f64;
+    let font_from_height = (1800.0 * height_scale).min(4400.0);
+    
+    // Use the smaller of the two to ensure text fits
+    let optimal_size = font_from_width.min(font_from_height);
+    
+    // Clamp to reasonable range: 800 (8pt) to 4400 (44pt)
+    (optimal_size.max(800.0).min(4400.0)) as u32
+}
+
+/// Generate text body XML for shape with auto-fit font sizing
+fn generate_text_xml_with_autofit(text: &Option<String>, width: u32, height: u32) -> String {
     match text {
         Some(t) => {
             // Check if this is code (starts with [ and contains language tag)
@@ -118,19 +154,26 @@ fn generate_text_xml(text: &Option<String>) -> String {
                     paragraphs
                 )
             } else {
-                // Regular text: centered
+                // Calculate optimal font size based on shape dimensions
+                let font_size = calculate_font_size(t, width, height);
+                
+                // Use PowerPoint's auto-fit feature for additional safety
+                // normAutofit scales text down if needed, fontScale is percentage (100000 = 100%)
                 format!(
                     r#"<p:txBody>
-<a:bodyPr wrap="square" rtlCol="0" anchor="ctr"/>
+<a:bodyPr wrap="square" rtlCol="0" anchor="ctr">
+<a:normAutofit/>
+</a:bodyPr>
 <a:lstStyle/>
 <a:p>
 <a:pPr algn="ctr"/>
 <a:r>
-<a:rPr lang="en-US" sz="1800" dirty="0"/>
+<a:rPr lang="en-US" sz="{}" dirty="0"/>
 <a:t>{}</a:t>
 </a:r>
 </a:p>
 </p:txBody>"#,
+                    font_size,
                     escape_xml(t)
                 )
             }
@@ -269,5 +312,37 @@ mod tests {
         let xml = generate_shape_xml(&shape, 1);
         
         assert!(xml.contains("A &lt; B &amp; C &gt; D"));
+    }
+
+    #[test]
+    fn test_font_size_autofit_small_shape() {
+        // Small shape with long text should get smaller font
+        let font_size = calculate_font_size("This is a very long text that needs to fit", 500_000, 300_000);
+        assert!(font_size < 1800, "Font should be smaller than 18pt for small shape with long text");
+        assert!(font_size >= 800, "Font should not be smaller than 8pt");
+    }
+
+    #[test]
+    fn test_font_size_autofit_large_shape() {
+        // Large shape with short text should get larger font
+        let font_size = calculate_font_size("Hi", 3_000_000, 2_000_000);
+        assert!(font_size >= 1800, "Font should be at least 18pt for large shape with short text");
+    }
+
+    #[test]
+    fn test_font_size_autofit_multiline() {
+        // Multi-line text should account for height
+        let font_size = calculate_font_size("Line 1\nLine 2\nLine 3\nLine 4", 2_000_000, 500_000);
+        assert!(font_size < 1800, "Font should be smaller for multi-line text in short shape");
+    }
+
+    #[test]
+    fn test_autofit_xml_contains_norm_autofit() {
+        let shape = Shape::new(ShapeType::Rectangle, 0, 0, 1_000_000, 500_000)
+            .with_text("Test text");
+        
+        let xml = generate_shape_xml(&shape, 1);
+        
+        assert!(xml.contains("normAutofit"), "Should contain PowerPoint auto-fit element");
     }
 }

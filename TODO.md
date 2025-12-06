@@ -2,6 +2,16 @@
 
 ## Recently Completed
 
+### Auto-fit Font Sizing for Shapes (v1.0.19)
+- [x] **Font size auto-calculation** based on shape dimensions and text length
+  - Calculates optimal font size considering width and height constraints
+  - Accounts for multi-line text
+  - Clamps to reasonable range (8pt - 44pt)
+- [x] **PowerPoint normAutofit** element for additional safety
+  - Allows PowerPoint to further scale text if needed
+- [x] 4 new tests for font sizing logic
+- [x] All 452 tests passing
+
 ### Code Modularization (v1.0.18)
 - [x] **Modularized slide_xml** into separate files:
   - `slide_xml/mod.rs` - Main entry point and simple slide creation
