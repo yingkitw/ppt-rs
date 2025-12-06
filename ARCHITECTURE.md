@@ -385,7 +385,11 @@ src/generator/
 ├── mod.rs              # Module exports
 ├── builder.rs          # PPTX creation functions
 ├── xml.rs              # SlideContent, SlideLayout
-├── slide_xml.rs        # Slide XML generation
+├── slide_xml/          # Modular slide XML generation (v0.1.7)
+│   ├── mod.rs          # Main entry point
+│   ├── common.rs       # Shared XML templates
+│   ├── layouts.rs      # Layout implementations
+│   └── content.rs      # Additional content (shapes, code blocks)
 ├── slide_content.rs    # Slide content types
 ├── package_xml.rs      # Package-level XML
 ├── theme_xml.rs        # Theme XML
@@ -401,7 +405,7 @@ src/generator/
 │   └── xml.rs          # Table XML generation
 ├── charts/             # Chart module
 ├── shapes.rs           # Shape types
-├── shapes_xml.rs       # Shape XML generation
+├── shapes_xml.rs       # Shape XML generation (auto-fit, contrast)
 ├── images.rs           # Image types
 ├── images_xml.rs       # Image XML generation
 ├── text.rs             # Text formatting
@@ -409,6 +413,30 @@ src/generator/
 ├── hyperlinks.rs       # Hyperlink support
 ├── gradients.rs        # Gradient fills
 └── media.rs            # Video/audio
+```
+
+## CLI Module Structure
+
+```
+src/cli/
+├── mod.rs              # Module exports
+├── commands.rs         # CLI commands
+├── syntax.rs           # Syntax highlighting (Solarized Dark)
+└── markdown/           # Markdown parsing (v0.1.7)
+    ├── mod.rs          # Module exports
+    ├── parser.rs       # Markdown parser state machine
+    └── mermaid/        # Mermaid diagram rendering
+        ├── mod.rs      # Detection and dispatch
+        ├── types.rs    # Shared types
+        ├── flowchart.rs
+        ├── sequence.rs
+        ├── pie.rs
+        ├── gantt.rs
+        ├── class_diagram.rs
+        ├── state_diagram.rs
+        ├── er_diagram.rs
+        ├── mindmap.rs
+        └── timeline.rs
 ```
 
 ## Completed Features
@@ -429,6 +457,9 @@ src/generator/
 - [x] VBA macro support
 - [x] Custom XML support
 - [x] Table cell formatting and text rendering
+- [x] Syntax highlighting for code blocks (Solarized Dark)
+- [x] Auto-fit font sizing for shapes
+- [x] Automatic text color contrast
 
 ## Future Enhancements
 

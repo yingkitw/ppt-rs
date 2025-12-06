@@ -2,17 +2,25 @@
 
 ## Recently Completed
 
-### Auto-fit Font Sizing for Shapes (v1.0.19)
-- [x] **Font size auto-calculation** based on shape dimensions and text length
-  - Calculates optimal font size considering width and height constraints
-  - Accounts for multi-line text
+### v0.1.7 - Code Blocks & Shape Text Improvements
+- [x] **Fixed syntax highlighting in code blocks**
+  - Fixed OOXML element order: `<a:solidFill>` must come before `<a:latin>`
+  - Solarized Dark theme colors now render correctly in PowerPoint
+  - Keywords (blue), strings (cyan), functions (yellow), operators (green)
+- [x] **Auto-fit font sizing for shapes**
+  - Calculates optimal font size based on shape dimensions and text length
+  - Uses PowerPoint's `normAutofit` for additional safety
   - Clamps to reasonable range (8pt - 44pt)
-- [x] **PowerPoint normAutofit** element for additional safety
-  - Allows PowerPoint to further scale text if needed
-- [x] 4 new tests for font sizing logic
-- [x] All 452 tests passing
+- [x] **Automatic text color contrast**
+  - Detects if fill color is dark or light using luminance calculation
+  - White text on dark backgrounds, black text on light backgrounds
+  - Ensures text is always readable in shapes
+- [x] **Code modularization**
+  - `slide_xml/` module: mod.rs, common.rs, layouts.rs, content.rs
+  - `mermaid/` module: 11 files for each diagram type
+- [x] All 456 tests passing
 
-### Code Modularization (v1.0.18)
+### Code Modularization (v0.1.6)
 - [x] **Modularized slide_xml** into separate files:
   - `slide_xml/mod.rs` - Main entry point and simple slide creation
   - `slide_xml/common.rs` - Shared XML templates and utilities

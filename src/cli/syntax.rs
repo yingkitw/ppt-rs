@@ -89,16 +89,17 @@ pub fn generate_highlighted_code_xml(code: &str, language: &str) -> String {
         xml.push_str("<a:p><a:pPr algn=\"l\"/>");
         
         if line_segments.is_empty() {
-            // Empty line - use Solarized base0 color
-            xml.push_str(r#"<a:r><a:rPr lang="en-US" sz="1400" dirty="0"><a:latin typeface="Consolas"/><a:solidFill><a:srgbClr val="839496"/></a:solidFill></a:rPr><a:t> </a:t></a:r>"#);
+            // Empty line - use Solarized base0 color (solidFill before latin)
+            xml.push_str(r#"<a:r><a:rPr lang="en-US" sz="1400" dirty="0"><a:solidFill><a:srgbClr val="839496"/></a:solidFill><a:latin typeface="Consolas"/></a:rPr><a:t> </a:t></a:r>"#);
         } else {
             for segment in line_segments {
                 let bold = if segment.bold { r#" b="1""# } else { "" };
                 let italic = if segment.italic { r#" i="1""# } else { "" };
                 let text = escape_xml(&segment.text);
                 
+                // OOXML order: solidFill must come before latin font
                 xml.push_str(&format!(
-                    r#"<a:r><a:rPr lang="en-US" sz="1400" dirty="0"{}{}><a:latin typeface="Consolas"/><a:solidFill><a:srgbClr val="{}"/></a:solidFill></a:rPr><a:t>{}</a:t></a:r>"#,
+                    r#"<a:r><a:rPr lang="en-US" sz="1400" dirty="0"{}{}><a:solidFill><a:srgbClr val="{}"/></a:solidFill><a:latin typeface="Consolas"/></a:rPr><a:t>{}</a:t></a:r>"#,
                     bold, italic, segment.color, text
                 ));
             }
@@ -150,5 +151,36 @@ mod tests {
         let xml = generate_highlighted_code_xml("let x = 1;", "rust");
         assert!(xml.contains("<a:p>"));
         assert!(xml.contains("Consolas"));
+    }
+
+    #[test]
+    fn test_highlight_colors_not_black() {
+        let code = "fn main() {\n    println!(\"Hello\");\n}";
+        let highlighted = highlight_code(code, "rust");
+        
+        // Check that we have some non-black colors
+        let mut has_non_black = false;
+        for line in &highlighted {
+            for segment in line {
+                // Black would be "000000"
+                if segment.color != "000000" && !segment.text.trim().is_empty() {
+                    has_non_black = true;
+                }
+            }
+        }
+        assert!(has_non_black, "Syntax highlighting should produce non-black colors");
+    }
+
+    #[test]
+    fn test_xml_has_solarized_colors() {
+        let xml = generate_highlighted_code_xml("fn main() {}", "rust");
+        // Solarized colors should appear (not black 000000)
+        // Common Solarized colors: 859900 (green), 268BD2 (blue), 2AA198 (cyan), etc.
+        let has_color = xml.contains("859900") || xml.contains("268BD2") || 
+                        xml.contains("2AA198") || xml.contains("B58900") ||
+                        xml.contains("CB4B16") || xml.contains("DC322F") ||
+                        xml.contains("D33682") || xml.contains("6C71C4") ||
+                        xml.contains("839496") || xml.contains("93A1A1");
+        assert!(has_color, "XML should contain Solarized theme colors, got: {}", xml);
     }
 }

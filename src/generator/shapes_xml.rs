@@ -17,7 +17,8 @@ fn escape_xml(s: &str) -> String {
 pub fn generate_shape_xml(shape: &Shape, shape_id: u32) -> String {
     let fill_xml = generate_fill_xml(&shape.fill);
     let line_xml = generate_line_xml(&shape.line);
-    let text_xml = generate_text_xml_with_autofit(&shape.text, shape.width, shape.height);
+    let fill_color = shape.fill.as_ref().map(|f| f.color.as_str());
+    let text_xml = generate_text_xml_with_autofit(&shape.text, shape.width, shape.height, fill_color);
     
     format!(
         r#"<p:sp>
@@ -123,8 +124,32 @@ fn calculate_font_size(text: &str, width_emu: u32, height_emu: u32) -> u32 {
     (optimal_size.max(800.0).min(4400.0)) as u32
 }
 
+/// Calculate if a color is dark (needs white text) or light (needs black text)
+fn is_dark_color(hex_color: &str) -> bool {
+    let hex = hex_color.trim_start_matches('#');
+    if hex.len() < 6 {
+        return false; // Default to light
+    }
+    
+    let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(255);
+    let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(255);
+    let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(255);
+    
+    // Calculate relative luminance using sRGB formula
+    let luminance = 0.299 * (r as f64) + 0.587 * (g as f64) + 0.114 * (b as f64);
+    luminance < 128.0
+}
+
+/// Get contrasting text color for a given background
+fn get_text_color(fill_color: Option<&str>) -> &'static str {
+    match fill_color {
+        Some(color) if is_dark_color(color) => "FFFFFF", // White text on dark background
+        _ => "000000", // Black text on light/no background
+    }
+}
+
 /// Generate text body XML for shape with auto-fit font sizing
-fn generate_text_xml_with_autofit(text: &Option<String>, width: u32, height: u32) -> String {
+fn generate_text_xml_with_autofit(text: &Option<String>, width: u32, height: u32, fill_color: Option<&str>) -> String {
     match text {
         Some(t) => {
             // Check if this is code (starts with [ and contains language tag)
@@ -157,8 +182,10 @@ fn generate_text_xml_with_autofit(text: &Option<String>, width: u32, height: u32
                 // Calculate optimal font size based on shape dimensions
                 let font_size = calculate_font_size(t, width, height);
                 
+                // Get contrasting text color based on fill
+                let text_color = get_text_color(fill_color);
+                
                 // Use PowerPoint's auto-fit feature for additional safety
-                // normAutofit scales text down if needed, fontScale is percentage (100000 = 100%)
                 format!(
                     r#"<p:txBody>
 <a:bodyPr wrap="square" rtlCol="0" anchor="ctr">
@@ -168,12 +195,13 @@ fn generate_text_xml_with_autofit(text: &Option<String>, width: u32, height: u32
 <a:p>
 <a:pPr algn="ctr"/>
 <a:r>
-<a:rPr lang="en-US" sz="{}" dirty="0"/>
+<a:rPr lang="en-US" sz="{}" dirty="0"><a:solidFill><a:srgbClr val="{}"/></a:solidFill></a:rPr>
 <a:t>{}</a:t>
 </a:r>
 </a:p>
 </p:txBody>"#,
                     font_size,
+                    text_color,
                     escape_xml(t)
                 )
             }
@@ -344,5 +372,35 @@ mod tests {
         let xml = generate_shape_xml(&shape, 1);
         
         assert!(xml.contains("normAutofit"), "Should contain PowerPoint auto-fit element");
+    }
+
+    #[test]
+    fn test_dark_color_detection() {
+        // Dark colors should return true
+        assert!(is_dark_color("000000")); // Black
+        assert!(is_dark_color("1565C0")); // Dark blue
+        assert!(is_dark_color("002B36")); // Solarized base03
+        
+        // Light colors should return false
+        assert!(!is_dark_color("FFFFFF")); // White
+        assert!(!is_dark_color("E3F2FD")); // Light blue
+        assert!(!is_dark_color("F3E5F5")); // Light purple
+    }
+
+    #[test]
+    fn test_text_color_contrast() {
+        // Dark fill should get white text
+        let shape = Shape::new(ShapeType::Rectangle, 0, 0, 1_000_000, 500_000)
+            .with_fill(ShapeFill::new("1565C0"))
+            .with_text("Test");
+        let xml = generate_shape_xml(&shape, 1);
+        assert!(xml.contains("FFFFFF"), "Dark fill should have white text");
+        
+        // Light fill should get black text
+        let shape2 = Shape::new(ShapeType::Rectangle, 0, 0, 1_000_000, 500_000)
+            .with_fill(ShapeFill::new("E3F2FD"))
+            .with_text("Test");
+        let xml2 = generate_shape_xml(&shape2, 1);
+        assert!(xml2.contains("000000"), "Light fill should have black text");
     }
 }

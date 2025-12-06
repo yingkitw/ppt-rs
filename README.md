@@ -101,9 +101,18 @@ The Markdown format supports rich content:
 | `` `code` `` | Inline code |
 | `> Quote` | Speaker notes |
 | `| Table |` | GFM-style tables |
-| ` ```code``` ` | Code blocks |
+| ` ```code``` ` | Syntax-highlighted code blocks |
 | ` ```mermaid ` | Mermaid diagrams (12 types) |
 | `---` | Slide break |
+
+**Code Block Syntax Highlighting:**
+Code blocks are rendered with Solarized Dark theme colors:
+- **Blue** - Keywords (`fn`, `let`, `def`, `class`)
+- **Yellow** - Function names
+- **Cyan** - Strings
+- **Green** - Operators, macros
+- **Violet** - Numbers
+- **Orange** - Format specifiers
 
 **Example:**
 ```markdown
@@ -257,7 +266,7 @@ Unlike other Rust PPTX crates that:
 
 `ppt-rs`:
 - ✅ Generates **valid PPTX files** from day one
-- ✅ **Actively maintained** with comprehensive test coverage (600+ tests)
+- ✅ **Actively maintained** with comprehensive test coverage (650+ tests)
 - ✅ **Complete XML structure** following ECMA-376 standard
 - ✅ **Validation tools** - Built-in validation command for quality assurance
 - ✅ **Alignment testing** - Framework for ensuring compatibility with python-pptx
@@ -267,7 +276,7 @@ Unlike other Rust PPTX crates that:
 
 ### Validation
 - Built-in validation command for ECMA-376 compliance checking
-- Comprehensive test suite (600+ tests)
+- Comprehensive test suite (650+ tests)
 - Integration tests for end-to-end validation
 
 ### Alignment Testing
@@ -281,7 +290,7 @@ Unlike other Rust PPTX crates that:
 - **Standard**: ECMA-376 Office Open XML
 - **Compatibility**: PowerPoint, LibreOffice, Google Slides, Keynote
 - **Architecture**: Layered design with clear separation of concerns
-- **Test Coverage**: 610+ tests covering all major features
+- **Test Coverage**: 650+ tests covering all major features
 
 ## Advanced Features
 
