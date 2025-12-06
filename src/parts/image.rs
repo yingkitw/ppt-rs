@@ -20,7 +20,8 @@ pub struct ImagePart {
 impl ImagePart {
     /// Create a new image part
     pub fn new(image_number: usize, format: &str, data: Vec<u8>) -> Self {
-        let ext = match format.to_lowercase().as_str() {
+        let format_lower = format.to_lowercase();
+        let ext = match format_lower.as_str() {
             "jpeg" => "jpg",
             other => other,
         };
@@ -28,7 +29,7 @@ impl ImagePart {
         ImagePart {
             path: format!("ppt/media/image{}.{}", image_number, ext),
             image_number,
-            format: format.to_lowercase(),
+            format: format_lower,
             data,
             width: 0,
             height: 0,

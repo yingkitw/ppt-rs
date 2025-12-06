@@ -16,8 +16,18 @@ The PPTX library is organized into several layers that handle different aspects 
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
+│              Elements Layer (elements/)                     │
+│         Color, Position, Size, Transform                    │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
 │              Generator Layer (generator/)                   │
 │    SlideContent, Tables, Charts, Images, XML generation     │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Parts Layer (parts/)                           │
+│         SlidePart, ImagePart, ChartPart, etc.               │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -25,6 +35,13 @@ The PPTX library is organized into several layers that handle different aspects 
 │         ZIP file handling and Package management            │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+## Design Principles
+
+1. **Single Source of Truth**: Each type is defined once (no duplicates)
+2. **Trait-Based Design**: `ToXml` trait for consistent XML generation
+3. **Builder Pattern**: Fluent APIs for constructing complex objects
+4. **Separation of Concerns**: Clear boundaries between layers
 
 ## Module Descriptions
 

@@ -2,6 +2,15 @@
 
 ## Recently Completed
 
+### Architecture Optimization (v1.0.10)
+- [x] Created unified `elements/` module for shared types (Color, Position, Size, Transform)
+- [x] Removed empty stub modules (`table.rs`, `slide.rs`, `media.rs`, `text/`, `shapes/`, `chart/`, `dml/`)
+- [x] Added `InvalidOperation` error variant to `PptxError`
+- [x] Fixed `parts/` module imports and exports
+- [x] Updated ARCHITECTURE.md with new layer diagram
+- [x] Added EMU conversion constants to elements module
+- [x] All 505 tests passing
+
 ### Web2PPT Feature (v1.0.9)
 - [x] Added `web2ppt` optional feature for converting webpages to PPTX
 - [x] Created `WebFetcher` for fetching HTML from URLs

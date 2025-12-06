@@ -5,7 +5,7 @@
 use super::base::{Part, PartType, ContentType};
 use crate::exc::PptxError;
 use crate::oxml::XmlParser;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
 /// Core properties part (docProps/core.xml)
 #[derive(Debug, Clone)]

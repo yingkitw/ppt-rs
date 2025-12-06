@@ -4,8 +4,7 @@
 
 use super::base::{Part, PartType, ContentType};
 use crate::exc::PptxError;
-use crate::generator::charts::{Chart, ChartType, ChartSeries};
-use crate::generator::charts_xml::generate_chart_xml;
+use crate::generator::charts::{Chart, generate_chart_xml};
 
 /// Chart part (ppt/charts/chartN.xml)
 #[derive(Debug, Clone)]
@@ -78,7 +77,7 @@ impl Part for ChartPart {
         }
 
         if let Some(ref chart) = self.chart {
-            return Ok(generate_chart_xml(chart));
+            return Ok(generate_chart_xml(chart, self.chart_number));
         }
 
         // Return minimal chart XML
@@ -99,7 +98,7 @@ impl Part for ChartPart {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::generator::charts::ChartBuilder;
+    use crate::generator::charts::{ChartBuilder, ChartType, ChartSeries};
 
     #[test]
     fn test_chart_part_new() {

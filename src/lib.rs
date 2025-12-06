@@ -19,13 +19,19 @@
 //! # Module Organization
 //!
 //! - **core** - Core traits (`ToXml`, `Positioned`, `Styled`) and utilities
+//! - **elements** - Unified element types (Color, Position, Size, Transform)
 //! - **generator** - PPTX file generation with ZIP packaging and XML creation
+//! - **parts** - Package parts (SlidePart, ImagePart, ChartPart)
 //! - **integration** - High-level builders for presentations
 //! - **opc** - Open Packaging Convention (ZIP) handling
+//! - **oxml** - Office XML parsing and manipulation
 //! - **exc** - Error types
 
 // Core traits and utilities
 pub mod core;
+
+// Unified element types
+pub mod elements;
 
 // Main functionality
 pub mod generator;
@@ -40,6 +46,7 @@ pub mod exc;
 pub mod util;
 pub mod opc;
 pub mod oxml;
+pub mod parts;
 
 // Public API
 pub mod api;
@@ -53,6 +60,7 @@ pub mod web2ppt;
 // Re-exports for convenience
 pub use api::Presentation;
 pub use core::{ToXml, escape_xml};
+pub use elements::{Color, RgbColor, SchemeColor, Position, Size, Transform};
 pub use exc::{PptxError, Result};
 pub use generator::{
     create_pptx, create_pptx_with_content, SlideContent, SlideLayout,
