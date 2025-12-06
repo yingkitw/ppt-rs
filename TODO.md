@@ -15,10 +15,14 @@
   - Detects if fill color is dark or light using luminance calculation
   - White text on dark backgrounds, black text on light backgrounds
   - Ensures text is always readable in shapes
+- [x] **Added 3 new Mermaid diagram types**
+  - `journey` - User journey diagrams with sections and scored tasks
+  - `quadrantChart` - Quadrant charts with 4 colored quadrants and data points
+  - `gitGraph` - Git commit graphs with branches and merges
 - [x] **Code modularization**
   - `slide_xml/` module: mod.rs, common.rs, layouts.rs, content.rs
-  - `mermaid/` module: 11 files for each diagram type
-- [x] All 456 tests passing
+  - `mermaid/` module: 14 files for each diagram type
+- [x] All 462 tests passing (12 diagram types supported)
 
 ### Code Modularization (v0.1.6)
 - [x] **Modularized slide_xml** into separate files:

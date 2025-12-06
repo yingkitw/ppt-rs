@@ -15,6 +15,9 @@ pub enum MermaidType {
     ErDiagram,
     Mindmap,
     Timeline,
+    Journey,
+    Quadrant,
+    GitGraph,
     Unknown,
 }
 

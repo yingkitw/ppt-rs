@@ -12,6 +12,9 @@
 //! - ER diagrams
 //! - Mindmaps
 //! - Timelines
+//! - Journey (user journey)
+//! - Quadrant charts
+//! - Git graphs
 
 mod types;
 mod flowchart;
@@ -23,6 +26,9 @@ mod state_diagram;
 mod er_diagram;
 mod mindmap;
 mod timeline;
+mod journey;
+mod quadrant;
+mod gitgraph;
 
 pub use types::*;
 
@@ -50,6 +56,12 @@ pub fn detect_type(code: &str) -> MermaidType {
         MermaidType::Mindmap
     } else if first_line.starts_with("timeline") {
         MermaidType::Timeline
+    } else if first_line.starts_with("journey") {
+        MermaidType::Journey
+    } else if first_line.starts_with("quadrantchart") || first_line.starts_with("quadrant") {
+        MermaidType::Quadrant
+    } else if first_line.starts_with("gitgraph") || first_line.starts_with("git") {
+        MermaidType::GitGraph
     } else {
         MermaidType::Unknown
     }
@@ -104,6 +116,24 @@ pub fn create_diagram_elements(code: &str) -> DiagramElements {
                 connectors: Vec::new(),
             }
         }
+        MermaidType::Journey => {
+            DiagramElements {
+                shapes: journey::generate_shapes(code),
+                connectors: Vec::new(),
+            }
+        }
+        MermaidType::Quadrant => {
+            DiagramElements {
+                shapes: quadrant::generate_shapes(code),
+                connectors: Vec::new(),
+            }
+        }
+        MermaidType::GitGraph => {
+            DiagramElements {
+                shapes: gitgraph::generate_shapes(code),
+                connectors: Vec::new(),
+            }
+        }
         _ => {
             // Fallback: create a placeholder
             DiagramElements {
@@ -136,6 +166,9 @@ pub fn get_diagram_style(diagram_type: MermaidType) -> (&'static str, &'static s
         MermaidType::ErDiagram => ("FCE4EC", "C2185B", "ER Diagram", ""),
         MermaidType::Mindmap => ("E8EAF6", "3949AB", "Mind Map", ""),
         MermaidType::Timeline => ("EFEBE9", "5D4037", "Timeline", ""),
+        MermaidType::Journey => ("F3E5F5", "7B1FA2", "User Journey", ""),
+        MermaidType::Quadrant => ("E3F2FD", "1565C0", "Quadrant Chart", ""),
+        MermaidType::GitGraph => ("ECEFF1", "607D8B", "Git Graph", ""),
         MermaidType::Unknown => ("F5F5F5", "757575", "Diagram", ""),
     }
 }
