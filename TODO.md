@@ -2,7 +2,7 @@
 
 ## Recently Completed
 
-### v0.1.9 - Diagram Improvements & Code Cleanup
+### v0.1.8 API Simplification & Enhanced Features
 - [x] **Connectors now anchor to shapes for auto-routing**
   - Added `id` field to `Shape` struct for fixed shape IDs
   - Added `with_id()` builder method to set shape ID
@@ -55,13 +55,25 @@
   - `ShapeFill::with_transparency()` for solid color transparency
   - `create_gradient_shape()` helper for gradient shapes with labels
   - `create_transparent_shape()` helper for transparent shapes
+- [x] **Added prelude module for easy API**
+  - `pptx!()` macro for quick presentation creation
+  - `shape!()` macro for quick shape creation
+  - `QuickPptx` builder with `.slide()`, `.title_slide()`, `.shapes_slide()`
+  - Unit conversion helpers: `inches()`, `cm()`, `pt()`
+  - Shape builders: `shapes::rect()`, `shapes::circle()`, `shapes::text_box()`
+  - Color constants: `colors::RED`, `colors::BLUE`, `colors::CORPORATE_BLUE`, etc.
+  - Updated examples to use simplified API (`proper_pptx.rs`, `simple_presentation.rs`)
+- [x] **Enhanced comprehensive_demo with new features**
+  - Gradient fills slide: horizontal, vertical, diagonal, 3-color, custom angle
+  - Transparency effects slide: overlapping shapes with 25%, 50%, 75% transparency
+  - Styled connectors slide: straight, elbow, curved with arrows and dash styles
+  - Updated summary to show all new capabilities (23 slides, 36 KB)
 - [x] **Code cleanup**
   - Removed unused `generate_content_textbox` function
   - Removed unused `create_diagram_shapes` function
   - Zero compiler warnings
   - All tests passing
 
-### v0.1.7 - Code Blocks & Shape Text Improvements
 - [x] **Fixed syntax highlighting in code blocks**
   - Fixed OOXML element order: `<a:solidFill>` must come before `<a:latin>`
   - Solarized Dark theme colors now render correctly in PowerPoint
@@ -83,7 +95,6 @@
   - `mermaid/` module: 14 files for each diagram type
 - [x] All 462 tests passing (12 diagram types supported)
 
-### Code Modularization (v0.1.6)
 - [x] **Modularized slide_xml** into separate files:
   - `slide_xml/mod.rs` - Main entry point and simple slide creation
   - `slide_xml/common.rs` - Shared XML templates and utilities
@@ -104,7 +115,7 @@
 - [x] All 9 diagram types supported
 - [x] All 451+ tests passing
 
-### Mermaid Diagram Rendering with Shapes (v1.0.17)
+### v0.1.7 - Mermaid Diagram Rendering
 - [x] **Flowchart diagrams** - Nodes, subgraphs, connectors
 - [x] **Sequence diagrams** - Participants, lifelines, messages
 - [x] **Pie charts** - Circle with color-coded legend
@@ -115,7 +126,7 @@
 - [x] **Mindmaps** - Radial layout with root and branches
 - [x] **Timelines** - Horizontal timeline with events
 
-### Code Modularization & Syntax Highlighting (v1.0.16)
+### v0.1.6 - Syntax Highlighting
 - [x] **Syntax highlighting with Solarized Dark theme**
   - Vibrant colors: green (keywords), blue (functions), yellow (strings), cyan (special)
   - Dark background (#002B36) with proper contrast
@@ -129,7 +140,7 @@
   - `generator/slide/formatting.rs` - Text formatting utilities
 - [x] All 645 tests passing
 
-### Enhanced md2ppt with Tables & More (v1.0.15)
+### v0.1.5 - Enhanced md2ppt
 - [x] Added pulldown-cmark for proper markdown parsing
 - [x] Tables: GFM-style tables with header styling
 - [x] **Syntax-highlighted code blocks**: Using syntect library
@@ -154,14 +165,14 @@
 - [x] Rich text parsing tests (8 tests)
 - [x] Syntax highlighting tests (4 tests)
 
-### Table Text Rendering Fix (v1.0.14)
+### v0.1.4 - Table Text Rendering Fix
 - [x] Fixed critical table cell text visibility issue
 - [x] Learned from reference PPTX that `<a:txBody>` must come BEFORE `<a:tcPr>`
 - [x] Simplified `<a:rPr>` structure to match PowerPoint's format
 - [x] XML structure now matches Microsoft PowerPoint output exactly
 - [x] All table tests passing
 
-### Table Module Modularization (v1.0.13)
+### v0.1.3 - Table Module
 - [x] Created modular `generator/table/` module structure:
   - `cell.rs` - TableCell with CellAlign, CellVAlign enums
   - `row.rs` - TableRow with height support
@@ -173,7 +184,7 @@
 - [x] Added text wrapping support
 - [x] Comprehensive test coverage for table module
 
-### Advanced Features (v1.0.12)
+### v0.1.2 - Advanced Features
 - [x] Enhanced `TablePart` with advanced formatting:
   - Cell alignment (horizontal: left/center/right/justify, vertical: top/middle/bottom)
   - Borders (all sides, individual sides, styles: solid/dashed/dotted/double)
@@ -189,7 +200,7 @@
 - [x] Added `Model3DPart` - 3D models (GLB/GLTF/OBJ/FBX/STL formats)
 - [x] All 592 tests passing (+42 new tests)
 
-### Extended Parts Support (v1.0.11)
+### v0.1.1 - Extended Parts Support
 - [x] Added `SlideLayoutPart` - Slide layout templates with 11 layout types
 - [x] Added `SlideMasterPart` - Slide master templates with theme/layout management
 - [x] Added `ThemePart` - Theme support with colors, fonts, and format schemes
@@ -202,7 +213,7 @@
 - [x] Extended `PartType` enum with matching variants and relationship types
 - [x] All 550 tests passing (+45 new tests)
 
-### Architecture Optimization (v1.0.10)
+### v0.1.0 - Initial Release
 - [x] Created unified `elements/` module for shared types (Color, Position, Size, Transform)
 - [x] Removed empty stub modules (`table.rs`, `slide.rs`, `media.rs`, `text/`, `shapes/`, `chart/`, `dml/`)
 - [x] Added `InvalidOperation` error variant to `PptxError`
@@ -211,90 +222,21 @@
 - [x] Added EMU conversion constants to elements module
 - [x] All 505 tests passing
 
-### Web2PPT Feature (v1.0.9)
-- [x] Added `web2ppt` optional feature for converting webpages to PPTX
-- [x] Created `WebFetcher` for fetching HTML from URLs
-- [x] Created `WebParser` for extracting content from HTML (headings, paragraphs, lists, code, tables, images)
-- [x] Created `Web2Ppt` converter with configurable options
-- [x] Added `Web2PptConfig` for customizing conversion (max slides, bullets, include/exclude content types)
-- [x] Added `ConversionOptions` for presentation metadata
-- [x] Integrated `web2ppt` command into `pptcli` (with aliases: `from-url`, `url2ppt`)
-- [x] High-level functions: `url_to_pptx()`, `html_to_pptx()` with options variants
-- [x] Added example `web2ppt_demo.rs`
-- [x] All tests passing
+## Earlier Versions (Pre-0.1.0)
 
-### Enhanced PPT Elements (v1.0.8)
-- [x] Added 18 new chart types (Area, Scatter, Doughnut, Radar, Bubble, Stock, Combo, etc.)
-- [x] Added connector support (`Connector`, `ConnectorType`, `ArrowType`, `ConnectionSite`)
-- [x] Added hyperlink support (`Hyperlink`, `HyperlinkAction` for URLs, slides, email)
-- [x] Added gradient fill support (`GradientFill`, `GradientType`, `PresetGradients`)
-- [x] Added video/audio embedding (`Video`, `Audio`, `VideoFormat`, `AudioFormat`)
-- [x] Updated `SlideContent` to support connectors, videos, audio, and charts
-- [x] Added 42 new tests for new elements
-- [x] All 250 tests passing
+<details>
+<summary>Click to expand earlier development history</summary>
 
-### PPTX Repair Capability (v1.0.7)
-- [x] Added `PptxRepair` struct for opening and repairing PPTX files
-- [x] Added `RepairIssue` enum with 9 issue types (MissingPart, InvalidXml, BrokenRelationship, etc.)
-- [x] Added `RepairResult` struct for tracking repair outcomes
-- [x] Implemented validation logic to detect common PPTX issues
-- [x] Implemented repair logic to fix detected issues
-- [x] Added 16 new tests for repair functionality
-- [x] Created `examples/repair_pptx.rs` example
-- [x] All 208 tests passing
+- Web2PPT feature for converting webpages to PPTX
+- 18 chart types (Area, Scatter, Doughnut, Radar, etc.)
+- Connector, hyperlink, gradient, video/audio support
+- PPTX repair capability
+- Speaker notes support
+- Comprehensive test coverage (500+ tests)
+- Code modularization and optimization
+- Core traits (`ToXml`, `Positioned`, `Styled`)
 
-### Speaker Notes Support (v1.0.6)
-- [x] Added `notes` field to `SlideContent` struct
-- [x] Added `.notes()` builder method for adding speaker notes
-- [x] Created `notes_xml.rs` - Notes XML generation
-- [x] Created notes master XML and relationships
-- [x] Updated content types for notes slides
-- [x] Updated slide relationships for notes references
-- [x] All 376 tests passing
-
-### Unit Test Coverage (v1.0.5)
-- [x] Added comprehensive tests for `util.rs` - Length conversions (14 tests)
-- [x] Added comprehensive tests for `opc/packuri.rs` - PackUri operations (12 tests)
-- [x] Added comprehensive tests for `oxml/ns.rs` - Namespace handling (10 tests)
-- [x] Added comprehensive tests for `enums/base.rs` - Enum types (14 tests)
-- [x] Enhanced `comprehensive_demo.rs` - 32-slide business presentation
-- [x] All 371 tests passing
-
-### Code Modularization (v1.0.4)
-- [x] Modularized `generator/layouts/` - Atomic slide layout generators
-  - `common.rs` - SlideXmlBuilder, generate_text_props
-  - `blank.rs` - BlankLayout
-  - `title_only.rs` - TitleOnlyLayout
-  - `centered_title.rs` - CenteredTitleLayout
-  - `title_content.rs` - TitleContentLayout, TitleBigContentLayout
-  - `two_column.rs` - TwoColumnLayout
-- [x] Modularized `generator/text/` - Atomic text components
-  - `format.rs` - TextFormat, FormattedText
-  - `run.rs` - Run (text span with formatting)
-  - `paragraph.rs` - Paragraph (alignment, bullets, spacing)
-  - `frame.rs` - TextFrame (container for paragraphs)
-- [x] Modularized `generator/charts/` - Atomic chart components
-  - `types.rs` - ChartType enum
-  - `data.rs` - Chart, ChartSeries
-  - `builder.rs` - ChartBuilder
-  - `xml.rs` - Chart XML generation with shared helpers
-- [x] All 303 tests passing
-
-### Code Optimization (v1.0.3)
-- [x] Fixed failing test (file size check too strict)
-- [x] Created core module with trait-based XML generation (`ToXml`, `Positioned`, `Styled`)
-- [x] Added `XmlWriter` utility for efficient XML building
-- [x] Consolidated `escape_xml` and color handling in `core::xml_utils`
-- [x] Removed deprecated stub modules, simplified `lib.rs`
-- [x] Implemented `api::Presentation` with builder pattern
-- [x] Re-exported all major types from lib.rs for convenience
-- [x] Modularized `generator/xml.rs` (1135 lines → 5 modules):
-  - `slide_content.rs` (160 lines) - SlideLayout, SlideContent
-  - `package_xml.rs` (85 lines) - content types, relationships
-  - `slide_xml.rs` (718 lines) - slide layout XML generation
-  - `theme_xml.rs` (137 lines) - theme, master, layout XML
-  - `props_xml.rs` (42 lines) - document properties
-- [x] All tests passing
+</details>
 
 ## Completed
 
@@ -617,36 +559,12 @@ See [LEARNING_ANALYSIS.md](LEARNING_ANALYSIS.md) for detailed analysis.
   - Consider improvements to README and docs
   - Add more examples
 
-## Future Enhancements
+## Future Work
 
-- [x] Animation support (v1.0.12) - 50+ animation effects, 27 transitions
-- [x] Master slide support (v1.0.11) - SlideMasterPart with theme/layout management
-- [x] Notes page support (v1.0.6)
-- [x] Handout master support (v1.0.12) - HandoutMasterPart with layout options
-- [x] Custom XML support (v1.0.12) - CustomXmlPart for data storage
-- [x] VBA macro support (v1.0.12) - VbaProjectPart for .pptm files
-- [x] Embedded fonts support (v1.0.12) - EmbeddedFontPart with font collection
-- [x] SmartArt support (v1.0.12) - 25 SmartArt layouts
-- [x] 3D model support (v1.0.12) - GLB/GLTF/OBJ/FBX/STL formats
-
-### Remaining Future Work
 - [ ] Digital signatures
 - [ ] Ink annotations
 - [ ] Comments and review
 - [ ] Slide show settings
 - [ ] Print settings
-
-## v0.1.9 - Code Quality & Diagram Improvements ✅
-
-### Code Cleanup
-- [x] Remove unused `generate_content_textbox` function
-- [x] Remove unused `create_diagram_shapes` function (replaced by `create_diagram_elements`)
-- [x] Remove unused `DiagramBounds::new` and `DiagramElements::empty` functions
-- [x] Use `DiagramBounds` for diagram centering on slides
-- [ ] Use `grouped` flag to wrap diagrams in `<p:grpSp>` group shapes (future)
-
-### Diagram Enhancements
-- [x] Smart connection site selection based on relative positions
-- [x] Add shape IDs to class_diagram, state_diagram, er_diagram for connector anchoring
-- [x] Improve diagram positioning - center on slide based on bounds
-- [ ] Add diagram title shape above diagram content (future)
+- [ ] Advanced theme customization
+- [ ] Embedded fonts in output

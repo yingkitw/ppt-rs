@@ -6,6 +6,11 @@ The PPTX library is organized into several layers that handle different aspects 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
+│                    Prelude (prelude.rs)                     │
+│     pptx!(), shape!(), shapes::, colors::, inches(), cm()   │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
 │                    Public API (lib.rs)                      │
 │     Presentation, SlideContent, Table, Chart, Image         │
 └─────────────────────────────────────────────────────────────┘
@@ -44,6 +49,17 @@ The PPTX library is organized into several layers that handle different aspects 
 4. **Separation of Concerns**: Clear boundaries between layers
 
 ## Module Descriptions
+
+### Prelude Layer (`prelude.rs`)
+- **Purpose**: Simplified API for common use cases
+- **Key Features**:
+  - `pptx!()` macro for quick presentation creation
+  - `shape!()` macro for quick shape creation
+  - `QuickPptx` builder with fluent API
+  - Unit conversion helpers: `inches()`, `cm()`, `pt()`
+  - Shape builders: `shapes::rect()`, `shapes::circle()`, `shapes::text_box()`
+  - Color constants: `colors::RED`, `colors::BLUE`, `colors::CORPORATE_BLUE`
+- **Usage**: `use ppt_rs::prelude::*;`
 
 ### API Layer (`lib.rs`)
 - **Purpose**: Provide user-friendly functions for common tasks
@@ -202,6 +218,7 @@ ZIP file is saved
 ```
 src/
 ├── lib.rs                 # Library root
+├── prelude.rs           # Simplified API (v0.1.8)
 ├── api.rs               # Public API
 ├── package.rs           # Package handling
 ├── presentation.rs      # Presentation type
@@ -404,14 +421,14 @@ src/generator/
 │   ├── builder.rs      # Table, TableBuilder
 │   └── xml.rs          # Table XML generation
 ├── charts/             # Chart module
-├── shapes.rs           # Shape types
-├── shapes_xml.rs       # Shape XML generation (auto-fit, contrast)
+├── shapes.rs           # Shape types (gradient fills, transparency)
+├── shapes_xml.rs       # Shape XML generation (auto-fit, contrast, gradients)
 ├── images.rs           # Image types
 ├── images_xml.rs       # Image XML generation
 ├── text.rs             # Text formatting
-├── connectors.rs       # Connector shapes
+├── connectors.rs       # Connector shapes (straight, elbow, curved, arrows)
 ├── hyperlinks.rs       # Hyperlink support
-├── gradients.rs        # Gradient fills
+├── gradients.rs        # Gradient fills (linear, multi-stop)
 └── media.rs            # Video/audio
 ```
 
@@ -460,6 +477,11 @@ src/cli/
 - [x] Syntax highlighting for code blocks (Solarized Dark)
 - [x] Auto-fit font sizing for shapes
 - [x] Automatic text color contrast
+- [x] Prelude module with simplified API (v0.1.8)
+- [x] Gradient fills (linear, multi-stop, custom angles)
+- [x] Transparency for solid fills
+- [x] Styled connectors (arrows, dash styles)
+- [x] 12 Mermaid diagram types
 
 ## Future Enhancements
 
@@ -468,4 +490,4 @@ src/cli/
 - [ ] Ink annotations
 - [ ] Comments and review features
 - [ ] Slide sections
-- [ ] Advanced master slide customization
+- [ ] Digital signatures

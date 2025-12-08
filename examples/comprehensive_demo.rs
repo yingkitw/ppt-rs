@@ -15,9 +15,11 @@ use ppt_rs::generator::{
     create_pptx_with_content, SlideContent, SlideLayout,
     TableRow, TableCell, TableBuilder, CellAlign, CellVAlign,
     ChartType, ChartSeries, ChartBuilder,
-    Shape, ShapeType, ShapeFill,
+    Shape, ShapeType, ShapeFill, ShapeLine,
     Image,
+    Connector, ConnectorType, ConnectorLine, ArrowType, ArrowSize, LineDash,
 };
+use ppt_rs::generator::shapes::{GradientFill, GradientDirection, GradientStop};
 use ppt_rs::opc::Package;
 use ppt_rs::parts::{
     SlideLayoutPart, LayoutType,
@@ -247,9 +249,160 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // =========================================================================
-    // SLIDE 10: Images
+    // SLIDE 10: Gradient Fills (NEW)
     // =========================================================================
-    println!("🖼️  Slide 10: Image Placeholders");
+    println!("🌈 Slide 10: Gradient Fills");
+    
+    // Horizontal gradient
+    let gradient_h = Shape::new(ShapeType::Rectangle, 500000, 1600000, 2500000, 1200000)
+        .with_gradient(GradientFill::linear("1565C0", "42A5F5", GradientDirection::Horizontal))
+        .with_text("Horizontal");
+    
+    // Vertical gradient
+    let gradient_v = Shape::new(ShapeType::Rectangle, 3200000, 1600000, 2500000, 1200000)
+        .with_gradient(GradientFill::linear("2E7D32", "81C784", GradientDirection::Vertical))
+        .with_text("Vertical");
+    
+    // Diagonal gradient
+    let gradient_d = Shape::new(ShapeType::RoundedRectangle, 5900000, 1600000, 2500000, 1200000)
+        .with_gradient(GradientFill::linear("C62828", "EF9A9A", GradientDirection::DiagonalDown))
+        .with_text("Diagonal");
+    
+    // Three-color gradient
+    let gradient_3 = Shape::new(ShapeType::Ellipse, 1800000, 3200000, 2500000, 1200000)
+        .with_gradient(GradientFill::three_color("FF6F00", "FFC107", "FFEB3B", GradientDirection::Horizontal))
+        .with_text("3-Color");
+    
+    // Custom angle gradient
+    let gradient_angle = Shape::new(ShapeType::RoundedRectangle, 4800000, 3200000, 2500000, 1200000)
+        .with_gradient(GradientFill::linear("7B1FA2", "E1BEE7", GradientDirection::Angle(135)))
+        .with_text("135° Angle");
+    
+    slides.push(
+        SlideContent::new("Gradient Fills - Multiple Directions")
+            .add_shape(gradient_h)
+            .add_shape(gradient_v)
+            .add_shape(gradient_d)
+            .add_shape(gradient_3)
+            .add_shape(gradient_angle)
+            .title_color("1F497D")
+    );
+
+    // =========================================================================
+    // SLIDE 11: Transparency (NEW)
+    // =========================================================================
+    println!("👻 Slide 11: Transparency Effects");
+    
+    // Base shape (fully opaque)
+    let base = Shape::new(ShapeType::Rectangle, 1000000, 1800000, 3000000, 2000000)
+        .with_fill(ShapeFill::new("1565C0"))
+        .with_text("Base (100%)");
+    
+    // 25% transparent overlay
+    let trans_25 = Shape::new(ShapeType::Rectangle, 2000000, 2200000, 2500000, 1500000)
+        .with_fill(ShapeFill::new("F44336").with_transparency(25))
+        .with_line(ShapeLine::new("B71C1C", 25400))
+        .with_text("25% Transparent");
+    
+    // 50% transparent overlay
+    let trans_50 = Shape::new(ShapeType::Ellipse, 4500000, 1800000, 2500000, 2000000)
+        .with_fill(ShapeFill::new("4CAF50").with_transparency(50))
+        .with_line(ShapeLine::new("1B5E20", 25400))
+        .with_text("50% Transparent");
+    
+    // 75% transparent overlay
+    let trans_75 = Shape::new(ShapeType::RoundedRectangle, 5500000, 2500000, 2500000, 1500000)
+        .with_fill(ShapeFill::new("FF9800").with_transparency(75))
+        .with_line(ShapeLine::new("E65100", 25400))
+        .with_text("75% Transparent");
+    
+    slides.push(
+        SlideContent::new("Transparency Effects - Overlapping Shapes")
+            .add_shape(base)
+            .add_shape(trans_25)
+            .add_shape(trans_50)
+            .add_shape(trans_75)
+            .title_color("1F497D")
+    );
+
+    // =========================================================================
+    // SLIDE 12: Styled Connectors (NEW)
+    // =========================================================================
+    println!("🔗 Slide 12: Styled Connectors");
+    
+    // Create shapes to connect
+    let box1 = Shape::new(ShapeType::RoundedRectangle, 500000, 1800000, 1800000, 800000)
+        .with_id(100)
+        .with_fill(ShapeFill::new("1565C0"))
+        .with_text("Start");
+    
+    let box2 = Shape::new(ShapeType::RoundedRectangle, 3500000, 1800000, 1800000, 800000)
+        .with_id(101)
+        .with_fill(ShapeFill::new("2E7D32"))
+        .with_text("Process");
+    
+    let box3 = Shape::new(ShapeType::RoundedRectangle, 6500000, 1800000, 1800000, 800000)
+        .with_id(102)
+        .with_fill(ShapeFill::new("C62828"))
+        .with_text("End");
+    
+    // Straight connector with arrow
+    let conn1 = Connector::straight(2300000, 2200000, 3500000, 2200000)
+        .with_line(ConnectorLine::new("1565C0", 25400))
+        .with_end_arrow(ArrowType::Triangle)
+        .with_arrow_size(ArrowSize::Large);
+    
+    // Elbow connector with stealth arrow
+    let conn2 = Connector::elbow(5300000, 2200000, 6500000, 2200000)
+        .with_line(ConnectorLine::new("2E7D32", 38100).with_dash(LineDash::Dash))
+        .with_end_arrow(ArrowType::Stealth)
+        .with_arrow_size(ArrowSize::Medium);
+    
+    // Curved connector examples
+    let box4 = Shape::new(ShapeType::Ellipse, 1000000, 3200000, 1500000, 800000)
+        .with_id(103)
+        .with_fill(ShapeFill::new("7B1FA2"))
+        .with_text("A");
+    
+    let box5 = Shape::new(ShapeType::Ellipse, 4000000, 3200000, 1500000, 800000)
+        .with_id(104)
+        .with_fill(ShapeFill::new("00838F"))
+        .with_text("B");
+    
+    let box6 = Shape::new(ShapeType::Ellipse, 7000000, 3200000, 1500000, 800000)
+        .with_id(105)
+        .with_fill(ShapeFill::new("EF6C00"))
+        .with_text("C");
+    
+    // Curved connector with diamond arrow
+    let conn3 = Connector::curved(2500000, 3600000, 4000000, 3600000)
+        .with_line(ConnectorLine::new("7B1FA2", 19050).with_dash(LineDash::DashDot))
+        .with_arrows(ArrowType::Oval, ArrowType::Diamond);
+    
+    // Dotted connector
+    let conn4 = Connector::straight(5500000, 3600000, 7000000, 3600000)
+        .with_line(ConnectorLine::new("00838F", 12700).with_dash(LineDash::Dot))
+        .with_end_arrow(ArrowType::Open);
+    
+    slides.push(
+        SlideContent::new("Styled Connectors - Types, Arrows, Dashes")
+            .add_shape(box1)
+            .add_shape(box2)
+            .add_shape(box3)
+            .add_shape(box4)
+            .add_shape(box5)
+            .add_shape(box6)
+            .add_connector(conn1)
+            .add_connector(conn2)
+            .add_connector(conn3)
+            .add_connector(conn4)
+            .title_color("1F497D")
+    );
+
+    // =========================================================================
+    // SLIDE 13: Images
+    // =========================================================================
+    println!("🖼️  Slide 13: Image Placeholders");
     
     let img1 = Image::new("logo.png", 2500000, 1800000, "png")
         .position(500000, 1600000);
@@ -1218,7 +1371,11 @@ End Sub
     println!("║  SHAPES:                                                     ║");
     println!("║    ✓ Rectangle       ✓ Ellipse        ✓ RoundedRectangle     ║");
     println!("║    ✓ Triangle        ✓ Diamond        ✓ Color fills          ║");
-    println!("║    ✓ Text in shapes  ✓ Position/size control                 ║");
+    println!("║    ✓ Gradient fills  ✓ Transparency   ✓ Text in shapes       ║");
+    println!("╠══════════════════════════════════════════════════════════════╣");
+    println!("║  CONNECTORS (NEW):                                           ║");
+    println!("║    ✓ Straight        ✓ Elbow          ✓ Curved               ║");
+    println!("║    ✓ Arrow types     ✓ Dash styles    ✓ Line colors/widths   ║");
     println!("╠══════════════════════════════════════════════════════════════╣");
     println!("║  IMAGES:                                                     ║");
     println!("║    ✓ Image placeholders  ✓ Position   ✓ Dimensions           ║");

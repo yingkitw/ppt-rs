@@ -52,13 +52,34 @@ pptcli md2ppt slides.md --title "My Presentation"
 
 That's it! You now have a valid PowerPoint file that opens in PowerPoint, Google Slides, LibreOffice, and more.
 
-### Library
+### Library (Simple API)
+
+```rust
+use ppt_rs::prelude::*;
+
+fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    // Quick presentation with macros
+    let pptx = pptx!("My Presentation")
+        .title_slide("Welcome", "Introduction to ppt-rs")
+        .slide("Key Points", vec!["Point 1", "Point 2", "Point 3"])
+        .shapes_slide("Shapes", vec![
+            shapes::rect(inches(1.0), inches(2.0), inches(2.0), inches(1.0))
+                .with_fill(ShapeFill::new(colors::BLUE))
+                .with_text("Hello"),
+        ])
+        .build()?;
+    
+    std::fs::write("output.pptx", pptx)?;
+    Ok(())
+}
+```
+
+### Library (Full API)
 
 ```rust
 use ppt_rs::generator::{SlideContent, create_pptx_with_content};
-use std::fs;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let slides = vec![
         SlideContent::new("Introduction")
             .add_bullet("Welcome")
@@ -69,7 +90,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     ];
     
     let pptx = create_pptx_with_content("My Presentation", slides)?;
-    fs::write("output.pptx", pptx)?;
+    std::fs::write("output.pptx", pptx)?;
     Ok(())
 }
 ```
@@ -80,7 +101,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 - **Slides** - Multiple layouts (title-only, two-column, blank, etc.)
 - **Text** - Titles, bullets, formatting (bold, italic, colors, sizes)
 - **Tables** - Multi-line cells, styling, positioning
-- **Shapes** - 100+ shape types (flowcharts, arrows, geometric, decorative)
+- **Shapes** - 100+ shape types with gradient fills and transparency
+- **Connectors** - Straight, elbow, curved with arrows and dash styles
 - **Charts** - Bar, line, pie charts with multiple series
 - **Images** - Embed and position images
 - **Reading** - Parse and modify existing PPTX files
@@ -249,11 +271,40 @@ let chart = ChartBuilder::new("Sales", ChartType::Bar)
 ### Shapes
 
 ```rust
-use ppt_rs::generator::{Shape, ShapeType, ShapeFill};
+use ppt_rs::generator::{Shape, ShapeType, ShapeFill, ShapeLine};
+use ppt_rs::generator::shapes::{GradientFill, GradientDirection};
 
+// Simple shape with solid fill
 let shape = Shape::new(ShapeType::Rectangle, 0, 0, 1000000, 500000)
     .with_fill(ShapeFill::new("FF0000"))
     .with_text("Hello");
+
+// Shape with gradient fill
+let gradient_shape = Shape::new(ShapeType::RoundedRectangle, 0, 0, 2000000, 1000000)
+    .with_gradient(GradientFill::linear("1565C0", "42A5F5", GradientDirection::Horizontal))
+    .with_text("Gradient");
+
+// Shape with transparency
+let transparent = Shape::new(ShapeType::Ellipse, 0, 0, 1500000, 1500000)
+    .with_fill(ShapeFill::new("4CAF50").with_transparency(50))
+    .with_line(ShapeLine::new("1B5E20", 25400));
+```
+
+### Connectors
+
+```rust
+use ppt_rs::generator::{Connector, ConnectorLine, ArrowType, ArrowSize, LineDash};
+
+// Straight connector with arrow
+let conn = Connector::straight(1000000, 1000000, 3000000, 1000000)
+    .with_line(ConnectorLine::new("1565C0", 25400))
+    .with_end_arrow(ArrowType::Triangle)
+    .with_arrow_size(ArrowSize::Large);
+
+// Elbow connector with dashed line
+let elbow = Connector::elbow(1000000, 2000000, 3000000, 3000000)
+    .with_line(ConnectorLine::new("2E7D32", 19050).with_dash(LineDash::Dash))
+    .with_arrows(ArrowType::Oval, ArrowType::Stealth);
 ```
 
 ## What Makes This Different
@@ -294,6 +345,10 @@ Unlike other Rust PPTX crates that:
 
 ## Advanced Features
 
+- **Prelude Module**: Simplified API with macros (`pptx!`, `shape!`), unit helpers (`inches()`, `cm()`), and color constants
+- **Gradient Fills**: Linear gradients with multiple stops and directions (horizontal, vertical, diagonal, custom angle)
+- **Transparency**: Alpha transparency for solid fills (0-100%)
+- **Connectors**: Straight, elbow, curved with arrow types (triangle, stealth, diamond, oval, open) and dash styles
 - **Tables**: Cell formatting, colors, alignment, borders
 - **Charts**: Bar, line, pie, area, scatter, doughnut, radar, and more
 - **Shapes**: 100+ shape types with fills, outlines, and text

@@ -53,6 +53,9 @@ pub mod api;
 pub mod types;
 pub mod shared;
 
+// Easy-to-use prelude
+pub mod prelude;
+
 // Web2PPT module (optional feature)
 #[cfg(feature = "web2ppt")]
 pub mod web2ppt;
