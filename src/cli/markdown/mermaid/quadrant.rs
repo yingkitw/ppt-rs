@@ -1,6 +1,7 @@
 //! Quadrant chart rendering
 
 use crate::generator::{Shape, ShapeType, ShapeFill, ShapeLine};
+use super::types::{create_labeled_dot, LabelPosition};
 
 /// Generate shapes for a quadrant chart
 pub fn generate_shapes(code: &str) -> Vec<Shape> {
@@ -96,7 +97,7 @@ pub fn generate_shapes(code: &str) -> Vec<Shape> {
             .with_line(ShapeLine::new("9E9E9E", 12700))
     );
     
-    // Draw points with separate labels
+    // Draw points with separate labels using helper
     let point_size = 300_000u32;
     for (label, x, y) in &points {
         // Convert 0-1 coordinates to chart position
@@ -104,23 +105,7 @@ pub fn generate_shapes(code: &str) -> Vec<Shape> {
         let px = chart_x + ((*x * chart_width as f32) as u32).saturating_sub(point_size / 2);
         let py = chart_y + (((1.0 - *y) * chart_height as f32) as u32).saturating_sub(point_size / 2);
         
-        // Point circle (no text)
-        shapes.push(
-            Shape::new(ShapeType::Circle, px, py, point_size, point_size)
-                .with_fill(ShapeFill::new("1565C0"))
-        );
-        
-        // Label to the right of the point
-        let label_width = 1_000_000u32;
-        let label_height = 200_000u32;
-        shapes.push(
-            Shape::new(ShapeType::Rectangle, 
-                px + point_size + 50_000,
-                py + point_size / 2 - label_height / 2,
-                label_width,
-                label_height)
-                .with_text(label)
-        );
+        shapes.extend(create_labeled_dot(px, py, point_size, "1565C0", None, label, LabelPosition::Right));
     }
     
     // If no points, add placeholder text

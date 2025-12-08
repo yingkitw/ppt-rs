@@ -1,6 +1,7 @@
 //! Shared types for Mermaid diagram parsing
 
-use crate::generator::Shape;
+use crate::generator::{Shape, ShapeType, ShapeFill, ShapeLine};
+use crate::generator::shapes::{GradientFill, GradientDirection};
 use crate::generator::connectors::Connector;
 
 /// Mermaid diagram types
@@ -163,4 +164,209 @@ impl DiagramElements {
             grouped: true,
         }
     }
+}
+
+/// Position for label relative to shape
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+pub enum LabelPosition {
+    Above,
+    Below,
+    Right,
+    Inside,
+}
+
+/// Helper to create a shape with a separate label
+/// Returns (background_shape, label_shape)
+pub fn create_labeled_shape(
+    shape_type: ShapeType,
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
+    fill_color: Option<&str>,
+    line_color: Option<&str>,
+    text: &str,
+    label_pos: LabelPosition,
+) -> Vec<Shape> {
+    let mut shapes = Vec::new();
+    
+    // Background shape (no text)
+    let mut bg = Shape::new(shape_type, x, y, width, height);
+    if let Some(color) = fill_color {
+        bg = bg.with_fill(ShapeFill::new(color));
+    }
+    if let Some(color) = line_color {
+        bg = bg.with_line(ShapeLine::new(color, 12700));
+    }
+    shapes.push(bg);
+    
+    // Label shape
+    let label_height = 200_000u32;
+    let label_width = width.max(800_000);
+    
+    let (lx, ly) = match label_pos {
+        LabelPosition::Above => (
+            x + width / 2 - label_width / 2,
+            y.saturating_sub(label_height + 50_000)
+        ),
+        LabelPosition::Below => (
+            x + width / 2 - label_width / 2,
+            y + height + 50_000
+        ),
+        LabelPosition::Right => (
+            x + width + 50_000,
+            y + height / 2 - label_height / 2
+        ),
+        LabelPosition::Inside => (
+            x + 50_000,
+            y + 50_000
+        ),
+    };
+    
+    let lw = if matches!(label_pos, LabelPosition::Inside) { width - 100_000 } else { label_width };
+    let lh = if matches!(label_pos, LabelPosition::Inside) { height - 100_000 } else { label_height };
+    
+    let label = Shape::new(ShapeType::Rectangle, lx, ly, lw, lh)
+        .with_text(text);
+    shapes.push(label);
+    
+    shapes
+}
+
+/// Helper to create a circle/dot with label
+pub fn create_labeled_dot(
+    x: u32,
+    y: u32,
+    size: u32,
+    fill_color: &str,
+    line_color: Option<&str>,
+    text: &str,
+    label_pos: LabelPosition,
+) -> Vec<Shape> {
+    let mut shapes = Vec::new();
+    
+    // Dot shape
+    let mut dot = Shape::new(ShapeType::Circle, x, y, size, size)
+        .with_fill(ShapeFill::new(fill_color));
+    if let Some(color) = line_color {
+        dot = dot.with_line(ShapeLine::new(color, 25400));
+    }
+    shapes.push(dot);
+    
+    // Label
+    let label_width = 800_000u32;
+    let label_height = 200_000u32;
+    
+    let (lx, ly) = match label_pos {
+        LabelPosition::Above => (
+            x + size / 2 - label_width / 2,
+            y.saturating_sub(label_height + 50_000)
+        ),
+        LabelPosition::Below => (
+            x + size / 2 - label_width / 2,
+            y + size + 50_000
+        ),
+        LabelPosition::Right => (
+            x + size + 50_000,
+            y + size / 2 - label_height / 2
+        ),
+        LabelPosition::Inside => (
+            x, y
+        ),
+    };
+    
+    if !matches!(label_pos, LabelPosition::Inside) {
+        let label = Shape::new(ShapeType::Rectangle, lx, ly, label_width, label_height)
+            .with_text(text);
+        shapes.push(label);
+    }
+    
+    shapes
+}
+
+/// Helper to create a shape with gradient fill and separate label
+#[allow(dead_code)]
+pub fn create_gradient_shape(
+    shape_type: ShapeType,
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
+    start_color: &str,
+    end_color: &str,
+    direction: GradientDirection,
+    line_color: Option<&str>,
+    text: &str,
+    label_pos: LabelPosition,
+) -> Vec<Shape> {
+    let mut shapes = Vec::new();
+    
+    // Background shape with gradient (no text)
+    let gradient = GradientFill::linear(start_color, end_color, direction);
+    let mut bg = Shape::new(shape_type, x, y, width, height)
+        .with_gradient(gradient);
+    if let Some(color) = line_color {
+        bg = bg.with_line(ShapeLine::new(color, 12700));
+    }
+    shapes.push(bg);
+    
+    // Label shape
+    let label_height = 200_000u32;
+    let label_width = width.max(800_000);
+    
+    let (lx, ly) = match label_pos {
+        LabelPosition::Above => (
+            x + width / 2 - label_width / 2,
+            y.saturating_sub(label_height + 50_000)
+        ),
+        LabelPosition::Below => (
+            x + width / 2 - label_width / 2,
+            y + height + 50_000
+        ),
+        LabelPosition::Right => (
+            x + width + 50_000,
+            y + height / 2 - label_height / 2
+        ),
+        LabelPosition::Inside => (
+            x + 50_000,
+            y + 50_000
+        ),
+    };
+    
+    let lw = if matches!(label_pos, LabelPosition::Inside) { width - 100_000 } else { label_width };
+    let lh = if matches!(label_pos, LabelPosition::Inside) { height - 100_000 } else { label_height };
+    
+    let label = Shape::new(ShapeType::Rectangle, lx, ly, lw, lh)
+        .with_text(text);
+    shapes.push(label);
+    
+    shapes
+}
+
+/// Helper to create a shape with transparency
+#[allow(dead_code)]
+pub fn create_transparent_shape(
+    shape_type: ShapeType,
+    x: u32,
+    y: u32,
+    width: u32,
+    height: u32,
+    fill_color: &str,
+    transparency_percent: u32,
+    line_color: Option<&str>,
+    text: Option<&str>,
+) -> Shape {
+    let fill = ShapeFill::new(fill_color).with_transparency(transparency_percent);
+    let mut shape = Shape::new(shape_type, x, y, width, height)
+        .with_fill(fill);
+    
+    if let Some(color) = line_color {
+        shape = shape.with_line(ShapeLine::new(color, 12700));
+    }
+    if let Some(t) = text {
+        shape = shape.with_text(t);
+    }
+    
+    shape
 }

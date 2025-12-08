@@ -40,6 +40,21 @@
   - Mindmap: node labels now separate from background shapes
   - Prevents vertical text in small shapes
   - Better font sizing and layout control
+- [x] **Simplified diagram code with helper functions**
+  - Added `LabelPosition` enum (Above, Below, Right, Inside)
+  - Added `create_labeled_shape()` helper for shape + label pairs
+  - Added `create_labeled_dot()` helper for circle + label pairs
+  - Reduced code duplication across diagram generators
+  - Consistent label positioning logic
+- [x] **Added gradient fill and transparency support**
+  - `GradientDirection` enum (Horizontal, Vertical, DiagonalDown, DiagonalUp, Angle)
+  - `GradientStop` for multi-color gradients with position and transparency
+  - `GradientFill::linear()` for two-color gradients
+  - `GradientFill::three_color()` for three-color gradients
+  - `Shape::with_gradient()` builder method
+  - `ShapeFill::with_transparency()` for solid color transparency
+  - `create_gradient_shape()` helper for gradient shapes with labels
+  - `create_transparent_shape()` helper for transparent shapes
 - [x] **Code cleanup**
   - Removed unused `generate_content_textbox` function
   - Removed unused `create_diagram_shapes` function

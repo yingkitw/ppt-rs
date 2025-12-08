@@ -2,7 +2,7 @@
 //!
 //! Generates XML for shapes embedded in slides.
 
-use super::shapes::{Shape, ShapeFill, ShapeLine};
+use super::shapes::{Shape, ShapeFill, ShapeLine, GradientFill};
 
 /// Escape XML special characters
 fn escape_xml(s: &str) -> String {
@@ -15,7 +15,12 @@ fn escape_xml(s: &str) -> String {
 
 /// Generate XML for a shape
 pub fn generate_shape_xml(shape: &Shape, shape_id: u32) -> String {
-    let fill_xml = generate_fill_xml(&shape.fill);
+    // Generate fill XML - gradient takes precedence over solid fill
+    let fill_xml = if let Some(gradient) = &shape.gradient {
+        generate_gradient_xml(gradient)
+    } else {
+        generate_fill_xml(&shape.fill)
+    };
     let line_xml = generate_line_xml(&shape.line);
     let fill_color = shape.fill.as_ref().map(|f| f.color.as_str());
     let text_xml = generate_text_xml_with_autofit(&shape.text, shape.width, shape.height, fill_color);
@@ -52,7 +57,7 @@ pub fn generate_shape_xml(shape: &Shape, shape_id: u32) -> String {
     )
 }
 
-/// Generate fill XML
+/// Generate fill XML for solid color
 fn generate_fill_xml(fill: &Option<ShapeFill>) -> String {
     match fill {
         Some(f) => {
@@ -69,6 +74,35 @@ fn generate_fill_xml(fill: &Option<ShapeFill>) -> String {
         }
         None => String::new(),
     }
+}
+
+/// Generate gradient fill XML
+fn generate_gradient_xml(gradient: &GradientFill) -> String {
+    let mut stops_xml = String::new();
+    
+    for stop in &gradient.stops {
+        let alpha = stop.transparency
+            .map(|t| format!(r#"<a:alpha val="{}"/>"#, t))
+            .unwrap_or_default();
+        
+        stops_xml.push_str(&format!(
+            r#"<a:gs pos="{}">
+<a:srgbClr val="{}">{}</a:srgbClr>
+</a:gs>"#,
+            stop.position, stop.color, alpha
+        ));
+    }
+    
+    format!(
+        r#"<a:gradFill>
+<a:gsLst>
+{}
+</a:gsLst>
+<a:lin ang="{}" scaled="1"/>
+</a:gradFill>"#,
+        stops_xml,
+        gradient.direction.to_angle()
+    )
 }
 
 /// Generate line XML

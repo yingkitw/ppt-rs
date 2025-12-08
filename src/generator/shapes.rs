@@ -424,6 +424,107 @@ impl ShapeType {
     }
 }
 
+/// Gradient direction for linear gradients
+#[derive(Clone, Debug, Copy, PartialEq)]
+pub enum GradientDirection {
+    /// Left to right (0 degrees)
+    Horizontal,
+    /// Top to bottom (90 degrees)
+    Vertical,
+    /// Top-left to bottom-right (45 degrees)
+    DiagonalDown,
+    /// Bottom-left to top-right (315 degrees)
+    DiagonalUp,
+    /// Custom angle in degrees (0-360)
+    Angle(u32),
+}
+
+impl GradientDirection {
+    /// Get angle in 60000ths of a degree (OOXML format)
+    pub fn to_angle(&self) -> u32 {
+        match self {
+            GradientDirection::Horizontal => 0,
+            GradientDirection::Vertical => 5400000,      // 90 * 60000
+            GradientDirection::DiagonalDown => 2700000,  // 45 * 60000
+            GradientDirection::DiagonalUp => 18900000,   // 315 * 60000
+            GradientDirection::Angle(deg) => deg * 60000,
+        }
+    }
+}
+
+/// A gradient stop (color at a position)
+#[derive(Clone, Debug)]
+pub struct GradientStop {
+    pub color: String,
+    pub position: u32,  // 0-100000 (percentage * 1000)
+    pub transparency: Option<u32>,
+}
+
+impl GradientStop {
+    /// Create a gradient stop at a position (0-100%)
+    pub fn new(color: &str, position_percent: u32) -> Self {
+        GradientStop {
+            color: color.trim_start_matches('#').to_uppercase(),
+            position: position_percent.min(100) * 1000,
+            transparency: None,
+        }
+    }
+    
+    /// Set transparency (0-100 percent)
+    pub fn with_transparency(mut self, percent: u32) -> Self {
+        let alpha = ((100 - percent.min(100)) * 1000) as u32;
+        self.transparency = Some(alpha);
+        self
+    }
+}
+
+/// Gradient fill definition
+#[derive(Clone, Debug)]
+pub struct GradientFill {
+    pub stops: Vec<GradientStop>,
+    pub direction: GradientDirection,
+}
+
+impl GradientFill {
+    /// Create a simple two-color gradient
+    pub fn linear(start_color: &str, end_color: &str, direction: GradientDirection) -> Self {
+        GradientFill {
+            stops: vec![
+                GradientStop::new(start_color, 0),
+                GradientStop::new(end_color, 100),
+            ],
+            direction,
+        }
+    }
+    
+    /// Create a three-color gradient
+    pub fn three_color(start: &str, middle: &str, end: &str, direction: GradientDirection) -> Self {
+        GradientFill {
+            stops: vec![
+                GradientStop::new(start, 0),
+                GradientStop::new(middle, 50),
+                GradientStop::new(end, 100),
+            ],
+            direction,
+        }
+    }
+    
+    /// Add a custom stop
+    pub fn with_stop(mut self, stop: GradientStop) -> Self {
+        self.stops.push(stop);
+        self.stops.sort_by_key(|s| s.position);
+        self
+    }
+}
+
+/// Shape fill type - solid color or gradient
+#[derive(Clone, Debug)]
+pub enum FillType {
+    Solid(ShapeFill),
+    Gradient(GradientFill),
+    NoFill,
+}
+
 /// Shape fill/color properties
 #[derive(Clone, Debug)]
 pub struct ShapeFill {
@@ -441,10 +542,15 @@ impl ShapeFill {
     }
 
     /// Set transparency (0-100 percent)
-    pub fn transparency(mut self, percent: u32) -> Self {
+    pub fn with_transparency(mut self, percent: u32) -> Self {
         let alpha = ((100 - percent.min(100)) * 1000) as u32;
         self.transparency = Some(alpha);
         self
+    }
+    
+    /// Set transparency (0-100 percent) - builder style (deprecated, use with_transparency)
+    pub fn transparency(self, percent: u32) -> Self {
+        self.with_transparency(percent)
     }
 }
 
@@ -474,6 +580,7 @@ pub struct Shape {
     pub width: u32,  // Width in EMU
     pub height: u32, // Height in EMU
     pub fill: Option<ShapeFill>,
+    pub gradient: Option<GradientFill>,
     pub line: Option<ShapeLine>,
     pub text: Option<String>,
     /// Optional fixed shape ID for connector anchoring
@@ -490,6 +597,7 @@ impl Shape {
             width,
             height,
             fill: None,
+            gradient: None,
             line: None,
             text: None,
             id: None,
@@ -502,9 +610,17 @@ impl Shape {
         self
     }
 
-    /// Set shape fill
+    /// Set shape fill (solid color)
     pub fn with_fill(mut self, fill: ShapeFill) -> Self {
         self.fill = Some(fill);
+        self.gradient = None; // Clear gradient if setting solid fill
+        self
+    }
+    
+    /// Set gradient fill
+    pub fn with_gradient(mut self, gradient: GradientFill) -> Self {
+        self.gradient = Some(gradient);
+        self.fill = None; // Clear solid fill if setting gradient
         self
     }
 

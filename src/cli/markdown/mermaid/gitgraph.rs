@@ -1,6 +1,7 @@
 //! Git graph diagram rendering
 
 use crate::generator::{Shape, ShapeType, ShapeFill, ShapeLine};
+use super::types::{create_labeled_dot, LabelPosition};
 
 /// Generate shapes for a git graph
 pub fn generate_shapes(code: &str) -> Vec<Shape> {
@@ -78,31 +79,14 @@ pub fn generate_shapes(code: &str) -> Vec<Shape> {
         );
     }
     
-    // Draw commits with separate label shapes
+    // Draw commits with separate label shapes using helper
     for (id, branch, pos) in &commits {
         let branch_idx = branches.iter().position(|b| b == branch).unwrap_or(0);
         let x = start_x + (*pos) * commit_spacing;
         let y = start_y + (branch_idx as u32) * branch_spacing - commit_size / 2;
         let color = branch_colors[branch_idx % branch_colors.len()];
         
-        // Commit circle (no text)
-        shapes.push(
-            Shape::new(ShapeType::Circle, x, y, commit_size, commit_size)
-                .with_fill(ShapeFill::new("FFFFFF"))
-                .with_line(ShapeLine::new(color, 25400))
-        );
-        
-        // Commit label above the circle
-        let label_width = 800_000u32;
-        let label_height = 200_000u32;
-        shapes.push(
-            Shape::new(ShapeType::Rectangle, 
-                x + commit_size / 2 - label_width / 2, 
-                y - label_height - 50_000,
-                label_width, 
-                label_height)
-                .with_text(id)
-        );
+        shapes.extend(create_labeled_dot(x, y, commit_size, "FFFFFF", Some(color), id, LabelPosition::Above));
     }
     
     // If no commits, add placeholder

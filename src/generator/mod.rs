@@ -55,7 +55,7 @@ pub use notes_xml::{create_notes_xml, create_notes_rels_xml, create_notes_master
 pub use xml::{SlideContent, SlideLayout};
 pub use slide_content::CodeBlock;
 pub use text::{TextFormat, FormattedText, TextFrame, Paragraph, Run, TextAlign, TextAnchor};
-pub use shapes::{Shape, ShapeType, ShapeFill, ShapeLine, emu_to_inches, inches_to_emu, cm_to_emu};
+pub use shapes::{Shape, ShapeType, ShapeFill, ShapeLine, GradientFill as ShapeGradientFill, GradientStop as ShapeGradientStop, GradientDirection as ShapeGradientDirection, FillType, emu_to_inches, inches_to_emu, cm_to_emu};
 pub use shapes_xml::{generate_shape_xml, generate_shapes_xml, generate_connector_xml};
 pub use tables::{Table, TableRow, TableCell, TableBuilder, CellAlign, CellVAlign};
 pub use images::{Image, ImageBuilder};
