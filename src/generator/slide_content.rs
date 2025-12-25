@@ -7,6 +7,79 @@ use super::connectors::Connector;
 use super::media::{Video, Audio};
 use super::charts::Chart;
 
+/// Bullet style for lists
+#[derive(Clone, Debug, Copy, PartialEq, Eq, Default)]
+pub enum BulletStyle {
+    /// Standard bullet point (•)
+    #[default]
+    Bullet,
+    /// Numbered list (1, 2, 3...)
+    Number,
+    /// Lettered list (a, b, c...)
+    LetterLower,
+    /// Lettered list uppercase (A, B, C...)
+    LetterUpper,
+    /// Roman numerals lowercase (i, ii, iii...)
+    RomanLower,
+    /// Roman numerals uppercase (I, II, III...)
+    RomanUpper,
+    /// Custom bullet character
+    Custom(char),
+    /// No bullet
+    None,
+}
+
+impl BulletStyle {
+    /// Get the OOXML bullet type attribute
+    pub fn to_xml(&self) -> String {
+        match self {
+            BulletStyle::Bullet => r#"<a:buChar char="•"/>"#.to_string(),
+            BulletStyle::Number => r#"<a:buAutoNum type="arabicPeriod"/>"#.to_string(),
+            BulletStyle::LetterLower => r#"<a:buAutoNum type="alphaLcPeriod"/>"#.to_string(),
+            BulletStyle::LetterUpper => r#"<a:buAutoNum type="alphaUcPeriod"/>"#.to_string(),
+            BulletStyle::RomanLower => r#"<a:buAutoNum type="romanLcPeriod"/>"#.to_string(),
+            BulletStyle::RomanUpper => r#"<a:buAutoNum type="romanUcPeriod"/>"#.to_string(),
+            BulletStyle::Custom(ch) => format!(r#"<a:buChar char="{}"/>"#, ch),
+            BulletStyle::None => r#"<a:buNone/>"#.to_string(),
+        }
+    }
+    
+    /// Get the OOXML indent level XML
+    pub fn indent_xml(&self, level: u32) -> String {
+        let indent = 457200 + (level * 457200); // 0.5 inch base + 0.5 inch per level
+        let margin_left = level * 457200;
+        format!(r#"indent="-{}" marL="{}""#, indent, margin_left + indent)
+    }
+}
+
+/// A bullet point with optional style
+#[derive(Clone, Debug)]
+pub struct BulletPoint {
+    pub text: String,
+    pub level: u32,
+    pub style: BulletStyle,
+}
+
+impl BulletPoint {
+    pub fn new(text: &str) -> Self {
+        BulletPoint {
+            text: text.to_string(),
+            level: 0,
+            style: BulletStyle::Bullet,
+        }
+    }
+    
+    pub fn with_level(mut self, level: u32) -> Self {
+        self.level = level;
+        self
+    }
+    
+    pub fn with_style(mut self, style: BulletStyle) -> Self {
+        self.style = style;
+        self
+    }
+}
+
 /// Slide layout types
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
 pub enum SlideLayout {
@@ -78,6 +151,10 @@ impl CodeBlock {
 pub struct SlideContent {
     pub title: String,
     pub content: Vec<String>,
+    /// Rich bullet points with styles and levels
+    pub bullets: Vec<BulletPoint>,
+    /// Default bullet style for this slide
+    pub bullet_style: BulletStyle,
     pub title_size: Option<u32>,
     pub content_size: Option<u32>,
     pub title_bold: bool,
@@ -114,6 +191,8 @@ impl SlideContent {
         SlideContent {
             title: title.to_string(),
             content: Vec::new(),
+            bullets: Vec::new(),
+            bullet_style: BulletStyle::Bullet,
             title_size: Some(44),
             content_size: Some(28),
             title_bold: true,
@@ -140,8 +219,44 @@ impl SlideContent {
         }
     }
 
+    /// Add a bullet point with default style
     pub fn add_bullet(mut self, text: &str) -> Self {
         self.content.push(text.to_string());
+        self.bullets.push(BulletPoint::new(text).with_style(self.bullet_style));
+        self
+    }
+    
+    /// Add a bullet point with specific style
+    pub fn add_styled_bullet(mut self, text: &str, style: BulletStyle) -> Self {
+        self.content.push(text.to_string());
+        self.bullets.push(BulletPoint::new(text).with_style(style));
+        self
+    }
+    
+    /// Add a numbered item (shorthand for add_styled_bullet with Number)
+    pub fn add_numbered(mut self, text: &str) -> Self {
+        self.content.push(text.to_string());
+        self.bullets.push(BulletPoint::new(text).with_style(BulletStyle::Number));
+        self
+    }
+    
+    /// Add a lettered item (shorthand for add_styled_bullet with LetterLower)
+    pub fn add_lettered(mut self, text: &str) -> Self {
+        self.content.push(text.to_string());
+        self.bullets.push(BulletPoint::new(text).with_style(BulletStyle::LetterLower));
+        self
+    }
+    
+    /// Add a sub-bullet (indented)
+    pub fn add_sub_bullet(mut self, text: &str) -> Self {
+        self.content.push(format!("  {}", text));
+        self.bullets.push(BulletPoint::new(text).with_level(1).with_style(self.bullet_style));
+        self
+    }
+    
+    /// Set default bullet style for this slide
+    pub fn with_bullet_style(mut self, style: BulletStyle) -> Self {
+        self.bullet_style = style;
         self
     }
 

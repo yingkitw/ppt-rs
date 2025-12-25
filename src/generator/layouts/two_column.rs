@@ -34,10 +34,12 @@ impl TwoColumnLayout {
             .start_sp_tree()
             .add_title(2, 457200, 274638, 8230200, 914400, &content.title, &title_props, "title");
 
-        if !content.content.is_empty() {
-            let mid = content.content.len().div_ceil(2);
-            let left_content = &content.content[..mid];
-            let right_content = &content.content[mid..];
+        // Determine which bullets to use
+        let use_styled_bullets = !content.bullets.is_empty();
+        let bullet_count = if use_styled_bullets { content.bullets.len() } else { content.content.len() };
+        
+        if bullet_count > 0 {
+            let mid = bullet_count.div_ceil(2);
 
             // Left column
             builder = builder.raw(r#"
@@ -60,13 +62,19 @@ impl TwoColumnLayout {
 <a:lstStyle/>
 "#);
 
-            for bullet in left_content {
-                builder = builder.add_bullet(bullet, &content_props, 0);
+            if use_styled_bullets {
+                for bullet in &content.bullets[..mid] {
+                    builder = builder.add_bullet_with_style(&bullet.text, &content_props, bullet.level, bullet.style);
+                }
+            } else {
+                for bullet in &content.content[..mid] {
+                    builder = builder.add_bullet_with_style(bullet, &content_props, 0, content.bullet_style);
+                }
             }
             builder = builder.raw("</p:txBody>\n</p:sp>\n");
 
             // Right column
-            if !right_content.is_empty() {
+            if mid < bullet_count {
                 builder = builder.raw(r#"
 <p:sp>
 <p:nvSpPr>
@@ -87,8 +95,14 @@ impl TwoColumnLayout {
 <a:lstStyle/>
 "#);
 
-                for bullet in right_content {
-                    builder = builder.add_bullet(bullet, &content_props, 0);
+                if use_styled_bullets {
+                    for bullet in &content.bullets[mid..] {
+                        builder = builder.add_bullet_with_style(&bullet.text, &content_props, bullet.level, bullet.style);
+                    }
+                } else {
+                    for bullet in &content.content[mid..] {
+                        builder = builder.add_bullet_with_style(bullet, &content_props, 0, content.bullet_style);
+                    }
                 }
                 builder = builder.raw("</p:txBody>\n</p:sp>\n");
             }

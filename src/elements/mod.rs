@@ -12,15 +12,15 @@
 //!
 //! # Example
 //!
-//! ```rust,ignore
-//! use ppt_rs::elements::{Table, TableRow, TableCell};
+//! ```rust
+//! use ppt_rs::elements::{Color, RgbColor, Position, Size};
 //!
-//! let table = Table::builder()
-//!     .add_row(TableRow::new(vec![
-//!         TableCell::new("Header 1").bold(),
-//!         TableCell::new("Header 2").bold(),
-//!     ]))
-//!     .build();
+//! // Create an RGB color
+//! let red = RgbColor::new(255, 0, 0);
+//! assert_eq!(red.to_hex(), "FF0000");
+//!
+//! // Create a position in EMU (English Metric Units)
+//! let pos = Position::new(914400, 914400); // 1 inch x 1 inch
 //! ```
 
 mod color;

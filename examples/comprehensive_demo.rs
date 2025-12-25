@@ -8,18 +8,26 @@
 //! 5. Shapes with fills
 //! 6. Images (placeholder)
 //! 7. Package reading/writing
-//! 8. NEW: Parts API (SlideLayout, SlideMaster, Theme, Notes, Media, etc.)
-//! 9. NEW: Elements API (Color, Position, Size, Transform)
+//! 8. Parts API (SlideLayout, SlideMaster, Theme, Notes, Media, etc.)
+//! 9. Elements API (Color, Position, Size, Transform)
+//! 10. NEW v0.2.1: BulletStyle (Number, Letter, Roman, Custom)
+//! 11. NEW v0.2.1: Text enhancements (Strikethrough, Highlight, Sub/Superscript)
+//! 12. NEW v0.2.1: Font size presets
+//! 13. NEW v0.2.1: Image from base64/bytes
+//! 14. NEW v0.2.1: Theme colors (Corporate, Modern, Vibrant, Dark, Nature, Tech, Carbon)
+//! 15. NEW v0.2.1: Material & Carbon Design colors
 
 use ppt_rs::generator::{
     create_pptx_with_content, SlideContent, SlideLayout,
-    TableRow, TableCell, TableBuilder, CellAlign, CellVAlign,
+    TableRow, TableCell, TableBuilder,
     ChartType, ChartSeries, ChartBuilder,
     Shape, ShapeType, ShapeFill, ShapeLine,
-    Image,
-    Connector, ConnectorType, ConnectorLine, ArrowType, ArrowSize, LineDash,
+    Image, ImageBuilder,
+    Connector, ConnectorLine, ArrowType, ArrowSize, LineDash,
+    BulletStyle, TextFormat,
 };
-use ppt_rs::generator::shapes::{GradientFill, GradientDirection, GradientStop};
+use ppt_rs::generator::shapes::{GradientFill, GradientDirection};
+use ppt_rs::prelude::{colors, themes, font_sizes};
 use ppt_rs::opc::Package;
 use ppt_rs::parts::{
     SlideLayoutPart, LayoutType,
@@ -822,6 +830,300 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_bullet("Key Risks: Resource constraints, Timeline pressure")
             .content_size(24)
             .notes("Speaker Notes:\n\n1. Emphasize the progress made\n2. Highlight key achievements\n3. Address any concerns about timeline\n4. Open for Q&A")
+    );
+
+    // =========================================================================
+    // SLIDE 21: Bullet Styles (NEW v0.2.1)
+    // =========================================================================
+    println!("🔢 Slide 21: Bullet Styles (NEW)");
+    
+    // Numbered list
+    slides.push(
+        SlideContent::new("Bullet Styles - Numbered List")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .with_bullet_style(BulletStyle::Number)
+            .add_bullet("First numbered item")
+            .add_bullet("Second numbered item")
+            .add_bullet("Third numbered item")
+            .add_bullet("Fourth numbered item")
+            .content_size(28)
+    );
+
+    // =========================================================================
+    // SLIDE 22: Lettered Lists (NEW v0.2.1)
+    // =========================================================================
+    println!("🔤 Slide 22: Lettered Lists (NEW)");
+    
+    slides.push(
+        SlideContent::new("Bullet Styles - Lettered Lists")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .add_lettered("Option A - First choice")
+            .add_lettered("Option B - Second choice")
+            .add_lettered("Option C - Third choice")
+            .add_lettered("Option D - Fourth choice")
+            .content_size(28)
+    );
+
+    // =========================================================================
+    // SLIDE 23: Roman Numerals (NEW v0.2.1)
+    // =========================================================================
+    println!("🏛️ Slide 23: Roman Numerals (NEW)");
+    
+    slides.push(
+        SlideContent::new("Bullet Styles - Roman Numerals")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .with_bullet_style(BulletStyle::RomanUpper)
+            .add_bullet("Chapter I - Introduction")
+            .add_bullet("Chapter II - Background")
+            .add_bullet("Chapter III - Methodology")
+            .add_bullet("Chapter IV - Results")
+            .add_bullet("Chapter V - Conclusion")
+            .content_size(28)
+    );
+
+    // =========================================================================
+    // SLIDE 24: Custom Bullets (NEW v0.2.1)
+    // =========================================================================
+    println!("⭐ Slide 24: Custom Bullets (NEW)");
+    
+    slides.push(
+        SlideContent::new("Bullet Styles - Custom Characters")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .add_styled_bullet("Star bullet point", BulletStyle::Custom('★'))
+            .add_styled_bullet("Arrow bullet point", BulletStyle::Custom('→'))
+            .add_styled_bullet("Check bullet point", BulletStyle::Custom('✓'))
+            .add_styled_bullet("Diamond bullet point", BulletStyle::Custom('◆'))
+            .add_styled_bullet("Heart bullet point", BulletStyle::Custom('♥'))
+            .content_size(28)
+    );
+
+    // =========================================================================
+    // SLIDE 25: Sub-bullets / Hierarchy (NEW v0.2.1)
+    // =========================================================================
+    println!("📊 Slide 25: Sub-bullets Hierarchy (NEW)");
+    
+    slides.push(
+        SlideContent::new("Bullet Styles - Hierarchical Lists")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .add_bullet("Main Topic 1")
+            .add_sub_bullet("Supporting detail A")
+            .add_sub_bullet("Supporting detail B")
+            .add_bullet("Main Topic 2")
+            .add_sub_bullet("Supporting detail C")
+            .add_sub_bullet("Supporting detail D")
+            .add_bullet("Main Topic 3")
+            .content_size(24)
+    );
+
+    // =========================================================================
+    // SLIDE 26: Text Enhancements (NEW v0.2.1)
+    // =========================================================================
+    println!("✏️ Slide 26: Text Enhancements (NEW)");
+    
+    // Demonstrate TextFormat capabilities
+    let _strikethrough_format = TextFormat::new().strikethrough();
+    let _highlight_format = TextFormat::new().highlight("FFFF00");
+    let _subscript_format = TextFormat::new().subscript();
+    let _superscript_format = TextFormat::new().superscript();
+    
+    slides.push(
+        SlideContent::new("Text Enhancements - New Formatting")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .add_bullet("Strikethrough: For deleted or deprecated text")
+            .add_bullet("Highlight: Yellow background for emphasis")
+            .add_bullet("Subscript: H₂O chemical formulas")
+            .add_bullet("Superscript: x² mathematical expressions")
+            .add_bullet("Combined: Bold + Italic + Underline + Color")
+            .content_size(24)
+    );
+
+    // =========================================================================
+    // SLIDE 27: Font Size Presets (NEW v0.2.1)
+    // =========================================================================
+    println!("🔤 Slide 27: Font Size Presets (NEW)");
+    
+    slides.push(
+        SlideContent::new("Font Size Presets")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .add_bullet(&format!("TITLE: {} (44pt)", font_sizes::TITLE / 100))
+            .add_bullet(&format!("SUBTITLE: {} (32pt)", font_sizes::SUBTITLE / 100))
+            .add_bullet(&format!("HEADING: {} (28pt)", font_sizes::HEADING / 100))
+            .add_bullet(&format!("BODY: {} (18pt)", font_sizes::BODY / 100))
+            .add_bullet(&format!("SMALL: {} (14pt)", font_sizes::SMALL / 100))
+            .add_bullet(&format!("CAPTION: {} (12pt)", font_sizes::CAPTION / 100))
+            .content_size(24)
+    );
+
+    // =========================================================================
+    // SLIDE 28: Theme Colors (NEW v0.2.1)
+    // =========================================================================
+    println!("🎨 Slide 28: Theme Colors (NEW)");
+    
+    // Create shapes with theme colors
+    let corporate_shape = Shape::new(ShapeType::Rectangle, 500000, 1600000, 1800000, 800000)
+        .with_fill(ShapeFill::new(themes::CORPORATE.primary))
+        .with_text("Corporate");
+    
+    let modern_shape = Shape::new(ShapeType::Rectangle, 2500000, 1600000, 1800000, 800000)
+        .with_fill(ShapeFill::new(themes::MODERN.primary))
+        .with_text("Modern");
+    
+    let vibrant_shape = Shape::new(ShapeType::Rectangle, 4500000, 1600000, 1800000, 800000)
+        .with_fill(ShapeFill::new(themes::VIBRANT.primary))
+        .with_text("Vibrant");
+    
+    let dark_shape = Shape::new(ShapeType::Rectangle, 6500000, 1600000, 1800000, 800000)
+        .with_fill(ShapeFill::new(themes::DARK.primary))
+        .with_text("Dark");
+    
+    let nature_shape = Shape::new(ShapeType::Rectangle, 500000, 2700000, 1800000, 800000)
+        .with_fill(ShapeFill::new(themes::NATURE.primary))
+        .with_text("Nature");
+    
+    let tech_shape = Shape::new(ShapeType::Rectangle, 2500000, 2700000, 1800000, 800000)
+        .with_fill(ShapeFill::new(themes::TECH.primary))
+        .with_text("Tech");
+    
+    let carbon_shape = Shape::new(ShapeType::Rectangle, 4500000, 2700000, 1800000, 800000)
+        .with_fill(ShapeFill::new(themes::CARBON.primary))
+        .with_text("Carbon");
+    
+    slides.push(
+        SlideContent::new("Theme Color Palettes")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .add_shape(corporate_shape)
+            .add_shape(modern_shape)
+            .add_shape(vibrant_shape)
+            .add_shape(dark_shape)
+            .add_shape(nature_shape)
+            .add_shape(tech_shape)
+            .add_shape(carbon_shape)
+    );
+
+    // =========================================================================
+    // SLIDE 29: Material & Carbon Design Colors (NEW v0.2.1)
+    // =========================================================================
+    println!("🌈 Slide 29: Material & Carbon Colors (NEW)");
+    
+    // Material Design colors
+    let material_red = Shape::new(ShapeType::Rectangle, 500000, 1600000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::MATERIAL_RED))
+        .with_text("M-Red");
+    
+    let material_blue = Shape::new(ShapeType::Rectangle, 1900000, 1600000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::MATERIAL_BLUE))
+        .with_text("M-Blue");
+    
+    let material_green = Shape::new(ShapeType::Rectangle, 3300000, 1600000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::MATERIAL_GREEN))
+        .with_text("M-Green");
+    
+    let material_orange = Shape::new(ShapeType::Rectangle, 4700000, 1600000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::MATERIAL_ORANGE))
+        .with_text("M-Orange");
+    
+    let material_purple = Shape::new(ShapeType::Rectangle, 6100000, 1600000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::MATERIAL_PURPLE))
+        .with_text("M-Purple");
+    
+    // Carbon Design colors
+    let carbon_blue = Shape::new(ShapeType::Rectangle, 500000, 2500000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::CARBON_BLUE_60))
+        .with_text("C-Blue");
+    
+    let carbon_green = Shape::new(ShapeType::Rectangle, 1900000, 2500000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::CARBON_GREEN_50))
+        .with_text("C-Green");
+    
+    let carbon_red = Shape::new(ShapeType::Rectangle, 3300000, 2500000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::CARBON_RED_60))
+        .with_text("C-Red");
+    
+    let carbon_purple = Shape::new(ShapeType::Rectangle, 4700000, 2500000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::CARBON_PURPLE_60))
+        .with_text("C-Purple");
+    
+    let carbon_gray = Shape::new(ShapeType::Rectangle, 6100000, 2500000, 1200000, 600000)
+        .with_fill(ShapeFill::new(colors::CARBON_GRAY_100))
+        .with_text("C-Gray");
+    
+    slides.push(
+        SlideContent::new("Material & Carbon Design Colors")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .add_shape(material_red)
+            .add_shape(material_blue)
+            .add_shape(material_green)
+            .add_shape(material_orange)
+            .add_shape(material_purple)
+            .add_shape(carbon_blue)
+            .add_shape(carbon_green)
+            .add_shape(carbon_red)
+            .add_shape(carbon_purple)
+            .add_shape(carbon_gray)
+    );
+
+    // =========================================================================
+    // SLIDE 30: Image from Base64 (NEW v0.2.1)
+    // =========================================================================
+    println!("🖼️ Slide 30: Image from Base64 (NEW)");
+    
+    // 1x1 red PNG pixel in base64
+    let _red_pixel_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==";
+    
+    // Create image from base64 (demonstrating the API)
+    let _base64_image = ImageBuilder::from_base64(_red_pixel_base64, 914400, 914400, "PNG")
+        .position(4000000, 2500000)
+        .build();
+    
+    slides.push(
+        SlideContent::new("Image Loading - New Methods")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .add_bullet("Image::new(path) - Load from file path")
+            .add_bullet("Image::from_base64(data) - Load from base64 string")
+            .add_bullet("Image::from_bytes(data) - Load from raw bytes")
+            .add_bullet("ImageBuilder for fluent API configuration")
+            .add_bullet("Built-in base64 decoder (no external deps)")
+            .content_size(24)
+    );
+
+    // =========================================================================
+    // SLIDE 31: Feature Summary (NEW v0.2.1)
+    // =========================================================================
+    println!("📋 Slide 31: v0.2.1 Feature Summary (NEW)");
+    
+    slides.push(
+        SlideContent::new("New Features in v0.2.1")
+            .layout(SlideLayout::TitleAndContent)
+            .title_color("1F497D")
+            .title_bold(true)
+            .add_numbered("BulletStyle: Number, Letter, Roman, Custom")
+            .add_numbered("TextFormat: Strikethrough, Highlight")
+            .add_numbered("TextFormat: Subscript, Superscript")
+            .add_numbered("Font size presets in prelude")
+            .add_numbered("Image::from_base64 and from_bytes")
+            .add_numbered("Theme color palettes (7 themes)")
+            .add_numbered("Material & Carbon Design colors")
+            .content_size(24)
     );
 
     // =========================================================================

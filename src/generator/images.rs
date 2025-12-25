@@ -4,6 +4,17 @@
 
 use std::path::Path;
 
+/// Image data source
+#[derive(Clone, Debug)]
+pub enum ImageSource {
+    /// Load from file path
+    File(String),
+    /// Base64 encoded data
+    Base64(String),
+    /// Raw bytes
+    Bytes(Vec<u8>),
+}
+
 /// Image metadata and properties
 #[derive(Clone, Debug)]
 pub struct Image {
@@ -13,6 +24,8 @@ pub struct Image {
     pub x: u32,          // Position X in EMU
     pub y: u32,          // Position Y in EMU
     pub format: String,  // PNG, JPG, GIF, etc.
+    /// Image data source (file path, base64, or bytes)
+    pub source: Option<ImageSource>,
 }
 
 impl Image {
@@ -25,6 +38,75 @@ impl Image {
             x: 0,
             y: 0,
             format: format.to_uppercase(),
+            source: Some(ImageSource::File(filename.to_string())),
+        }
+    }
+    
+    /// Create an image from base64 encoded data
+    ///
+    /// # Example
+    /// ```rust
+    /// use ppt_rs::generator::Image;
+    ///
+    /// let base64_data = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    /// let img = Image::from_base64(base64_data, 100, 100, "PNG")
+    ///     .position(1000000, 1000000);
+    ///
+    /// assert_eq!(img.width, 100);
+    /// assert_eq!(img.height, 100);
+    /// assert_eq!(img.format, "PNG");
+    /// ```
+    pub fn from_base64(data: &str, width: u32, height: u32, format: &str) -> Self {
+        let format_upper = format.to_uppercase();
+        let ext = match format_upper.as_str() {
+            "JPEG" => "jpg",
+            _ => &format_upper.to_lowercase(),
+        };
+        let filename = format!("image_{}.{}", uuid::Uuid::new_v4(), ext);
+        
+        Image {
+            filename,
+            width,
+            height,
+            x: 0,
+            y: 0,
+            format: format_upper,
+            source: Some(ImageSource::Base64(data.to_string())),
+        }
+    }
+    
+    /// Create an image from raw bytes
+    pub fn from_bytes(data: Vec<u8>, width: u32, height: u32, format: &str) -> Self {
+        let format_upper = format.to_uppercase();
+        let ext = match format_upper.as_str() {
+            "JPEG" => "jpg",
+            _ => &format_upper.to_lowercase(),
+        };
+        let filename = format!("image_{}.{}", uuid::Uuid::new_v4(), ext);
+        
+        Image {
+            filename,
+            width,
+            height,
+            x: 0,
+            y: 0,
+            format: format_upper,
+            source: Some(ImageSource::Bytes(data)),
+        }
+    }
+    
+    /// Get the image data as bytes (decodes base64 if needed)
+    pub fn get_bytes(&self) -> Option<Vec<u8>> {
+        match &self.source {
+            Some(ImageSource::Base64(data)) => {
+                // Decode base64
+                base64_decode(data).ok()
+            }
+            Some(ImageSource::Bytes(data)) => Some(data.clone()),
+            Some(ImageSource::File(path)) => {
+                std::fs::read(path).ok()
+            }
+            None => None,
         }
     }
 
@@ -79,6 +161,60 @@ impl Image {
     }
 }
 
+/// Decode base64 string to bytes
+fn base64_decode(input: &str) -> Result<Vec<u8>, std::io::Error> {
+    // Simple base64 decoder
+    const DECODE_TABLE: [i8; 128] = [
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
+        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1,
+        -1,  0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14,
+        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
+        -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
+    ];
+    
+    let input = input.trim().replace(['\n', '\r', ' '], "");
+    let mut output = Vec::with_capacity(input.len() * 3 / 4);
+    let bytes: Vec<u8> = input.bytes().collect();
+    
+    let mut i = 0;
+    while i < bytes.len() {
+        let mut buf = [0u8; 4];
+        let mut pad = 0;
+        
+        for j in 0..4 {
+            if i + j >= bytes.len() {
+                buf[j] = 0;
+                pad += 1;
+            } else if bytes[i + j] == b'=' {
+                buf[j] = 0;
+                pad += 1;
+            } else if bytes[i + j] < 128 && DECODE_TABLE[bytes[i + j] as usize] >= 0 {
+                buf[j] = DECODE_TABLE[bytes[i + j] as usize] as u8;
+            } else {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Invalid base64 character",
+                ));
+            }
+        }
+        
+        output.push((buf[0] << 2) | (buf[1] >> 4));
+        if pad < 2 {
+            output.push((buf[1] << 4) | (buf[2] >> 2));
+        }
+        if pad < 1 {
+            output.push((buf[2] << 6) | buf[3]);
+        }
+        
+        i += 4;
+    }
+    
+    Ok(output)
+}
+
 /// Image builder for fluent API
 pub struct ImageBuilder {
     filename: String,
@@ -87,10 +223,11 @@ pub struct ImageBuilder {
     x: u32,
     y: u32,
     format: String,
+    source: Option<ImageSource>,
 }
 
 impl ImageBuilder {
-    /// Create a new image builder
+    /// Create a new image builder from file
     pub fn new(filename: &str, width: u32, height: u32) -> Self {
         let format = Path::new(filename)
             .extension()
@@ -105,6 +242,45 @@ impl ImageBuilder {
             x: 0,
             y: 0,
             format,
+            source: Some(ImageSource::File(filename.to_string())),
+        }
+    }
+    
+    /// Create image builder from base64 data
+    pub fn from_base64(data: &str, width: u32, height: u32, format: &str) -> Self {
+        let format_upper = format.to_uppercase();
+        let ext = match format_upper.as_str() {
+            "JPEG" => "jpg",
+            _ => &format_upper.to_lowercase(),
+        };
+        
+        ImageBuilder {
+            filename: format!("image.{}", ext),
+            width,
+            height,
+            x: 0,
+            y: 0,
+            format: format_upper,
+            source: Some(ImageSource::Base64(data.to_string())),
+        }
+    }
+    
+    /// Create image builder from bytes
+    pub fn from_bytes(data: Vec<u8>, width: u32, height: u32, format: &str) -> Self {
+        let format_upper = format.to_uppercase();
+        let ext = match format_upper.as_str() {
+            "JPEG" => "jpg",
+            _ => &format_upper.to_lowercase(),
+        };
+        
+        ImageBuilder {
+            filename: format!("image.{}", ext),
+            width,
+            height,
+            x: 0,
+            y: 0,
+            format: format_upper,
+            source: Some(ImageSource::Bytes(data)),
         }
     }
 
@@ -146,6 +322,7 @@ impl ImageBuilder {
             x: self.x,
             y: self.y,
             format: self.format,
+            source: self.source,
         }
     }
 }
@@ -233,5 +410,59 @@ mod tests {
     fn test_image_builder_auto_format() {
         let img = ImageBuilder::new("photo.jpg", 1920, 1080).build();
         assert_eq!(img.format, "JPG");
+    }
+    
+    #[test]
+    fn test_image_from_base64() {
+        // 1x1 PNG image in base64
+        let base64_png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        let img = Image::from_base64(base64_png, 100, 100, "PNG");
+        
+        assert!(img.filename.ends_with(".png"));
+        assert_eq!(img.format, "PNG");
+        assert!(matches!(img.source, Some(ImageSource::Base64(_))));
+    }
+    
+    #[test]
+    fn test_image_from_bytes() {
+        let data = vec![0x89, 0x50, 0x4E, 0x47]; // PNG header
+        let img = Image::from_bytes(data.clone(), 100, 100, "PNG");
+        
+        assert_eq!(img.format, "PNG");
+        assert!(matches!(img.source, Some(ImageSource::Bytes(_))));
+    }
+    
+    #[test]
+    fn test_base64_decode() {
+        // Test simple base64 decode
+        let result = base64_decode("SGVsbG8=").unwrap();
+        assert_eq!(result, b"Hello");
+        
+        // Test with padding
+        let result = base64_decode("SGVsbG8gV29ybGQ=").unwrap();
+        assert_eq!(result, b"Hello World");
+    }
+    
+    #[test]
+    fn test_image_get_bytes_base64() {
+        let base64_png = "SGVsbG8="; // "Hello" in base64
+        let img = Image::from_base64(base64_png, 100, 100, "PNG");
+        
+        let bytes = img.get_bytes().unwrap();
+        assert_eq!(bytes, b"Hello");
+    }
+    
+    #[test]
+    fn test_image_builder_from_base64() {
+        let base64_data = "SGVsbG8=";
+        let img = ImageBuilder::from_base64(base64_data, 200, 150, "JPEG")
+            .position(1000, 2000)
+            .build();
+        
+        assert_eq!(img.width, 200);
+        assert_eq!(img.height, 150);
+        assert_eq!(img.x, 1000);
+        assert_eq!(img.y, 2000);
+        assert_eq!(img.format, "JPEG");
     }
 }

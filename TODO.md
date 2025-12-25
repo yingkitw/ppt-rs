@@ -1,5 +1,103 @@
 # TODO - PPTX-RS Development
 
+## Current Priority
+
+### v0.2.0 - Template System & Enhanced Prelude ✓
+- [x] **Template system for common presentations**
+  - [x] `templates::business_proposal()` - Title, agenda, sections, summary
+  - [x] `templates::training_material()` - Objectives, content, exercises, quiz
+  - [x] `templates::status_report()` - Summary, progress, issues, next steps
+  - [x] `templates::technical_doc()` - Overview, architecture, API, examples
+  - [x] `templates::simple()` - Quick presentation from slides array
+- [x] **Theme presets**
+  - [x] `themes::CORPORATE` - Professional blue/gray theme
+  - [x] `themes::MODERN` - Clean minimalist theme
+  - [x] `themes::VIBRANT` - Colorful creative theme
+  - [x] `themes::DARK` - Dark mode theme
+  - [x] `themes::NATURE` - Fresh green theme
+  - [x] `themes::TECH` - Technology blue theme
+  - [x] `themes::CARBON` - IBM Carbon Design theme
+- [x] **Enhanced prelude shapes**
+  - [x] `shapes::arrow_right/left/up/down()` - Arrow shapes
+  - [x] `shapes::callout()` - Callout shapes with text
+  - [x] `shapes::badge()` - Badge/tag shapes with color
+  - [x] `shapes::process/decision/document/data/terminator()` - Flowchart shapes
+  - [x] `shapes::diamond/triangle/star/heart/cloud()` - Decorative shapes
+- [x] **Layout helpers**
+  - [x] `layouts::grid(rows, cols, w, h)` - Grid positions
+  - [x] `layouts::stack_horizontal/vertical()` - Stack positions
+  - [x] `layouts::center()` - Center on slide
+  - [x] `layouts::distribute_horizontal()` - Evenly distribute
+- [x] **Extended color constants**
+  - [x] Material Design colors (MATERIAL_RED, MATERIAL_BLUE, etc.)
+  - [x] IBM Carbon Design colors (CARBON_BLUE_60, CARBON_GRAY_100, etc.)
+
+### v0.2.1 - Content Enhancements ✓
+- [x] **Bullet formatting**
+  - [x] `BulletStyle::Number` - Numbered lists (1, 2, 3...)
+  - [x] `BulletStyle::LetterLower/Upper` - Lettered lists (a, b, c / A, B, C)
+  - [x] `BulletStyle::RomanLower/Upper` - Roman numerals (i, ii, iii / I, II, III)
+  - [x] `BulletStyle::Custom(char)` - Custom bullet character
+  - [x] `BulletStyle::None` - No bullet
+  - [x] `add_numbered()`, `add_lettered()`, `add_sub_bullet()` helpers
+- [x] **Text enhancements**
+  - [x] Subscript/superscript support (`TextFormat::subscript()`, `superscript()`)
+  - [x] Strikethrough text (`TextFormat::strikethrough()`)
+  - [x] Text highlight color (`TextFormat::highlight()`)
+  - [x] Font size presets in prelude (`font_sizes::TITLE`, `BODY`, etc.)
+- [x] **Image enhancements**
+  - [ ] `Image::from_url(url)` - Load from URL
+  - [x] `Image::from_base64(data)` - Load from base64 encoded data
+  - [x] `Image::from_bytes(data)` - Load from raw bytes
+  - [ ] Image cropping
+  - [ ] Image effects (shadow, reflection)
+
+### v0.2.2 - Export & Import
+- [ ] **Export formats**
+  - [ ] Export slides to PNG/JPEG
+  - [ ] Export to PDF (via external tool)
+  - [ ] Export to HTML slideshow
+- [ ] **Import support**
+  - [ ] Import from Google Slides (PPTX export)
+  - [ ] Import from PDF (basic)
+  - [ ] Merge multiple PPTX files
+
+## Backlog
+
+### Performance & Optimization
+- [ ] Profile memory usage with large presentations
+- [ ] Lazy loading for slide content
+- [ ] Streaming ZIP operations
+- [ ] Parallel slide generation
+- [ ] Binary search for part lookups
+
+### Quality & Testing
+- [ ] Fuzzing tests for PPTX parsing
+- [ ] Property-based testing
+- [ ] Benchmark suite
+- [ ] Cross-platform testing (Windows, macOS, Linux)
+- [ ] Compatibility testing with Office versions
+
+### Documentation
+- [ ] Complete API documentation with examples
+- [ ] Tutorial: Building your first presentation
+- [ ] Tutorial: Markdown to PPTX workflow
+- [ ] Tutorial: Programmatic report generation
+- [ ] Troubleshooting guide
+
+### Advanced Features
+- [ ] RTL (right-to-left) text support
+- [ ] Comments and review annotations
+- [ ] Slide sections and organization
+- [ ] Digital signatures
+- [ ] Ink annotations
+- [ ] Slide show settings
+- [ ] Print settings and handouts
+- [ ] Advanced table merging
+- [ ] Embedded fonts in output
+
+---
+
 ## Recently Completed
 
 ### v0.1.8 API Simplification & Enhanced Features

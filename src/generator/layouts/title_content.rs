@@ -43,10 +43,18 @@ impl TitleContentLayout {
         // Add table or bullets
         if let Some(ref table) = content.table {
             builder = builder.raw(&crate::generator::tables_xml::generate_table_xml(table, 3));
+        } else if !content.bullets.is_empty() {
+            // Use bullets with styles
+            builder = builder.start_content_body(3, CONTENT_X, CONTENT_Y_START, CONTENT_WIDTH, CONTENT_HEIGHT);
+            for bullet in &content.bullets {
+                builder = builder.add_bullet_with_style(&bullet.text, &content_props, bullet.level, bullet.style);
+            }
+            builder = builder.end_content_body();
         } else if !content.content.is_empty() {
+            // Fallback to plain content strings
             builder = builder.start_content_body(3, CONTENT_X, CONTENT_Y_START, CONTENT_WIDTH, CONTENT_HEIGHT);
             for bullet in &content.content {
-                builder = builder.add_bullet(bullet, &content_props, 0);
+                builder = builder.add_bullet_with_style(bullet, &content_props, 0, content.bullet_style);
             }
             builder = builder.end_content_body();
         }
@@ -135,10 +143,16 @@ impl TitleBigContentLayout {
             .start_sp_tree()
             .add_title(2, TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT_BIG, &content.title, &title_props, "title");
 
-        if !content.content.is_empty() {
+        if !content.bullets.is_empty() {
+            builder = builder.start_content_body(3, CONTENT_X, CONTENT_Y_START_BIG, CONTENT_WIDTH, CONTENT_HEIGHT_BIG);
+            for bullet in &content.bullets {
+                builder = builder.add_bullet_with_style(&bullet.text, &content_props, bullet.level, bullet.style);
+            }
+            builder = builder.end_content_body();
+        } else if !content.content.is_empty() {
             builder = builder.start_content_body(3, CONTENT_X, CONTENT_Y_START_BIG, CONTENT_WIDTH, CONTENT_HEIGHT_BIG);
             for bullet in &content.content {
-                builder = builder.add_bullet(bullet, &content_props, 0);
+                builder = builder.add_bullet_with_style(bullet, &content_props, 0, content.bullet_style);
             }
             builder = builder.end_content_body();
         }

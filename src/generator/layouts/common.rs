@@ -4,6 +4,7 @@ use crate::core::XmlWriter;
 use crate::generator::constants::{
     SLIDE_WIDTH, SLIDE_HEIGHT,
 };
+use crate::generator::slide_content::BulletStyle;
 
 /// XML declaration and namespaces
 pub const XML_DECL: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#;
@@ -160,17 +161,28 @@ impl SlideXmlBuilder {
     }
 
     /// Add bullet paragraph
-    pub fn add_bullet(mut self, text: &str, props: &str, level: u32) -> Self {
+    pub fn add_bullet(self, text: &str, props: &str, level: u32) -> Self {
+        self.add_bullet_with_style(text, props, level, BulletStyle::Bullet)
+    }
+    
+    /// Add bullet paragraph with specific style
+    pub fn add_bullet_with_style(mut self, text: &str, props: &str, level: u32, style: BulletStyle) -> Self {
+        let indent = 457200 + (level * 457200); // 0.5 inch base + 0.5 inch per level
+        let margin_left = level * 457200 + indent;
+        let bullet_xml = style.to_xml();
+        
         self.writer.raw(&format!(
             r#"<a:p>
-<a:pPr lvl="{}"/>
+<a:pPr lvl="{}" marL="{}" indent="-{}">
+{}
+</a:pPr>
 <a:r>
 {}
 <a:t>{}</a:t>
 </a:r>
 </a:p>
 "#,
-            level, props, escape_xml(text)
+            level, margin_left, indent, bullet_xml, props, escape_xml(text)
         ));
         self
     }

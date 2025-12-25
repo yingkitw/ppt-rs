@@ -53,12 +53,12 @@ pub mod media;
 pub use builder::{create_pptx, create_pptx_with_content};
 pub use notes_xml::{create_notes_xml, create_notes_rels_xml, create_notes_master_xml, create_notes_master_rels_xml};
 pub use xml::{SlideContent, SlideLayout};
-pub use slide_content::CodeBlock;
+pub use slide_content::{CodeBlock, BulletStyle, BulletPoint};
 pub use text::{TextFormat, FormattedText, TextFrame, Paragraph, Run, TextAlign, TextAnchor};
 pub use shapes::{Shape, ShapeType, ShapeFill, ShapeLine, GradientFill as ShapeGradientFill, GradientStop as ShapeGradientStop, GradientDirection as ShapeGradientDirection, FillType, emu_to_inches, inches_to_emu, cm_to_emu};
 pub use shapes_xml::{generate_shape_xml, generate_shapes_xml, generate_connector_xml};
 pub use tables::{Table, TableRow, TableCell, TableBuilder, CellAlign, CellVAlign};
-pub use images::{Image, ImageBuilder};
+pub use images::{Image, ImageBuilder, ImageSource};
 pub use images_xml::{generate_image_xml, generate_image_relationship, generate_image_content_type};
 pub use charts::{Chart, ChartType, ChartSeries, ChartBuilder, generate_chart_xml};
 
@@ -81,5 +81,66 @@ mod tests {
         assert_eq!(slide.title, "Title");
         assert_eq!(slide.content.len(), 2);
         assert_eq!(slide.content[0], "Point 1");
+    }
+    
+    #[test]
+    fn test_bullet_styles() {
+        let bullet = BulletStyle::Bullet;
+        assert!(bullet.to_xml().contains("buChar"));
+        
+        let number = BulletStyle::Number;
+        assert!(number.to_xml().contains("arabicPeriod"));
+        
+        let letter = BulletStyle::LetterLower;
+        assert!(letter.to_xml().contains("alphaLcPeriod"));
+        
+        let roman = BulletStyle::RomanUpper;
+        assert!(roman.to_xml().contains("romanUcPeriod"));
+        
+        let custom = BulletStyle::Custom('★');
+        assert!(custom.to_xml().contains("★"));
+        
+        let none = BulletStyle::None;
+        assert!(none.to_xml().contains("buNone"));
+    }
+    
+    #[test]
+    fn test_numbered_slide() {
+        let slide = SlideContent::new("Steps")
+            .with_bullet_style(BulletStyle::Number)
+            .add_bullet("First step")
+            .add_bullet("Second step")
+            .add_bullet("Third step");
+        
+        assert_eq!(slide.bullets.len(), 3);
+        assert_eq!(slide.bullets[0].style, BulletStyle::Number);
+    }
+    
+    #[test]
+    fn test_mixed_bullet_styles() {
+        let slide = SlideContent::new("Mixed")
+            .add_numbered("Step 1")
+            .add_numbered("Step 2")
+            .add_lettered("Option a")
+            .add_lettered("Option b");
+        
+        assert_eq!(slide.bullets.len(), 4);
+        assert_eq!(slide.bullets[0].style, BulletStyle::Number);
+        assert_eq!(slide.bullets[2].style, BulletStyle::LetterLower);
+    }
+    
+    #[test]
+    fn test_sub_bullets() {
+        let slide = SlideContent::new("Hierarchy")
+            .add_bullet("Main point")
+            .add_sub_bullet("Sub point 1")
+            .add_sub_bullet("Sub point 2")
+            .add_bullet("Another main point");
+        
+        assert_eq!(slide.bullets.len(), 4);
+        assert_eq!(slide.bullets[0].level, 0);
+        assert_eq!(slide.bullets[1].level, 1);
+        assert_eq!(slide.bullets[2].level, 1);
+        assert_eq!(slide.bullets[3].level, 0);
     }
 }

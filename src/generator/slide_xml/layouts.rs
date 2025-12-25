@@ -1,10 +1,31 @@
 //! Slide layout implementations
 
-use crate::generator::slide_content::SlideContent;
+use crate::generator::slide_content::{SlideContent, BulletStyle};
 use crate::generator::package_xml::escape_xml;
-use crate::generator::slide::formatting::{generate_rich_text_runs, generate_text_props};
+use crate::generator::slide::formatting::generate_text_props;
 use super::common::{SLIDE_HEADER, SLIDE_FOOTER, generate_title_shape};
 use super::content::render_additional_content;
+
+/// Generate a bullet paragraph with style
+fn generate_bullet_paragraph(text: &str, level: u32, style: BulletStyle, text_props: &str) -> String {
+    let indent = 457200 + (level * 457200);
+    let margin_left = level * 457200 + indent;
+    let bullet_xml = style.to_xml();
+    
+    format!(
+        r#"
+<a:p>
+<a:pPr lvl="{}" marL="{}" indent="-{}">
+{}
+</a:pPr>
+<a:r>
+{}
+<a:t>{}</a:t>
+</a:r>
+</a:p>"#,
+        level, margin_left, indent, bullet_xml, text_props, escape_xml(text)
+    )
+}
 
 /// Create a blank slide
 pub fn create_blank_slide() -> String {
@@ -109,7 +130,7 @@ pub fn create_title_and_big_content_slide(content: &SlideContent) -> String {
     ));
 
     // Content
-    if !content.content.is_empty() {
+    if !content.bullets.is_empty() || !content.content.is_empty() {
         xml.push_str(
             r#"
 <p:sp>
@@ -131,21 +152,33 @@ pub fn create_title_and_big_content_slide(content: &SlideContent) -> String {
 <a:lstStyle/>"#
         );
 
-        for bullet in content.content.iter() {
-            let rich_text = generate_rich_text_runs(
-                bullet,
-                content_size,
-                content.content_bold,
-                content.content_italic,
-                content.content_color.as_deref(),
-            );
-            xml.push_str(&format!(
-                r#"
-<a:p>
-<a:pPr lvl="0"/>
-{rich_text}
-</a:p>"#
-            ));
+        let content_props = generate_text_props(
+            content_size,
+            content.content_bold,
+            content.content_italic,
+            false,
+            content.content_color.as_deref(),
+        );
+
+        // Use styled bullets if available, otherwise use plain content
+        if !content.bullets.is_empty() {
+            for bullet in &content.bullets {
+                xml.push_str(&generate_bullet_paragraph(
+                    &bullet.text,
+                    bullet.level,
+                    bullet.style,
+                    &content_props,
+                ));
+            }
+        } else {
+            for bullet in &content.content {
+                xml.push_str(&generate_bullet_paragraph(
+                    bullet,
+                    0,
+                    content.bullet_style,
+                    &content_props,
+                ));
+            }
         }
 
         xml.push_str(
@@ -206,10 +239,20 @@ pub fn create_two_column_slide(content: &SlideContent) -> String {
 </p:sp>"#
     ));
 
-    if !content.content.is_empty() {
-        let mid = content.content.len().div_ceil(2);
-        let left_content = &content.content[..mid];
-        let right_content = &content.content[mid..];
+    let content_props = generate_text_props(
+        content_size,
+        content.content_bold,
+        content.content_italic,
+        false,
+        content.content_color.as_deref(),
+    );
+
+    // Determine which bullets to use
+    let use_styled_bullets = !content.bullets.is_empty();
+    let bullet_count = if use_styled_bullets { content.bullets.len() } else { content.content.len() };
+
+    if bullet_count > 0 {
+        let mid = bullet_count.div_ceil(2);
 
         // Left column
         xml.push_str(
@@ -233,21 +276,24 @@ pub fn create_two_column_slide(content: &SlideContent) -> String {
 <a:lstStyle/>"#
         );
 
-        for bullet in left_content.iter() {
-            let rich_text = generate_rich_text_runs(
-                bullet,
-                content_size,
-                content.content_bold,
-                content.content_italic,
-                content.content_color.as_deref(),
-            );
-            xml.push_str(&format!(
-                r#"
-<a:p>
-<a:pPr lvl="0"/>
-{rich_text}
-</a:p>"#
-            ));
+        if use_styled_bullets {
+            for bullet in &content.bullets[..mid] {
+                xml.push_str(&generate_bullet_paragraph(
+                    &bullet.text,
+                    bullet.level,
+                    bullet.style,
+                    &content_props,
+                ));
+            }
+        } else {
+            for bullet in &content.content[..mid] {
+                xml.push_str(&generate_bullet_paragraph(
+                    bullet,
+                    0,
+                    content.bullet_style,
+                    &content_props,
+                ));
+            }
         }
 
         xml.push_str(
@@ -257,7 +303,7 @@ pub fn create_two_column_slide(content: &SlideContent) -> String {
         );
 
         // Right column
-        if !right_content.is_empty() {
+        if mid < bullet_count {
             xml.push_str(
                 r#"
 <p:sp>
@@ -279,21 +325,24 @@ pub fn create_two_column_slide(content: &SlideContent) -> String {
 <a:lstStyle/>"#
             );
 
-            for bullet in right_content.iter() {
-                let rich_text = generate_rich_text_runs(
-                    bullet,
-                    content_size,
-                    content.content_bold,
-                    content.content_italic,
-                    content.content_color.as_deref(),
-                );
-                xml.push_str(&format!(
-                    r#"
-<a:p>
-<a:pPr lvl="0"/>
-{rich_text}
-</a:p>"#
-                ));
+            if use_styled_bullets {
+                for bullet in &content.bullets[mid..] {
+                    xml.push_str(&generate_bullet_paragraph(
+                        &bullet.text,
+                        bullet.level,
+                        bullet.style,
+                        &content_props,
+                    ));
+                }
+            } else {
+                for bullet in &content.content[mid..] {
+                    xml.push_str(&generate_bullet_paragraph(
+                        bullet,
+                        0,
+                        content.bullet_style,
+                        &content_props,
+                    ));
+                }
             }
 
             xml.push_str(
@@ -359,7 +408,7 @@ pub fn create_title_and_content_slide(content: &SlideContent) -> String {
     if let Some(ref table) = content.table {
         xml.push('\n');
         xml.push_str(&crate::generator::tables_xml::generate_table_xml(table, 3));
-    } else if !content.content.is_empty() {
+    } else if !content.bullets.is_empty() || !content.content.is_empty() {
         // Render bullets if no table
         xml.push_str(
             r#"
@@ -382,21 +431,33 @@ pub fn create_title_and_content_slide(content: &SlideContent) -> String {
 <a:lstStyle/>"#
         );
 
-        for bullet in content.content.iter() {
-            let rich_text = generate_rich_text_runs(
-                bullet,
-                content_size,
-                content.content_bold,
-                content.content_italic,
-                content.content_color.as_deref(),
-            );
-            xml.push_str(&format!(
-                r#"
-<a:p>
-<a:pPr lvl="0"/>
-{rich_text}
-</a:p>"#
-            ));
+        let content_props = generate_text_props(
+            content_size,
+            content.content_bold,
+            content.content_italic,
+            false,
+            content.content_color.as_deref(),
+        );
+
+        // Use styled bullets if available, otherwise use plain content
+        if !content.bullets.is_empty() {
+            for bullet in &content.bullets {
+                xml.push_str(&generate_bullet_paragraph(
+                    &bullet.text,
+                    bullet.level,
+                    bullet.style,
+                    &content_props,
+                ));
+            }
+        } else {
+            for bullet in &content.content {
+                xml.push_str(&generate_bullet_paragraph(
+                    bullet,
+                    0,
+                    content.bullet_style,
+                    &content_props,
+                ));
+            }
         }
 
         xml.push_str(

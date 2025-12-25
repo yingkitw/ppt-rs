@@ -6,9 +6,13 @@ pub struct TextFormat {
     pub bold: bool,
     pub italic: bool,
     pub underline: bool,
+    pub strikethrough: bool,
     pub color: Option<String>,      // RGB hex color (e.g., "FF0000" for red)
+    pub highlight: Option<String>,  // Highlight/background color
     pub font_size: Option<u32>,     // in points
     pub font_family: Option<String>, // Font family name (e.g., "Arial")
+    pub subscript: bool,
+    pub superscript: bool,
 }
 
 impl TextFormat {
@@ -34,10 +38,22 @@ impl TextFormat {
         self.underline = true;
         self
     }
+    
+    /// Set strikethrough formatting
+    pub fn strikethrough(mut self) -> Self {
+        self.strikethrough = true;
+        self
+    }
 
     /// Set text color (RGB hex format)
     pub fn color(mut self, hex_color: &str) -> Self {
         self.color = Some(hex_color.trim_start_matches('#').to_uppercase());
+        self
+    }
+    
+    /// Set highlight/background color (RGB hex format)
+    pub fn highlight(mut self, hex_color: &str) -> Self {
+        self.highlight = Some(hex_color.trim_start_matches('#').to_uppercase());
         self
     }
 
@@ -50,6 +66,20 @@ impl TextFormat {
     /// Set font family
     pub fn font_family(mut self, family: &str) -> Self {
         self.font_family = Some(family.to_string());
+        self
+    }
+    
+    /// Set subscript formatting
+    pub fn subscript(mut self) -> Self {
+        self.subscript = true;
+        self.superscript = false; // Can't be both
+        self
+    }
+    
+    /// Set superscript formatting
+    pub fn superscript(mut self) -> Self {
+        self.superscript = true;
+        self.subscript = false; // Can't be both
         self
     }
 
@@ -68,12 +98,31 @@ impl TextFormat {
         if self.underline {
             attrs.push_str(" u=\"sng\"");
         }
+        
+        if self.strikethrough {
+            attrs.push_str(" strike=\"sngStrike\"");
+        }
+        
+        if self.subscript {
+            attrs.push_str(" baseline=\"-25000\""); // 25% below baseline
+        } else if self.superscript {
+            attrs.push_str(" baseline=\"30000\""); // 30% above baseline
+        }
 
         if let Some(size) = self.font_size {
             attrs.push_str(&format!(" sz=\"{}\"", size * 100));
         }
 
         attrs
+    }
+    
+    /// Generate highlight element if set
+    pub fn to_highlight_xml(&self) -> String {
+        if let Some(ref color) = self.highlight {
+            format!(r#"<a:highlight><a:srgbClr val="{}"/></a:highlight>"#, color)
+        } else {
+            String::new()
+        }
     }
 }
 
@@ -116,16 +165,40 @@ impl FormattedText {
         self.format = self.format.underline();
         self
     }
+    
+    /// Builder method for strikethrough
+    pub fn strikethrough(mut self) -> Self {
+        self.format = self.format.strikethrough();
+        self
+    }
 
     /// Builder method for color
     pub fn color(mut self, hex_color: &str) -> Self {
         self.format = self.format.color(hex_color);
         self
     }
+    
+    /// Builder method for highlight
+    pub fn highlight(mut self, hex_color: &str) -> Self {
+        self.format = self.format.highlight(hex_color);
+        self
+    }
 
     /// Builder method for font size
     pub fn font_size(mut self, size: u32) -> Self {
         self.format = self.format.font_size(size);
+        self
+    }
+    
+    /// Builder method for subscript
+    pub fn subscript(mut self) -> Self {
+        self.format = self.format.subscript();
+        self
+    }
+    
+    /// Builder method for superscript
+    pub fn superscript(mut self) -> Self {
+        self.format = self.format.superscript();
         self
     }
 }
@@ -181,5 +254,54 @@ mod tests {
         let xml = color_to_xml("FF0000");
         assert!(xml.contains("FF0000"));
         assert!(xml.contains("srgbClr"));
+    }
+    
+    #[test]
+    fn test_strikethrough() {
+        let format = TextFormat::new().strikethrough();
+        let attrs = format.to_xml_attrs();
+        assert!(attrs.contains("strike=\"sngStrike\""));
+    }
+    
+    #[test]
+    fn test_highlight() {
+        let format = TextFormat::new().highlight("FFFF00");
+        let xml = format.to_highlight_xml();
+        assert!(xml.contains("highlight"));
+        assert!(xml.contains("FFFF00"));
+    }
+    
+    #[test]
+    fn test_subscript_superscript() {
+        let sub = TextFormat::new().subscript();
+        let attrs = sub.to_xml_attrs();
+        assert!(attrs.contains("baseline=\"-25000\""));
+        
+        let sup = TextFormat::new().superscript();
+        let attrs = sup.to_xml_attrs();
+        assert!(attrs.contains("baseline=\"30000\""));
+    }
+    
+    #[test]
+    fn test_formatted_text_strikethrough() {
+        let text = FormattedText::new("Deleted")
+            .strikethrough();
+        assert!(text.format.strikethrough);
+    }
+    
+    #[test]
+    fn test_formatted_text_highlight() {
+        let text = FormattedText::new("Important")
+            .highlight("FFFF00");
+        assert_eq!(text.format.highlight, Some("FFFF00".to_string()));
+    }
+    
+    #[test]
+    fn test_formatted_text_subscript_superscript() {
+        let sub = FormattedText::new("2").subscript();
+        assert!(sub.format.subscript);
+        
+        let sup = FormattedText::new("2").superscript();
+        assert!(sup.format.superscript);
     }
 }

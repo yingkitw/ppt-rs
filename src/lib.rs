@@ -56,6 +56,9 @@ pub mod shared;
 // Easy-to-use prelude
 pub mod prelude;
 
+// Templates for common presentations
+pub mod templates;
+
 // Web2PPT module (optional feature)
 #[cfg(feature = "web2ppt")]
 pub mod web2ppt;
@@ -70,8 +73,10 @@ pub use generator::{
     TextFormat, FormattedText,
     Table, TableRow, TableCell, TableBuilder,
     Shape, ShapeType, ShapeFill, ShapeLine,
-    Image, ImageBuilder,
+    Image, ImageBuilder, ImageSource,
     Chart, ChartType, ChartSeries, ChartBuilder,
+    // Bullet styles
+    BulletStyle, BulletPoint,
     // New element types
     Connector, ConnectorType, ConnectorLine, ArrowType, ArrowSize, ConnectionSite, LineDash,
     Hyperlink, HyperlinkAction,

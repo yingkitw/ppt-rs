@@ -343,9 +343,96 @@ Unlike other Rust PPTX crates that:
 - **Architecture**: Layered design with clear separation of concerns
 - **Test Coverage**: 650+ tests covering all major features
 
+## Templates
+
+Create presentations quickly with pre-built templates:
+
+```rust
+use ppt_rs::templates::{self, ProposalContent, StatusContent};
+
+// Business proposal template
+let proposal = templates::business_proposal(
+    "Q4 Budget Proposal",
+    "Finance Team",
+    ProposalContent {
+        executive_summary: vec!["Key insight 1", "Key insight 2"],
+        problem: vec!["Current challenge"],
+        solution: vec!["Our approach"],
+        timeline: vec![("Phase 1", "Week 1-2"), ("Phase 2", "Week 3-4")],
+        budget: vec![("Development", "$100,000")],
+        next_steps: vec!["Approve budget"],
+    },
+)?;
+
+// Status report template
+let status = templates::status_report(
+    "Weekly Status",
+    "2025-01-01",
+    StatusContent {
+        summary: vec!["On track for Q1 goals"],
+        completed: vec!["Feature A released"],
+        in_progress: vec!["Feature B in testing"],
+        blocked: vec![],
+        next_week: vec!["Release Feature B"],
+        metrics: vec![("Velocity", "32 points")],
+    },
+)?;
+
+// Quick simple presentation
+let simple = templates::simple("My Presentation", &[
+    ("Introduction", &["Point 1", "Point 2"]),
+    ("Conclusion", &["Summary"]),
+])?;
+```
+
+Available templates: `business_proposal`, `training_material`, `status_report`, `technical_doc`, `simple`
+
+## Themes
+
+Pre-defined color themes for consistent styling:
+
+```rust
+use ppt_rs::prelude::themes;
+
+// Available themes
+themes::CORPORATE  // Professional blue/gray
+themes::MODERN     // Clean minimalist
+themes::VIBRANT    // Bold and colorful
+themes::DARK       // Dark mode
+themes::NATURE     // Fresh green
+themes::TECH       // Technology blue
+themes::CARBON     // IBM Carbon Design
+
+// Theme properties
+let theme = themes::CORPORATE;
+println!("Primary: {}", theme.primary);     // "1565C0"
+println!("Background: {}", theme.background); // "FFFFFF"
+```
+
+## Layout Helpers
+
+Position shapes easily with layout helpers:
+
+```rust
+use ppt_rs::prelude::layouts;
+
+// Center a shape on the slide
+let (x, y) = layouts::center(1000000, 500000);
+
+// Create a grid of positions
+let positions = layouts::grid(2, 3, 1000000, 800000); // 2x3 grid
+
+// Stack shapes horizontally
+let positions = layouts::stack_horizontal(4, 500000, 100000, 2000000);
+
+// Evenly distribute shapes
+let positions = layouts::distribute_horizontal(3, 500000, 2000000);
+```
+
 ## Advanced Features
 
 - **Prelude Module**: Simplified API with macros (`pptx!`, `shape!`), unit helpers (`inches()`, `cm()`), and color constants
+- **Templates**: Pre-built presentation structures (business proposal, status report, training material, technical doc)
 - **Gradient Fills**: Linear gradients with multiple stops and directions (horizontal, vertical, diagonal, custom angle)
 - **Transparency**: Alpha transparency for solid fills (0-100%)
 - **Connectors**: Straight, elbow, curved with arrow types (triangle, stealth, diamond, oval, open) and dash styles

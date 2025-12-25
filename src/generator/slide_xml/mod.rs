@@ -88,7 +88,6 @@ pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent) 
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::generator::slide::formatting::parse_inline_formatting;
 
     #[test]
