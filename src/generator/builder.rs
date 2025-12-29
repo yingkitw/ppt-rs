@@ -260,8 +260,18 @@ fn write_charts(
                 zip.start_file(format!("ppt/charts/chart{slide_num}_{chart_index}.xml"), *options)?;
                 zip.write_all(chart_xml.as_bytes())?;
                 
+                // Write chart style XML
+                let style_xml = crate::generator::charts::style::generate_chart_style_xml(chart);
+                zip.start_file(format!("ppt/charts/style{}.xml", chart_index + 1), *options)?;
+                zip.write_all(style_xml.as_bytes())?;
+                
+                // Write chart colors XML
+                let colors_xml = crate::generator::charts::style::generate_chart_colors_xml(chart);
+                zip.start_file(format!("ppt/charts/colors{}.xml", chart_index + 1), *options)?;
+                zip.write_all(colors_xml.as_bytes())?;
+                
                 // Write chart relationship file
-                let chart_relationship_xml = crate::generator::charts::create_chart_relationship_xml(
+                let chart_relationship_xml = crate::generator::charts::create_chart_relationship_xml_with_styles(
                     chart_index + 1,
                     &format!("chart{slide_num}_{chart_index}_data.xlsx")
                 );

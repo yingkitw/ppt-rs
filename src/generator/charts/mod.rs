@@ -12,6 +12,7 @@ mod builder;
 pub mod xml;
 pub mod excel;
 pub mod relationships;
+pub mod style;
 
 pub use types::ChartType;
 pub use data::{Chart, ChartSeries};

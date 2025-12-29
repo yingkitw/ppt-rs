@@ -856,10 +856,18 @@ fn generate_combo_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_nu
 fn chart_data_header(chart: &Chart) -> String {
     format!(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:c14="http://schemas.microsoft.com/office/drawing/2007/8/2/chart">
 <c:date1904 val="0"/>
 <c:lang val="en-US"/>
 <c:roundedCorners val="0"/>
+<mc:AlternateContent>
+<mc:Choice Requires="c14">
+<c14:style val="102"/>
+</mc:Choice>
+<mc:Fallback>
+<c:style val="2"/>
+</mc:Fallback>
+</mc:AlternateContent>
 <c:chart>
 <c:autoTitleDeleted val="0"/>
 <c:title>
@@ -902,6 +910,19 @@ fn chart_data_footer(relationship_id: Option<&str>) -> String {
             rid
         ));
     }
+    
+    // Add style and color references
+    xml.push_str(r#"<c:extLst>
+<c:ext xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex" uri="{CE6537A1-D6FC-4A65-B693-37E3B8C79D0E}">
+<cx:chartSpacePr/>
+</c:ext>
+<c:ext uri="{C3380CC4-5D6E-409C-BE32-E72D297353CC}">
+<c16r3:chartStyle xmlns:c16r3="http://schemas.microsoft.com/office/drawing/2017/03/chart/r3" val="201"/>
+</c:ext>
+<c:ext uri="{02D2A6F0-4D43-4DE2-B1C9-9B3A9F5F9C0A}">
+<c16r3:colorStyle xmlns:c16r3="http://schemas.microsoft.com/office/drawing/2017/03/chart/r3" val="201"/>
+</c:ext>
+</c:extLst>"#);
     
     xml.push_str(r#"</c:chart>
 </c:chartSpace>"#);
