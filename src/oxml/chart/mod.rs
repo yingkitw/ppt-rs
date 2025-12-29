@@ -103,6 +103,15 @@ impl NumericData {
         NumericData::from_values_with_sheet(values, "Sheet1")
     }
     
+    pub fn from_values_with_chart_number(values: &[f64], chart_number: usize) -> Self {
+        let sheet_name = if chart_number == 1 {
+            "Sheet1".to_string()
+        } else {
+            format!("Sheet{}", chart_number)
+        };
+        NumericData::from_values_with_sheet(values, &sheet_name)
+    }
+    
     pub fn from_values_with_sheet(values: &[f64], sheet_name: &str) -> Self {
         let formula = format!("'{}'!$B$2", sheet_name);
         let mut data = NumericData::new(&formula);
@@ -143,6 +152,15 @@ impl StringData {
 
     pub fn from_categories(categories: &[&str]) -> Self {
         StringData::from_categories_with_sheet(categories, "Sheet1")
+    }
+    
+    pub fn from_categories_with_chart_number(categories: &[&str], chart_number: usize) -> Self {
+        let sheet_name = if chart_number == 1 {
+            "Sheet1".to_string()
+        } else {
+            format!("Sheet{}", chart_number)
+        };
+        StringData::from_categories_with_sheet(categories, &sheet_name)
     }
     
     pub fn from_categories_with_sheet(categories: &[&str], sheet_name: &str) -> Self {
@@ -193,6 +211,10 @@ impl ChartSeries {
     }
 
     pub fn parse(elem: &XmlElement) -> Option<Self> {
+        ChartSeries::parse_with_chart_number(elem, 1)
+    }
+    
+    pub fn parse_with_chart_number(elem: &XmlElement, chart_number: usize) -> Option<Self> {
         let index = elem.find("idx")
             .and_then(|e| e.attr("val"))
             .and_then(|v| v.parse().ok())
@@ -202,8 +224,13 @@ impl ChartSeries {
             .map(|t| t.text_content())
             .unwrap_or_default();
 
-        // Parse values - use default sheet name for backward compatibility
-        let values = NumericData::new("'Sheet1'!$B$2");
+        // Parse values - use chart number for worksheet naming
+        let sheet_name = if chart_number == 1 {
+            "Sheet1".to_string()
+        } else {
+            format!("Sheet{}", chart_number)
+        };
+        let values = NumericData::new(&format!("'{}'!$B$2", sheet_name));
 
         Some(ChartSeries {
             index,
@@ -215,6 +242,15 @@ impl ChartSeries {
 
     pub fn to_xml(&self) -> String {
         self.to_xml_with_sheet("Sheet1")
+    }
+    
+    pub fn to_xml_with_chart_number(&self, chart_number: usize) -> String {
+        let sheet_name = if chart_number == 1 {
+            "Sheet1".to_string()
+        } else {
+            format!("Sheet{}", chart_number)
+        };
+        self.to_xml_with_sheet(&sheet_name)
     }
 
     pub fn to_xml_with_sheet(&self, sheet_name: &str) -> String {
