@@ -229,18 +229,23 @@ fn column_letter(col_num: u16) -> String {
 
 /// Generate Excel workbook bytes based on chart type
 pub fn generate_excel_for_chart(chart: &Chart) -> Vec<u8> {
+    generate_excel_for_chart_with_name(chart, "Sheet1".to_string())
+}
+
+/// Generate Excel workbook bytes based on chart type with specific worksheet name
+pub fn generate_excel_for_chart_with_name(chart: &Chart, worksheet_name: String) -> Vec<u8> {
     match chart.chart_type {
         ChartType::Scatter | ChartType::ScatterLines | ChartType::ScatterSmooth => {
-            let writer = XyExcelWriter::new();
+            let writer = XyExcelWriter::with_worksheet_name(worksheet_name);
             writer.generate_excel_bytes(chart)
         }
         ChartType::Bubble => {
             // For bubble charts, we need to include bubble sizes
-            generate_bubble_excel(chart)
+            generate_bubble_excel_with_name(chart, worksheet_name)
         }
         _ => {
             // Category-based charts
-            let writer = CategoryExcelWriter::new();
+            let writer = CategoryExcelWriter::with_worksheet_name(worksheet_name);
             writer.generate_excel_bytes(chart)
         }
     }
@@ -248,18 +253,7 @@ pub fn generate_excel_for_chart(chart: &Chart) -> Vec<u8> {
 
 /// Get the appropriate Excel writer for the chart type
 pub fn get_excel_writer(chart_type: &ChartType) -> Box<dyn ExcelWriter> {
-    match chart_type {
-        ChartType::Scatter | ChartType::ScatterLines | ChartType::ScatterSmooth => {
-            Box::new(XyExcelWriter::new())
-        }
-        ChartType::Bubble => {
-            Box::new(BubbleExcelWriter::new())
-        }
-        _ => {
-            // Category-based charts
-            Box::new(CategoryExcelWriter::new())
-        }
-    }
+    get_excel_writer_with_name(chart_type, "Sheet1".to_string())
 }
 
 /// Get the appropriate Excel writer for the chart type with specific worksheet name
@@ -280,8 +274,14 @@ pub fn get_excel_writer_with_name(chart_type: &ChartType, worksheet_name: String
 
 /// Generate Excel for bubble charts (includes bubble sizes)
 fn generate_bubble_excel(chart: &Chart) -> Vec<u8> {
+    generate_bubble_excel_with_name(chart, "Sheet1".to_string())
+}
+
+/// Generate Excel for bubble charts with specific worksheet name
+fn generate_bubble_excel_with_name(chart: &Chart, worksheet_name: String) -> Vec<u8> {
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
+    worksheet.set_name(&worksheet_name).unwrap();
     
     for (series_idx, series) in chart.series.iter().enumerate() {
         let offset = series_idx * 4; // 4 rows per series (header + data)

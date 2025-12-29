@@ -57,7 +57,7 @@ pub fn create_content_types_xml_with_charts(slides: usize, custom_slides: Option
                         "\n<Override PartName=\"/ppt/charts/chart{slide_num}_{chart_index}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.drawingml.chart+xml\"/>"
                     ));
                     xml.push_str(&format!(
-                        "\n<Override PartName=\"/ppt/charts/chart{slide_num}_{chart_index}_data.xlsx\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\"/>"
+                        "\n<Override PartName=\"/ppt/embeddings/chart{slide_num}_{chart_index}_data.xlsx\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\"/>"
                     ));
                 }
             }
@@ -218,7 +218,7 @@ pub fn create_slide_rels_xml_with_charts(slide_num: usize, chart_count: usize) -
         let excel_id = chart_count + i + 2; // Continue from where chart IDs left off
         xml.push_str(&format!(
             r#"
-<Relationship Id="rId{excel_id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/package" Target="../charts/chart{slide_num}_{i}_data.xlsx"/>"#
+<Relationship Id="rId{excel_id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/package" Target="../embeddings/chart{slide_num}_{i}_data.xlsx"/>"#
         ));
     }
     
@@ -246,7 +246,7 @@ pub fn create_slide_rels_xml_with_notes_and_charts(slide_num: usize, chart_count
         let excel_id = chart_count + i + 2; // Continue from where chart IDs left off
         xml.push_str(&format!(
             r#"
-<Relationship Id="rId{excel_id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/package" Target="../charts/chart{slide_num}_{i}_data.xlsx"/>"#
+<Relationship Id="rId{excel_id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/package" Target="../embeddings/chart{slide_num}_{i}_data.xlsx"/>"#
         ));
     }
     

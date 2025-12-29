@@ -17,20 +17,20 @@ pub fn generate_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_numb
             generate_bar_chart_xml_with_number(chart, shape_id, chart_number)
         }
         ChartType::Line | ChartType::LineMarkers | ChartType::LineStacked => {
-            generate_line_chart_xml(chart, shape_id)
+            generate_line_chart_xml_with_number(chart, shape_id, chart_number)
         }
         ChartType::Pie => generate_pie_chart_xml_with_number(chart, shape_id, chart_number),
         ChartType::Doughnut => generate_doughnut_chart_xml(chart, shape_id),
         ChartType::Area | ChartType::AreaStacked | ChartType::AreaStacked100 => {
-            generate_area_chart_xml(chart, shape_id)
+            generate_area_chart_xml_with_number(chart, shape_id, chart_number)
         }
         ChartType::Scatter | ChartType::ScatterLines | ChartType::ScatterSmooth => {
-            generate_scatter_chart_xml(chart, shape_id)
+            generate_scatter_chart_xml_with_number(chart, shape_id, chart_number)
         }
-        ChartType::Bubble => generate_bubble_chart_xml(chart, shape_id),
-        ChartType::Radar | ChartType::RadarFilled => generate_radar_chart_xml(chart, shape_id),
-        ChartType::StockHLC | ChartType::StockOHLC => generate_stock_chart_xml(chart, shape_id),
-        ChartType::Combo => generate_combo_chart_xml(chart, shape_id),
+        ChartType::Bubble => generate_bubble_chart_xml_with_number(chart, shape_id, chart_number),
+        ChartType::Radar | ChartType::RadarFilled => generate_radar_chart_xml_with_number(chart, shape_id, chart_number),
+        ChartType::StockHLC | ChartType::StockOHLC => generate_stock_chart_xml_with_number(chart, shape_id, chart_number),
+        ChartType::Combo => generate_combo_chart_xml_with_number(chart, shape_id, chart_number),
     }
 }
 
@@ -318,16 +318,20 @@ fn generate_bar_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_numb
 
 /// Generate line chart XML
 fn generate_line_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    generate_line_chart_xml_with_number(chart, shape_id, 1)
+}
+
+fn generate_line_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_number: usize) -> String {
     let mut xml = chart_frame_header(chart, shape_id);
     
     xml.push_str(r#"<c:lineChart>
 <c:grouping val="lineMarkers"/>"#);
 
     for (idx, series) in chart.series.iter().enumerate() {
-        xml.push_str(&generate_series_data(chart, idx, &series.name, &series.values));
+        xml.push_str(&generate_series_data_with_number(chart, idx, &series.name, &series.values, chart_number));
     }
 
-    xml.push_str(&generate_category_axis(chart, "b"));
+    xml.push_str(&generate_category_axis_with_number(chart, "b", chart_number));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:lineChart>");
     xml.push_str(&chart_frame_footer(Some("rId1")));
@@ -525,6 +529,10 @@ fn generate_doughnut_chart_xml(chart: &Chart, shape_id: usize) -> String {
 
 /// Generate area chart XML
 fn generate_area_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    generate_area_chart_xml_with_number(chart, shape_id, 1)
+}
+
+fn generate_area_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_number: usize) -> String {
     let mut xml = chart_frame_header(chart, shape_id);
     
     let grouping = chart.chart_type.grouping().unwrap_or("standard");
@@ -532,10 +540,10 @@ fn generate_area_chart_xml(chart: &Chart, shape_id: usize) -> String {
 <c:grouping val="{}"/>"#, grouping));
 
     for (idx, series) in chart.series.iter().enumerate() {
-        xml.push_str(&generate_series_data(chart, idx, &series.name, &series.values));
+        xml.push_str(&generate_series_data_with_number(chart, idx, &series.name, &series.values, chart_number));
     }
 
-    xml.push_str(&generate_category_axis(chart, "b"));
+    xml.push_str(&generate_category_axis_with_number(chart, "b", chart_number));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:areaChart>");
     xml.push_str(&chart_frame_footer(Some("rId1")));
@@ -545,6 +553,10 @@ fn generate_area_chart_xml(chart: &Chart, shape_id: usize) -> String {
 
 /// Generate scatter chart XML
 fn generate_scatter_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    generate_scatter_chart_xml_with_number(chart, shape_id, 1)
+}
+
+fn generate_scatter_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_number: usize) -> String {
     let mut xml = chart_frame_header(chart, shape_id);
     
     let scatter_style = chart.chart_type.scatter_style().unwrap_or("lineMarker");
@@ -552,7 +564,8 @@ fn generate_scatter_chart_xml(chart: &Chart, shape_id: usize) -> String {
 <c:scatterStyle val="{}"/>"#, scatter_style));
 
     for (idx, series) in chart.series.iter().enumerate() {
-        let excel_writer = get_excel_writer(&chart.chart_type);
+        let worksheet_name = worksheet_name_for_chart(chart_number);
+        let excel_writer = get_excel_writer_with_name(&chart.chart_type, worksheet_name);
         let values_ref = excel_writer.values_ref(idx);
         let categories_ref = excel_writer.categories_ref();
         
@@ -631,6 +644,10 @@ fn generate_scatter_chart_xml(chart: &Chart, shape_id: usize) -> String {
 
 /// Generate bubble chart XML
 fn generate_bubble_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    generate_bubble_chart_xml_with_number(chart, shape_id, 1)
+}
+
+fn generate_bubble_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_number: usize) -> String {
     let mut xml = chart_frame_header(chart, shape_id);
     
     xml.push_str(r#"<c:bubbleChart>
@@ -638,7 +655,8 @@ fn generate_bubble_chart_xml(chart: &Chart, shape_id: usize) -> String {
 <c:bubbleScale val="100"/>"#);
 
     for (idx, series) in chart.series.iter().enumerate() {
-        let excel_writer = get_excel_writer(&chart.chart_type);
+        let worksheet_name = worksheet_name_for_chart(chart_number);
+        let excel_writer = get_excel_writer_with_name(&chart.chart_type, worksheet_name);
         let values_ref = excel_writer.values_ref(idx);
         let categories_ref = excel_writer.categories_ref();
         
@@ -750,6 +768,10 @@ fn generate_bubble_chart_xml(chart: &Chart, shape_id: usize) -> String {
 
 /// Generate radar chart XML
 fn generate_radar_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    generate_radar_chart_xml_with_number(chart, shape_id, 1)
+}
+
+fn generate_radar_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_number: usize) -> String {
     let mut xml = chart_frame_header(chart, shape_id);
     
     let radar_style = chart.chart_type.radar_style().unwrap_or("marker");
@@ -757,10 +779,10 @@ fn generate_radar_chart_xml(chart: &Chart, shape_id: usize) -> String {
 <c:radarStyle val="{}"/>"#, radar_style));
 
     for (idx, series) in chart.series.iter().enumerate() {
-        xml.push_str(&generate_series_data(chart, idx, &series.name, &series.values));
+        xml.push_str(&generate_series_data_with_number(chart, idx, &series.name, &series.values, chart_number));
     }
 
-    xml.push_str(&generate_category_axis(chart, "b"));
+    xml.push_str(&generate_category_axis_with_number(chart, "b", chart_number));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:radarChart>");
     xml.push_str(&chart_frame_footer(Some("rId1")));
@@ -770,16 +792,20 @@ fn generate_radar_chart_xml(chart: &Chart, shape_id: usize) -> String {
 
 /// Generate stock chart XML
 fn generate_stock_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    generate_stock_chart_xml_with_number(chart, shape_id, 1)
+}
+
+fn generate_stock_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_number: usize) -> String {
     let mut xml = chart_frame_header(chart, shape_id);
     
     xml.push_str(r#"<c:stockChart>"#);
 
     // Stock charts need High, Low, Close (and optionally Open) series
     for (idx, series) in chart.series.iter().enumerate() {
-        xml.push_str(&generate_series_data(chart, idx, &series.name, &series.values));
+        xml.push_str(&generate_series_data_with_number(chart, idx, &series.name, &series.values, chart_number));
     }
 
-    xml.push_str(&generate_category_axis(chart, "b"));
+    xml.push_str(&generate_category_axis_with_number(chart, "b", chart_number));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:stockChart>");
     xml.push_str(&chart_frame_footer(Some("rId1")));
@@ -789,6 +815,10 @@ fn generate_stock_chart_xml(chart: &Chart, shape_id: usize) -> String {
 
 /// Generate combo chart XML (bar + line)
 fn generate_combo_chart_xml(chart: &Chart, shape_id: usize) -> String {
+    generate_combo_chart_xml_with_number(chart, shape_id, 1)
+}
+
+fn generate_combo_chart_xml_with_number(chart: &Chart, shape_id: usize, chart_number: usize) -> String {
     let mut xml = chart_frame_header(chart, shape_id);
     
     // First half of series as bars
@@ -798,10 +828,10 @@ fn generate_combo_chart_xml(chart: &Chart, shape_id: usize) -> String {
 
     let mid = chart.series.len() / 2;
     for (idx, series) in chart.series.iter().take(mid.max(1)).enumerate() {
-        xml.push_str(&generate_series_data(chart, idx, &series.name, &series.values));
+        xml.push_str(&generate_series_data_with_number(chart, idx, &series.name, &series.values, chart_number));
     }
 
-    xml.push_str(&generate_category_axis(chart, "b"));
+    xml.push_str(&generate_category_axis_with_number(chart, "b", chart_number));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:barChart>");
 
@@ -811,7 +841,7 @@ fn generate_combo_chart_xml(chart: &Chart, shape_id: usize) -> String {
 <c:grouping val="standard"/>"#);
 
         for (idx, series) in chart.series.iter().skip(mid.max(1)).enumerate() {
-            xml.push_str(&generate_series_data(chart, mid + idx, &series.name, &series.values));
+            xml.push_str(&generate_series_data_with_number(chart, mid + idx, &series.name, &series.values, chart_number));
         }
 
         xml.push_str("</c:lineChart>");

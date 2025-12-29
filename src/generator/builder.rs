@@ -260,9 +260,17 @@ fn write_charts(
                 zip.start_file(format!("ppt/charts/chart{slide_num}_{chart_index}.xml"), *options)?;
                 zip.write_all(chart_xml.as_bytes())?;
                 
-                // Write Excel data file
+                // Write chart relationship file
+                let chart_relationship_xml = crate::generator::charts::create_chart_relationship_xml(
+                    chart_index + 1,
+                    &format!("chart{slide_num}_{chart_index}_data.xlsx")
+                );
+                zip.start_file(format!("ppt/charts/_rels/chart{slide_num}_{chart_index}.xml.rels"), *options)?;
+                zip.write_all(chart_relationship_xml.as_bytes())?;
+                
+                // Write Excel data file (move to embeddings directory)
                 let excel_bytes = crate::generator::charts::excel::generate_excel_bytes(chart);
-                zip.start_file(format!("ppt/charts/chart{slide_num}_{chart_index}_data.xlsx"), *options)?;
+                zip.start_file(format!("ppt/embeddings/chart{slide_num}_{chart_index}_data.xlsx"), *options)?;
                 zip.write_all(&excel_bytes)?;
             }
         }
