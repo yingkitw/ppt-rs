@@ -22,7 +22,7 @@ pub fn create_slide_layout_xml_by_type(layout_type: &str, layout_num: usize) -> 
 pub fn create_title_slide_layout(_layout_num: usize) -> String {
     format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="title" preserve="1">
-<p:cSld name="标题幻灯片">
+<p:cSld name="Title Slide">
 <p:spTree>
 <p:nvGrpSpPr>
 <p:cNvPr id="1" name=""/>
@@ -39,7 +39,7 @@ pub fn create_title_slide_layout(_layout_num: usize) -> String {
 </p:grpSpPr>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="2" name="标题 1"/>
+<p:cNvPr id="2" name="Title 1"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="ctrTitle"/><p:custDataLst><p:tags r:id="rId2"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -47,12 +47,12 @@ pub fn create_title_slide_layout(_layout_num: usize) -> String {
 <p:txBody>
 <a:bodyPr lIns="90000" tIns="46800" rIns="90000" bIns="46800" anchor="b" anchorCtr="0"><a:normAutofit/></a:bodyPr>
 <a:lstStyle><a:lvl1pPr algn="ctr"><a:defRPr sz="6000"/></a:lvl1pPr></a:lstStyle>
-<a:p><a:r><a:rPr lang="zh-CN" altLang="en-US" dirty="0"/><a:t>单击此处编辑母版标题样式</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" dirty="0"/></a:p>
+<a:p><a:r><a:rPr lang="zh-CN" altLang="en-US" dirty="0"/><a:t>Click to edit Master title style</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" dirty="0"/></a:p>
 </p:txBody>
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="3" name="副标题 2"/>
+<p:cNvPr id="3" name="Subtitle 2"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="subTitle" idx="1"/><p:custDataLst><p:tags r:id="rId3"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -70,12 +70,12 @@ pub fn create_title_slide_layout(_layout_num: usize) -> String {
 <a:lvl8pPr marL="3200400" indent="0" algn="ctr"><a:buNone/><a:defRPr sz="1600"/></a:lvl8pPr>
 <a:lvl9pPr marL="3657600" indent="0" algn="ctr"><a:buNone/><a:defRPr sz="1600"/></a:lvl9pPr>
 </a:lstStyle>
-<a:p><a:r><a:rPr lang="zh-CN" altLang="en-US" dirty="0"/><a:t>单击此处编辑母版副标题样式</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" dirty="0"/></a:p>
+<a:p><a:r><a:rPr lang="zh-CN" altLang="en-US" dirty="0"/><a:t>Click to edit Master subtitle style</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" dirty="0"/></a:p>
 </p:txBody>
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="16" name="日期占位符 15"/>
+<p:cNvPr id="16" name="Date Placeholder 15"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="dt" sz="half" idx="10"/><p:custDataLst><p:tags r:id="rId4"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -88,7 +88,7 @@ pub fn create_title_slide_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="17" name="页脚占位符 16"/>
+<p:cNvPr id="17" name="Footer Placeholder 16"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="ftr" sz="quarter" idx="11"/><p:custDataLst><p:tags r:id="rId5"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -101,7 +101,7 @@ pub fn create_title_slide_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="18" name="灯片编号占位符 17"/>
+<p:cNvPr id="18" name="Slide Number Placeholder 17"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="sldNum" sz="quarter" idx="12"/><p:custDataLst><p:tags r:id="rId6"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -124,7 +124,7 @@ pub fn create_title_slide_layout(_layout_num: usize) -> String {
 pub fn create_title_and_content_layout(_layout_num: usize) -> String {
     format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="obj" preserve="1">
-<p:cSld name="标题和内容">
+<p:cSld name="Title and Content">
 <p:spTree>
 <p:nvGrpSpPr>
 <p:cNvPr id="1" name=""/>
@@ -141,7 +141,7 @@ pub fn create_title_and_content_layout(_layout_num: usize) -> String {
 </p:grpSpPr>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="2" name="标题 1"/>
+<p:cNvPr id="2" name="Title 1"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="title"/><p:custDataLst><p:tags r:id="rId2"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -149,12 +149,12 @@ pub fn create_title_and_content_layout(_layout_num: usize) -> String {
 <p:txBody>
 <a:bodyPr vert="horz" lIns="90000" tIns="46800" rIns="90000" bIns="46800" rtlCol="0" anchor="ctr" anchorCtr="0"><a:normAutofit/></a:bodyPr>
 <a:lstStyle/>
-<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>单击此处编辑母版标题样式</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US"/></a:p>
+<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Click to edit Master title style</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US"/></a:p>
 </p:txBody>
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="3" name="内容占位符 2"/>
+<p:cNvPr id="3" name="Content Placeholder 2"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph idx="1"/><p:custDataLst><p:tags r:id="rId3"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -162,16 +162,16 @@ pub fn create_title_and_content_layout(_layout_num: usize) -> String {
 <p:txBody>
 <a:bodyPr vert="horz" lIns="90000" tIns="46800" rIns="90000" bIns="46800" rtlCol="0"><a:normAutofit/></a:bodyPr>
 <a:lstStyle/>
-<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>单击此处编辑母版文本样式</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
-<a:p><a:pPr lvl="1"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第二级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
-<a:p><a:pPr lvl="2"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第三级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
-<a:p><a:pPr lvl="3"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第四级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
-<a:p><a:pPr lvl="4"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第五级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US"/></a:p>
+<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Click to edit Master text style</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="1"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Second level</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="2"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Third level</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="3"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Fourth level</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="4"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Fifth level</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US"/></a:p>
 </p:txBody>
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="4" name="日期占位符 3"/>
+<p:cNvPr id="4" name="Date Placeholder 3"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="dt" sz="half" idx="10"/><p:custDataLst><p:tags r:id="rId4"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -184,7 +184,7 @@ pub fn create_title_and_content_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="5" name="页脚占位符 4"/>
+<p:cNvPr id="5" name="Footer Placeholder 4"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="ftr" sz="quarter" idx="11"/><p:custDataLst><p:tags r:id="rId5"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -197,7 +197,7 @@ pub fn create_title_and_content_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="6" name="灯片编号占位符 5"/>
+<p:cNvPr id="6" name="Slide Number Placeholder 5"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="sldNum" sz="quarter" idx="12"/><p:custDataLst><p:tags r:id="rId6"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -247,7 +247,7 @@ pub fn create_blank_layout(_layout_num: usize) -> String {
 pub fn create_section_header_layout(_layout_num: usize) -> String {
     format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="secHead" preserve="1">
-<p:cSld name="节标题">
+<p:cSld name="Section Header">
 <p:spTree>
 <p:nvGrpSpPr>
 <p:cNvPr id="1" name=""/>
@@ -272,12 +272,12 @@ pub fn create_section_header_layout(_layout_num: usize) -> String {
 <p:txBody>
 <a:bodyPr lIns="90000" tIns="46800" rIns="90000" bIns="46800" anchor="b" anchorCtr="0"><a:normAutofit/></a:bodyPr>
 <a:lstStyle><a:lvl1pPr><a:defRPr sz="4400"/></a:lvl1pPr></a:lstStyle>
-<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" dirty="0"/><a:t>单击此处编辑标题</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" dirty="0"/></a:p>
+<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" dirty="0"/><a:t>Click to edit title</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" dirty="0"/></a:p>
 </p:txBody>
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="3" name="文本占位符 2"/>
+<p:cNvPr id="3" name="Text Placeholder 2"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="body" idx="1" hasCustomPrompt="1"/><p:custDataLst><p:tags r:id="rId3"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -295,7 +295,7 @@ pub fn create_section_header_layout(_layout_num: usize) -> String {
 <a:lvl8pPr marL="3200400" indent="0"><a:buNone/><a:defRPr sz="1600"><a:solidFill><a:schemeClr val="tx1"><a:tint val="75000"/></a:schemeClr></a:solidFill></a:defRPr></a:lvl8pPr>
 <a:lvl9pPr marL="3657600" indent="0"><a:buNone/><a:defRPr sz="1600"><a:solidFill><a:schemeClr val="tx1"><a:tint val="75000"/></a:schemeClr></a:solidFill></a:defRPr></a:lvl9pPr>
 </a:lstStyle>
-<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" dirty="0"/><a:t>单击此处编辑文本</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" dirty="0"/></a:p>
+<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" dirty="0"/><a:t>Click to edit text</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" dirty="0"/></a:p>
 </p:txBody>
 </p:sp>
 <p:sp>
@@ -349,7 +349,7 @@ pub fn create_section_header_layout(_layout_num: usize) -> String {
 pub fn create_title_only_layout(_layout_num: usize) -> String {
     format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="titleOnly" preserve="1">
-<p:cSld name="仅标题">
+<p:cSld name="Title Only">
 <p:spTree>
 <p:nvGrpSpPr>
 <p:cNvPr id="1" name=""/>
@@ -521,7 +521,7 @@ pub fn create_master_rels_xml() -> String {
 pub fn create_two_content_layout(_layout_num: usize) -> String {
     format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="twoObj" preserve="1">
-<p:cSld name="两栏内容">
+<p:cSld name="Two Content">
 <p:spTree>
 <p:nvGrpSpPr>
 <p:cNvPr id="1" name=""/>
@@ -559,9 +559,9 @@ pub fn create_two_content_layout(_layout_num: usize) -> String {
 <p:txBody>
 <a:bodyPr vert="horz" lIns="90000" tIns="46800" rIns="90000" bIns="46800" rtlCol="0"><a:normAutofit/></a:bodyPr>
 <a:lstStyle/>
-<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>单击此处编辑母版文本样式</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
-<a:p><a:pPr lvl="1"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第二级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
-<a:p><a:pPr lvl="2"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第三级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Click to edit Master text style</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="1"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Second level</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="2"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Third level</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
 <a:p><a:pPr lvl="3"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第四级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
 <a:p><a:pPr lvl="4"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第五级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US"/></a:p>
 </p:txBody>
@@ -576,9 +576,9 @@ pub fn create_two_content_layout(_layout_num: usize) -> String {
 <p:txBody>
 <a:bodyPr vert="horz" lIns="90000" tIns="46800" rIns="90000" bIns="46800" rtlCol="0"><a:normAutofit/></a:bodyPr>
 <a:lstStyle/>
-<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>单击此处编辑母版文本样式</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
-<a:p><a:pPr lvl="1"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第二级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
-<a:p><a:pPr lvl="2"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第三级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Click to edit Master text style</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="1"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Second level</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="2"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Third level</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
 <a:p><a:pPr lvl="3"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第四级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
 <a:p><a:pPr lvl="4"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第五级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US"/></a:p>
 </p:txBody>
@@ -634,7 +634,7 @@ pub fn create_two_content_layout(_layout_num: usize) -> String {
 pub fn create_comparison_layout(_layout_num: usize) -> String {
     format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="twoTxTwoObj" preserve="1">
-<p:cSld name="比较">
+<p:cSld name="Comparison">
 <p:spTree>
 <p:nvGrpSpPr>
 <p:cNvPr id="1" name=""/>
@@ -664,7 +664,7 @@ pub fn create_comparison_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="3" name="文本占位符 2"/>
+<p:cNvPr id="3" name="Text Placeholder 2"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph idx="1"/><p:custDataLst><p:tags r:id="rId3"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -672,7 +672,7 @@ pub fn create_comparison_layout(_layout_num: usize) -> String {
 <p:txBody>
 <a:bodyPr vert="horz" lIns="90000" tIns="46800" rIns="90000" bIns="46800" rtlCol="0"><a:normAutofit/></a:bodyPr>
 <a:lstStyle/>
-<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>单击此处编辑母版文本样式</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
+<a:p><a:pPr lvl="0"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>Click to edit Master text style</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
 <a:p><a:pPr lvl="1"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第二级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
 <a:p><a:pPr lvl="2"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第三级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
 <a:p><a:pPr lvl="3"/><a:r><a:rPr lang="zh-CN" altLang="en-US" smtClean="0"/><a:t>第四级</a:t></a:r><a:endParaRPr lang="zh-CN" altLang="en-US" smtClean="0"/></a:p>
@@ -698,7 +698,7 @@ pub fn create_comparison_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="5" name="文本占位符 4"/>
+<p:cNvPr id="5" name="Text Placeholder 4"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph idx="3"/><p:custDataLst><p:tags r:id="rId5"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -781,7 +781,7 @@ pub fn create_comparison_layout(_layout_num: usize) -> String {
 pub fn create_content_with_caption_layout(_layout_num: usize) -> String {
     format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="objTx" preserve="1">
-<p:cSld name="内容和标题">
+<p:cSld name="Content with Caption">
 <p:spTree>
 <p:nvGrpSpPr>
 <p:cNvPr id="1" name=""/>
@@ -828,7 +828,7 @@ pub fn create_content_with_caption_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="4" name="文本占位符 3"/>
+<p:cNvPr id="4" name="Text Placeholder 3"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="body" idx="2" hasCustomPrompt="1"/><p:custDataLst><p:tags r:id="rId4"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -900,7 +900,7 @@ pub fn create_content_with_caption_layout(_layout_num: usize) -> String {
 pub fn create_picture_with_caption_layout(_layout_num: usize) -> String {
     format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" type="picTx" preserve="1">
-<p:cSld name="图片和标题">
+<p:cSld name="Picture with Caption">
 <p:spTree>
 <p:nvGrpSpPr>
 <p:cNvPr id="1" name=""/>
@@ -943,7 +943,7 @@ pub fn create_picture_with_caption_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="4" name="文本占位符 3"/>
+<p:cNvPr id="4" name="Text Placeholder 3"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph type="body" idx="2" hasCustomPrompt="1"/><p:custDataLst><p:tags r:id="rId4"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -1045,7 +1045,7 @@ pub fn create_title_and_vertical_text_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="3" name="文本占位符 2"/>
+<p:cNvPr id="3" name="Text Placeholder 2"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph idx="1"/><p:custDataLst><p:tags r:id="rId3"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
@@ -1141,7 +1141,7 @@ pub fn create_vertical_title_and_text_layout(_layout_num: usize) -> String {
 </p:sp>
 <p:sp>
 <p:nvSpPr>
-<p:cNvPr id="3" name="文本占位符 2"/>
+<p:cNvPr id="3" name="Text Placeholder 2"/>
 <p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr>
 <p:nvPr><p:ph idx="1"/><p:custDataLst><p:tags r:id="rId3"/></p:custDataLst></p:nvPr>
 </p:nvSpPr>
