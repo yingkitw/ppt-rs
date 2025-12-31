@@ -5,6 +5,7 @@
 use super::base::{Part, PartType, ContentType};
 use crate::exc::PptxError;
 use crate::core::escape_xml;
+use crate::util::format_lang_attributes;
 
 /// Notes slide part (ppt/notesSlides/notesSlideN.xml)
 #[derive(Debug, Clone)]
@@ -62,14 +63,16 @@ impl NotesSlidePart {
     }
 
     fn generate_xml(&self) -> String {
+        let lang_attrs = format_lang_attributes();
         let paragraphs: String = if self.notes_text.is_empty() {
-            "<a:p><a:endParaRPr lang=\"en-US\"/></a:p>".to_string()
+            format!("<a:p><a:endParaRPr {}/></a:p>", lang_attrs)
         } else {
             self.notes_text
                 .lines()
                 .map(|line| {
                     format!(
-                        "<a:p><a:r><a:rPr lang=\"en-US\"/><a:t>{}</a:t></a:r></a:p>",
+                        "<a:p><a:r><a:rPr {} dirty=\"0\"><a:t>{}</a:t></a:r></a:p>",
+                        lang_attrs,
                         escape_xml(line)
                     )
                 })

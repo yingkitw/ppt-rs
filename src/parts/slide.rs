@@ -8,6 +8,7 @@ use crate::exc::PptxError;
 use crate::generator::SlideContent;
 use crate::generator::slide_xml::create_slide_xml_with_content;
 use crate::oxml::{SlideParser, ParsedSlide};
+use crate::generator::slide_content::SlideLayout;
 
 /// Slide part (ppt/slides/slideN.xml)
 #[derive(Debug, Clone)]
@@ -17,6 +18,7 @@ pub struct SlidePart {
     content: Option<SlideContent>,
     parsed: Option<ParsedSlide>,
     xml_content: Option<String>,
+    layout: SlideLayout,
 }
 
 impl SlidePart {
@@ -28,17 +30,20 @@ impl SlidePart {
             content: None,
             parsed: None,
             xml_content: None,
+            layout: SlideLayout::TitleAndContent,
         }
     }
 
     /// Create from SlideContent
     pub fn from_content(slide_number: usize, content: SlideContent) -> Self {
+        let layout = content.layout;
         SlidePart {
             path: format!("ppt/slides/slide{}.xml", slide_number),
             slide_number,
             content: Some(content),
             parsed: None,
             xml_content: None,
+            layout,
         }
     }
 
@@ -83,7 +88,15 @@ impl SlidePart {
     /// Create default relationships for slide
     pub fn create_relationships(&self) -> Relationships {
         let mut rels = Relationships::new();
-        rels.add(RelationshipType::SlideLayout, "../slideLayouts/slideLayout1.xml");
+        let layout_number = match self.layout {
+            crate::generator::slide_content::SlideLayout::TitleOnly => 1,
+            crate::generator::slide_content::SlideLayout::TitleAndContent => 2,
+            crate::generator::slide_content::SlideLayout::TitleAndBigContent => 3,
+            crate::generator::slide_content::SlideLayout::Blank => 4,
+            crate::generator::slide_content::SlideLayout::CenteredTitle => 5,
+            crate::generator::slide_content::SlideLayout::TwoColumn => 6,
+        };
+        rels.add(RelationshipType::SlideLayout, &format!("../slideLayouts/slideLayout{}.xml", layout_number));
         rels
     }
 
@@ -149,6 +162,7 @@ impl Part for SlidePart {
             content: None,
             parsed: Some(parsed),
             xml_content: Some(xml.to_string()),
+            layout: SlideLayout::TitleAndContent,
         })
     }
 }
@@ -163,6 +177,7 @@ pub fn parse_slide(xml: &str, slide_number: usize) -> Result<SlidePart, PptxErro
         content: None,
         parsed: Some(parsed),
         xml_content: Some(xml.to_string()),
+        layout: SlideLayout::TitleAndContent,
     })
 }
 

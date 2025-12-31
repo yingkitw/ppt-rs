@@ -25,6 +25,9 @@ anyrepair = "0.1"
 clap = { version = "4.5", features = ["derive"] }
 pulldown-cmark = "0.10"
 syntect = "5.2"
+rust_xlsxwriter = "0.92.2"
+# Windows API for language detection (Windows only)
+windows-sys = { version = "0.52", features = ["Win32_System_SystemInformation"], optional = true }
 # Web2PPT dependencies
 reqwest = { version = "0.11", features = ["blocking"], optional = true }
 scraper = { version = "0.18", optional = true }
@@ -33,6 +36,7 @@ url = { version = "2.5", optional = true }
 [features]
 default = ["web2ppt"]
 web2ppt = ["reqwest", "scraper", "url"]
+windows-lang = ["windows-sys"]
 
 [dev-dependencies]
 insta = "1.34"

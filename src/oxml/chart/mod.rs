@@ -3,6 +3,7 @@
 //! Provides types for parsing and generating DrawingML chart elements.
 
 use super::xmlchemy::XmlElement;
+use crate::util::format_lang_attributes;
 
 /// Chart type enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -100,7 +101,21 @@ impl NumericData {
     }
 
     pub fn from_values(values: &[f64]) -> Self {
-        let mut data = NumericData::new("Sheet1!$B$2");
+        NumericData::from_values_with_sheet(values, "Sheet1")
+    }
+    
+    pub fn from_values_with_chart_number(values: &[f64], chart_number: usize) -> Self {
+        let sheet_name = if chart_number == 1 {
+            "Sheet1".to_string()
+        } else {
+            format!("Sheet{}", chart_number)
+        };
+        NumericData::from_values_with_sheet(values, &sheet_name)
+    }
+    
+    pub fn from_values_with_sheet(values: &[f64], sheet_name: &str) -> Self {
+        let formula = format!("'{}'!$B$2", sheet_name);
+        let mut data = NumericData::new(&formula);
         for (i, &v) in values.iter().enumerate() {
             data.points.push(DataPoint::new(i as u32, v));
         }
@@ -137,7 +152,21 @@ impl StringData {
     }
 
     pub fn from_categories(categories: &[&str]) -> Self {
-        let mut data = StringData::new("Sheet1!$A$2");
+        StringData::from_categories_with_sheet(categories, "Sheet1")
+    }
+    
+    pub fn from_categories_with_chart_number(categories: &[&str], chart_number: usize) -> Self {
+        let sheet_name = if chart_number == 1 {
+            "Sheet1".to_string()
+        } else {
+            format!("Sheet{}", chart_number)
+        };
+        StringData::from_categories_with_sheet(categories, &sheet_name)
+    }
+    
+    pub fn from_categories_with_sheet(categories: &[&str], sheet_name: &str) -> Self {
+        let formula = format!("'{}'!$A$2", sheet_name);
+        let mut data = StringData::new(&formula);
         for (i, &cat) in categories.iter().enumerate() {
             data.points.push(CategoryPoint::new(i as u32, cat));
         }
@@ -183,6 +212,10 @@ impl ChartSeries {
     }
 
     pub fn parse(elem: &XmlElement) -> Option<Self> {
+        ChartSeries::parse_with_chart_number(elem, 1)
+    }
+    
+    pub fn parse_with_chart_number(elem: &XmlElement, chart_number: usize) -> Option<Self> {
         let index = elem.find("idx")
             .and_then(|e| e.attr("val"))
             .and_then(|v| v.parse().ok())
@@ -192,8 +225,13 @@ impl ChartSeries {
             .map(|t| t.text_content())
             .unwrap_or_default();
 
-        // Parse values
-        let values = NumericData::new("Sheet1!$B$2");
+        // Parse values - use chart number for worksheet naming
+        let sheet_name = if chart_number == 1 {
+            "Sheet1".to_string()
+        } else {
+            format!("Sheet{}", chart_number)
+        };
+        let values = NumericData::new(&format!("'{}'!$B$2", sheet_name));
 
         Some(ChartSeries {
             index,
@@ -204,10 +242,25 @@ impl ChartSeries {
     }
 
     pub fn to_xml(&self) -> String {
+        self.to_xml_with_sheet("Sheet1")
+    }
+    
+    pub fn to_xml_with_chart_number(&self, chart_number: usize) -> String {
+        let sheet_name = if chart_number == 1 {
+            "Sheet1".to_string()
+        } else {
+            format!("Sheet{}", chart_number)
+        };
+        self.to_xml_with_sheet(&sheet_name)
+    }
+
+    pub fn to_xml_with_sheet(&self, sheet_name: &str) -> String {
+        let formula = format!("'{}'!$B$1", sheet_name);
         let mut xml = format!(
-            r#"<c:ser><c:idx val="{}"/><c:order val="{}"/><c:tx><c:strRef><c:f>Sheet1!$B$1</c:f><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>{}</c:v></c:pt></c:strCache></c:strRef></c:tx>"#,
+            r#"<c:ser><c:idx val="{}"/><c:order val="{}"/><c:tx><c:strRef><c:f>{}</c:f><c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>{}</c:v></c:pt></c:strCache></c:strRef></c:tx>"#,
             self.index,
             self.index,
+            formula,
             escape_xml(&self.name)
         );
 
@@ -318,8 +371,10 @@ impl ChartTitle {
     }
 
     pub fn to_xml(&self) -> String {
+        let lang_attrs = format_lang_attributes();
         format!(
-            r#"<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US"/><a:t>{}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title>"#,
+            r#"<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr {} dirty="0"/><a:t>{}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title>"#,
+            lang_attrs,
             escape_xml(&self.text)
         )
     }

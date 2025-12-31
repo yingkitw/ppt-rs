@@ -198,3 +198,127 @@ mod tests {
         assert_eq!(height.emu(), 6858000);
     }
 }
+
+/// Detects the system language and returns the appropriate language code
+pub fn get_system_language() -> String {
+    // Try to get the system locale from environment variables
+    if let Ok(locale) = std::env::var("LANG") {
+        // Parse locale string like "en_US.UTF-8" or "zh_CN.UTF-8"
+        if locale.starts_with("zh_CN") {
+            return "zh-CN".to_string();
+        } else if locale.starts_with("en_US") {
+            return "en-US".to_string();
+        } else if locale.starts_with("en_GB") {
+            return "en-GB".to_string();
+        } else if locale.starts_with("es") {
+            return "es-ES".to_string();
+        } else if locale.starts_with("fr") {
+            return "fr-FR".to_string();
+        } else if locale.starts_with("de") {
+            return "de-DE".to_string();
+        } else if locale.starts_with("it") {
+            return "it-IT".to_string();
+        } else if locale.starts_with("pt") {
+            return "pt-PT".to_string();
+        } else if locale.starts_with("nl") {
+            return "nl-NL".to_string();
+        } else if locale.starts_with("ru") {
+            return "ru-RU".to_string();
+        } else if locale.starts_with("ja") {
+            return "ja-JP".to_string();
+        } else if locale.starts_with("ko") {
+            return "ko-KR".to_string();
+        }
+    }
+
+    // Try LC_ALL environment variable
+    if let Ok(lc_all) = std::env::var("LC_ALL") {
+        if lc_all.starts_with("zh_CN") {
+            return "zh-CN".to_string();
+        } else if lc_all.starts_with("en_US") {
+            return "en-US".to_string();
+        }
+    }
+
+    // Try Windows API on Windows systems
+    #[cfg(all(windows, feature = "windows-lang"))]
+    {
+        if let Ok(lang) = get_windows_language() {
+            return lang;
+        }
+    }
+
+    // Default to en-US if we can't detect the language
+    "en-US".to_string()
+}
+
+/// Get Windows system language using Windows API
+#[cfg(all(windows, feature = "windows-lang"))]
+fn get_windows_language() -> Result<String, ()> {
+    use windows_sys::Win32::System::SystemInformation::*;
+    
+    unsafe {
+        let mut buffer = [0u16; 256];
+        let result = GetUserDefaultLocaleName(buffer.as_mut_ptr(), buffer.len() as i32);
+        
+        if result > 0 {
+            let locale = String::from_utf16_lossy(&buffer[..result as usize - 1]);
+            
+            // Convert Windows locale format to XML language format
+            match locale.as_str() {
+                "zh-CN" => Ok("zh-CN".to_string()),
+                "en-US" => Ok("en-US".to_string()),
+                "en-GB" => Ok("en-GB".to_string()),
+                "es-ES" => Ok("es-ES".to_string()),
+                "fr-FR" => Ok("fr-FR".to_string()),
+                "de-DE" => Ok("de-DE".to_string()),
+                "it-IT" => Ok("it-IT".to_string()),
+                "pt-PT" => Ok("pt-PT".to_string()),
+                "pt-BR" => Ok("pt-BR".to_string()),
+                "nl-NL" => Ok("nl-NL".to_string()),
+                "ru-RU" => Ok("ru-RU".to_string()),
+                "ja-JP" => Ok("ja-JP".to_string()),
+                "ko-KR" => Ok("ko-KR".to_string()),
+                _ => Ok("en-US".to_string()),
+            }
+        } else {
+            Err(())
+        }
+    }
+}
+
+/// Get the alternative language (usually English) for XML altLang attribute
+pub fn get_alt_language() -> String {
+    let system_lang = get_system_language();
+    
+    // If system language is already English, return empty string
+    if system_lang.starts_with("en") {
+        String::new()
+    } else {
+        "en-US".to_string()
+    }
+}
+
+/// Format language attributes for XML
+pub fn format_lang_attributes() -> String {
+    let lang = get_system_language();
+    let alt_lang = get_alt_language();
+    
+    if alt_lang.is_empty() {
+        format!(r#" lang="{}""#, lang)
+    } else {
+        format!(r#" lang="{}" altLang="{}""#, lang, alt_lang)
+    }
+}
+
+/// Format language attributes for XML with additional attributes
+pub fn format_lang_attributes_with(additional_attrs: &str) -> String {
+    let lang = get_system_language();
+    let alt_lang = get_alt_language();
+    
+    if alt_lang.is_empty() {
+        format!(r#" lang="{}"{}"#, lang, additional_attrs)
+    } else {
+        format!(r#" lang="{}" altLang="{}"{}"#, lang, alt_lang, additional_attrs)
+    }
+}

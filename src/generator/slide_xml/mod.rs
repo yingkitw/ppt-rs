@@ -12,7 +12,8 @@ mod common;
 mod layouts;
 mod content;
 
-use super::slide_content::{SlideContent, SlideLayout};
+use super::slide_content::SlideContent;
+use crate::generator::layouts::create_slide_xml_for_layout;
 
 pub use common::create_slide_rels_xml;
 
@@ -76,14 +77,7 @@ pub fn create_slide_xml(slide_num: usize, title: &str) -> String {
 
 /// Create slide XML with content based on layout
 pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent) -> String {
-    match content.layout {
-        SlideLayout::Blank => layouts::create_blank_slide(),
-        SlideLayout::TitleOnly => layouts::create_title_only_slide(content),
-        SlideLayout::CenteredTitle => layouts::create_centered_title_slide(content),
-        SlideLayout::TitleAndBigContent => layouts::create_title_and_big_content_slide(content),
-        SlideLayout::TwoColumn => layouts::create_two_column_slide(content),
-        SlideLayout::TitleAndContent => layouts::create_title_and_content_slide(content),
-    }
+    create_slide_xml_for_layout(content)
 }
 
 #[cfg(test)]

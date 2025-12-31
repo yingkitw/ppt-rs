@@ -3,6 +3,7 @@
 //! Provides types for parsing and generating DrawingML table elements.
 
 use super::xmlchemy::XmlElement;
+use crate::util::format_lang_attributes;
 
 /// Table cell properties
 #[derive(Debug, Clone, Default)]
@@ -98,10 +99,12 @@ impl TableCell {
         }
 
         let attr_str = if attrs.is_empty() { String::new() } else { format!(" {}", attrs.join(" ")) };
+        let lang_attrs = format_lang_attributes();
 
         format!(
-            r#"<a:tc{}><a:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr lang="en-US"/><a:t>{}</a:t></a:r></a:p></a:txBody>{}</a:tc>"#,
+            r#"<a:tc{}><a:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:rPr {} dirty="0"/><a:t>{}</a:t></a:r></a:p></a:txBody>{}</a:tc>"#,
             attr_str,
+            lang_attrs,
             escape_xml(&self.text),
             self.properties.to_xml()
         )

@@ -14,6 +14,7 @@
 use super::base::{Part, PartType, ContentType};
 use crate::exc::PptxError;
 use crate::core::escape_xml;
+use crate::util::format_lang_attributes;
 
 /// Horizontal alignment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -386,6 +387,7 @@ impl TableCellPart {
             .map(|b| b.to_xml())
             .unwrap_or_default();
 
+        let lang_attrs = format_lang_attributes();
         format!(
             r#"<a:tc{}>
           <a:txBody>
@@ -393,7 +395,7 @@ impl TableCellPart {
             <a:lstStyle/>
             <a:p{}>
               <a:r>
-                <a:rPr lang="en-US"{}>{}{}</a:rPr>
+                <a:rPr {} dirty="0"{}>{}{}</a:rPr>
                 <a:t>{}</a:t>
               </a:r>
             </a:p>
@@ -402,6 +404,7 @@ impl TableCellPart {
         </a:tc>"#,
             attrs,
             p_align,
+            lang_attrs,
             rpr_attrs,
             color_xml,
             font_xml,

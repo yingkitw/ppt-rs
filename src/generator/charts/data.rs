@@ -7,6 +7,8 @@ use super::types::ChartType;
 pub struct ChartSeries {
     pub name: String,
     pub values: Vec<f64>,
+    pub x_values: Option<Vec<f64>>,
+    pub bubble_sizes: Option<Vec<f64>>,
 }
 
 impl ChartSeries {
@@ -15,6 +17,28 @@ impl ChartSeries {
         ChartSeries {
             name: name.to_string(),
             values,
+            x_values: None,
+            bubble_sizes: None,
+        }
+    }
+
+    /// Create a new XY chart series (for scatter and bubble charts)
+    pub fn new_xy(name: &str, x_values: Vec<f64>, y_values: Vec<f64>) -> Self {
+        ChartSeries {
+            name: name.to_string(),
+            values: y_values,
+            x_values: Some(x_values),
+            bubble_sizes: None,
+        }
+    }
+
+    /// Create a new bubble chart series
+    pub fn new_bubble(name: &str, x_values: Vec<f64>, y_values: Vec<f64>, bubble_sizes: Vec<f64>) -> Self {
+        ChartSeries {
+            name: name.to_string(),
+            values: y_values,
+            x_values: Some(x_values),
+            bubble_sizes: Some(bubble_sizes),
         }
     }
 

@@ -23,10 +23,10 @@ impl ChartBuilder {
             chart_type,
             categories: Vec::new(),
             series: Vec::new(),
-            x: 0,
-            y: 0,
-            width: 5000000,  // Default width (5 inches in EMU)
-            height: 3750000, // Default height (3.75 inches in EMU)
+            x: 2675890,      // Default x position (based on WPS reference)
+            y: 1725930,      // Default y position (based on WPS reference)
+            width: 6839585,  // Default width (based on WPS reference)
+            height: 3959860, // Default height (based on WPS reference)
         }
     }
 

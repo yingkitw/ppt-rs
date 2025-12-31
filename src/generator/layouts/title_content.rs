@@ -3,6 +3,7 @@
 use super::common::{SlideXmlBuilder, generate_text_props, escape_xml};
 use crate::generator::slide_content::SlideContent;
 use crate::generator::shapes_xml::generate_shape_xml;
+use crate::generator::charts::xml::generate_chart_frame_xml;
 use crate::generator::constants::{
     TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT, TITLE_HEIGHT_BIG,
     CONTENT_X, CONTENT_Y_START, CONTENT_Y_START_BIG,
@@ -106,6 +107,14 @@ impl TitleContentLayout {
             ));
         }
 
+        // Add charts
+        let chart_start_id = 30 + content.shapes.len() + content.images.len();
+        for (i, chart) in content.charts.iter().enumerate() {
+            let relationship_id = format!("rId{}", i + 2); // Start from rId2 (rId1 is usually for slide layout)
+            let chart_xml = generate_chart_frame_xml(chart, chart_start_id + i, &relationship_id);
+            builder = builder.raw("\n").raw(&chart_xml);
+        }
+
         builder
             .end_sp_tree()
             .end_slide()
@@ -155,6 +164,14 @@ impl TitleBigContentLayout {
                 builder = builder.add_bullet_with_style(bullet, &content_props, 0, content.bullet_style);
             }
             builder = builder.end_content_body();
+        }
+
+        // Add charts
+        let chart_start_id = 30 + content.shapes.len() + content.images.len();
+        for (i, chart) in content.charts.iter().enumerate() {
+            let relationship_id = format!("rId{}", i + 2); // Start from rId2 (rId1 is usually for slide layout)
+            let chart_xml = generate_chart_frame_xml(chart, chart_start_id + i, &relationship_id);
+            builder = builder.raw("\n").raw(&chart_xml);
         }
 
         builder

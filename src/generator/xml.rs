@@ -18,7 +18,9 @@ pub use super::slide_xml::{
 };
 pub use super::theme_xml::{
     create_slide_layout_xml,
+    create_slide_layout_xml_by_type,
     create_layout_rels_xml,
+    create_layout_rels_xml_for_layout,
     create_slide_master_xml,
     create_master_rels_xml,
     create_theme_xml,

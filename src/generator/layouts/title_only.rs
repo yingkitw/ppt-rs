@@ -2,6 +2,7 @@
 
 use super::common::{SlideXmlBuilder, generate_text_props};
 use crate::generator::slide_content::SlideContent;
+use crate::generator::charts::xml::generate_chart_frame_xml;
 use crate::generator::constants::{
     TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT, TITLE_FONT_SIZE,
 };
@@ -21,10 +22,20 @@ impl TitleOnlyLayout {
             content.title_color.as_deref(),
         );
 
-        SlideXmlBuilder::new()
+        let mut builder = SlideXmlBuilder::new()
             .start_slide_with_bg()
             .start_sp_tree()
-            .add_title(2, TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT, &content.title, &title_props, "title")
+            .add_title(2, TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT, &content.title, &title_props, "title");
+
+        // Add charts
+        let chart_start_id = 10;
+        for (i, chart) in content.charts.iter().enumerate() {
+            let relationship_id = format!("rId{}", i + 2); // Start from rId2 (rId1 is usually for slide layout)
+            let chart_xml = generate_chart_frame_xml(chart, chart_start_id + i, &relationship_id);
+            builder = builder.raw("\n").raw(&chart_xml);
+        }
+
+        builder
             .end_sp_tree()
             .end_slide()
             .build()

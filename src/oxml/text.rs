@@ -3,6 +3,7 @@
 //! Provides types for parsing and generating DrawingML text elements.
 
 use super::xmlchemy::XmlElement;
+use crate::util::format_lang_attributes;
 
 /// Text body properties (a:bodyPr)
 #[derive(Debug, Clone, Default)]
@@ -155,7 +156,8 @@ impl RunProperties {
     }
 
     pub fn to_xml(&self) -> String {
-        let mut attrs = vec![r#"lang="en-US""#.to_string()];
+        let lang_attrs = format_lang_attributes();
+        let mut attrs = vec![lang_attrs];
         
         if let Some(sz) = self.size {
             attrs.push(format!(r#"sz="{sz}""#));

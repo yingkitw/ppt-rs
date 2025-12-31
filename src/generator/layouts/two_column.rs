@@ -2,6 +2,7 @@
 
 use super::common::{SlideXmlBuilder, generate_text_props};
 use crate::generator::slide_content::SlideContent;
+use crate::generator::charts::xml::generate_chart_frame_xml;
 
 /// Two-column slide layout generator
 pub struct TwoColumnLayout;
@@ -106,6 +107,14 @@ impl TwoColumnLayout {
                 }
                 builder = builder.raw("</p:txBody>\n</p:sp>\n");
             }
+        }
+
+        // Add charts
+        let chart_start_id = 10;
+        for (i, chart) in content.charts.iter().enumerate() {
+            let relationship_id = format!("rId{}", i + 2); // Start from rId2 (rId1 is usually for slide layout)
+            let chart_xml = generate_chart_frame_xml(chart, chart_start_id + i, &relationship_id);
+            builder = builder.raw("\n").raw(&chart_xml);
         }
 
         builder
