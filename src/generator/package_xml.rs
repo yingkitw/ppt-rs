@@ -84,8 +84,12 @@ pub fn create_presentation_xml(_title: &str, slides: usize) -> String {
     xml
 }
 
-/// Create [Content_Types].xml with notes support
-pub fn create_content_types_xml_with_notes(slides: usize, custom_slides: Option<&Vec<super::slide_content::SlideContent>>) -> String {
+/// Create [Content_Types].xml with notes and charts support
+pub fn create_content_types_xml_with_notes_and_charts(
+    slides: usize, 
+    custom_slides: Option<&Vec<super::slide_content::SlideContent>>,
+    chart_count: usize
+) -> String {
     let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
 <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
@@ -112,6 +116,13 @@ pub fn create_content_types_xml_with_notes(slides: usize, custom_slides: Option<
         if slides_vec.iter().any(|s| s.notes.is_some()) {
             xml.push_str("\n<Override PartName=\"/ppt/notesMasters/notesMaster1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.notesMaster+xml\"/>");
         }
+    }
+
+    // Add chart content types
+    for i in 1..=chart_count {
+        xml.push_str(&format!(
+            "\n<Override PartName=\"/ppt/charts/chart{i}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.drawingml.chart+xml\"/>"
+        ));
     }
 
     xml.push_str(r#"
@@ -148,11 +159,26 @@ pub fn create_presentation_rels_xml_with_notes(slides: usize) -> String {
     xml
 }
 
-/// Create slide relationship XML with notes reference
-pub fn create_slide_rels_xml_with_notes(slide_num: usize) -> String {
-    format!(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+/// Create slide relationship XML with notes and charts
+pub fn create_slide_rels_xml_extended(slide_num: usize, has_notes: bool, chart_rels: &[(String, String)]) -> String {
+    let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
-<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide" Target="../notesSlides/notesSlide{slide_num}.xml"/>
-</Relationships>"#)
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>"#.to_string();
+
+    if has_notes {
+        xml.push_str(&format!(
+            "\n<Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide\" Target=\"../notesSlides/notesSlide{}.xml\"/>",
+            slide_num
+        ));
+    }
+
+    for (rid, target) in chart_rels {
+        xml.push_str(&format!(
+            "\n<Relationship Id=\"{}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart\" Target=\"{}\"/>",
+            rid, target
+        ));
+    }
+
+    xml.push_str("\n</Relationships>");
+    xml
 }

@@ -56,6 +56,10 @@ pub struct TableCell {
     pub align: CellAlign,                // Horizontal alignment
     pub valign: CellVAlign,              // Vertical alignment
     pub wrap_text: bool,                 // Text wrapping
+    pub row_span: u32,
+    pub col_span: u32,
+    pub v_merge: bool,
+    pub h_merge: bool,
 }
 
 impl TableCell {
@@ -73,6 +77,10 @@ impl TableCell {
             align: CellAlign::Center,
             valign: CellVAlign::Middle,
             wrap_text: true,
+            row_span: 1,
+            col_span: 1,
+            v_merge: false,
+            h_merge: false,
         }
     }
 
@@ -93,6 +101,7 @@ impl TableCell {
         self.underline = true;
         self
     }
+
 
     /// Set cell text color (RGB hex format, e.g., "FF0000" or "#FF0000")
     pub fn text_color(mut self, color: &str) -> Self {
@@ -163,6 +172,30 @@ impl TableCell {
     /// Enable or disable text wrapping
     pub fn wrap(mut self, wrap: bool) -> Self {
         self.wrap_text = wrap;
+        self
+    }
+
+    /// Set row span (number of rows to merge down)
+    pub fn with_row_span(mut self, span: u32) -> Self {
+        self.row_span = span;
+        self
+    }
+
+    /// Set column span (number of columns to merge right)
+    pub fn with_col_span(mut self, span: u32) -> Self {
+        self.col_span = span;
+        self
+    }
+
+    /// Set vertical merge flag (for cells covered by row span)
+    pub fn with_v_merge(mut self) -> Self {
+        self.v_merge = true;
+        self
+    }
+
+    /// Set horizontal merge flag (for cells covered by col span)
+    pub fn with_h_merge(mut self) -> Self {
+        self.h_merge = true;
         self
     }
 }

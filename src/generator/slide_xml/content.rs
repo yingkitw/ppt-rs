@@ -3,8 +3,8 @@
 use crate::generator::slide_content::SlideContent;
 use crate::generator::shapes_xml::generate_shape_xml;
 
-/// Render additional content elements (shapes, images, code blocks, connectors)
-pub fn render_additional_content(xml: &mut String, content: &SlideContent) {
+/// Render additional content elements (shapes, images, code blocks, connectors, charts)
+pub fn render_additional_content(xml: &mut String, content: &SlideContent, chart_rids: &[String]) {
     // Render shapes - use shape's fixed ID if set, otherwise auto-assign
     for (i, shape) in content.shapes.iter().enumerate() {
         xml.push('\n');
@@ -32,6 +32,16 @@ pub fn render_additional_content(xml: &mut String, content: &SlideContent) {
         xml.push('\n');
         let id = connector_start_id + i;
         xml.push_str(&crate::generator::connectors::generate_connector_xml(connector, id));
+    }
+
+    // Render charts
+    let chart_start_id = 100 + content.shapes.len() + content.images.len() + content.code_blocks.len() + content.connectors.len();
+    for (i, chart) in content.charts.iter().enumerate() {
+        if i < chart_rids.len() {
+            xml.push('\n');
+            let r_id = &chart_rids[i];
+            xml.push_str(&crate::generator::charts::generate_chart_ref_xml(chart, r_id, chart_start_id + i));
+        }
     }
 }
 

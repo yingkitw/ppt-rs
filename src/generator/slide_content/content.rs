@@ -10,6 +10,7 @@ use crate::generator::charts::Chart;
 use super::bullet::{BulletStyle, BulletPoint};
 use super::layout::SlideLayout;
 use super::code_block::CodeBlock;
+use super::transition::TransitionType;
 
 /// Slide content for more complex presentations
 #[derive(Clone, Debug)]
@@ -34,6 +35,7 @@ pub struct SlideContent {
     pub has_chart: bool,
     pub has_image: bool,
     pub layout: SlideLayout,
+    pub transition: TransitionType,
     pub table: Option<Table>,
     pub shapes: Vec<Shape>,
     pub images: Vec<Image>,
@@ -72,6 +74,7 @@ impl SlideContent {
             has_chart: false,
             has_image: false,
             layout: SlideLayout::TitleAndContent,
+            transition: TransitionType::None,
             table: None,
             shapes: Vec::new(),
             images: Vec::new(),
@@ -84,6 +87,12 @@ impl SlideContent {
         }
     }
 
+    /// Set the slide transition
+    pub fn with_transition(mut self, transition: TransitionType) -> Self {
+        self.transition = transition;
+        self
+    }
+    
     /// Add a bullet point with default style
     pub fn add_bullet(mut self, text: &str) -> Self {
         self.content.push(text.to_string());

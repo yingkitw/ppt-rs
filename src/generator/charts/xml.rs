@@ -4,32 +4,32 @@ use super::types::ChartType;
 use super::data::Chart;
 use super::escape_xml;
 
-/// Generate chart XML for a slide
-pub fn generate_chart_xml(chart: &Chart, shape_id: usize) -> String {
+/// Generate chart XML content (for ppt/charts/chartN.xml)
+pub fn generate_chart_part_xml(chart: &Chart) -> String {
     match chart.chart_type {
         ChartType::Bar | ChartType::BarHorizontal | ChartType::BarStacked | ChartType::BarStacked100 => {
-            generate_bar_chart_xml(chart, shape_id)
+            generate_bar_chart_xml(chart)
         }
         ChartType::Line | ChartType::LineMarkers | ChartType::LineStacked => {
-            generate_line_chart_xml(chart, shape_id)
+            generate_line_chart_xml(chart)
         }
-        ChartType::Pie => generate_pie_chart_xml(chart, shape_id),
-        ChartType::Doughnut => generate_doughnut_chart_xml(chart, shape_id),
+        ChartType::Pie => generate_pie_chart_xml(chart),
+        ChartType::Doughnut => generate_doughnut_chart_xml(chart),
         ChartType::Area | ChartType::AreaStacked | ChartType::AreaStacked100 => {
-            generate_area_chart_xml(chart, shape_id)
+            generate_area_chart_xml(chart)
         }
         ChartType::Scatter | ChartType::ScatterLines | ChartType::ScatterSmooth => {
-            generate_scatter_chart_xml(chart, shape_id)
+            generate_scatter_chart_xml(chart)
         }
-        ChartType::Bubble => generate_bubble_chart_xml(chart, shape_id),
-        ChartType::Radar | ChartType::RadarFilled => generate_radar_chart_xml(chart, shape_id),
-        ChartType::StockHLC | ChartType::StockOHLC => generate_stock_chart_xml(chart, shape_id),
-        ChartType::Combo => generate_combo_chart_xml(chart, shape_id),
+        ChartType::Bubble => generate_bubble_chart_xml(chart),
+        ChartType::Radar | ChartType::RadarFilled => generate_radar_chart_xml(chart),
+        ChartType::StockHLC | ChartType::StockOHLC => generate_stock_chart_xml(chart),
+        ChartType::Combo => generate_combo_chart_xml(chart),
     }
 }
 
-/// Generate the common chart frame header
-fn chart_frame_header(chart: &Chart, shape_id: usize) -> String {
+/// Generate chart reference XML for slide (p:graphicFrame)
+pub fn generate_chart_ref_xml(chart: &Chart, r_id: &str, shape_id: usize) -> String {
     format!(
         r#"<p:graphicFrame>
 <p:nvGraphicFramePr>
@@ -43,13 +43,22 @@ fn chart_frame_header(chart: &Chart, shape_id: usize) -> String {
 </p:xfrm>
 <a:graphic>
 <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/chart">
+<c:chart xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="{}"/>
+</a:graphicData>
+</a:graphic>
+</p:graphicFrame>"#,
+        shape_id, shape_id, chart.x, chart.y, chart.width, chart.height, r_id
+    )
+}
+
+/// Generate the chart part header
+fn chart_part_header(chart: &Chart) -> String {
+    format!(
+        r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-<c:nvChartSpPr>
-<c:cNvPr id="1" name="Chart"/>
-<c:cNvChartSpPr/>
-<c:nvPr/>
-</c:nvChartSpPr>
-<c:chartSpace>
+<c:date1904 val="0"/>
+<c:lang val="en-US"/>
+<c:roundedCorners val="0"/>
 <c:chart>
 <c:title>
 <c:tx>
@@ -57,33 +66,44 @@ fn chart_frame_header(chart: &Chart, shape_id: usize) -> String {
 <a:bodyPr/>
 <a:lstStyle/>
 <a:p>
+<a:pPr>
+<a:defRPr/>
+</a:pPr>
 <a:r>
-<a:rPr lang="en-US" sz="1800"/>
+<a:rPr lang="en-US" sz="1800" b="0" i="0" u="none" strike="noStrike">
+<a:solidFill>
+<a:srgbClr val="595959"/>
+</a:solidFill>
+<a:latin typeface="Calibri"/>
+</a:rPr>
 <a:t>{}</a:t>
 </a:r>
 </a:p>
 </c:rich>
 </c:tx>
+<c:layout/>
+<c:overlay val="0"/>
 </c:title>
+<c:autoTitleDeleted val="0"/>
 <c:plotArea>
 <c:layout/>"#,
-        shape_id, shape_id, chart.x, chart.y, chart.width, chart.height, escape_xml(&chart.title)
+        escape_xml(&chart.title)
     )
 }
 
-/// Generate the common chart frame footer
-fn chart_frame_footer() -> &'static str {
+/// Generate the chart part footer
+fn chart_part_footer() -> &'static str {
     r#"</c:plotArea>
 <c:legend>
 <c:legendPos val="r"/>
+<c:layout/>
 <c:overlay val="0"/>
 </c:legend>
 <c:plotVisOnly val="1"/>
+<c:dispBlanksAs val="gap"/>
+<c:showDLblsOverMax val="0"/>
 </c:chart>
-</c:chartSpace>
-</a:graphicData>
-</a:graphic>
-</p:graphicFrame>"#
+</c:chartSpace>"#
 }
 
 /// Generate series data XML
@@ -204,8 +224,8 @@ fn generate_value_axis(ax_pos: &str) -> String {
 }
 
 /// Generate bar chart XML
-fn generate_bar_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_bar_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     xml.push_str(r#"<c:barChart>
 <c:barDir val="bar"/>
@@ -218,14 +238,14 @@ fn generate_bar_chart_xml(chart: &Chart, shape_id: usize) -> String {
     xml.push_str(&generate_category_axis(chart, "l"));
     xml.push_str(&generate_value_axis("b"));
     xml.push_str("</c:barChart>");
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
 
 /// Generate line chart XML
-fn generate_line_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_line_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     xml.push_str(r#"<c:lineChart>
 <c:grouping val="lineMarkers"/>"#);
@@ -237,14 +257,14 @@ fn generate_line_chart_xml(chart: &Chart, shape_id: usize) -> String {
     xml.push_str(&generate_category_axis(chart, "b"));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:lineChart>");
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
 
 /// Generate pie chart XML
-fn generate_pie_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_pie_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     xml.push_str(r#"<c:pieChart>
 <c:varyColors val="1"/>"#);
@@ -327,14 +347,14 @@ fn generate_pie_chart_xml(chart: &Chart, shape_id: usize) -> String {
     }
 
     xml.push_str("</c:pieChart>");
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
 
 /// Generate doughnut chart XML
-fn generate_doughnut_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_doughnut_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     xml.push_str(r#"<c:doughnutChart>
 <c:varyColors val="1"/>
@@ -413,14 +433,14 @@ fn generate_doughnut_chart_xml(chart: &Chart, shape_id: usize) -> String {
     }
 
     xml.push_str("</c:doughnutChart>");
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
 
 /// Generate area chart XML
-fn generate_area_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_area_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     let grouping = chart.chart_type.grouping().unwrap_or("standard");
     xml.push_str(&format!(r#"<c:areaChart>
@@ -433,14 +453,14 @@ fn generate_area_chart_xml(chart: &Chart, shape_id: usize) -> String {
     xml.push_str(&generate_category_axis(chart, "b"));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:areaChart>");
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
 
 /// Generate scatter chart XML
-fn generate_scatter_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_scatter_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     let scatter_style = chart.chart_type.scatter_style().unwrap_or("lineMarker");
     xml.push_str(&format!(r#"<c:scatterChart>
@@ -515,14 +535,14 @@ fn generate_scatter_chart_xml(chart: &Chart, shape_id: usize) -> String {
     xml.push_str(&generate_value_axis("b"));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:scatterChart>");
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
 
 /// Generate bubble chart XML
-fn generate_bubble_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_bubble_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     xml.push_str(r#"<c:bubbleChart>
 <c:varyColors val="0"/>
@@ -620,14 +640,14 @@ fn generate_bubble_chart_xml(chart: &Chart, shape_id: usize) -> String {
     xml.push_str(&generate_value_axis("b"));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:bubbleChart>");
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
 
 /// Generate radar chart XML
-fn generate_radar_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_radar_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     let radar_style = chart.chart_type.radar_style().unwrap_or("marker");
     xml.push_str(&format!(r#"<c:radarChart>
@@ -640,14 +660,14 @@ fn generate_radar_chart_xml(chart: &Chart, shape_id: usize) -> String {
     xml.push_str(&generate_category_axis(chart, "b"));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:radarChart>");
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
 
 /// Generate stock chart XML
-fn generate_stock_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_stock_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     xml.push_str(r#"<c:stockChart>"#);
 
@@ -659,14 +679,14 @@ fn generate_stock_chart_xml(chart: &Chart, shape_id: usize) -> String {
     xml.push_str(&generate_category_axis(chart, "b"));
     xml.push_str(&generate_value_axis("l"));
     xml.push_str("</c:stockChart>");
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
 
 /// Generate combo chart XML (bar + line)
-fn generate_combo_chart_xml(chart: &Chart, shape_id: usize) -> String {
-    let mut xml = chart_frame_header(chart, shape_id);
+fn generate_combo_chart_xml(chart: &Chart) -> String {
+    let mut xml = chart_part_header(chart);
     
     // First half of series as bars
     xml.push_str(r#"<c:barChart>
@@ -694,7 +714,7 @@ fn generate_combo_chart_xml(chart: &Chart, shape_id: usize) -> String {
         xml.push_str("</c:lineChart>");
     }
 
-    xml.push_str(chart_frame_footer());
+    xml.push_str(chart_part_footer());
 
     xml
 }
@@ -713,7 +733,7 @@ mod tests {
             0, 0, 5000000, 3750000,
         ).add_series(ChartSeries::new("2024", vec![100.0, 150.0]));
 
-        let xml = generate_bar_chart_xml(&chart, 1);
+        let xml = generate_bar_chart_xml(&chart);
         assert!(xml.contains("barChart"));
         assert!(xml.contains("Sales"));
     }
@@ -727,7 +747,7 @@ mod tests {
             0, 0, 5000000, 3750000,
         ).add_series(ChartSeries::new("Revenue", vec![1000.0, 1200.0]));
 
-        let xml = generate_line_chart_xml(&chart, 1);
+        let xml = generate_line_chart_xml(&chart);
         assert!(xml.contains("lineChart"));
     }
 
@@ -740,7 +760,7 @@ mod tests {
             0, 0, 5000000, 3750000,
         ).add_series(ChartSeries::new("Data", vec![30.0, 70.0]));
 
-        let xml = generate_pie_chart_xml(&chart, 1);
+        let xml = generate_pie_chart_xml(&chart);
         assert!(xml.contains("pieChart"));
     }
 }

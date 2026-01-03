@@ -75,15 +75,25 @@ pub fn create_slide_xml(slide_num: usize, title: &str) -> String {
 }
 
 /// Create slide XML with content based on layout
-pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent) -> String {
-    match content.layout {
-        SlideLayout::Blank => layouts::create_blank_slide(),
-        SlideLayout::TitleOnly => layouts::create_title_only_slide(content),
-        SlideLayout::CenteredTitle => layouts::create_centered_title_slide(content),
-        SlideLayout::TitleAndBigContent => layouts::create_title_and_big_content_slide(content),
-        SlideLayout::TwoColumn => layouts::create_two_column_slide(content),
-        SlideLayout::TitleAndContent => layouts::create_title_and_content_slide(content),
+pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent, chart_rids: &[String]) -> String {
+    let mut xml = match content.layout {
+        SlideLayout::Blank => layouts::create_blank_slide(content, chart_rids),
+        SlideLayout::TitleOnly => layouts::create_title_only_slide(content, chart_rids),
+        SlideLayout::CenteredTitle => layouts::create_centered_title_slide(content, chart_rids),
+        SlideLayout::TitleAndBigContent => layouts::create_title_and_big_content_slide(content, chart_rids),
+        SlideLayout::TwoColumn => layouts::create_two_column_slide(content, chart_rids),
+        SlideLayout::TitleAndContent => layouts::create_title_and_content_slide(content, chart_rids),
+    };
+
+    // Inject transition if present
+    let transition_xml = content.transition.to_xml();
+    if !transition_xml.is_empty() {
+        if let Some(pos) = xml.rfind("</p:sld>") {
+            xml.insert_str(pos, &transition_xml);
+        }
     }
+    
+    xml
 }
 
 #[cfg(test)]

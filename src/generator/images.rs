@@ -13,6 +13,34 @@ pub enum ImageSource {
     Base64(String),
     /// Raw bytes
     Bytes(Vec<u8>),
+    /// Load from URL
+    #[cfg(feature = "web2ppt")]
+    Url(String),
+}
+
+/// Image crop configuration (values 0.0 to 1.0)
+#[derive(Clone, Debug, Default)]
+pub struct Crop {
+    pub left: f64,
+    pub top: f64,
+    pub right: f64,
+    pub bottom: f64,
+}
+
+impl Crop {
+    /// Create a new crop configuration
+    pub fn new(left: f64, top: f64, right: f64, bottom: f64) -> Self {
+        Self { left, top, right, bottom }
+    }
+}
+
+/// Image effects
+#[derive(Clone, Debug)]
+pub enum ImageEffect {
+    /// Outer shadow
+    Shadow,
+    /// Reflection
+    Reflection,
 }
 
 /// Image metadata and properties
@@ -26,6 +54,10 @@ pub struct Image {
     pub format: String,  // PNG, JPG, GIF, etc.
     /// Image data source (file path, base64, or bytes)
     pub source: Option<ImageSource>,
+    /// Image cropping
+    pub crop: Option<Crop>,
+    /// Image effects
+    pub effects: Vec<ImageEffect>,
 }
 
 impl Image {
@@ -39,7 +71,43 @@ impl Image {
             y: 0,
             format: format.to_uppercase(),
             source: Some(ImageSource::File(filename.to_string())),
+            crop: None,
+            effects: Vec::new(),
         }
+    }
+
+    /// Create an image from a file path, automatically detecting dimensions
+    pub fn from_path<P: AsRef<Path>>(path: P) -> std::result::Result<Self, String> {
+        let path = path.as_ref();
+        let filename = path.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "image.png".to_string());
+        let path_str = path.to_string_lossy().to_string();
+        
+        // Read image to get dimensions
+        let reader = ::image::io::Reader::open(path)
+            .map_err(|e| format!("Failed to open image: {}", e))?
+            .with_guessed_format()
+            .map_err(|e| format!("Failed to guess image format: {}", e))?;
+            
+        let format = reader.format().map(|f| format!("{:?}", f)).unwrap_or("PNG".to_string());
+        let (w, h) = reader.into_dimensions()
+            .map_err(|e| format!("Failed to get image dimensions: {}", e))?;
+            
+        // Convert pixels to EMU (assuming 96 DPI)
+        // 1 pixel = 9525 EMU
+        let w_emu = w * 9525;
+        let h_emu = h * 9525;
+        
+        Ok(Image {
+            filename,
+            width: w_emu,
+            height: h_emu,
+            x: 0,
+            y: 0,
+            format,
+            source: Some(ImageSource::File(path_str)),
+            crop: None,
+            effects: Vec::new(),
+        })
     }
     
     /// Create an image from base64 encoded data
@@ -72,6 +140,8 @@ impl Image {
             y: 0,
             format: format_upper,
             source: Some(ImageSource::Base64(data.to_string())),
+            crop: None,
+            effects: Vec::new(),
         }
     }
     
@@ -92,6 +162,31 @@ impl Image {
             y: 0,
             format: format_upper,
             source: Some(ImageSource::Bytes(data)),
+            crop: None,
+            effects: Vec::new(),
+        }
+    }
+
+    /// Create an image from URL
+    #[cfg(feature = "web2ppt")]
+    pub fn from_url(url: &str, width: u32, height: u32, format: &str) -> Self {
+        let format_upper = format.to_uppercase();
+        let ext = match format_upper.as_str() {
+            "JPEG" => "jpg",
+            _ => &format_upper.to_lowercase(),
+        };
+        let filename = format!("image_{}.{}", uuid::Uuid::new_v4(), ext);
+        
+        Image {
+            filename,
+            width,
+            height,
+            x: 0,
+            y: 0,
+            format: format_upper,
+            source: Some(ImageSource::Url(url.to_string())),
+            crop: None,
+            effects: Vec::new(),
         }
     }
     
@@ -106,6 +201,26 @@ impl Image {
             Some(ImageSource::File(path)) => {
                 std::fs::read(path).ok()
             }
+            #[cfg(feature = "web2ppt")]
+            Some(ImageSource::Url(url)) => {
+                // Use blocking client to fetch image
+                // Set User-Agent to mimic browser to avoid some 403s
+                let client = reqwest::blocking::Client::builder()
+                    .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                    .build()
+                    .ok()?;
+                    
+                match client.get(url).send() {
+                    Ok(resp) => {
+                        if resp.status().is_success() {
+                            resp.bytes().ok().map(|b| b.to_vec())
+                        } else {
+                            None
+                        }
+                    },
+                    Err(_) => None,
+                }
+            }
             None => None,
         }
     }
@@ -114,6 +229,18 @@ impl Image {
     pub fn position(mut self, x: u32, y: u32) -> Self {
         self.x = x;
         self.y = y;
+        self
+    }
+
+    /// Set image cropping
+    pub fn with_crop(mut self, left: f64, top: f64, right: f64, bottom: f64) -> Self {
+        self.crop = Some(Crop::new(left, top, right, bottom));
+        self
+    }
+
+    /// Add an image effect
+    pub fn with_effect(mut self, effect: ImageEffect) -> Self {
+        self.effects.push(effect);
         self
     }
 
@@ -323,6 +450,8 @@ impl ImageBuilder {
             y: self.y,
             format: self.format,
             source: self.source,
+            crop: None,
+            effects: Vec::new(),
         }
     }
 }

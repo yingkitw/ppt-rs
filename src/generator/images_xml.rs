@@ -2,13 +2,59 @@
 //!
 //! Generates proper PPTX XML for image embedding and display
 
-use crate::generator::images::Image;
+use crate::generator::images::{Image, ImageEffect};
 
 /// Generate image XML for a slide
 pub fn generate_image_xml(image: &Image, shape_id: usize, rel_id: usize) -> String {
     let rel_id_str = format!("rId{}", rel_id);
     
-    let xml = format!(
+    // Generate blipFill content (including crop)
+    let blip_fill = if let Some(crop) = &image.crop {
+        let l = (crop.left * 100_000.0) as u32;
+        let t = (crop.top * 100_000.0) as u32;
+        let r = (crop.right * 100_000.0) as u32;
+        let b = (crop.bottom * 100_000.0) as u32;
+        
+        format!(
+            r#"<p:blipFill>
+<a:blip r:embed="{}"/>
+<a:srcRect l="{}" t="{}" r="{}" b="{}"/>
+<a:stretch>
+<a:fillRect/>
+</a:stretch>
+</p:blipFill>"#,
+            rel_id_str, l, t, r, b
+        )
+    } else {
+        format!(
+            r#"<p:blipFill>
+<a:blip r:embed="{}"/>
+<a:stretch>
+<a:fillRect/>
+</a:stretch>
+</p:blipFill>"#,
+            rel_id_str
+        )
+    };
+
+    // Generate effects XML
+    let mut effects_xml = String::new();
+    if !image.effects.is_empty() {
+        effects_xml.push_str("<a:effectLst>");
+        for effect in &image.effects {
+            match effect {
+                ImageEffect::Shadow => {
+                    effects_xml.push_str(r#"<a:outerShdw blurRad="40000" dist="20000" dir="5400000" rotWithShape="0"><a:srgbClr val="000000"><a:alpha val="40000"/></a:srgbClr></a:outerShdw>"#);
+                }
+                ImageEffect::Reflection => {
+                    effects_xml.push_str(r#"<a:ref blurRad="6350" stA="50000" endA="300" endPos="35000" dist="0" dir="5400000" sy="-100000" algn="bl" rotWithShape="0"/>"#);
+                }
+            }
+        }
+        effects_xml.push_str("</a:effectLst>");
+    }
+
+    format!(
         r#"<p:pic>
 <p:nvPicPr>
 <p:cNvPr id="{}" name="{}"/>
@@ -17,12 +63,7 @@ pub fn generate_image_xml(image: &Image, shape_id: usize, rel_id: usize) -> Stri
 </p:cNvPicPr>
 <p:nvPr/>
 </p:nvPicPr>
-<p:blipFill>
-<a:blip r:embed="{}"/>
-<a:stretch>
-<a:fillRect/>
-</a:stretch>
-</p:blipFill>
+{}
 <p:spPr>
 <a:xfrm>
 <a:off x="{}" y="{}"/>
@@ -31,18 +72,18 @@ pub fn generate_image_xml(image: &Image, shape_id: usize, rel_id: usize) -> Stri
 <a:prstGeom prst="rect">
 <a:avLst/>
 </a:prstGeom>
+{}
 </p:spPr>
 </p:pic>"#,
         shape_id,
         escape_xml(&image.filename),
-        rel_id_str,
+        blip_fill,
         image.x,
         image.y,
         image.width,
-        image.height
-    );
-
-    xml
+        image.height,
+        effects_xml
+    )
 }
 
 /// Generate image relationship XML

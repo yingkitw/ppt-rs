@@ -9,12 +9,12 @@
 mod types;
 mod data;
 mod builder;
-mod xml;
+pub mod xml;
 
 pub use types::ChartType;
 pub use data::{Chart, ChartSeries};
 pub use builder::ChartBuilder;
-pub use xml::generate_chart_xml;
+pub use xml::{generate_chart_part_xml, generate_chart_ref_xml};
 
 /// Escape XML special characters
 pub(crate) fn escape_xml(s: &str) -> String {

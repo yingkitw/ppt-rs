@@ -1,7 +1,8 @@
 //! PPTX CLI - Command-line tool for creating PowerPoint presentations
 
 use clap::Parser;
-use ppt_rs::cli::{Cli, Commands, CreateCommand, FromMarkdownCommand, InfoCommand, ValidateCommand};
+use ppt_rs::cli::{Cli, Commands, CreateCommand, FromMarkdownCommand, InfoCommand, ValidateCommand, ExportFormat};
+use ppt_rs::api::Presentation;
 
 fn main() {
     let cli = Cli::parse();
@@ -79,6 +80,96 @@ fn main() {
                 }
                 Err(e) => {
                     eprintln!("✗ Error: {e}");
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::Export { input, output, format } => {
+            println!("Exporting {}...", input);
+            let pres = match Presentation::from_path(&input) {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("✗ Error loading presentation: {}", e);
+                    std::process::exit(1);
+                }
+            };
+
+            let format = format.or_else(|| {
+                let out_lower = output.to_lowercase();
+                if out_lower.ends_with(".pdf") {
+                    Some(ExportFormat::Pdf)
+                } else if out_lower.ends_with(".html") {
+                    Some(ExportFormat::Html)
+                } else if out_lower.ends_with(".png") {
+                    Some(ExportFormat::Png)
+                } else {
+                    None
+                }
+            }).unwrap_or(ExportFormat::Pdf);
+
+            let result = match format {
+                ExportFormat::Pdf => pres.save_as_pdf(&output),
+                ExportFormat::Html => pres.save_as_html(&output),
+                ExportFormat::Png => pres.save_as_png(&output),
+            };
+            
+            match result {
+                Ok(_) => println!("✓ Export completed: {}", output),
+                Err(e) => {
+                    eprintln!("✗ Error exporting: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::Merge { output, inputs } => {
+            println!("Merging {} files into {}...", inputs.len(), output);
+            let mut final_pres = match Presentation::from_path(&inputs[0]) {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("✗ Error loading {}: {}", inputs[0], e);
+                    std::process::exit(1);
+                }
+            };
+            
+            for input in inputs.iter().skip(1) {
+                match Presentation::from_path(input) {
+                    Ok(p) => {
+                        final_pres = final_pres.add_presentation(p);
+                    }
+                    Err(e) => {
+                        eprintln!("✗ Error loading {}: {}", input, e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+            
+            match final_pres.save(&output) {
+                Ok(_) => println!("✓ Merge completed: {}", output),
+                Err(e) => {
+                    eprintln!("✗ Error saving merged file: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::Pdf2Ppt { input, output } => {
+            let output = output.unwrap_or_else(|| {
+                let path = std::path::Path::new(&input);
+                path.with_extension("pptx").to_string_lossy().to_string()
+            });
+            
+            println!("Converting {} to {}...", input, output);
+            match Presentation::from_pdf(&input) {
+                Ok(p) => {
+                    match p.save(&output) {
+                        Ok(_) => println!("✓ Conversion completed: {}", output),
+                        Err(e) => {
+                            eprintln!("✗ Error saving presentation: {}", e);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("✗ Error converting PDF: {}", e);
                     std::process::exit(1);
                 }
             }

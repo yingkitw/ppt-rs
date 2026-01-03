@@ -12,9 +12,11 @@ mod bullet;
 mod layout;
 mod code_block;
 mod content;
+pub mod transition;
 
 pub use bullet::{BulletStyle, BulletPoint, BulletTextFormat};
 pub use layout::SlideLayout;
 pub use code_block::CodeBlock;
 pub use content::SlideContent;
+pub use transition::TransitionType;
 

@@ -59,7 +59,7 @@ impl PresentationEditor {
         let new_index = self.slide_count + 1;
         
         // Generate slide XML
-        let slide_xml = create_slide_xml_with_content(new_index, &content);
+        let slide_xml = create_slide_xml_with_content(new_index, &content, &[]);
         let slide_rels_xml = create_slide_rels_xml();
         
         // Add slide file
@@ -90,7 +90,7 @@ impl PresentationEditor {
         }
         
         let slide_num = index + 1;
-        let slide_xml = create_slide_xml_with_content(slide_num, &content);
+        let slide_xml = create_slide_xml_with_content(slide_num, &content, &[]);
         let slide_path = format!("ppt/slides/slide{slide_num}.xml");
         
         self.package.add_part(slide_path, slide_xml.into_bytes());

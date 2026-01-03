@@ -59,6 +59,12 @@ pub mod prelude;
 // Templates for common presentations
 pub mod templates;
 
+// Export functionality
+pub mod export;
+
+// Import functionality
+pub mod import;
+
 // Web2PPT module (optional feature)
 #[cfg(feature = "web2ppt")]
 pub mod web2ppt;

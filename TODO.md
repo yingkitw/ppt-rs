@@ -46,21 +46,45 @@
   - [x] Text highlight color (`TextFormat::highlight()`)
   - [x] Font size presets in prelude (`font_sizes::TITLE`, `BODY`, etc.)
 - [x] **Image enhancements**
-  - [ ] `Image::from_url(url)` - Load from URL
+  - [x] `Image::from_url(url)` - Load from URL
   - [x] `Image::from_base64(data)` - Load from base64 encoded data
   - [x] `Image::from_bytes(data)` - Load from raw bytes
-  - [ ] Image cropping
-  - [ ] Image effects (shadow, reflection)
+  - [x] Image cropping
+  - [x] Image effects (shadow, reflection)
 
-### v0.2.2 - Export & Import
-- [ ] **Export formats**
-  - [ ] Export slides to PNG/JPEG
-  - [ ] Export to PDF (via external tool)
-  - [ ] Export to HTML slideshow
-- [ ] **Import support**
-  - [ ] Import from Google Slides (PPTX export)
-  - [ ] Import from PDF (basic)
-  - [ ] Merge multiple PPTX files
+### v0.2.3 - Visual Polish ✓
+- [x] **Slide Transitions**
+  - [x] Add transition support to `SlideContent`
+  - [x] Implement standard transitions (Fade, Push, Wipe, Split, etc.)
+- [x] **Advanced Shape Features**
+  - [x] Shape rotation support
+  - [x] Hyperlinks on shapes
+  - [x] Gradient fills
+  - [x] Connectors
+- [x] **Table Enhancements**
+  - [x] Cell merging (rowspan/colspan)
+- [x] **Chart Generation**
+  - [x] Bar, Line, Pie, Doughnut, Area, Scatter, Bubble, Radar, Stock, Combo charts
+  - [x] Chart data and styling
+  - [x] Integration with SlideContent
+
+### v0.2.4 - Advanced Media (In Progress)
+- [ ] **Media Support**
+  - [ ] Video embedding
+  - [ ] Audio embedding
+- [ ] **Advanced Elements**
+  - [ ] SmartArt (basic support)
+  - [ ] 3D Models (basic support)
+
+### v0.2.2 - Export & Import ✓
+- [x] **Export formats**
+  - [x] Export slides to PNG/JPEG
+  - [x] Export to PDF (via external tool)
+  - [x] Export to HTML slideshow
+- [x] **Import support**
+  - [x] Import from Google Slides (PPTX export)
+  - [x] Import from PDF (basic)
+  - [x] Merge multiple PPTX files
 
 ## Backlog
 

@@ -3,6 +3,7 @@
 //! Generates XML for shapes embedded in slides.
 
 use super::shapes::{Shape, ShapeFill, ShapeLine, GradientFill};
+use crate::generator::hyperlinks::generate_shape_hyperlink_xml;
 
 /// Escape XML special characters
 fn escape_xml(s: &str) -> String {
@@ -25,15 +26,31 @@ pub fn generate_shape_xml(shape: &Shape, shape_id: u32) -> String {
     let fill_color = shape.fill.as_ref().map(|f| f.color.as_str());
     let text_xml = generate_text_xml_with_autofit(&shape.text, shape.width, shape.height, fill_color);
     
+    let rot_attr = if let Some(rot) = shape.rotation {
+        format!(r#" rot="{}""#, rot * 60000)
+    } else {
+        String::new()
+    };
+
+    let cnvpr_xml = if let Some(h) = &shape.hyperlink {
+        if let Some(rid) = &h.r_id {
+             format!(r#"<p:cNvPr id="{}" name="Shape {}">{}</p:cNvPr>"#, shape_id, shape_id, generate_shape_hyperlink_xml(h, rid))
+        } else {
+             format!(r#"<p:cNvPr id="{}" name="Shape {}"/>"#, shape_id, shape_id)
+        }
+    } else {
+        format!(r#"<p:cNvPr id="{}" name="Shape {}"/>"#, shape_id, shape_id)
+    };
+
     format!(
         r#"<p:sp>
 <p:nvSpPr>
-<p:cNvPr id="{}" name="Shape {}"/>
+{}
 <p:cNvSpPr/>
 <p:nvPr/>
 </p:nvSpPr>
 <p:spPr>
-<a:xfrm>
+<a:xfrm{}>
 <a:off x="{}" y="{}"/>
 <a:ext cx="{}" cy="{}"/>
 </a:xfrm>
@@ -44,8 +61,8 @@ pub fn generate_shape_xml(shape: &Shape, shape_id: u32) -> String {
 </p:spPr>
 {}
 </p:sp>"#,
-        shape_id,
-        shape_id,
+        cnvpr_xml,
+        rot_attr,
         shape.x,
         shape.y,
         shape.width,

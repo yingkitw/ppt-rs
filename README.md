@@ -109,6 +109,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 - **Images** - Embed from files, base64, or bytes
 - **Reading** - Parse and modify existing PPTX files
 - **Repair** - Validate and fix damaged PPTX files
+- **Export** - Export presentations to HTML and PDF
 
 ### Markdown Format
 
@@ -264,9 +265,49 @@ let slides = vec![
 ```rust
 use ppt_rs::generator::{ChartBuilder, ChartType, ChartSeries};
 
+// Create a bar chart
 let chart = ChartBuilder::new("Sales", ChartType::Bar)
     .categories(vec!["Q1", "Q2", "Q3"])
     .add_series(ChartSeries::new("2023", vec![100.0, 150.0, 120.0]))
+    .add_series(ChartSeries::new("2024", vec![120.0, 180.0, 150.0]))
+    .position(1000000, 1000000)
+    .size(4000000, 3000000)
+    .build();
+
+// Add to slide
+let slide = SlideContent::new("Sales Data").add_chart(chart);
+```
+
+### Slide Transitions (NEW in v0.2.3)
+
+```rust
+use ppt_rs::generator::{SlideContent, TransitionType};
+
+// Create slide with transition
+let slide = SlideContent::new("Moving On")
+    .with_transition(TransitionType::Push); // Push, Fade, Cut, Cover, etc.
+```
+
+### Table Merging (NEW in v0.2.3)
+
+```rust
+use ppt_rs::generator::{TableBuilder, TableRow, TableCell};
+
+let table = TableBuilder::new(vec![2000000, 2000000])
+    .add_row(TableRow::new(vec![
+        // Span 2 columns
+        TableCell::new("Header").with_col_span(2),
+        // Second cell skipped due to merge
+    ]))
+    .add_row(TableRow::new(vec![
+        // Span 2 rows
+        TableCell::new("Row Span").with_row_span(2),
+        TableCell::new("Data 1"),
+    ]))
+    .add_row(TableRow::new(vec![
+        // First cell skipped due to merge
+        TableCell::new("Data 2"),
+    ]))
     .build();
 ```
 
@@ -439,7 +480,7 @@ Unlike other Rust PPTX crates that:
 
 ## Technical Details
 
-- **Version**: 0.2.1
+- **Version**: 0.2.3
 - **Format**: Microsoft PowerPoint 2007+ (.pptx)
 - **Standard**: ECMA-376 Office Open XML
 - **Compatibility**: PowerPoint, LibreOffice, Google Slides, Keynote

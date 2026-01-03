@@ -1,6 +1,6 @@
 //! Command-line argument parser using clap
 
-use clap::{Parser as ClapParser, Subcommand};
+use clap::{Parser as ClapParser, Subcommand, ValueEnum};
 
 #[derive(ClapParser, Debug)]
 #[command(name = "pptcli")]
@@ -128,87 +128,144 @@ Example:
         file: String,
     },
     
-    /// Validate a PPTX file for ECMA-376 compliance
+    /// Validate a PPTX file
     #[command(
-        long_about = "Validate a PPTX file for ECMA-376 Office Open XML compliance.
-
-Checks:
-  - ZIP archive integrity
-  - Required XML files presence
-  - XML validity
-  - Relationships structure
-
-Example:
-  pptcli validate presentation.pptx"
+        long_about = "Validate a PPTX file structure and content.
+        
+Checks for:
+- Valid ZIP structure
+- Required parts (presentation.xml, slide masters, etc.)
+- Content types
+- Relationships"
     )]
     Validate {
         /// PPTX file to validate
-        #[arg(value_name = "FILE", help = "Path to the PPTX file to validate")]
+        #[arg(value_name = "FILE")]
         file: String,
     },
     
-    /// Convert a webpage to PowerPoint (requires web2ppt feature)
+    /// Export presentation to other formats
     #[command(
-        name = "web2ppt",
-        alias = "from-url",
-        alias = "url2ppt",
-        long_about = "Convert a webpage to a PowerPoint presentation.
+        long_about = "Export PPTX to PDF, HTML, or images.
 
-Fetches the webpage, extracts content (headings, paragraphs, lists, code, tables),
-and generates slides grouped by headings.
-
-Requires the 'web2ppt' feature to be enabled.
-
-Examples:
-  pptcli web2ppt https://example.com
-  pptcli web2ppt https://example.com -o output.pptx
-  pptcli web2ppt https://example.com --max-slides 10 --no-images"
+Formats:
+- pdf:  Requires LibreOffice installed
+- html: Self-contained HTML slideshow
+- png:  Requires LibreOffice and pdftoppm"
     )]
-    Web2Ppt {
-        /// URL of the webpage to convert
-        #[arg(value_name = "URL", help = "URL of the webpage to convert")]
-        url: String,
+    Export {
+        /// Input PPTX file
+        #[arg(value_name = "INPUT")]
+        input: String,
         
         /// Output file path
-        #[arg(short, long, default_value = "output.pptx", help = "Path to the output PPTX file")]
+        #[arg(value_name = "OUTPUT")]
         output: String,
         
-        /// Custom presentation title (overrides page title)
-        #[arg(short, long, help = "Custom title for the presentation")]
+        /// Output format (overrides extension)
+        #[arg(long, value_enum)]
+        format: Option<ExportFormat>,
+    },
+    
+    /// Merge multiple presentations
+    #[command(
+        long_about = "Merge multiple PPTX files into one.
+        
+Slides from all input files will be appended in order."
+    )]
+    Merge {
+        /// Output PPTX file
+        #[arg(short, long)]
+        output: String,
+        
+        /// Input PPTX files
+        #[arg(value_name = "INPUTS", required = true, num_args = 1..)]
+        inputs: Vec<String>,
+    },
+    
+    /// Convert PDF to PowerPoint
+    #[command(
+        name = "pdf2ppt",
+        long_about = "Convert PDF pages to PowerPoint slides.
+        
+Requires `pdftoppm` (poppler) installed.
+Each page becomes a slide with the page image."
+    )]
+    Pdf2Ppt {
+        /// Input PDF file
+        #[arg(value_name = "INPUT")]
+        input: String,
+        
+        /// Output PPTX file
+        #[arg(value_name = "OUTPUT")]
+        output: Option<String>,
+    },
+
+    /// Generate PPTX from webpage (requires web2ppt feature)
+    #[cfg(feature = "web2ppt")]
+    #[command(
+        name = "web2ppt",
+        long_about = "Convert a webpage to a PowerPoint presentation.
+        
+Extracts:
+- Title and headings
+- Text content
+- Images
+- Tables
+- Code blocks"
+    )]
+    Web2Ppt {
+        /// URL to convert
+        #[arg(value_name = "URL")]
+        url: String,
+        
+        /// Output file path (.pptx)
+        #[arg(short, long, default_value = "output.pptx")]
+        output: String,
+        
+        /// Presentation title (overrides page title)
+        #[arg(long)]
         title: Option<String>,
         
-        /// Maximum number of slides
-        #[arg(long, default_value = "20", help = "Maximum number of slides to generate")]
+        /// Maximum number of slides to generate
+        #[arg(long, default_value_t = 20)]
         max_slides: usize,
         
-        /// Maximum bullets per slide
-        #[arg(long, default_value = "6", help = "Maximum bullet points per slide")]
+        /// Maximum bullet points per slide
+        #[arg(long, default_value_t = 7)]
         max_bullets: usize,
         
-        /// Exclude images from the presentation
-        #[arg(long, help = "Don't include images from the webpage")]
+        /// Disable image extraction
+        #[arg(long)]
         no_images: bool,
         
-        /// Exclude tables from the presentation
-        #[arg(long, help = "Don't include tables from the webpage")]
+        /// Disable table extraction
+        #[arg(long)]
         no_tables: bool,
         
-        /// Exclude code blocks from the presentation
-        #[arg(long, help = "Don't include code blocks from the webpage")]
+        /// Disable code block extraction
+        #[arg(long)]
         no_code: bool,
         
-        /// Don't include source URL in presentation
-        #[arg(long, help = "Don't add source URL to the title slide")]
+        /// Don't add source URL to last slide
+        #[arg(long)]
         no_source_url: bool,
         
         /// Request timeout in seconds
-        #[arg(long, default_value = "30", help = "HTTP request timeout in seconds")]
+        #[arg(long, default_value_t = 30)]
         timeout: u64,
         
-        /// Verbose output
-        #[arg(short, long, help = "Show detailed progress")]
+        /// Enable verbose logging
+        #[arg(short, long)]
         verbose: bool,
     },
+}
+
+#[derive(ValueEnum, Clone, Debug)]
+pub enum ExportFormat {
+    Pdf,
+    Html,
+    Png,
 }
 
 // Legacy types for backward compatibility with existing command execution code
@@ -260,6 +317,25 @@ pub struct Web2PptArgs {
 }
 
 #[derive(Debug, Clone)]
+pub struct ExportArgs {
+    pub input: String,
+    pub output: String,
+    pub format: Option<ExportFormat>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MergeArgs {
+    pub output: String,
+    pub inputs: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Pdf2PptArgs {
+    pub input: String,
+    pub output: Option<String>,
+}
+
+#[derive(Debug, Clone)]
 pub enum Command {
     Create(CreateArgs),
     FromMarkdown(FromMarkdownArgs),
@@ -267,6 +343,9 @@ pub enum Command {
     Info(InfoArgs),
     Validate(ValidateArgs),
     Web2Ppt(Web2PptArgs),
+    Export(ExportArgs),
+    Merge(MergeArgs),
+    Pdf2Ppt(Pdf2PptArgs),
 }
 
 impl From<Commands> for Command {
@@ -325,6 +404,25 @@ impl From<Commands> for Command {
                     no_source_url,
                     timeout,
                     verbose,
+                })
+            }
+            Commands::Export { input, output, format } => {
+                Command::Export(ExportArgs {
+                    input,
+                    output,
+                    format,
+                })
+            }
+            Commands::Merge { output, inputs } => {
+                Command::Merge(MergeArgs {
+                    output,
+                    inputs,
+                })
+            }
+            Commands::Pdf2Ppt { input, output } => {
+                Command::Pdf2Ppt(Pdf2PptArgs {
+                    input,
+                    output,
                 })
             }
         }

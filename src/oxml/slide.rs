@@ -66,6 +66,8 @@ pub struct ParsedShape {
     pub y: i64,
     pub width: i64,
     pub height: i64,
+    pub is_title: bool,
+    pub is_body: bool,
 }
 
 impl ParsedShape {
@@ -78,6 +80,8 @@ impl ParsedShape {
             y: 0,
             width: 0,
             height: 0,
+            is_title: false,
+            is_body: false,
         }
     }
 
@@ -179,11 +183,13 @@ impl SlideParser {
         if let Some(sp_tree) = root.find_descendant("spTree") {
             // Parse shapes
             for sp in sp_tree.find_all("sp") {
-                if let Some(shape) = Self::parse_shape(sp) {
+                if let Some(mut shape) = Self::parse_shape(sp) {
                     // Check if this is title or body
                     if Self::is_title_shape(sp) {
+                        shape.is_title = true;
                         slide.title = Some(shape.text());
                     } else if Self::is_body_shape(sp) {
+                        shape.is_body = true;
                         for para in &shape.paragraphs {
                             let text = para.text();
                             if !text.is_empty() {

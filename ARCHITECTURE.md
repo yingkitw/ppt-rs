@@ -398,38 +398,59 @@ Tables in PPTX follow a specific XML structure. The critical ordering is:
 ## Generator Module Structure
 
 ```
-src/generator/
-├── mod.rs              # Module exports
-├── builder.rs          # PPTX creation functions
-├── xml.rs              # SlideContent, SlideLayout
-├── slide_xml/          # Modular slide XML generation (v0.1.7)
-│   ├── mod.rs          # Main entry point
-│   ├── common.rs       # Shared XML templates
-│   ├── layouts.rs      # Layout implementations
-│   └── content.rs      # Additional content (shapes, code blocks)
-├── slide_content.rs    # Slide content types
-├── package_xml.rs      # Package-level XML
-├── theme_xml.rs        # Theme XML
-├── props_xml.rs        # Properties XML
-├── notes_xml.rs        # Notes XML
-├── tables.rs           # Table types (legacy)
-├── tables_xml.rs       # Table XML generation
-├── table/              # Modular table module
+├── generator/          # Generator module
+│   ├── mod.rs          # Module exports
+│   ├── builder.rs      # PPTX creation functions
+│   ├── xml.rs          # SlideContent, SlideLayout
+│   ├── slide_xml/      # Modular slide XML generation
+│   │   ├── mod.rs
+│   │   ├── common.rs
+│   │   ├── layouts.rs
+│   │   └── content.rs
+│   ├── slide_content/  # Slide content types (v0.2.x)
+│   │   ├── mod.rs
+│   │   ├── content.rs
+│   │   ├── bullet.rs
+│   │   ├── layout.rs
+│   │   ├── transition.rs
+│   │   └── code_block.rs
+│   ├── charts/         # Chart module (v0.2.3)
+│   │   ├── mod.rs
+│   │   ├── builder.rs
+│   │   ├── data.rs
+│   │   ├── types.rs
+│   │   └── xml.rs
+│   ├── table/          # Modular table module
+│   │   ├── mod.rs
+│   │   ├── cell.rs
+│   │   ├── row.rs
+│   │   ├── builder.rs
+│   │   └── xml.rs
+│   ├── shapes.rs       # Shape types
+│   ├── shapes_xml.rs   # Shape XML generation
+│   ├── images.rs       # Image types
+│   ├── images_xml.rs   # Image XML generation
+│   ├── connectors.rs   # Connector shapes
+│   ├── hyperlinks.rs   # Hyperlink support
+│   ├── gradients.rs    # Gradient fills
+│   ├── media.rs        # Video/audio
+│   ├── package_xml.rs  # Package-level XML
+│   ├── theme_xml.rs    # Theme XML
+│   ├── props_xml.rs    # Properties XML
+│   └── notes_xml.rs    # Notes XML
+├── export/             # Export module (v0.2.2)
 │   ├── mod.rs
-│   ├── cell.rs         # TableCell, CellAlign, CellVAlign
-│   ├── row.rs          # TableRow
-│   ├── builder.rs      # Table, TableBuilder
-│   └── xml.rs          # Table XML generation
-├── charts/             # Chart module
-├── shapes.rs           # Shape types (gradient fills, transparency)
-├── shapes_xml.rs       # Shape XML generation (auto-fit, contrast, gradients)
-├── images.rs           # Image types
-├── images_xml.rs       # Image XML generation
-├── text.rs             # Text formatting
-├── connectors.rs       # Connector shapes (straight, elbow, curved, arrows)
-├── hyperlinks.rs       # Hyperlink support
-├── gradients.rs        # Gradient fills (linear, multi-stop)
-└── media.rs            # Video/audio
+│   ├── html.rs
+│   └── html_style.css
+├── import/             # Import module (v0.2.2)
+│   └── mod.rs
+├── web2ppt/            # Web to PPT converter
+│   ├── mod.rs
+│   ├── converter.rs
+│   ├── config.rs
+│   ├── fetcher.rs
+│   └── parser.rs
+├── cli/                # CLI module
 ```
 
 ## CLI Module Structure
@@ -482,11 +503,12 @@ src/cli/
 - [x] Transparency for solid fills
 - [x] Styled connectors (arrows, dash styles)
 - [x] 12 Mermaid diagram types
+- [x] Table merging (rowspan/colspan)
+- [x] HTML/PDF export
 
 ## Future Enhancements
 
 - [ ] RTL text support
-- [ ] Advanced table merging
 - [ ] Ink annotations
 - [ ] Comments and review features
 - [ ] Slide sections

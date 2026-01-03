@@ -585,6 +585,10 @@ pub struct Shape {
     pub text: Option<String>,
     /// Optional fixed shape ID for connector anchoring
     pub id: Option<u32>,
+    /// Rotation in degrees (0-360)
+    pub rotation: Option<i32>,
+    /// Optional hyperlink
+    pub hyperlink: Option<crate::generator::hyperlinks::Hyperlink>,
 }
 
 impl Shape {
@@ -601,12 +605,26 @@ impl Shape {
             line: None,
             text: None,
             id: None,
+            rotation: None,
+            hyperlink: None,
         }
     }
 
-    /// Set a fixed shape ID (for connector anchoring)
+    /// Set shape ID for connector anchoring
     pub fn with_id(mut self, id: u32) -> Self {
         self.id = Some(id);
+        self
+    }
+
+    /// Set shape rotation in degrees
+    pub fn with_rotation(mut self, degrees: i32) -> Self {
+        self.rotation = Some(degrees);
+        self
+    }
+
+    /// Set shape hyperlink
+    pub fn with_hyperlink(mut self, hyperlink: crate::generator::hyperlinks::Hyperlink) -> Self {
+        self.hyperlink = Some(hyperlink);
         self
     }
 
