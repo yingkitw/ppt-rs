@@ -11,6 +11,7 @@ use super::package_xml::{
     create_slide_rels_xml_extended
 };
 use crate::generator::charts::generate_chart_part_xml;
+use crate::generator::slide_content::presentation_settings::PresentationSettings;
 
 /// Create a minimal but valid PPTX file
 pub fn create_pptx(title: &str, slides: usize) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
@@ -19,7 +20,7 @@ pub fn create_pptx(title: &str, slides: usize) -> Result<Vec<u8>, Box<dyn std::e
     let mut zip = ZipWriter::new(cursor);
     let options = FileOptions::default();
 
-    write_package_files(&mut zip, &options, title, slides, None)?;
+    write_package_files(&mut zip, &options, title, slides, None, None)?;
 
     let cursor = zip.finish()?;
     Ok(cursor.into_inner())
@@ -30,12 +31,21 @@ pub fn create_pptx_with_content(
     title: &str,
     slides: Vec<super::xml::SlideContent>,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    create_pptx_with_settings(title, slides, None)
+}
+
+/// Create a PPTX file with custom slide content and presentation-level settings
+pub fn create_pptx_with_settings(
+    title: &str,
+    slides: Vec<super::xml::SlideContent>,
+    settings: Option<PresentationSettings>,
+) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let buffer = Vec::new();
     let cursor = Cursor::new(buffer);
     let mut zip = ZipWriter::new(cursor);
     let options = FileOptions::default();
 
-    write_package_files(&mut zip, &options, title, slides.len(), Some(&slides))?;
+    write_package_files(&mut zip, &options, title, slides.len(), Some(&slides), settings.as_ref())?;
 
     let cursor = zip.finish()?;
     Ok(cursor.into_inner())
@@ -48,6 +58,7 @@ fn write_package_files(
     title: &str,
     slide_count: usize,
     custom_slides: Option<&Vec<super::xml::SlideContent>>,
+    settings: Option<&PresentationSettings>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Check if any slides have notes and calculate chart info
     let has_notes = custom_slides
@@ -63,8 +74,18 @@ fn write_package_files(
         }
     }
 
-    // 1. Content types (with notes and charts)
-    let content_types = create_content_types_xml_with_notes_and_charts(slide_count, custom_slides, total_charts);
+    // Determine if we need presProps.xml
+    let has_pres_props = settings.map(|s| s.slide_show.is_some() || s.print.is_some()).unwrap_or(false);
+
+    // 1. Content types (with notes, charts, and presProps)
+    let mut content_types = create_content_types_xml_with_notes_and_charts(slide_count, custom_slides, total_charts);
+    if has_pres_props {
+        // Insert presProps override before closing </Types>
+        let ct_entry = "\n<Override PartName=\"/ppt/presProps.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.presProps+xml\"/>";
+        if let Some(pos) = content_types.rfind("</Types>") {
+            content_types.insert_str(pos, ct_entry);
+        }
+    }
     zip.start_file("[Content_Types].xml", *options)?;
     zip.write_all(content_types.as_bytes())?;
 
@@ -73,12 +94,23 @@ fn write_package_files(
     zip.start_file("_rels/.rels", *options)?;
     zip.write_all(rels.as_bytes())?;
 
-    // 3. Presentation relationships (with notes master if notes present)
-    let pres_rels = if has_notes {
+    // 3. Presentation relationships (with notes master if notes present, plus presProps)
+    let mut pres_rels = if has_notes {
         create_presentation_rels_xml_with_notes(slide_count)
     } else {
         create_presentation_rels_xml(slide_count)
     };
+    if has_pres_props {
+        // Add presProps relationship before closing </Relationships>
+        // Use a high rId that won't conflict with slides (rId starts at 3 for slides)
+        let props_rid = slide_count + 3 + if has_notes { 1 } else { 0 } + 1;
+        let rel_entry = format!(
+            "\n    <Relationship Id=\"rId{props_rid}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/presProps\" Target=\"presProps.xml\"/>"
+        );
+        if let Some(pos) = pres_rels.rfind("</Relationships>") {
+            pres_rels.insert_str(pos, &rel_entry);
+        }
+    }
     zip.start_file("ppt/_rels/presentation.xml.rels", *options)?;
     zip.write_all(pres_rels.as_bytes())?;
 
@@ -86,6 +118,24 @@ fn write_package_files(
     let presentation = create_presentation_xml(title, slide_count);
     zip.start_file("ppt/presentation.xml", *options)?;
     zip.write_all(presentation.as_bytes())?;
+
+    // 4b. Presentation properties (presProps.xml) with showPr/prnPr
+    if has_pres_props {
+        let mut props_xml = String::from(
+            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentationPr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">"#
+        );
+        if let Some(s) = settings {
+            if let Some(ref show) = s.slide_show {
+                props_xml.push_str(&show.to_xml());
+            }
+            if let Some(ref print) = s.print {
+                props_xml.push_str(&print.to_prnpr_xml());
+            }
+        }
+        props_xml.push_str("</p:presentationPr>");
+        zip.start_file("ppt/presProps.xml", *options)?;
+        zip.write_all(props_xml.as_bytes())?;
+    }
 
     // 5. Slides (and notes if present)
     write_slides(zip, options, slide_count, custom_slides)?;
@@ -147,6 +197,9 @@ fn write_package_files(
     if total_charts > 0 {
         write_charts(zip, options, custom_slides, &slide_chart_start_indices)?;
     }
+
+    // NOTE: Digital signature parts require Content_Types + _rels registration;
+    // skip injection until full signature pipeline is implemented
 
     Ok(())
 }

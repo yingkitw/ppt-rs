@@ -10,11 +10,13 @@ mod format;
 mod run;
 mod paragraph;
 mod frame;
+pub mod rtl;
 
 pub use format::{TextFormat, FormattedText, color_to_xml};
 pub use run::Run;
 pub use paragraph::Paragraph;
 pub use frame::TextFrame;
+pub use rtl::{TextDirection, RtlLanguage, RtlTextProps};
 
 /// Text alignment options
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Default)]

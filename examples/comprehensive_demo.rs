@@ -16,15 +16,22 @@
 //! 13. NEW v0.2.1: Image from base64/bytes
 //! 14. NEW v0.2.1: Theme colors (Corporate, Modern, Vibrant, Dark, Nature, Tech, Carbon)
 //! 15. NEW v0.2.1: Material & Carbon Design colors
+//! 16. NEW: Digital signatures, Ink annotations, Slide show settings
+//! 17. NEW: Print settings, Advanced table merging, Embedded fonts
 
 use ppt_rs::generator::{
-    create_pptx_with_content, SlideContent, SlideLayout,
+    create_pptx_with_settings, SlideContent, SlideLayout,
     TableRow, TableCell, TableBuilder,
     ChartType, ChartSeries, ChartBuilder,
     Shape, ShapeType, ShapeFill, ShapeLine,
     Image, ImageBuilder,
     Connector, ConnectorLine, ArrowType, ArrowSize, LineDash,
-    BulletStyle, BulletPoint, TextFormat,
+    BulletStyle, BulletPoint,
+    // Advanced features actually embedded in PPTX output
+    SlideShowSettings, ShowType, PenColor, SlideRange,
+    PrintSettings, HandoutLayout as GenHandoutLayout, PrintColorMode, PrintWhat,
+    TableMergeMap,
+    PresentationSettings,
 };
 use ppt_rs::generator::shapes::{GradientFill, GradientDirection};
 use ppt_rs::prelude::{colors, themes, font_sizes};
@@ -1134,10 +1141,293 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // =========================================================================
-    // Generate PPTX
+    // SLIDE 32: Slide Show Settings - Comparison Table (REAL: embedded in presProps.xml)
     // =========================================================================
-    println!("\n📦 Generating PPTX...");
-    let pptx_data = create_pptx_with_content("PPTX-RS Element Showcase", slides.clone())?;
+    println!("🎬 Slide 34: Slide Show Settings (Visual)");
+
+    let show_speaker = SlideShowSettings::new().pen_color(PenColor::red());
+    let show_kiosk = SlideShowSettings::kiosk();
+    let _show_range = SlideShowSettings::new()
+        .show_type(ShowType::Browsed)
+        .slide_range(SlideRange::Range { start: 1, end: 10 })
+        .without_animation(true);
+    let _speaker_xml = show_speaker.to_xml();
+    let _kiosk_xml = show_kiosk.to_xml();
+
+    let show_table = TableBuilder::new(vec![2000000, 2000000, 2000000, 2000000])
+        .add_row(TableRow::new(vec![
+            TableCell::new("Setting").bold().background_color("1F4E79").text_color("FFFFFF"),
+            TableCell::new("Speaker").bold().background_color("4472C4").text_color("FFFFFF"),
+            TableCell::new("Kiosk").bold().background_color("ED7D31").text_color("FFFFFF"),
+            TableCell::new("Browsed").bold().background_color("70AD47").text_color("FFFFFF"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Loop").bold().background_color("D6E4F0"),
+            TableCell::new("No"), TableCell::new("Yes").bold().text_color("2E7D32"),
+            TableCell::new("No"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Narration").bold().background_color("D6E4F0"),
+            TableCell::new("Yes"), TableCell::new("No").text_color("C62828"),
+            TableCell::new("Yes"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Animation").bold().background_color("D6E4F0"),
+            TableCell::new("Yes"), TableCell::new("Yes"),
+            TableCell::new("No").text_color("C62828"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Timings").bold().background_color("D6E4F0"),
+            TableCell::new("Yes"), TableCell::new("Auto"),
+            TableCell::new("Yes"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Slide Range").bold().background_color("D6E4F0"),
+            TableCell::new("All"), TableCell::new("All"),
+            TableCell::new("1-10"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Pen Color").bold().background_color("D6E4F0"),
+            TableCell::new("Red").text_color("FF0000"),
+            TableCell::new("Red").text_color("FF0000"),
+            TableCell::new("Red").text_color("FF0000"),
+        ]))
+        .position(300000, 1600000)
+        .build();
+
+    // Mode icons
+    let icon_speaker = Shape::new(ShapeType::RoundedRectangle, 300000, 4200000, 2500000, 600000)
+        .with_fill(ShapeFill::new("4472C4"))
+        .with_text("Speaker: Full control");
+    let icon_kiosk = Shape::new(ShapeType::RoundedRectangle, 3100000, 4200000, 2500000, 600000)
+        .with_fill(ShapeFill::new("ED7D31"))
+        .with_text("Kiosk: Auto-loop");
+    let icon_browsed = Shape::new(ShapeType::RoundedRectangle, 5900000, 4200000, 2500000, 600000)
+        .with_fill(ShapeFill::new("70AD47"))
+        .with_text("Browsed: Scrollbar");
+
+    slides.push(
+        SlideContent::new("Slide Show Settings - Mode Comparison")
+            .table(show_table)
+            .add_shape(icon_speaker)
+            .add_shape(icon_kiosk)
+            .add_shape(icon_browsed)
+            .title_color("1F497D")
+            .title_bold(true)
+    );
+
+    // =========================================================================
+    // SLIDE 35: Print Settings - Visual Handout Grid
+    // =========================================================================
+    println!("🖨️  Slide 35: Print Settings & Handouts (Visual)");
+
+    let print = PrintSettings::new()
+        .print_what(PrintWhat::Handouts)
+        .color_mode(PrintColorMode::Grayscale)
+        .handout_layout(GenHandoutLayout::SlidesPerPage6)
+        .frame_slides(true)
+        .header("Q1 2025 Strategy Review")
+        .footer("Confidential - Internal Use Only")
+        .print_date(true)
+        .print_page_numbers(true);
+    let _prnpr_xml = print.to_prnpr_xml();
+    let _handout_xml = print.to_handout_master_xml();
+
+    // Visual: 6-slide handout grid (2 cols x 3 rows)
+    let hdr = Shape::new(ShapeType::Rectangle, 300000, 1500000, 4200000, 300000)
+        .with_fill(ShapeFill::new("E7E6E6"))
+        .with_text("Q1 2025 Strategy Review");
+    // Row 1
+    let s1 = Shape::new(ShapeType::Rectangle, 400000, 2000000, 1800000, 1100000)
+        .with_line(ShapeLine::new("999999", 12700))
+        .with_text("Slide 1");
+    let s2 = Shape::new(ShapeType::Rectangle, 2500000, 2000000, 1800000, 1100000)
+        .with_line(ShapeLine::new("999999", 12700))
+        .with_text("Slide 2");
+    // Row 2
+    let s3 = Shape::new(ShapeType::Rectangle, 400000, 3200000, 1800000, 1100000)
+        .with_line(ShapeLine::new("999999", 12700))
+        .with_text("Slide 3");
+    let s4 = Shape::new(ShapeType::Rectangle, 2500000, 3200000, 1800000, 1100000)
+        .with_line(ShapeLine::new("999999", 12700))
+        .with_text("Slide 4");
+    // Row 3
+    let s5 = Shape::new(ShapeType::Rectangle, 400000, 4400000, 1800000, 1100000)
+        .with_line(ShapeLine::new("999999", 12700))
+        .with_text("Slide 5");
+    let s6 = Shape::new(ShapeType::Rectangle, 2500000, 4400000, 1800000, 1100000)
+        .with_line(ShapeLine::new("999999", 12700))
+        .with_text("Slide 6");
+    let ftr = Shape::new(ShapeType::Rectangle, 300000, 5600000, 4200000, 300000)
+        .with_fill(ShapeFill::new("E7E6E6"))
+        .with_text("Confidential - Internal Use Only");
+
+    // Settings summary table on the right
+    let print_table = TableBuilder::new(vec![1800000, 2000000])
+        .add_row(TableRow::new(vec![
+            TableCell::new("Print Settings").bold().background_color("1F4E79").text_color("FFFFFF"),
+            TableCell::new("").background_color("1F4E79"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Print What").bold().background_color("D6E4F0"),
+            TableCell::new("Handouts"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Color Mode").bold().background_color("D6E4F0"),
+            TableCell::new("Grayscale"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Layout").bold().background_color("D6E4F0"),
+            TableCell::new("6 slides/page"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Frame Slides").bold().background_color("D6E4F0"),
+            TableCell::new("Yes"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Date").bold().background_color("D6E4F0"),
+            TableCell::new("Yes"),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Page Numbers").bold().background_color("D6E4F0"),
+            TableCell::new("Yes"),
+        ]))
+        .position(5000000, 1800000)
+        .build();
+
+    slides.push(
+        SlideContent::new("Print Handout - 6 Slides Per Page")
+            .table(print_table)
+            .add_shape(hdr)
+            .add_shape(s1).add_shape(s2)
+            .add_shape(s3).add_shape(s4)
+            .add_shape(s5).add_shape(s6)
+            .add_shape(ftr)
+            .title_color("1F497D")
+            .title_bold(true)
+    );
+
+    // =========================================================================
+    // SLIDE 36: Advanced Table Merging - Actual Merged Table
+    // =========================================================================
+    println!("📊 Slide 36: Advanced Table Merging (Visual)");
+
+    // Use TableMergeMap to compute states, then build a visual table
+    let mut merge_map = TableMergeMap::new(5, 4);
+    merge_map.merge_cells(0, 0, 1, 4).unwrap(); // Title row spans all 4 cols
+    merge_map.merge_cells(1, 0, 2, 1).unwrap(); // "Products" spans 2 rows
+    merge_map.merge_cells(3, 0, 2, 1).unwrap(); // "Services" spans 2 rows
+
+    // Show merge state labels
+    let state_00 = merge_map.cell_state(0, 0); // Anchor gridSpan=4
+    let state_01 = merge_map.cell_state(0, 1); // HMerge
+    let state_10 = merge_map.cell_state(1, 0); // Anchor rowSpan=2
+    let state_20 = merge_map.cell_state(2, 0); // VMerge
+    println!("   ├── (0,0): {}", state_00.to_xml_attrs().trim());
+    println!("   ├── (0,1): {}", state_01.to_xml_attrs().trim());
+    println!("   ├── (1,0): {}", state_10.to_xml_attrs().trim());
+    println!("   └── (2,0): {}", state_20.to_xml_attrs().trim());
+
+    // Build the table with REAL merge attributes (gridSpan, rowSpan, hMerge, vMerge)
+    let merge_table = TableBuilder::new(vec![1500000, 2000000, 2000000, 2000000])
+        .add_row(TableRow::new(vec![
+            TableCell::new("Q1 2025 Revenue Report").bold().background_color("1F4E79").text_color("FFFFFF").grid_span(4),
+            TableCell::new("").background_color("1F4E79").h_merge(),
+            TableCell::new("").background_color("1F4E79").h_merge(),
+            TableCell::new("").background_color("1F4E79").h_merge(),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Products").bold().background_color("BDD7EE").text_color("1F497D").row_span(2),
+            TableCell::new("Hardware").background_color("E2EFDA"),
+            TableCell::new("$450,000").text_color("2E7D32").align_right(),
+            TableCell::new("+12%").bold().text_color("2E7D32").align_right(),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("").background_color("BDD7EE").v_merge(),
+            TableCell::new("Software").background_color("E2EFDA"),
+            TableCell::new("$680,000").text_color("2E7D32").align_right(),
+            TableCell::new("+25%").bold().text_color("2E7D32").align_right(),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("Services").bold().background_color("FCE4D6").text_color("C65911").row_span(2),
+            TableCell::new("Consulting").background_color("FFF2CC"),
+            TableCell::new("$320,000").text_color("2E7D32").align_right(),
+            TableCell::new("+8%").bold().text_color("2E7D32").align_right(),
+        ]))
+        .add_row(TableRow::new(vec![
+            TableCell::new("").background_color("FCE4D6").v_merge(),
+            TableCell::new("Support").background_color("FFF2CC"),
+            TableCell::new("$190,000").text_color("2E7D32").align_right(),
+            TableCell::new("+5%").bold().text_color("2E7D32").align_right(),
+        ]))
+        .position(300000, 1600000)
+        .build();
+
+    // Legend shapes
+    let legend_anchor = Shape::new(ShapeType::RoundedRectangle, 300000, 4400000, 2000000, 400000)
+        .with_fill(ShapeFill::new("4472C4"))
+        .with_text("Anchor (gridSpan/rowSpan)");
+    let legend_hmerge = Shape::new(ShapeType::RoundedRectangle, 2500000, 4400000, 2000000, 400000)
+        .with_fill(ShapeFill::new("ED7D31"))
+        .with_text("hMerge (col covered)");
+    let legend_vmerge = Shape::new(ShapeType::RoundedRectangle, 4700000, 4400000, 2000000, 400000)
+        .with_fill(ShapeFill::new("70AD47"))
+        .with_text("vMerge (row covered)");
+    let legend_normal = Shape::new(ShapeType::RoundedRectangle, 6900000, 4400000, 2000000, 400000)
+        .with_fill(ShapeFill::new("A5A5A5"))
+        .with_text("Normal (no merge)");
+
+    slides.push(
+        SlideContent::new("Advanced Table Merging - Merged Cells")
+            .table(merge_table)
+            .add_shape(legend_anchor)
+            .add_shape(legend_hmerge)
+            .add_shape(legend_vmerge)
+            .add_shape(legend_normal)
+            .title_color("1F497D")
+            .title_bold(true)
+    );
+
+    // =========================================================================
+    // Build PresentationSettings with all advanced features
+    // =========================================================================
+    println!("\n⚙️  Building Presentation Settings...");
+
+    // Slide show settings (embedded in presProps.xml as <p:showPr>)
+    let show_settings = SlideShowSettings::new()
+        .show_type(ShowType::Speaker)
+        .pen_color(PenColor::red())
+        .use_timings(true);
+    println!("   ├── Slide Show: Speaker mode, red pen, timings enabled");
+    println!("   │   └── XML: {} bytes", show_settings.to_xml().len());
+
+    // Print settings (embedded in presProps.xml as <p:prnPr>)
+    let print_settings = PrintSettings::new()
+        .print_what(PrintWhat::Handouts)
+        .color_mode(PrintColorMode::Grayscale)
+        .handout_layout(GenHandoutLayout::SlidesPerPage6)
+        .frame_slides(true)
+        .header("Q1 2025 Strategy Review")
+        .footer("Confidential - Internal Use Only")
+        .print_date(true)
+        .print_page_numbers(true);
+    println!("   └── Print: Handouts, 6/page, grayscale, framed");
+    println!("       └── XML: {} bytes", print_settings.to_prnpr_xml().len());
+
+    let pres_settings = PresentationSettings::new()
+        .slide_show(show_settings)
+        .print(print_settings);
+    println!("   All settings configured → presProps.xml");
+
+    // =========================================================================
+    // Generate PPTX with real integrated features
+    // =========================================================================
+    println!("\n📦 Generating PPTX with integrated features...");
+    let pptx_data = create_pptx_with_settings(
+        "PPTX-RS Element Showcase",
+        slides.clone(),
+        Some(pres_settings),
+    )?;
     fs::write("comprehensive_demo.pptx", &pptx_data)?;
     println!("   ✓ Created comprehensive_demo.pptx ({} slides, {} bytes)", 
              slides.len(), pptx_data.len());

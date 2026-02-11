@@ -68,7 +68,21 @@ fn generate_row_xml(row: &TableRow) -> String {
 /// Generate cell XML with formatting
 /// Based on reference PPTX structure: txBody comes BEFORE tcPr
 fn generate_cell_xml(cell: &TableCell) -> String {
-    let mut xml = String::from(r#"<a:tc>"#);
+    // Build <a:tc> opening tag with merge attributes
+    let mut tc_attrs = String::new();
+    if let Some(gs) = cell.grid_span {
+        tc_attrs.push_str(&format!(r#" gridSpan="{}""#, gs));
+    }
+    if let Some(rs) = cell.row_span {
+        tc_attrs.push_str(&format!(r#" rowSpan="{}""#, rs));
+    }
+    if cell.h_merge {
+        tc_attrs.push_str(r#" hMerge="1""#);
+    }
+    if cell.v_merge {
+        tc_attrs.push_str(r#" vMerge="1""#);
+    }
+    let mut xml = format!(r#"<a:tc{}>"#, tc_attrs);
 
     // === TEXT BODY (must come first!) ===
     xml.push_str(r#"<a:txBody><a:bodyPr/><a:lstStyle/><a:p>"#);

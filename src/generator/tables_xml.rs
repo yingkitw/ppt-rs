@@ -70,20 +70,27 @@ fn generate_cell_xml(cell: &TableCell) -> String {
     let mut xml = String::from("<a:tc");
     
     // Add merge attributes
-    if cell.row_span > 1 {
-        xml.push_str(&format!(r#" rowSpan="{}""#, cell.row_span));
-    }
     if cell.col_span > 1 {
         xml.push_str(&format!(r#" gridSpan="{}""#, cell.col_span));
     }
-    if cell.v_merge {
-        xml.push_str(r#" vMerge="1""#);
+    if cell.row_span > 1 {
+        xml.push_str(&format!(r#" rowSpan="{}""#, cell.row_span));
     }
     if cell.h_merge {
         xml.push_str(r#" hMerge="1""#);
     }
+    if cell.v_merge {
+        xml.push_str(r#" vMerge="1""#);
+    }
     
     xml.push_str(">");
+
+    // Merged-over cells (hMerge/vMerge) must have empty text body
+    if cell.h_merge || cell.v_merge {
+        xml.push_str(r#"<a:txBody><a:bodyPr/><a:lstStyle/><a:p/></a:txBody><a:tcPr/>"#);
+        xml.push_str("</a:tc>");
+        return xml;
+    }
 
     // === TEXT BODY (must come first!) ===
     xml.push_str(r#"<a:txBody><a:bodyPr/><a:lstStyle/><a:p>"#);

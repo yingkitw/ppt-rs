@@ -75,7 +75,7 @@ pub use core::{ToXml, escape_xml};
 pub use elements::{Color, RgbColor, SchemeColor, Position, Size, Transform};
 pub use exc::{PptxError, Result};
 pub use generator::{
-    create_pptx, create_pptx_with_content, SlideContent, SlideLayout,
+    create_pptx, create_pptx_with_content, create_pptx_with_settings, SlideContent, SlideLayout,
     TextFormat, FormattedText,
     Table, TableRow, TableCell, TableBuilder,
     Shape, ShapeType, ShapeFill, ShapeLine,
@@ -83,6 +83,26 @@ pub use generator::{
     Chart, ChartType, ChartSeries, ChartBuilder,
     // Bullet styles
     BulletStyle, BulletPoint,
+    // RTL text support
+    TextDirection, RtlLanguage, RtlTextProps,
+    // Comments and annotations
+    Comment, CommentAuthor, CommentAuthorList, SlideComments,
+    // Slide sections
+    SlideSection, SectionManager,
+    // Digital signatures
+    DigitalSignature, SignerInfo, HashAlgorithm, SignatureCommitment,
+    // Ink annotations
+    InkAnnotations, InkStroke, InkPen, InkPoint, PenTip,
+    // Slide show settings
+    SlideShowSettings, ShowType, PenColor, SlideRange,
+    // Print settings and handouts
+    PrintSettings, HandoutLayout, PrintColorMode, PrintWhat, Orientation,
+    // Advanced table merging
+    TableMergeMap, MergeRegion, CellMergeState,
+    // Embedded fonts
+    EmbeddedFontList, EmbeddedFont, FontStyle, FontCharset,
+    // Presentation-level settings
+    PresentationSettings,
     // New element types
     Connector, ConnectorType, ConnectorLine, ArrowType, ArrowSize, ConnectionSite, LineDash,
     Hyperlink, HyperlinkAction,

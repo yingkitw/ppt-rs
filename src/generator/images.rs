@@ -82,18 +82,12 @@ impl Image {
         let filename = path.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "image.png".to_string());
         let path_str = path.to_string_lossy().to_string();
         
-        // Read image to get dimensions
-        let reader = ::image::io::Reader::open(path)
-            .map_err(|e| format!("Failed to open image: {}", e))?
-            .with_guessed_format()
-            .map_err(|e| format!("Failed to guess image format: {}", e))?;
+        let data = std::fs::read(path)
+            .map_err(|e| format!("Failed to open image: {e}"))?;
+        let (w, h, format) = read_image_dimensions(&data)
+            .ok_or_else(|| "Failed to detect image dimensions (unsupported format)".to_string())?;
             
-        let format = reader.format().map(|f| format!("{:?}", f)).unwrap_or("PNG".to_string());
-        let (w, h) = reader.into_dimensions()
-            .map_err(|e| format!("Failed to get image dimensions: {}", e))?;
-            
-        // Convert pixels to EMU (assuming 96 DPI)
-        // 1 pixel = 9525 EMU
+        // Convert pixels to EMU (assuming 96 DPI): 1 pixel = 9525 EMU
         let w_emu = w * 9525;
         let h_emu = h * 9525;
         
@@ -594,4 +588,119 @@ mod tests {
         assert_eq!(img.y, 2000);
         assert_eq!(img.format, "JPEG");
     }
+
+    #[test]
+    fn test_read_png_dimensions() {
+        // Minimal 1x1 PNG
+        let png: Vec<u8> = vec![
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // signature
+            0x00, 0x00, 0x00, 0x0D, // IHDR length
+            0x49, 0x48, 0x44, 0x52, // "IHDR"
+            0x00, 0x00, 0x00, 0x01, // width=1
+            0x00, 0x00, 0x00, 0x01, // height=1
+            0x08, 0x02, 0x00, 0x00, 0x00, // bit depth, color type, etc.
+        ];
+        let (w, h, fmt) = read_image_dimensions(&png).unwrap();
+        assert_eq!((w, h), (1, 1));
+        assert_eq!(fmt, "PNG");
+    }
+
+    #[test]
+    fn test_read_gif_dimensions() {
+        let gif: Vec<u8> = vec![
+            0x47, 0x49, 0x46, 0x38, 0x39, 0x61, // "GIF89a"
+            0x0A, 0x00, // width=10 (little-endian)
+            0x14, 0x00, // height=20
+        ];
+        let (w, h, fmt) = read_image_dimensions(&gif).unwrap();
+        assert_eq!((w, h), (10, 20));
+        assert_eq!(fmt, "GIF");
+    }
+
+    #[test]
+    fn test_read_bmp_dimensions() {
+        let mut bmp = vec![0u8; 26];
+        bmp[0] = 0x42; bmp[1] = 0x4D; // "BM"
+        bmp[18..22].copy_from_slice(&100u32.to_le_bytes()); // width=100
+        bmp[22..26].copy_from_slice(&200u32.to_le_bytes()); // height=200
+        let (w, h, fmt) = read_image_dimensions(&bmp).unwrap();
+        assert_eq!((w, h), (100, 200));
+        assert_eq!(fmt, "BMP");
+    }
+}
+
+/// Read image dimensions from file header bytes (PNG, JPEG, GIF, BMP, WebP).
+/// Returns (width, height, format_name) or None if unrecognized.
+fn read_image_dimensions(data: &[u8]) -> Option<(u32, u32, String)> {
+    if data.len() < 10 {
+        return None;
+    }
+    // PNG: 8-byte signature, then IHDR chunk with width/height as big-endian u32
+    if data.starts_with(&[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) && data.len() >= 24 {
+        let w = u32::from_be_bytes([data[16], data[17], data[18], data[19]]);
+        let h = u32::from_be_bytes([data[20], data[21], data[22], data[23]]);
+        return Some((w, h, "PNG".into()));
+    }
+    // JPEG: starts with FF D8, scan for SOF0/SOF2 marker
+    if data.starts_with(&[0xFF, 0xD8]) {
+        return read_jpeg_dimensions(data);
+    }
+    // GIF: "GIF87a" or "GIF89a", width/height as little-endian u16 at offset 6
+    if data.starts_with(b"GIF8") && data.len() >= 10 {
+        let w = u16::from_le_bytes([data[6], data[7]]) as u32;
+        let h = u16::from_le_bytes([data[8], data[9]]) as u32;
+        return Some((w, h, "GIF".into()));
+    }
+    // BMP: "BM", width/height as little-endian u32 at offset 18/22
+    if data.starts_with(b"BM") && data.len() >= 26 {
+        let w = u32::from_le_bytes([data[18], data[19], data[20], data[21]]);
+        let h = u32::from_le_bytes([data[22], data[23], data[24], data[25]]);
+        return Some((w, h, "BMP".into()));
+    }
+    // WebP: "RIFF....WEBP", VP8 chunk has dimensions
+    if data.len() >= 30 && &data[0..4] == b"RIFF" && &data[8..12] == b"WEBP" {
+        // VP8 lossy: width/height at offset 26/28 as little-endian u16
+        if &data[12..16] == b"VP8 " && data.len() >= 30 {
+            let w = u16::from_le_bytes([data[26], data[27]]) as u32 & 0x3FFF;
+            let h = u16::from_le_bytes([data[28], data[29]]) as u32 & 0x3FFF;
+            return Some((w, h, "WEBP".into()));
+        }
+        // VP8L lossless: dimensions encoded at offset 21
+        if &data[12..16] == b"VP8L" && data.len() >= 25 {
+            let b0 = data[21] as u32;
+            let b1 = data[22] as u32;
+            let b2 = data[23] as u32;
+            let b3 = data[24] as u32;
+            let bits = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
+            let w = (bits & 0x3FFF) + 1;
+            let h = ((bits >> 14) & 0x3FFF) + 1;
+            return Some((w, h, "WEBP".into()));
+        }
+    }
+    None
+}
+
+/// Scan JPEG markers to find SOF0/SOF2 frame with dimensions
+fn read_jpeg_dimensions(data: &[u8]) -> Option<(u32, u32, String)> {
+    let mut i = 2;
+    while i + 1 < data.len() {
+        if data[i] != 0xFF {
+            i += 1;
+            continue;
+        }
+        let marker = data[i + 1];
+        i += 2;
+        // SOF0 (0xC0) or SOF2 (0xC2): height at +3, width at +5 (big-endian u16)
+        if (marker == 0xC0 || marker == 0xC2) && i + 7 < data.len() {
+            let h = u16::from_be_bytes([data[i + 3], data[i + 4]]) as u32;
+            let w = u16::from_be_bytes([data[i + 5], data[i + 6]]) as u32;
+            return Some((w, h, "JPEG".into()));
+        }
+        // Skip non-SOF markers by reading segment length
+        if marker >= 0xC0 && marker != 0xD9 && marker != 0xDA && i + 1 < data.len() {
+            let len = u16::from_be_bytes([data[i], data[i + 1]]) as usize;
+            i += len;
+        }
+    }
+    None
 }

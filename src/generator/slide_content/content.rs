@@ -11,6 +11,7 @@ use super::bullet::{BulletStyle, BulletPoint};
 use super::layout::SlideLayout;
 use super::code_block::CodeBlock;
 use super::transition::TransitionType;
+use super::ink_annotations::InkAnnotations;
 
 /// Slide content for more complex presentations
 #[derive(Clone, Debug)]
@@ -51,6 +52,8 @@ pub struct SlideContent {
     pub charts: Vec<Chart>,
     /// Code blocks with syntax highlighting
     pub code_blocks: Vec<CodeBlock>,
+    /// Ink annotations on the slide
+    pub ink_annotations: Option<InkAnnotations>,
 }
 
 impl SlideContent {
@@ -84,6 +87,7 @@ impl SlideContent {
             audios: Vec::new(),
             charts: Vec::new(),
             code_blocks: Vec::new(),
+            ink_annotations: None,
         }
     }
 
@@ -294,6 +298,12 @@ impl SlideContent {
     pub fn with_charts(mut self, charts: Vec<Chart>) -> Self {
         self.charts.extend(charts);
         self.has_chart = true;
+        self
+    }
+
+    /// Add ink annotations to the slide
+    pub fn with_ink(mut self, ink: InkAnnotations) -> Self {
+        self.ink_annotations = Some(ink);
         self
     }
 

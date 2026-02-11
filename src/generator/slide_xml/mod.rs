@@ -92,6 +92,9 @@ pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent, 
             xml.insert_str(pos, &transition_xml);
         }
     }
+
+    // NOTE: Ink annotations require a separate ink part + relationship + content type;
+    // inline injection into spTree is not valid OOXML. Skipped until full pipeline.
     
     xml
 }

@@ -460,7 +460,7 @@ Unlike other Rust PPTX crates that:
 
 `ppt-rs`:
 - ✅ Generates **valid PPTX files** from day one
-- ✅ **Actively maintained** with comprehensive test coverage (700+ tests)
+- ✅ **Actively maintained** with comprehensive test coverage (800+ tests)
 - ✅ **Complete XML structure** following ECMA-376 standard
 - ✅ **Validation tools** - Built-in validation command for quality assurance
 - ✅ **Alignment testing** - Framework for ensuring compatibility with python-pptx
@@ -470,7 +470,7 @@ Unlike other Rust PPTX crates that:
 
 ### Validation
 - Built-in validation command for ECMA-376 compliance checking
-- Comprehensive test suite (700+ tests)
+- Comprehensive test suite (800+ tests)
 - Integration tests for end-to-end validation
 
 ### Alignment Testing
@@ -485,7 +485,7 @@ Unlike other Rust PPTX crates that:
 - **Standard**: ECMA-376 Office Open XML
 - **Compatibility**: PowerPoint, LibreOffice, Google Slides, Keynote
 - **Architecture**: Modular design with clear separation of concerns
-- **Test Coverage**: 700+ tests covering all major features
+- **Test Coverage**: 800+ tests covering all major features
 
 ## Templates
 

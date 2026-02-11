@@ -110,15 +110,15 @@
 - [ ] Troubleshooting guide
 
 ### Advanced Features
-- [ ] RTL (right-to-left) text support
-- [ ] Comments and review annotations
-- [ ] Slide sections and organization
-- [ ] Digital signatures
-- [ ] Ink annotations
-- [ ] Slide show settings
-- [ ] Print settings and handouts
-- [ ] Advanced table merging
-- [ ] Embedded fonts in output
+- [x] RTL (right-to-left) text support
+- [x] Comments and review annotations
+- [x] Slide sections and organization
+- [x] Slide show settings (embedded `<p:showPr>` in presentation.xml)
+- [x] Print settings and handouts (embedded `<p:prnPr>` in presentation.xml)
+- [x] Advanced table merging (gridSpan/rowSpan/hMerge/vMerge in `<a:tc>`)
+- [ ] Digital signatures (XML generation done; needs Content_Types + _rels wiring)
+- [ ] Ink annotations (XML generation done; needs separate ink part + relationship)
+- [ ] Embedded fonts in output (XML generation done; needs font data parts + rId wiring)
 
 ---
 
@@ -683,10 +683,7 @@ See [LEARNING_ANALYSIS.md](LEARNING_ANALYSIS.md) for detailed analysis.
 
 ## Future Work
 
-- [ ] Digital signatures
-- [ ] Ink annotations
-- [ ] Comments and review
-- [ ] Slide show settings
-- [ ] Print settings
+- [ ] Digital signatures (full pipeline: Content_Types, _rels, origin.sigs, sig1.xml)
+- [ ] Ink annotations (full pipeline: ink part, relationship, content type)
+- [ ] Embedded fonts in output (full pipeline: font data parts, rId wiring)
 - [ ] Advanced theme customization
-- [ ] Embedded fonts in output

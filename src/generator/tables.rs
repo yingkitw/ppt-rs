@@ -198,6 +198,30 @@ impl TableCell {
         self.h_merge = true;
         self
     }
+
+    /// Set horizontal span (gridSpan) - this cell covers multiple columns
+    pub fn grid_span(mut self, span: u32) -> Self {
+        self.col_span = span;
+        self
+    }
+
+    /// Set vertical span (rowSpan) - this cell covers multiple rows
+    pub fn row_span(mut self, span: u32) -> Self {
+        self.row_span = span;
+        self
+    }
+
+    /// Mark this cell as horizontally merged (covered by another cell's gridSpan)
+    pub fn h_merge(mut self) -> Self {
+        self.h_merge = true;
+        self
+    }
+
+    /// Mark this cell as vertically merged (covered by another cell's rowSpan)
+    pub fn v_merge(mut self) -> Self {
+        self.v_merge = true;
+        self
+    }
 }
 
 /// Table row

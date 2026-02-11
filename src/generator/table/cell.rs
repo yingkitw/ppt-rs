@@ -67,6 +67,14 @@ pub struct TableCell {
     pub valign: CellVAlign,
     /// Enable text wrapping
     pub wrap_text: bool,
+    /// Number of columns this cell spans (gridSpan attribute)
+    pub grid_span: Option<u32>,
+    /// Number of rows this cell spans (rowSpan attribute)
+    pub row_span: Option<u32>,
+    /// Whether this cell is horizontally merged (covered by a gridSpan)
+    pub h_merge: bool,
+    /// Whether this cell is vertically merged (covered by a rowSpan)
+    pub v_merge: bool,
 }
 
 impl TableCell {
@@ -84,6 +92,10 @@ impl TableCell {
             align: CellAlign::Center,
             valign: CellVAlign::Middle,
             wrap_text: true,
+            grid_span: None,
+            row_span: None,
+            h_merge: false,
+            v_merge: false,
         }
     }
 
@@ -174,6 +186,30 @@ impl TableCell {
     /// Enable or disable text wrapping
     pub fn wrap(mut self, wrap: bool) -> Self {
         self.wrap_text = wrap;
+        self
+    }
+
+    /// Set horizontal span (gridSpan) - this cell covers multiple columns
+    pub fn grid_span(mut self, span: u32) -> Self {
+        self.grid_span = Some(span);
+        self
+    }
+
+    /// Set vertical span (rowSpan) - this cell covers multiple rows
+    pub fn row_span(mut self, span: u32) -> Self {
+        self.row_span = Some(span);
+        self
+    }
+
+    /// Mark this cell as horizontally merged (covered by another cell's gridSpan)
+    pub fn h_merge(mut self) -> Self {
+        self.h_merge = true;
+        self
+    }
+
+    /// Mark this cell as vertically merged (covered by another cell's rowSpan)
+    pub fn v_merge(mut self) -> Self {
+        self.v_merge = true;
         self
     }
 }
