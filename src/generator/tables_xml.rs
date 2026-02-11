@@ -84,7 +84,7 @@ fn generate_cell_xml(cell: &TableCell) -> String {
         xml.push_str(r#" vMerge="1""#);
     }
     
-    xml.push_str(">");
+    xml.push('>');
 
     // Merged-over cells (hMerge/vMerge) must have empty text body
     if cell.h_merge || cell.v_merge {
@@ -121,7 +121,7 @@ fn generate_cell_xml(cell: &TableCell) -> String {
     let has_font = cell.font_family.is_some();
     
     if has_color || has_font {
-        xml.push_str(">");
+        xml.push('>');
         if let Some(ref color) = cell.text_color {
             xml.push_str(&format!(r#"<a:solidFill><a:srgbClr val="{color}"/></a:solidFill>"#));
         }
@@ -140,8 +140,7 @@ fn generate_cell_xml(cell: &TableCell) -> String {
     xml.push_str("</a:r></a:p></a:txBody>");
 
     // === CELL PROPERTIES (comes after txBody) ===
-    if cell.background_color.is_some() {
-        let color = cell.background_color.as_ref().unwrap();
+    if let Some(ref color) = cell.background_color {
         xml.push_str(&format!(
             r#"<a:tcPr><a:solidFill><a:srgbClr val="{color}"/></a:solidFill></a:tcPr>"#
         ));

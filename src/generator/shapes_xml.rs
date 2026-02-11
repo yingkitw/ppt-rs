@@ -164,7 +164,7 @@ fn calculate_font_size(text: &str, width_emu: u32, height_emu: u32) -> u32 {
     let optimal_size = font_from_width.min(font_from_height);
     
     // Clamp to reasonable range: 800 (8pt) to 4400 (44pt)
-    (optimal_size.max(800.0).min(4400.0)) as u32
+    optimal_size.clamp(800.0, 4400.0) as u32
 }
 
 /// Calculate if a color is dark (needs white text) or light (needs black text)

@@ -330,20 +330,12 @@ impl Connector {
 
     /// Calculate width for XML
     fn width(&self) -> u32 {
-        if self.end_x > self.start_x {
-            self.end_x - self.start_x
-        } else {
-            self.start_x - self.end_x
-        }
+        self.end_x.abs_diff(self.start_x)
     }
 
     /// Calculate height for XML
     fn height(&self) -> u32 {
-        if self.end_y > self.start_y {
-            self.end_y - self.start_y
-        } else {
-            self.start_y - self.end_y
-        }
+        self.end_y.abs_diff(self.start_y)
     }
 
     /// Check if connector is flipped horizontally

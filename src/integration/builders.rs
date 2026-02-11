@@ -45,7 +45,7 @@ impl PresentationBuilder {
     pub fn save_to_file(&self, path: &str) -> Result<()> {
         let pptx_data = self.build()?;
         fs::write(path, pptx_data)
-            .map_err(|e| crate::exc::PptxError::Io(e))
+            .map_err(crate::exc::PptxError::Io)
     }
 
     /// Save to configured output directory

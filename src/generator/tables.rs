@@ -297,7 +297,7 @@ impl Table {
             .map(|row| {
                 let cells = row
                     .into_iter()
-                    .map(|cell| TableCell::new(cell))
+                    .map(TableCell::new)
                     .collect();
                 TableRow::new(cells)
             })
@@ -349,7 +349,7 @@ impl TableBuilder {
         let row = TableRow::new(
             cells
                 .into_iter()
-                .map(|c| TableCell::new(c))
+                .map(TableCell::new)
                 .collect(),
         );
         self.rows.push(row);

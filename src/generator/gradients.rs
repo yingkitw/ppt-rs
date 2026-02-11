@@ -93,7 +93,7 @@ impl GradientStop {
 
     /// Set transparency (0-100 percent)
     pub fn with_transparency(mut self, percent: u32) -> Self {
-        self.transparency = Some((percent.min(100) * 1000) as u32);
+        self.transparency = Some(percent.min(100) * 1000);
         self
     }
 }

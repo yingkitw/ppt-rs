@@ -309,10 +309,7 @@ fn base64_decode(input: &str) -> Result<Vec<u8>, std::io::Error> {
         let mut pad = 0;
         
         for j in 0..4 {
-            if i + j >= bytes.len() {
-                buf[j] = 0;
-                pad += 1;
-            } else if bytes[i + j] == b'=' {
+            if i + j >= bytes.len() || bytes[i + j] == b'=' {
                 buf[j] = 0;
                 pad += 1;
             } else if bytes[i + j] < 128 && DECODE_TABLE[bytes[i + j] as usize] >= 0 {

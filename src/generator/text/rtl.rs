@@ -116,7 +116,7 @@ impl RtlTextProps {
     /// Generate paragraph property XML attributes for RTL
     pub fn to_ppr_xml_attr(&self) -> String {
         if self.direction.is_rtl() {
-            format!(r#" rtl="1""#)
+            r#" rtl="1""#.to_string()
         } else {
             String::new()
         }

@@ -472,7 +472,7 @@ impl GradientStop {
     
     /// Set transparency (0-100 percent)
     pub fn with_transparency(mut self, percent: u32) -> Self {
-        let alpha = ((100 - percent.min(100)) * 1000) as u32;
+        let alpha = (100 - percent.min(100)) * 1000;
         self.transparency = Some(alpha);
         self
     }
@@ -543,7 +543,7 @@ impl ShapeFill {
 
     /// Set transparency (0-100 percent)
     pub fn with_transparency(mut self, percent: u32) -> Self {
-        let alpha = ((100 - percent.min(100)) * 1000) as u32;
+        let alpha = (100 - percent.min(100)) * 1000;
         self.transparency = Some(alpha);
         self
     }
