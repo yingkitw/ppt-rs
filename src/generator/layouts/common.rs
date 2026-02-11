@@ -109,6 +109,34 @@ pub fn generate_text_props_extended(props: &ExtendedTextProps) -> String {
     props.to_xml()
 }
 
+/// Shape position and size
+#[derive(Clone, Copy, Debug)]
+pub struct ShapePosition {
+    pub x: u32,
+    pub y: u32,
+    pub cx: u32,
+    pub cy: u32,
+}
+
+impl ShapePosition {
+    pub fn new(x: u32, y: u32, cx: u32, cy: u32) -> Self {
+        Self { x, y, cx, cy }
+    }
+}
+
+/// Text content with formatting properties
+#[derive(Clone, Debug)]
+pub struct TextContent<'a> {
+    pub text: &'a str,
+    pub props: &'a str,
+}
+
+impl<'a> TextContent<'a> {
+    pub fn new(text: &'a str, props: &'a str) -> Self {
+        Self { text, props }
+    }
+}
+
 /// Builder for slide XML with common structure
 pub struct SlideXmlBuilder {
     writer: XmlWriter,
@@ -142,7 +170,7 @@ impl SlideXmlBuilder {
     }
 
     /// Add title shape
-    pub fn add_title(mut self, id: u32, x: u32, y: u32, cx: u32, cy: u32, text: &str, props: &str, ph_type: &str) -> Self {
+    pub fn add_title(mut self, id: u32, position: ShapePosition, content: TextContent<'_>, ph_type: &str) -> Self {
         self.writer.raw(&format!(
             r#"<p:sp>
 <p:nvSpPr>
@@ -167,13 +195,13 @@ impl SlideXmlBuilder {
 </p:txBody>
 </p:sp>
 "#,
-            id, ph_type, x, y, cx, cy, props, escape_xml(text)
+            id, ph_type, position.x, position.y, position.cx, position.cy, content.props, escape_xml(content.text)
         ));
         self
     }
 
     /// Add centered title
-    pub fn add_centered_title(mut self, id: u32, x: u32, y: u32, cx: u32, cy: u32, text: &str, props: &str) -> Self {
+    pub fn add_centered_title(mut self, id: u32, position: ShapePosition, content: TextContent<'_>) -> Self {
         self.writer.raw(&format!(
             r#"<p:sp>
 <p:nvSpPr>
@@ -199,7 +227,7 @@ impl SlideXmlBuilder {
 </p:txBody>
 </p:sp>
 "#,
-            id, x, y, cx, cy, props, escape_xml(text)
+            id, position.x, position.y, position.cx, position.cy, content.props, escape_xml(content.text)
         ));
         self
     }
@@ -290,14 +318,7 @@ impl Default for SlideXmlBuilder {
     }
 }
 
-/// Escape XML special characters
-pub fn escape_xml(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&apos;")
-}
+pub use crate::core::escape_xml;
 
 #[cfg(test)]
 mod tests {

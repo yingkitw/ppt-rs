@@ -571,6 +571,8 @@ impl ShapeLine {
     }
 }
 
+use crate::core::{Positioned, ElementSized};
+
 /// Shape definition
 #[derive(Clone, Debug)]
 pub struct Shape {
@@ -652,6 +654,24 @@ impl Shape {
     pub fn with_text(mut self, text: &str) -> Self {
         self.text = Some(text.to_string());
         self
+    }
+}
+
+impl Positioned for Shape {
+    fn x(&self) -> u32 { self.x }
+    fn y(&self) -> u32 { self.y }
+    fn set_position(&mut self, x: u32, y: u32) {
+        self.x = x;
+        self.y = y;
+    }
+}
+
+impl ElementSized for Shape {
+    fn width(&self) -> u32 { self.width }
+    fn height(&self) -> u32 { self.height }
+    fn set_size(&mut self, width: u32, height: u32) {
+        self.width = width;
+        self.height = height;
     }
 }
 

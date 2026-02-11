@@ -1,5 +1,7 @@
 //! Bullet point types and formatting
 
+use crate::core::ToXml;
+
 /// Bullet style for lists
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Default)]
 pub enum BulletStyle {
@@ -42,6 +44,12 @@ impl BulletStyle {
         let indent = 457200 + (level * 457200); // 0.5 inch base + 0.5 inch per level
         let margin_left = level * 457200;
         format!(r#"indent="-{}" marL="{}""#, indent, margin_left + indent)
+    }
+}
+
+impl ToXml for BulletStyle {
+    fn to_xml(&self) -> String {
+        BulletStyle::to_xml(self)
     }
 }
 

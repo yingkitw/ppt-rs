@@ -1,6 +1,6 @@
 //! Two-column slide layout
 
-use super::common::{SlideXmlBuilder, generate_text_props};
+use super::common::{SlideXmlBuilder, generate_text_props, ShapePosition, TextContent};
 use crate::generator::slide_content::SlideContent;
 
 /// Two-column slide layout generator
@@ -32,7 +32,7 @@ impl TwoColumnLayout {
         let mut builder = SlideXmlBuilder::new()
             .start_slide_with_bg()
             .start_sp_tree()
-            .add_title(2, 457200, 274638, 8230200, 914400, &content.title, &title_props, "title");
+            .add_title(2, ShapePosition::new(457200, 274638, 8230200, 914400), TextContent::new(&content.title, &title_props), "title");
 
         // Determine which bullets to use
         let use_styled_bullets = !content.bullets.is_empty();

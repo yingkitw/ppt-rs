@@ -2,6 +2,7 @@
 
 use super::paragraph::Paragraph;
 use super::TextAnchor;
+use crate::core::ToXml;
 
 /// A text frame containing paragraphs
 #[derive(Clone, Debug)]
@@ -83,6 +84,12 @@ impl TextFrame {
         
         xml.push_str("</p:txBody>");
         xml
+    }
+}
+
+impl ToXml for TextFrame {
+    fn to_xml(&self) -> String {
+        TextFrame::to_xml(self)
     }
 }
 

@@ -2,6 +2,7 @@
 
 use super::format::TextFormat;
 use super::escape_xml;
+use crate::core::ToXml;
 
 /// A run of text with consistent formatting
 #[derive(Clone, Debug)]
@@ -80,6 +81,12 @@ impl Run {
             r#"<a:r><a:rPr lang="en-US" sz="{}" b="{}" i="{}"{} dirty="0">{}{}</a:rPr><a:t>{}</a:t></a:r>"#,
             size, bold, italic, underline, color_xml, font_xml, escape_xml(&self.text)
         )
+    }
+}
+
+impl ToXml for Run {
+    fn to_xml(&self) -> String {
+        Run::to_xml(self)
     }
 }
 

@@ -2,6 +2,7 @@
 
 use super::run::Run;
 use super::TextAlign;
+use crate::core::ToXml;
 
 /// A paragraph containing one or more runs
 #[derive(Clone, Debug)]
@@ -112,6 +113,12 @@ impl Paragraph {
         
         xml.push_str("</a:p>");
         xml
+    }
+}
+
+impl ToXml for Paragraph {
+    fn to_xml(&self) -> String {
+        Paragraph::to_xml(self)
     }
 }
 

@@ -1,13 +1,6 @@
 //! Package-level XML generation (content types, relationships, presentation)
 
-/// Escape special XML characters
-pub fn escape_xml(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&apos;")
-}
+pub use crate::core::escape_xml;
 
 /// Create [Content_Types].xml
 pub fn create_content_types_xml(slides: usize) -> String {

@@ -127,4 +127,71 @@ mod tests {
         let color = RgbColor::new(255, 0, 0);
         assert_eq!(color.to_xml(), r#"<a:srgbClr val="FF0000"/>"#);
     }
+
+    /// Verify generic dispatch works via ToXml trait objects
+    #[test]
+    fn test_to_xml_trait_dispatch() {
+        use crate::generator::text::{Run, Paragraph, TextFrame};
+
+        let items: Vec<Box<dyn ToXml>> = vec![
+            Box::new(Run::new("hello")),
+            Box::new(Paragraph::with_text("world")),
+            Box::new(TextFrame::with_text("frame")),
+            Box::new(RgbColor::new(255, 0, 0)),
+        ];
+
+        for item in &items {
+            let xml = item.to_xml();
+            assert!(!xml.is_empty(), "ToXml dispatch should produce non-empty XML");
+        }
+
+        assert!(items[0].to_xml().contains("hello"));
+        assert!(items[1].to_xml().contains("world"));
+        assert!(items[2].to_xml().contains("frame"));
+        assert!(items[3].to_xml().contains("FF0000"));
+    }
+
+    /// Verify Positioned trait works generically
+    #[test]
+    fn test_positioned_trait_dispatch() {
+        use crate::generator::shapes::{Shape, ShapeType};
+        use crate::generator::images::Image;
+
+        fn move_element(elem: &mut dyn Positioned, x: u32, y: u32) {
+            elem.set_position(x, y);
+        }
+
+        let mut shape = Shape::new(ShapeType::Rectangle, 0, 0, 1000, 1000);
+        let mut image = Image::new("test.png", 500, 500, "PNG");
+
+        move_element(&mut shape, 100, 200);
+        move_element(&mut image, 300, 400);
+
+        assert_eq!(shape.x(), 100);
+        assert_eq!(shape.y(), 200);
+        assert_eq!(image.x(), 300);
+        assert_eq!(image.y(), 400);
+    }
+
+    /// Verify ElementSized trait works generically
+    #[test]
+    fn test_element_sized_trait_dispatch() {
+        use crate::generator::shapes::{Shape, ShapeType};
+        use crate::generator::images::Image;
+
+        fn resize(elem: &mut dyn Sized, w: u32, h: u32) {
+            elem.set_size(w, h);
+        }
+
+        let mut shape = Shape::new(ShapeType::Rectangle, 0, 0, 1000, 1000);
+        let mut image = Image::new("test.png", 500, 500, "PNG");
+
+        resize(&mut shape, 2000, 3000);
+        resize(&mut image, 4000, 5000);
+
+        assert_eq!(shape.width(), 2000);
+        assert_eq!(shape.height(), 3000);
+        assert_eq!(image.width(), 4000);
+        assert_eq!(image.height(), 5000);
+    }
 }

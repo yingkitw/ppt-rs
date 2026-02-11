@@ -1,5 +1,7 @@
 //! Slide transition types
 
+use crate::core::ToXml;
+
 /// Slide transition effects
 #[derive(Clone, Debug, Copy, PartialEq, Eq, Default)]
 pub enum TransitionType {
@@ -29,5 +31,11 @@ impl TransitionType {
             TransitionType::Cover => r#"<p:transition><p:cover dir="r"/></p:transition>"#.to_string(),
             TransitionType::Zoom => r#"<p:transition><p:zoom dir="in"/></p:transition>"#.to_string(),
         }
+    }
+}
+
+impl ToXml for TransitionType {
+    fn to_xml(&self) -> String {
+        TransitionType::to_xml(self)
     }
 }

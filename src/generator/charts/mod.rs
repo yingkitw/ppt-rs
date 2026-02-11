@@ -15,12 +15,4 @@ pub use types::ChartType;
 pub use data::{Chart, ChartSeries};
 pub use builder::ChartBuilder;
 pub use xml::{generate_chart_part_xml, generate_chart_ref_xml};
-
-/// Escape XML special characters
-pub(crate) fn escape_xml(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&apos;")
-}
+pub(crate) use crate::core::escape_xml;

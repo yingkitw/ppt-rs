@@ -4,15 +4,7 @@
 
 use super::shapes::{Shape, ShapeFill, ShapeLine, GradientFill};
 use crate::generator::hyperlinks::generate_shape_hyperlink_xml;
-
-/// Escape XML special characters
-fn escape_xml(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&apos;")
-}
+use crate::core::escape_xml;
 
 /// Generate XML for a shape
 pub fn generate_shape_xml(shape: &Shape, shape_id: u32) -> String {

@@ -7,8 +7,8 @@ use super::types::{create_labeled_dot, LabelPosition};
 pub fn generate_shapes(code: &str) -> Vec<Shape> {
     let mut shapes = Vec::new();
     let mut points: Vec<(String, f32, f32)> = Vec::new();
-    let mut x_axis = ("Low", "High");
-    let mut y_axis = ("Low", "High");
+    let mut _x_axis = ("Low", "High");
+    let mut _y_axis = ("Low", "High");
     let mut quadrant_labels = ["", "", "", ""];
     
     for line in code.lines().skip(1) {
@@ -21,14 +21,14 @@ pub fn generate_shapes(code: &str) -> Vec<Shape> {
             // Parse: x-axis Low Effort --> High Effort
             let parts: Vec<&str> = trimmed.split("-->").collect();
             if parts.len() == 2 {
-                x_axis.0 = parts[0].strip_prefix("x-axis").unwrap_or("").trim();
-                x_axis.1 = parts[1].trim();
+                _x_axis.0 = parts[0].strip_prefix("x-axis").unwrap_or("").trim();
+                _x_axis.1 = parts[1].trim();
             }
         } else if trimmed.starts_with("y-axis") {
             let parts: Vec<&str> = trimmed.split("-->").collect();
             if parts.len() == 2 {
-                y_axis.0 = parts[0].strip_prefix("y-axis").unwrap_or("").trim();
-                y_axis.1 = parts[1].trim();
+                _y_axis.0 = parts[0].strip_prefix("y-axis").unwrap_or("").trim();
+                _y_axis.1 = parts[1].trim();
             }
         } else if trimmed.starts_with("quadrant-") {
             // Parse quadrant labels

@@ -14,6 +14,7 @@ pub mod props_xml;
 pub mod layouts;
 
 // Re-export module for backward compatibility
+#[doc(hidden)]
 pub mod xml;
 
 // Builder and content modules

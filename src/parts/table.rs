@@ -13,7 +13,7 @@
 
 use super::base::{Part, PartType, ContentType};
 use crate::exc::PptxError;
-use crate::core::escape_xml;
+use crate::core::{escape_xml, ToXml};
 
 /// Horizontal alignment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -154,6 +154,12 @@ impl CellBorders {
         if let Some(ref b) = self.top { xml.push_str(&b.to_xml("lnT")); }
         if let Some(ref b) = self.bottom { xml.push_str(&b.to_xml("lnB")); }
         xml
+    }
+}
+
+impl ToXml for CellBorders {
+    fn to_xml(&self) -> String {
+        CellBorders::to_xml(self)
     }
 }
 
@@ -413,6 +419,12 @@ impl TableCellPart {
     }
 }
 
+impl ToXml for TableCellPart {
+    fn to_xml(&self) -> String {
+        TableCellPart::to_xml(self)
+    }
+}
+
 /// Table row
 #[derive(Debug, Clone)]
 pub struct TableRowPart {
@@ -453,6 +465,12 @@ impl TableRowPart {
             height_attr,
             cells_xml
         )
+    }
+}
+
+impl ToXml for TableRowPart {
+    fn to_xml(&self) -> String {
+        TableRowPart::to_xml(self)
     }
 }
 

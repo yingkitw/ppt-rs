@@ -132,4 +132,4 @@ pub use web2ppt::{
     html_to_pptx, html_to_pptx_with_options, url_to_pptx, url_to_pptx_with_options,
 };
 
-pub const VERSION: &str = "1.0.3";
+pub const VERSION: &str = "0.2.4";

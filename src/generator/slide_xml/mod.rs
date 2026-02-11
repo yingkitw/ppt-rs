@@ -87,10 +87,9 @@ pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent, 
 
     // Inject transition if present
     let transition_xml = content.transition.to_xml();
-    if !transition_xml.is_empty() {
-        if let Some(pos) = xml.rfind("</p:sld>") {
-            xml.insert_str(pos, &transition_xml);
-        }
+    if !transition_xml.is_empty()
+        && let Some(pos) = xml.rfind("</p:sld>") {
+        xml.insert_str(pos, &transition_xml);
     }
 
     // NOTE: Ink annotations require a separate ink part + relationship + content type;

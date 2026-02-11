@@ -60,14 +60,7 @@ impl TextAnchor {
     }
 }
 
-/// Escape XML special characters
-pub(crate) fn escape_xml(s: &str) -> String {
-    s.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&apos;")
-}
+pub(crate) use crate::core::escape_xml;
 
 
 #[cfg(test)]

@@ -3,6 +3,7 @@
 //! Generates proper PPTX XML for tables with cells, rows, and formatting
 
 use crate::generator::tables::{Table, TableRow, TableCell};
+use crate::core::escape_xml;
 
 /// Generate table XML for a slide
 pub fn generate_table_xml(table: &Table, shape_id: usize) -> String {
@@ -152,14 +153,6 @@ fn generate_cell_xml(cell: &TableCell) -> String {
     xml
 }
 
-/// Escape XML special characters
-fn escape_xml(s: &str) -> String {
-    s.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\"", "&quot;")
-        .replace("'", "&apos;")
-}
 
 #[cfg(test)]
 mod tests {

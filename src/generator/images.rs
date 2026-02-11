@@ -3,6 +3,24 @@
 //! Handles image metadata, embedding, and XML generation
 
 use std::path::Path;
+use crate::core::{Positioned, ElementSized};
+
+/// Normalize format string and derive file extension
+fn format_and_ext(format: &str) -> (String, String) {
+    let upper = format.to_uppercase();
+    let ext = match upper.as_str() {
+        "JPEG" => "jpg".to_string(),
+        _ => upper.to_lowercase(),
+    };
+    (upper, ext)
+}
+
+/// Generate a unique image filename from format string
+fn generate_image_filename(format: &str) -> (String, String) {
+    let (upper, ext) = format_and_ext(format);
+    let filename = format!("image_{}.{}", uuid::Uuid::new_v4(), ext);
+    (filename, upper)
+}
 
 /// Image data source
 #[derive(Clone, Debug)]
@@ -119,66 +137,33 @@ impl Image {
     /// assert_eq!(img.format, "PNG");
     /// ```
     pub fn from_base64(data: &str, width: u32, height: u32, format: &str) -> Self {
-        let format_upper = format.to_uppercase();
-        let ext = match format_upper.as_str() {
-            "JPEG" => "jpg",
-            _ => &format_upper.to_lowercase(),
-        };
-        let filename = format!("image_{}.{}", uuid::Uuid::new_v4(), ext);
-        
-        Image {
-            filename,
-            width,
-            height,
-            x: 0,
-            y: 0,
-            format: format_upper,
-            source: Some(ImageSource::Base64(data.to_string())),
-            crop: None,
-            effects: Vec::new(),
-        }
+        let (filename, fmt) = generate_image_filename(format);
+        Self::with_source(filename, width, height, fmt, ImageSource::Base64(data.to_string()))
     }
     
     /// Create an image from raw bytes
     pub fn from_bytes(data: Vec<u8>, width: u32, height: u32, format: &str) -> Self {
-        let format_upper = format.to_uppercase();
-        let ext = match format_upper.as_str() {
-            "JPEG" => "jpg",
-            _ => &format_upper.to_lowercase(),
-        };
-        let filename = format!("image_{}.{}", uuid::Uuid::new_v4(), ext);
-        
-        Image {
-            filename,
-            width,
-            height,
-            x: 0,
-            y: 0,
-            format: format_upper,
-            source: Some(ImageSource::Bytes(data)),
-            crop: None,
-            effects: Vec::new(),
-        }
+        let (filename, fmt) = generate_image_filename(format);
+        Self::with_source(filename, width, height, fmt, ImageSource::Bytes(data))
     }
 
     /// Create an image from URL
     #[cfg(feature = "web2ppt")]
     pub fn from_url(url: &str, width: u32, height: u32, format: &str) -> Self {
-        let format_upper = format.to_uppercase();
-        let ext = match format_upper.as_str() {
-            "JPEG" => "jpg",
-            _ => &format_upper.to_lowercase(),
-        };
-        let filename = format!("image_{}.{}", uuid::Uuid::new_v4(), ext);
-        
+        let (filename, fmt) = generate_image_filename(format);
+        Self::with_source(filename, width, height, fmt, ImageSource::Url(url.to_string()))
+    }
+
+    /// Internal constructor to avoid repeating struct init
+    fn with_source(filename: String, width: u32, height: u32, format: String, source: ImageSource) -> Self {
         Image {
             filename,
             width,
             height,
             x: 0,
             y: 0,
-            format: format_upper,
-            source: Some(ImageSource::Url(url.to_string())),
+            format,
+            source: Some(source),
             crop: None,
             effects: Vec::new(),
         }
@@ -282,6 +267,24 @@ impl Image {
     }
 }
 
+impl Positioned for Image {
+    fn x(&self) -> u32 { self.x }
+    fn y(&self) -> u32 { self.y }
+    fn set_position(&mut self, x: u32, y: u32) {
+        self.x = x;
+        self.y = y;
+    }
+}
+
+impl ElementSized for Image {
+    fn width(&self) -> u32 { self.width }
+    fn height(&self) -> u32 { self.height }
+    fn set_size(&mut self, width: u32, height: u32) {
+        self.width = width;
+        self.height = height;
+    }
+}
+
 /// Decode base64 string to bytes
 fn base64_decode(input: &str) -> Result<Vec<u8>, std::io::Error> {
     // Simple base64 decoder
@@ -369,38 +372,22 @@ impl ImageBuilder {
     
     /// Create image builder from base64 data
     pub fn from_base64(data: &str, width: u32, height: u32, format: &str) -> Self {
-        let format_upper = format.to_uppercase();
-        let ext = match format_upper.as_str() {
-            "JPEG" => "jpg",
-            _ => &format_upper.to_lowercase(),
-        };
-        
+        let (upper, ext) = format_and_ext(format);
         ImageBuilder {
             filename: format!("image.{}", ext),
-            width,
-            height,
-            x: 0,
-            y: 0,
-            format: format_upper,
+            width, height, x: 0, y: 0,
+            format: upper,
             source: Some(ImageSource::Base64(data.to_string())),
         }
     }
     
     /// Create image builder from bytes
     pub fn from_bytes(data: Vec<u8>, width: u32, height: u32, format: &str) -> Self {
-        let format_upper = format.to_uppercase();
-        let ext = match format_upper.as_str() {
-            "JPEG" => "jpg",
-            _ => &format_upper.to_lowercase(),
-        };
-        
+        let (upper, ext) = format_and_ext(format);
         ImageBuilder {
             filename: format!("image.{}", ext),
-            width,
-            height,
-            x: 0,
-            y: 0,
-            format: format_upper,
+            width, height, x: 0, y: 0,
+            format: upper,
             source: Some(ImageSource::Bytes(data)),
         }
     }

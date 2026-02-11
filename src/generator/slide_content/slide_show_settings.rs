@@ -47,17 +47,12 @@ impl Default for PenColor {
 }
 
 /// Slide range for the show
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum SlideRange {
+    #[default]
     All,
     Range { start: u32, end: u32 },
     Custom(Vec<u32>),
-}
-
-impl Default for SlideRange {
-    fn default() -> Self {
-        SlideRange::All
-    }
 }
 
 /// Slide show settings

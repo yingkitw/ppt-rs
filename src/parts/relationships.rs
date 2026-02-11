@@ -4,6 +4,7 @@
 
 use crate::exc::PptxError;
 use crate::oxml::XmlParser;
+use crate::core::ToXml;
 
 /// Relationship types
 #[derive(Debug, Clone, PartialEq)]
@@ -90,6 +91,12 @@ impl Relationship {
     }
 }
 
+impl ToXml for Relationship {
+    fn to_xml(&self) -> String {
+        Relationship::to_xml(self)
+    }
+}
+
 /// Collection of relationships
 #[derive(Debug, Clone, Default)]
 pub struct Relationships {
@@ -164,6 +171,15 @@ impl Relationships {
         xml
     }
 
+}
+
+impl ToXml for Relationships {
+    fn to_xml(&self) -> String {
+        Relationships::to_xml(self)
+    }
+}
+
+impl Relationships {
     /// Parse relationships from XML
     pub fn from_xml(xml: &str) -> Result<Self, PptxError> {
         let root = XmlParser::parse_str(xml)?;

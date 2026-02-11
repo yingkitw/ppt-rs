@@ -608,6 +608,25 @@
 
 ## Code Quality
 
+- [x] **KISS/DRY/SoC Cleanup (v0.2.4)**
+  - [x] Consolidated `escape_xml` — removed 7 duplicate definitions, single source in `crate::core::escape_xml`
+  - [x] Extracted `format_and_ext()` / `generate_image_filename()` helpers in `images.rs` — eliminated 5x copy-paste
+  - [x] Added `Image::with_source()` internal constructor — DRY for all Image factory methods
+  - [x] Removed unused dependencies: `image`, `serde`, `serde_json`, `lazy_static`, `anyrepair`
+  - [x] Replaced `image` crate with 75-line header parser (`read_image_dimensions`) for PNG/JPEG/GIF/BMP/WebP
+  - [x] Dropped `serde` feature from `uuid` (only `v4` needed)
+  - [x] Fixed all compiler warnings (quadrant.rs unused variables)
+  - [x] Zero warnings, 644 tests passing
+- [x] **Trait-Facing Refactor (v0.2.4)**
+  - [x] `impl ToXml` for generator text types: `Run`, `Paragraph`, `TextFrame`
+  - [x] `impl ToXml` for slide_content types: `BulletStyle`, `TransitionType`
+  - [x] `impl ToXml` for parts types: `Relationship`, `Relationships`, `TableCellPart`, `TableRowPart`, `CellBorders`
+  - [x] `impl Positioned` for `Shape`, `Image` — generic position manipulation
+  - [x] `impl ElementSized` for `Shape`, `Image` — generic size manipulation
+  - [x] 3 new trait dispatch tests (ToXml, Positioned, ElementSized)
+  - [x] Zero warnings, 647 tests passing
+  - [ ] **Future**: Merge `tables.rs`+`tables_xml.rs` (old) with `table/` (new) — two parallel table implementations
+  - [ ] **Future**: Remove `generator/xml.rs` re-export shim (pure indirection, no callers)
 - [x] Fixed div_ceil clippy warnings
 - [x] Fix format string style warnings (reduced from 122 to 38 - 69% reduction)
   - [x] Fixed `generator/props_xml.rs`

@@ -1,6 +1,6 @@
 //! Title and content slide layouts
 
-use super::common::{SlideXmlBuilder, generate_text_props, escape_xml};
+use super::common::{SlideXmlBuilder, generate_text_props, escape_xml, ShapePosition, TextContent};
 use crate::generator::slide_content::SlideContent;
 use crate::generator::shapes_xml::generate_shape_xml;
 use crate::generator::constants::{
@@ -16,8 +16,8 @@ pub struct TitleContentLayout;
 impl TitleContentLayout {
     /// Generate title and content slide XML
     pub fn generate(content: &SlideContent) -> String {
-        let title_size = content.title_size.unwrap_or((TITLE_FONT_SIZE / 100) as u32) * 100;
-        let content_size = content.content_size.unwrap_or((CONTENT_FONT_SIZE / 100) as u32) * 100;
+        let title_size = content.title_size.unwrap_or(TITLE_FONT_SIZE / 100 * 100);
+        let content_size = content.content_size.unwrap_or(CONTENT_FONT_SIZE / 100 * 100);
 
         let title_props = generate_text_props(
             title_size,
@@ -38,7 +38,7 @@ impl TitleContentLayout {
         let mut builder = SlideXmlBuilder::new()
             .start_slide_with_bg()
             .start_sp_tree()
-            .add_title(2, TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT, &content.title, &title_props, "title");
+            .add_title(2, ShapePosition::new(TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT), TextContent::new(&content.title, &title_props), "title");
 
         // Add table or bullets
         if let Some(ref table) = content.table {
@@ -119,8 +119,8 @@ pub struct TitleBigContentLayout;
 impl TitleBigContentLayout {
     /// Generate title and big content slide XML
     pub fn generate(content: &SlideContent) -> String {
-        let title_size = content.title_size.unwrap_or((TITLE_FONT_SIZE / 100) as u32) * 100;
-        let content_size = content.content_size.unwrap_or((CONTENT_FONT_SIZE / 100) as u32) * 100;
+        let title_size = content.title_size.unwrap_or(TITLE_FONT_SIZE / 100 * 100);
+        let content_size = content.content_size.unwrap_or(CONTENT_FONT_SIZE / 100 * 100);
 
         let title_props = generate_text_props(
             title_size,
@@ -141,7 +141,7 @@ impl TitleBigContentLayout {
         let mut builder = SlideXmlBuilder::new()
             .start_slide_with_bg()
             .start_sp_tree()
-            .add_title(2, TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT_BIG, &content.title, &title_props, "title");
+            .add_title(2, ShapePosition::new(TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT_BIG), TextContent::new(&content.title, &title_props), "title");
 
         if !content.bullets.is_empty() {
             builder = builder.start_content_body(3, CONTENT_X, CONTENT_Y_START_BIG, CONTENT_WIDTH, CONTENT_HEIGHT_BIG);

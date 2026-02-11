@@ -43,10 +43,19 @@ The PPTX library is organized into several layers that handle different aspects 
 
 ## Design Principles
 
-1. **Single Source of Truth**: Each type is defined once (no duplicates)
-2. **Trait-Based Design**: `ToXml` trait for consistent XML generation
-3. **Builder Pattern**: Fluent APIs for constructing complex objects
-4. **Separation of Concerns**: Clear boundaries between layers
+1. **DRY**: Single source of truth — e.g. `escape_xml` lives only in `core::xml_utils`, image format helpers in `generator::images`
+2. **SoC**: Clear boundaries between layers — XML generation in `generator/`, parsing in `oxml/`, packaging in `opc/`
+3. **KISS**: Minimal dependencies (12 direct), lightweight header parsing instead of heavy crates, no unnecessary abstractions
+4. **Trait-Facing**: Core traits (`ToXml`, `Positioned`, `ElementSized`) implemented on key types for generic dispatch, testability, and polymorphism. Types keep inherent methods for direct callers; trait impls delegate via `Type::method(self)`.
+5. **Builder Pattern**: Fluent APIs for constructing complex objects
+
+### Trait Coverage
+
+| Trait | Implementors |
+|-------|-------------|
+| `ToXml` | `Run`, `Paragraph`, `TextFrame`, `BulletStyle`, `TransitionType`, `Relationship`, `Relationships`, `TableCellPart`, `TableRowPart`, `CellBorders`, `RgbColor`, `Position`, `Size`, `Color` |
+| `Positioned` | `Shape`, `Image` |
+| `ElementSized` | `Shape`, `Image` |
 
 ## Module Descriptions
 
