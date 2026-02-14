@@ -571,7 +571,7 @@ impl ShapeLine {
     }
 }
 
-use crate::core::{Positioned, ElementSized};
+use crate::core::{Positioned, ElementSized, Dimension};
 
 /// Shape definition
 #[derive(Clone, Debug)]
@@ -655,6 +655,53 @@ impl Shape {
         self.text = Some(text.to_string());
         self
     }
+
+    /// Create a shape using flexible Dimension units for position and size.
+    ///
+    /// ```
+    /// use ppt_rs::core::Dimension;
+    /// use ppt_rs::generator::shapes::{Shape, ShapeType};
+    ///
+    /// // Position at 10% from left, 20% from top; size = 80% width, 2 inches height
+    /// let shape = Shape::from_dimensions(
+    ///     ShapeType::Rectangle,
+    ///     Dimension::Ratio(0.1), Dimension::Ratio(0.2),
+    ///     Dimension::Ratio(0.8), Dimension::Inches(2.0),
+    /// );
+    /// ```
+    pub fn from_dimensions(shape_type: ShapeType, x: Dimension, y: Dimension, width: Dimension, height: Dimension) -> Self {
+        Shape::new(shape_type, x.to_emu_x(), y.to_emu_y(), width.to_emu_x(), height.to_emu_y())
+    }
+
+    /// Set position using flexible Dimension units (fluent).
+    ///
+    /// ```
+    /// use ppt_rs::core::Dimension;
+    /// use ppt_rs::generator::shapes::{Shape, ShapeType};
+    ///
+    /// let shape = Shape::new(ShapeType::Rectangle, 0, 0, 914400, 914400)
+    ///     .at(Dimension::Ratio(0.5), Dimension::Ratio(0.5));
+    /// ```
+    pub fn at(mut self, x: Dimension, y: Dimension) -> Self {
+        self.x = x.to_emu_x();
+        self.y = y.to_emu_y();
+        self
+    }
+
+    /// Set size using flexible Dimension units (fluent).
+    ///
+    /// ```
+    /// use ppt_rs::core::Dimension;
+    /// use ppt_rs::generator::shapes::{Shape, ShapeType};
+    ///
+    /// let shape = Shape::new(ShapeType::Rectangle, 0, 0, 0, 0)
+    ///     .with_dimensions(Dimension::Inches(3.0), Dimension::Cm(5.0));
+    /// ```
+    pub fn with_dimensions(mut self, width: Dimension, height: Dimension) -> Self {
+        self.width = width.to_emu_x();
+        self.height = height.to_emu_y();
+        self
+    }
 }
 
 impl Positioned for Shape {
@@ -733,5 +780,67 @@ mod tests {
     fn test_cm_to_emu() {
         let emu = cm_to_emu(2.54); // 1 inch
         assert_eq!(emu, 914400);
+    }
+
+    #[test]
+    fn test_shape_from_dimensions_ratio() {
+        let shape = Shape::from_dimensions(
+            ShapeType::Rectangle,
+            Dimension::Ratio(0.1), Dimension::Ratio(0.2),
+            Dimension::Ratio(0.8), Dimension::Ratio(0.6),
+        );
+        // 10% of 9144000 = 914400
+        assert_eq!(shape.x, 914400);
+        // 20% of 6858000 = 1371600
+        assert_eq!(shape.y, 1371600);
+        // 80% of 9144000 = 7315200
+        assert_eq!(shape.width, 7315200);
+        // 60% of 6858000 = 4114800
+        assert_eq!(shape.height, 4114800);
+    }
+
+    #[test]
+    fn test_shape_from_dimensions_mixed() {
+        let shape = Shape::from_dimensions(
+            ShapeType::Ellipse,
+            Dimension::Inches(1.0), Dimension::Cm(2.54),
+            Dimension::Pt(72.0), Dimension::Ratio(0.5),
+        );
+        assert_eq!(shape.x, 914400);   // 1 inch
+        assert_eq!(shape.y, 914400);   // 2.54 cm = 1 inch
+        assert_eq!(shape.width, 914400); // 72pt = 1 inch
+        assert_eq!(shape.height, 6858000 / 2); // 50% of slide height
+    }
+
+    #[test]
+    fn test_shape_at_fluent() {
+        let shape = Shape::new(ShapeType::Rectangle, 0, 0, 1000000, 500000)
+            .at(Dimension::Ratio(0.5), Dimension::Inches(2.0));
+        assert_eq!(shape.x, 9144000 / 2);
+        assert_eq!(shape.y, 914400 * 2);
+        assert_eq!(shape.width, 1000000); // unchanged
+    }
+
+    #[test]
+    fn test_shape_with_dimensions_fluent() {
+        let shape = Shape::new(ShapeType::Rectangle, 100, 200, 0, 0)
+            .with_dimensions(Dimension::Ratio(0.9), Dimension::Cm(5.0));
+        assert_eq!(shape.x, 100); // unchanged
+        assert_eq!(shape.y, 200); // unchanged
+        assert_eq!(shape.width, (9144000.0 * 0.9) as u32);
+        assert_eq!(shape.height, (5.0 * 360000.0) as u32);
+    }
+
+    #[test]
+    fn test_shape_chained_at_and_dimensions() {
+        let shape = Shape::new(ShapeType::Star5, 0, 0, 0, 0)
+            .at(Dimension::percent(10.0), Dimension::percent(20.0))
+            .with_dimensions(Dimension::percent(80.0), Dimension::percent(60.0))
+            .with_fill(ShapeFill::new("FF0000"));
+        assert_eq!(shape.x, 914400);
+        assert_eq!(shape.y, 1371600);
+        assert_eq!(shape.width, 7315200);
+        assert_eq!(shape.height, 4114800);
+        assert!(shape.fill.is_some());
     }
 }

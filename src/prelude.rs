@@ -34,6 +34,7 @@ pub use crate::generator::shapes::{
 };
 
 pub use crate::elements::{Color, RgbColor, Position, Size};
+pub use crate::core::{Dimension, FlexPosition, FlexSize};
 pub use crate::exc::Result;
 
 /// Font size module with common presets (in points)
@@ -321,6 +322,43 @@ pub mod shapes {
     pub fn terminator(x: f64, y: f64, width: f64, height: f64, text: &str) -> Shape {
         Shape::new(ShapeType::FlowChartTerminator, inches(x), inches(y), inches(width), inches(height))
             .with_text(text)
+    }
+
+    /// Create any shape using flexible Dimension units.
+    ///
+    /// ```
+    /// use ppt_rs::prelude::*;
+    ///
+    /// // 10% from left, 20% from top, 80% wide, 2 inches tall
+    /// let shape = shapes::dim(
+    ///     ShapeType::Rectangle,
+    ///     Dimension::Ratio(0.1), Dimension::Ratio(0.2),
+    ///     Dimension::Ratio(0.8), Dimension::Inches(2.0),
+    /// );
+    /// ```
+    pub fn dim(shape_type: ShapeType, x: Dimension, y: Dimension, width: Dimension, height: Dimension) -> Shape {
+        Shape::from_dimensions(shape_type, x, y, width, height)
+    }
+
+    /// Create a rectangle using ratio (0.0–1.0) of slide dimensions.
+    ///
+    /// ```
+    /// use ppt_rs::prelude::*;
+    ///
+    /// // Centered rectangle: 10% margin on each side, 20% from top, 30% tall
+    /// let shape = shapes::rect_ratio(0.1, 0.2, 0.8, 0.3);
+    /// ```
+    pub fn rect_ratio(x: f64, y: f64, width: f64, height: f64) -> Shape {
+        Shape::from_dimensions(
+            ShapeType::Rectangle,
+            Dimension::Ratio(x), Dimension::Ratio(y),
+            Dimension::Ratio(width), Dimension::Ratio(height),
+        )
+    }
+
+    /// Create a text box using ratio (0.0–1.0) of slide dimensions.
+    pub fn text_box_ratio(x: f64, y: f64, width: f64, height: f64, text: &str) -> Shape {
+        rect_ratio(x, y, width, height).with_text(text)
     }
 }
 

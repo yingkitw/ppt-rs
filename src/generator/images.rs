@@ -3,7 +3,7 @@
 //! Handles image metadata, embedding, and XML generation
 
 use std::path::Path;
-use crate::core::{Positioned, ElementSized};
+use crate::core::{Positioned, ElementSized, Dimension};
 
 /// Normalize format string and derive file extension
 fn format_and_ext(format: &str) -> (String, String) {
@@ -264,6 +264,20 @@ impl Image {
             "SVG" => "image/svg+xml".to_string(),
             _ => "application/octet-stream".to_string(),
         }
+    }
+
+    /// Set position using flexible Dimension units (fluent).
+    pub fn at(mut self, x: Dimension, y: Dimension) -> Self {
+        self.x = x.to_emu_x();
+        self.y = y.to_emu_y();
+        self
+    }
+
+    /// Set size using flexible Dimension units (fluent).
+    pub fn with_dimensions(mut self, width: Dimension, height: Dimension) -> Self {
+        self.width = width.to_emu_x();
+        self.height = height.to_emu_y();
+        self
     }
 }
 

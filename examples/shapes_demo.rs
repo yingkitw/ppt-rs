@@ -1,12 +1,14 @@
 //! Example demonstrating shape creation in PPTX
 //!
 //! Shows various shape types, fills, lines, and text in shapes.
+//! NEW: Demonstrates the flexible Dimension API for positioning and sizing.
 
 use ppt_rs::generator::{
     Shape, ShapeType, ShapeFill, ShapeLine,
     generate_shape_xml, generate_shapes_xml, generate_connector_xml,
     inches_to_emu, cm_to_emu,
 };
+use ppt_rs::core::Dimension;
 
 fn main() {
     println!("╔════════════════════════════════════════════════════════════╗");
@@ -204,6 +206,76 @@ fn main() {
     println!("   Has arrow head: {}", connector_xml.contains("triangle"));
 
     // =========================================================================
+    // Flexible Dimension API (NEW)
+    // =========================================================================
+    println!("\n📏 Flexible Dimension API (NEW):");
+
+    // 1. Shape using ratio-based positioning (% of slide)
+    let ratio_shape = Shape::from_dimensions(
+        ShapeType::Rectangle,
+        Dimension::Ratio(0.1), Dimension::Ratio(0.2),   // 10% from left, 20% from top
+        Dimension::Ratio(0.8), Dimension::Ratio(0.6),   // 80% wide, 60% tall
+    ).with_fill(ShapeFill::new("4472C4")).with_text("Ratio-based");
+
+    let xml = generate_shape_xml(&ratio_shape, 20);
+    println!("   Ratio-based shape: {}x{} EMU at ({}, {})",
+        ratio_shape.width, ratio_shape.height, ratio_shape.x, ratio_shape.y);
+    println!("   Generated XML ({} chars)", xml.len());
+
+    // 2. Mixed units: inches for position, ratio for size
+    let mixed_shape = Shape::from_dimensions(
+        ShapeType::RoundedRectangle,
+        Dimension::Inches(1.0), Dimension::Cm(3.0),     // 1 inch from left, 3cm from top
+        Dimension::Ratio(0.5), Dimension::Inches(1.5),  // 50% slide width, 1.5 inches tall
+    ).with_fill(ShapeFill::new("70AD47")).with_text("Mixed units");
+
+    println!("   Mixed-unit shape: {}x{} EMU at ({}, {})",
+        mixed_shape.width, mixed_shape.height, mixed_shape.x, mixed_shape.y);
+
+    // 3. Fluent .at() and .with_dimensions() chaining
+    let fluent_shape = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
+        .at(Dimension::percent(50.0), Dimension::percent(50.0))  // center of slide
+        .with_dimensions(Dimension::Inches(2.0), Dimension::Inches(2.0))
+        .with_fill(ShapeFill::new("C0504D"))
+        .with_text("Centered");
+
+    println!("   Fluent chained shape: {}x{} EMU at ({}, {})",
+        fluent_shape.width, fluent_shape.height, fluent_shape.x, fluent_shape.y);
+
+    // 4. Percent helper (syntactic sugar for Ratio)
+    let percent_shape = Shape::from_dimensions(
+        ShapeType::Diamond,
+        Dimension::percent(40.0), Dimension::percent(30.0),
+        Dimension::percent(20.0), Dimension::percent(40.0),
+    ).with_fill(ShapeFill::new("8064A2"));
+
+    println!("   Percent-based shape: {}x{} EMU at ({}, {})",
+        percent_shape.width, percent_shape.height, percent_shape.x, percent_shape.y);
+
+    // 5. Points (useful for font-relative sizing)
+    let pt_shape = Shape::from_dimensions(
+        ShapeType::Rectangle,
+        Dimension::Pt(72.0), Dimension::Pt(72.0),   // 1 inch = 72pt
+        Dimension::Pt(360.0), Dimension::Pt(144.0), // 5 inches x 2 inches
+    ).with_fill(ShapeFill::new("F79646")).with_text("Points");
+
+    println!("   Point-based shape: {}x{} EMU at ({}, {})",
+        pt_shape.width, pt_shape.height, pt_shape.x, pt_shape.y);
+
+    // 6. All Dimension types side by side (same 1-inch result)
+    println!("\n   Unit equivalence (all = 1 inch = 914400 EMU):");
+    let units = [
+        ("Emu(914400)", Dimension::Emu(914400)),
+        ("Inches(1.0)", Dimension::Inches(1.0)),
+        ("Cm(2.54)",    Dimension::Cm(2.54)),
+        ("Pt(72.0)",    Dimension::Pt(72.0)),
+        ("Ratio(0.1)",  Dimension::Ratio(0.1)),  // 10% of slide width (10 inches)
+    ];
+    for (label, dim) in &units {
+        println!("     {:<16} → {} EMU", label, dim.to_emu_x());
+    }
+
+    // =========================================================================
     // Summary
     // =========================================================================
     println!("\n╔════════════════════════════════════════════════════════════╗");
@@ -220,5 +292,8 @@ fn main() {
     println!("║  ✓ Line/border styling                                     ║");
     println!("║  ✓ Text inside shapes                                      ║");
     println!("║  ✓ Connectors with arrow heads                             ║");
+    println!("║  ✓ NEW: Flexible Dimension API (EMU/inches/cm/pt/ratio)    ║");
+    println!("║  ✓ NEW: Fluent .at() and .with_dimensions() chaining       ║");
+    println!("║  ✓ NEW: Percent-based positioning                          ║");
     println!("╚════════════════════════════════════════════════════════════╝");
 }

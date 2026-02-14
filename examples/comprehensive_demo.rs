@@ -18,6 +18,7 @@
 //! 15. NEW v0.2.1: Material & Carbon Design colors
 //! 16. NEW: Digital signatures, Ink annotations, Slide show settings
 //! 17. NEW: Print settings, Advanced table merging, Embedded fonts
+//! 18. NEW: Flexible Dimension API (EMU/inches/cm/pt/ratio/percent)
 
 use ppt_rs::generator::{
     create_pptx_with_settings, SlideContent, SlideLayout,
@@ -34,7 +35,7 @@ use ppt_rs::generator::{
     PresentationSettings,
 };
 use ppt_rs::generator::shapes::{GradientFill, GradientDirection};
-use ppt_rs::prelude::{colors, themes, font_sizes};
+use ppt_rs::prelude::{colors, themes, font_sizes, Dimension};
 use ppt_rs::opc::Package;
 use ppt_rs::parts::{
     SlideLayoutPart, LayoutType,
@@ -778,32 +779,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // =========================================================================
-    // SLIDE 19: Dashboard Summary (NEW)
+    // SLIDE 19: Dashboard Summary (NEW - using Dimension API)
     // =========================================================================
-    println!("🔷 Slide 19: Dashboard with KPIs");
+    println!("🔷 Slide 19: Dashboard with KPIs (Dimension API)");
     
-    // KPI boxes
-    let kpi1 = Shape::new(ShapeType::RoundedRectangle, 300000, 1600000, 2000000, 1200000)
-        .with_fill(ShapeFill::new("4472C4"))
-        .with_text("Revenue\n\n$2.14M\n+15% YoY");
-    let kpi2 = Shape::new(ShapeType::RoundedRectangle, 2500000, 1600000, 2000000, 1200000)
-        .with_fill(ShapeFill::new("70AD47"))
-        .with_text("Customers\n\n12,450\n+22% YoY");
-    let kpi3 = Shape::new(ShapeType::RoundedRectangle, 4700000, 1600000, 2000000, 1200000)
-        .with_fill(ShapeFill::new("ED7D31"))
-        .with_text("NPS Score\n\n72\n+8 pts");
-    let kpi4 = Shape::new(ShapeType::RoundedRectangle, 6900000, 1600000, 2000000, 1200000)
-        .with_fill(ShapeFill::new("5B9BD5"))
-        .with_text("Retention\n\n94%\n+3% YoY");
+    // KPI boxes using ratio-based positioning — automatically adapts to any slide size
+    let kpi1 = Shape::from_dimensions(ShapeType::RoundedRectangle,
+        Dimension::percent(3.0), Dimension::percent(23.0),
+        Dimension::percent(22.0), Dimension::percent(18.0),
+    ).with_fill(ShapeFill::new("4472C4")).with_text("Revenue\n\n$2.14M\n+15% YoY");
+
+    let kpi2 = Shape::from_dimensions(ShapeType::RoundedRectangle,
+        Dimension::percent(27.0), Dimension::percent(23.0),
+        Dimension::percent(22.0), Dimension::percent(18.0),
+    ).with_fill(ShapeFill::new("70AD47")).with_text("Customers\n\n12,450\n+22% YoY");
+
+    let kpi3 = Shape::from_dimensions(ShapeType::RoundedRectangle,
+        Dimension::percent(51.0), Dimension::percent(23.0),
+        Dimension::percent(22.0), Dimension::percent(18.0),
+    ).with_fill(ShapeFill::new("ED7D31")).with_text("NPS Score\n\n72\n+8 pts");
+
+    let kpi4 = Shape::from_dimensions(ShapeType::RoundedRectangle,
+        Dimension::percent(75.0), Dimension::percent(23.0),
+        Dimension::percent(22.0), Dimension::percent(18.0),
+    ).with_fill(ShapeFill::new("5B9BD5")).with_text("Retention\n\n94%\n+3% YoY");
     
-    // Status indicators
-    let status1 = Shape::new(ShapeType::Ellipse, 1800000, 2600000, 300000, 300000)
+    // Status indicators using mixed units: percent for X, inches for size
+    let status1 = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
+        .at(Dimension::percent(14.0), Dimension::percent(42.0))
+        .with_dimensions(Dimension::Inches(0.3), Dimension::Inches(0.3))
         .with_fill(ShapeFill::new("70AD47"));
-    let status2 = Shape::new(ShapeType::Ellipse, 4000000, 2600000, 300000, 300000)
+    let status2 = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
+        .at(Dimension::percent(38.0), Dimension::percent(42.0))
+        .with_dimensions(Dimension::Inches(0.3), Dimension::Inches(0.3))
         .with_fill(ShapeFill::new("70AD47"));
-    let status3 = Shape::new(ShapeType::Ellipse, 6200000, 2600000, 300000, 300000)
+    let status3 = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
+        .at(Dimension::percent(62.0), Dimension::percent(42.0))
+        .with_dimensions(Dimension::Inches(0.3), Dimension::Inches(0.3))
         .with_fill(ShapeFill::new("FFC000"));
-    let status4 = Shape::new(ShapeType::Ellipse, 8400000, 2600000, 300000, 300000)
+    let status4 = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
+        .at(Dimension::percent(86.0), Dimension::percent(42.0))
+        .with_dimensions(Dimension::Inches(0.3), Dimension::Inches(0.3))
         .with_fill(ShapeFill::new("70AD47"));
     
     slides.push(
@@ -1999,6 +2015,12 @@ End Sub
     println!("║    ✓ VBA Macros (.pptm)       ✓ Embedded Fonts               ║");
     println!("║    ✓ Custom XML               ✓ Handout Master               ║");
     println!("║    ✓ Table borders/alignment  ✓ Merged cells                 ║");
+    println!("╠══════════════════════════════════════════════════════════════╣");
+    println!("║  DIMENSION API (NEW):                                        ║");
+    println!("║    ✓ EMU / Inches / Cm / Pt / Ratio / Percent units          ║");
+    println!("║    ✓ from_dimensions() constructor                           ║");
+    println!("║    ✓ Fluent .at() and .with_dimensions() chaining            ║");
+    println!("║    ✓ Mixed-unit positioning (e.g. inches + percent)          ║");
     println!("╠══════════════════════════════════════════════════════════════╣");
     println!("║  Output: comprehensive_demo.pptx ({} slides, {} KB)         ║", 
              slides.len(), pptx_data.len() / 1024);

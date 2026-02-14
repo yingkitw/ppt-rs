@@ -625,6 +625,15 @@
   - [x] `impl ElementSized` for `Shape`, `Image` — generic size manipulation
   - [x] 3 new trait dispatch tests (ToXml, Positioned, ElementSized)
   - [x] Zero warnings, 647 tests passing
+- [x] **Flexible Dimension API (v0.2.4)**
+  - [x] `Dimension` enum: `Emu`, `Inches`, `Cm`, `Pt`, `Ratio` (0.0–1.0 of slide), `percent()`
+  - [x] `FlexPosition` / `FlexSize` structs for 2D position/size
+  - [x] `Shape::from_dimensions()`, `Shape::at()`, `Shape::with_dimensions()` — fluent API
+  - [x] `Image::at()`, `Image::with_dimensions()` — fluent API
+  - [x] Prelude: `shapes::dim()`, `shapes::rect_ratio()`, `shapes::text_box_ratio()`
+  - [x] Exported `Dimension`, `FlexPosition`, `FlexSize` from prelude
+  - [x] 18 new tests (13 dimension unit tests + 5 Shape integration tests)
+  - [x] Zero warnings, 665 tests passing
   - [ ] **Future**: Merge `tables.rs`+`tables_xml.rs` (old) with `table/` (new) — two parallel table implementations
   - [ ] **Future**: Remove `generator/xml.rs` re-export shim (pure indirection, no callers)
 - [x] Fixed div_ceil clippy warnings

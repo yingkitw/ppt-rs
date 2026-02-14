@@ -5,6 +5,8 @@
 
 mod traits;
 mod xml_utils;
+mod dimension;
 
 pub use traits::{ToXml, XmlElement, Positioned, Sized as ElementSized, Styled};
 pub use xml_utils::{escape_xml, XmlWriter};
+pub use dimension::{Dimension, FlexPosition, FlexSize, SLIDE_WIDTH_EMU, SLIDE_HEIGHT_EMU};

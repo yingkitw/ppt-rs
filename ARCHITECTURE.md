@@ -48,6 +48,7 @@ The PPTX library is organized into several layers that handle different aspects 
 3. **KISS**: Minimal dependencies (12 direct), lightweight header parsing instead of heavy crates, no unnecessary abstractions
 4. **Trait-Facing**: Core traits (`ToXml`, `Positioned`, `ElementSized`) implemented on key types for generic dispatch, testability, and polymorphism. Types keep inherent methods for direct callers; trait impls delegate via `Type::method(self)`.
 5. **Builder Pattern**: Fluent APIs for constructing complex objects
+6. **Flexible Dimensions**: `Dimension` enum supports EMU, inches, cm, points, and ratio (0.0–1.0 of slide). Shapes and images accept `Dimension` via `.at()`, `.with_dimensions()`, and `from_dimensions()` for mixed-unit positioning.
 
 ### Trait Coverage
 
