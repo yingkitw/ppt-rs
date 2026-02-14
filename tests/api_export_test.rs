@@ -41,62 +41,66 @@ fn test_from_path_api() {
 }
 
 #[test]
-#[ignore] // Requires LibreOffice
 fn test_pdf_export_api() {
     let pres = Presentation::new()
         .title("PDF Export Test")
         .add_slide(SlideContent::new("Slide 1"));
-        
+
     let output_path = "test_export.pdf";
-    
-    // This might fail if LibreOffice is not installed
-    if let Err(e) = pres.save_as_pdf(output_path) {
-        println!("Skipping PDF test: {}", e);
-        return;
+
+    // This test requires LibreOffice to be installed
+    match pres.save_as_pdf(output_path) {
+        Ok(_) => {
+            assert!(Path::new(output_path).exists());
+            fs::remove_file(output_path).unwrap();
+        },
+        Err(e) => {
+            // Skip test if LibreOffice is not available
+            println!("Skipping PDF export test (LibreOffice required): {}", e);
+        }
     }
-    
-    assert!(Path::new(output_path).exists());
-    fs::remove_file(output_path).unwrap();
 }
 
 #[test]
-#[ignore] // Requires LibreOffice and pdftoppm
 fn test_png_export_api() {
     let pres = Presentation::new()
         .title("PNG Export Test")
         .add_slide(SlideContent::new("Slide 1"));
-        
+
     let output_dir = "test_export_png";
-    
-    if let Err(e) = pres.save_as_png(output_dir) {
-        println!("Skipping PNG test: {}", e);
-        return;
+
+    // This test requires LibreOffice and pdftoppm to be installed
+    match pres.save_as_png(output_dir) {
+        Ok(_) => {
+            assert!(Path::new(output_dir).exists());
+            // Should have at least one image
+            let count = fs::read_dir(output_dir).unwrap().count();
+            assert!(count > 0);
+            fs::remove_dir_all(output_dir).unwrap();
+        },
+        Err(e) => {
+            // Skip test if required tools are not available
+            println!("Skipping PNG export test (LibreOffice + pdftoppm required): {}", e);
+        }
     }
-    
-    assert!(Path::new(output_dir).exists());
-    // Should have at least one image
-    let count = fs::read_dir(output_dir).unwrap().count();
-    assert!(count > 0);
-    
-    fs::remove_dir_all(output_dir).unwrap();
 }
 
 #[test]
-#[ignore] // Requires pdftoppm and a PDF file
 fn test_from_pdf_api() {
-    // We need a PDF file to test this
+    // This test requires pdftoppm and a PDF file to be present
     let pdf_path = "test_import.pdf";
+
     if !Path::new(pdf_path).exists() {
-        return; 
+        println!("Skipping PDF import test: test_import.pdf not found");
+        return;
     }
-    
-    let pres = Presentation::from_pdf(pdf_path);
-    match pres {
-        Ok(p) => {
-            assert!(p.slide_count() > 0);
+
+    match Presentation::from_pdf(pdf_path) {
+        Ok(pres) => {
+            assert!(pres.slide_count() > 0);
         },
         Err(e) => {
-            println!("Import failed (expected if pdftoppm missing): {}", e);
+            println!("Skipping PDF import test (pdftoppm required): {}", e);
         }
     }
 }
