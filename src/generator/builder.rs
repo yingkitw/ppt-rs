@@ -3,13 +3,22 @@
 use std::io::{Write, Cursor};
 use zip::ZipWriter;
 use zip::write::FileOptions;
-use super::xml::*;
-use super::notes_xml::*;
+use super::slide_content::SlideContent;
 use super::package_xml::{
+    create_rels_xml, create_presentation_rels_xml, create_presentation_xml,
     create_content_types_xml_with_notes_and_charts,
     create_presentation_rels_xml_with_notes,
-    create_slide_rels_xml_extended
+    create_slide_rels_xml_extended,
 };
+use super::slide_xml::{
+    create_slide_xml, create_slide_xml_with_content, create_slide_rels_xml,
+};
+use super::theme_xml::{
+    create_slide_layout_xml, create_layout_rels_xml,
+    create_slide_master_xml, create_master_rels_xml, create_theme_xml,
+};
+use super::props_xml::{create_core_props_xml, create_app_props_xml};
+use super::notes_xml::*;
 use crate::generator::charts::generate_chart_part_xml;
 use crate::generator::slide_content::presentation_settings::PresentationSettings;
 
@@ -29,7 +38,7 @@ pub fn create_pptx(title: &str, slides: usize) -> Result<Vec<u8>, Box<dyn std::e
 /// Create a PPTX file with custom slide content
 pub fn create_pptx_with_content(
     title: &str,
-    slides: Vec<super::xml::SlideContent>,
+    slides: Vec<SlideContent>,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     create_pptx_with_settings(title, slides, None)
 }
@@ -37,7 +46,7 @@ pub fn create_pptx_with_content(
 /// Create a PPTX file with custom slide content and presentation-level settings
 pub fn create_pptx_with_settings(
     title: &str,
-    slides: Vec<super::xml::SlideContent>,
+    slides: Vec<SlideContent>,
     settings: Option<PresentationSettings>,
 ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
     let buffer = Vec::new();
@@ -57,7 +66,7 @@ fn write_package_files(
     options: &FileOptions,
     title: &str,
     slide_count: usize,
-    custom_slides: Option<&Vec<super::xml::SlideContent>>,
+    custom_slides: Option<&Vec<SlideContent>>,
     settings: Option<&PresentationSettings>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // Check if any slides have notes and calculate chart info
@@ -209,7 +218,7 @@ fn write_slides(
     zip: &mut ZipWriter<Cursor<Vec<u8>>>,
     options: &FileOptions,
     slide_count: usize,
-    custom_slides: Option<&Vec<super::xml::SlideContent>>,
+    custom_slides: Option<&Vec<SlideContent>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     match custom_slides {
         Some(slides) => {
@@ -250,7 +259,7 @@ fn write_slides(
 fn write_slide_relationships_extended(
     zip: &mut ZipWriter<Cursor<Vec<u8>>>,
     options: &FileOptions,
-    custom_slides: Option<&Vec<super::xml::SlideContent>>,
+    custom_slides: Option<&Vec<SlideContent>>,
     slide_chart_start_indices: &[usize],
     slide_count: usize,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -290,7 +299,7 @@ fn write_slide_relationships_extended(
 fn write_charts(
     zip: &mut ZipWriter<Cursor<Vec<u8>>>,
     options: &FileOptions,
-    custom_slides: Option<&Vec<super::xml::SlideContent>>,
+    custom_slides: Option<&Vec<SlideContent>>,
     slide_chart_start_indices: &[usize],
 ) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(slides) = custom_slides {
@@ -311,7 +320,7 @@ fn write_charts(
 fn write_notes_relationships(
     zip: &mut ZipWriter<Cursor<Vec<u8>>>,
     options: &FileOptions,
-    custom_slides: Option<&Vec<super::xml::SlideContent>>,
+    custom_slides: Option<&Vec<SlideContent>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(slides) = custom_slides {
         for (i, slide) in slides.iter().enumerate() {

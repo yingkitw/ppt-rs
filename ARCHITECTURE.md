@@ -411,7 +411,6 @@ Tables in PPTX follow a specific XML structure. The critical ordering is:
 ├── generator/          # Generator module
 │   ├── mod.rs          # Module exports
 │   ├── builder.rs      # PPTX creation functions
-│   ├── xml.rs          # SlideContent, SlideLayout
 │   ├── slide_xml/      # Modular slide XML generation
 │   │   ├── mod.rs
 │   │   ├── common.rs

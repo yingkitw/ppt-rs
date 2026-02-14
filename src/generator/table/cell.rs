@@ -212,6 +212,26 @@ impl TableCell {
         self.v_merge = true;
         self
     }
+
+    /// Alias: set column span (gridSpan)
+    pub fn with_col_span(self, span: u32) -> Self {
+        self.grid_span(span)
+    }
+
+    /// Alias: set row span
+    pub fn with_row_span(self, span: u32) -> Self {
+        self.row_span(span)
+    }
+
+    /// Alias: set horizontal merge flag
+    pub fn with_h_merge(self) -> Self {
+        self.h_merge()
+    }
+
+    /// Alias: set vertical merge flag
+    pub fn with_v_merge(self) -> Self {
+        self.v_merge()
+    }
 }
 
 #[cfg(test)]

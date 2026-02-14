@@ -85,6 +85,13 @@ fn generate_cell_xml(cell: &TableCell) -> String {
     }
     let mut xml = format!(r#"<a:tc{}>"#, tc_attrs);
 
+    // Merged-over cells (hMerge/vMerge) must have empty text body
+    if cell.h_merge || cell.v_merge {
+        xml.push_str(r#"<a:txBody><a:bodyPr/><a:lstStyle/><a:p/></a:txBody><a:tcPr/>"#);
+        xml.push_str("</a:tc>");
+        return xml;
+    }
+
     // === TEXT BODY (must come first!) ===
     xml.push_str(r#"<a:txBody><a:bodyPr/><a:lstStyle/><a:p>"#);
     

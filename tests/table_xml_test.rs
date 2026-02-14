@@ -3,7 +3,7 @@
 //! Tests the table XML generation module
 
 use ppt_rs::generator::{Table, TableRow, TableCell, TableBuilder};
-use ppt_rs::generator::tables_xml::generate_table_xml;
+use ppt_rs::generator::table::generate_table_xml;
 
 // ============================================================================
 // TABLE XML GENERATION TESTS

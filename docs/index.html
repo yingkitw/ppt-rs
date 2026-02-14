@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ppt-rs Documentation</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; line-height: 1.6; }
+    h1 { border-bottom: 2px solid #1565C0; padding-bottom: 0.5rem; }
+    h2 { color: #1565C0; }
+    code { background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+    a { color: #1565C0; }
+    .badge { display: inline-block; background: #2E7D32; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <h1>ppt-rs</h1>
+  <p><span class="badge">Rust</span> A Rust library for generating PowerPoint (PPTX) files.</p>
+
+  <h2>Quick Start</h2>
+  <pre><code>use ppt_rs::prelude::*;
+
+let slides = vec![
+    SlideContent::new("Hello World")
+        .layout(SlideLayout::CenteredTitle)
+        .title_bold(true),
+];
+let pptx = create_pptx_with_content("My Presentation", slides)?;
+std::fs::write("output.pptx", pptx)?;</code></pre>
+
+  <h2>Key Features</h2>
+  <ul>
+    <li>40+ shape types with fills, lines, text</li>
+    <li>Tables, charts, images, connectors</li>
+    <li>Flexible Dimension API (EMU, inches, cm, pt, ratio, percent)</li>
+    <li>Fluent builder pattern with chaining</li>
+    <li>Bullet styles, text formatting, themes</li>
+    <li>Slide transitions, animations, notes</li>
+    <li>Valid PPTX output compatible with PowerPoint</li>
+  </ul>
+
+  <h2>Documentation</h2>
+  <ul>
+    <li><a href="../README.md">README</a> &mdash; Full usage guide</li>
+    <li><a href="../ARCHITECTURE.md">ARCHITECTURE</a> &mdash; Design &amp; module structure</li>
+    <li><a href="../SPEC.md">SPEC</a> &mdash; Specification</li>
+    <li><a href="../TODO.md">TODO</a> &mdash; Roadmap &amp; planned features</li>
+  </ul>
+
+  <h2>Examples</h2>
+  <p>Run any example with <code>cargo run --example &lt;name&gt;</code>:</p>
+  <ul>
+    <li><code>simple_presentation</code> &mdash; Minimal hello-world</li>
+    <li><code>shapes_demo</code> &mdash; Shape types, fills, Dimension API</li>
+    <li><code>dimension_demo</code> &mdash; Flexible positioning &amp; sizing</li>
+    <li><code>comprehensive_demo</code> &mdash; Full feature showcase</li>
+  </ul>
+</body>
+</html>

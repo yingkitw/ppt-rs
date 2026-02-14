@@ -42,7 +42,7 @@ impl TitleContentLayout {
 
         // Add table or bullets
         if let Some(ref table) = content.table {
-            builder = builder.raw(&crate::generator::tables_xml::generate_table_xml(table, 3));
+            builder = builder.raw(&crate::generator::table::generate_table_xml(table, 3));
         } else if !content.bullets.is_empty() {
             // Use bullets with styles
             builder = builder.start_content_body(3, CONTENT_X, CONTENT_Y_START, CONTENT_WIDTH, CONTENT_HEIGHT);

@@ -442,7 +442,7 @@ pub fn create_title_and_content_slide(content: &SlideContent, chart_rids: &[Stri
     // Render table if present
     if let Some(ref table) = content.table {
         xml.push('\n');
-        xml.push_str(&crate::generator::tables_xml::generate_table_xml(table, 3));
+        xml.push_str(&crate::generator::table::generate_table_xml(table, 3));
     } else if !content.bullets.is_empty() || !content.content.is_empty() {
         // Render bullets if no table
         xml.push_str(

@@ -16,6 +16,11 @@ pub struct Table {
 }
 
 impl Table {
+    /// Create a new table with explicit rows, column widths, and position
+    pub fn new(rows: Vec<TableRow>, column_widths: Vec<u32>, x: u32, y: u32) -> Self {
+        Table { rows, column_widths, x, y }
+    }
+
     /// Create a table from raw data (2D string array)
     pub fn from_data(data: Vec<Vec<&str>>, column_widths: Vec<u32>, x: u32, y: u32) -> Self {
         use super::cell::TableCell;
@@ -89,6 +94,15 @@ impl TableBuilder {
     pub fn position(mut self, x: u32, y: u32) -> Self {
         self.x = x;
         self.y = y;
+        self
+    }
+
+    /// Add a simple row from strings
+    pub fn add_simple_row(mut self, cells: Vec<&str>) -> Self {
+        let row = TableRow::new(
+            cells.into_iter().map(super::cell::TableCell::new).collect(),
+        );
+        self.rows.push(row);
         self
     }
 

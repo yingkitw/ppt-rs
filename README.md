@@ -476,7 +476,7 @@ Unlike other Rust PPTX crates that:
 ### Alignment Testing
 - Framework for comparing output with python-pptx standards
 - Alignment testing scripts and documentation
-- See [docs/ALIGNMENT.md](docs/ALIGNMENT.md) for details
+- See `examples/alignment_test.rs` for details
 
 ## Technical Details
 

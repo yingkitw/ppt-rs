@@ -1,6 +1,6 @@
 //! SlideContent struct for complex presentations
 
-use crate::generator::tables::Table;
+use crate::generator::table::Table;
 use crate::generator::shapes::Shape;
 use crate::generator::images::Image;
 use crate::generator::connectors::Connector;

@@ -48,8 +48,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  - Title: Alignment Test Presentation");
     println!("  - Slides: 2");
     println!("\nNext steps:");
-    println!("  1. Generate reference: python3 scripts/generate_reference.py");
-    println!("  2. Compare files: python3 scripts/compare_pptx.py");
+    println!("  1. Open the generated file in PowerPoint to verify");
+    println!("  2. Compare with a python-pptx reference if available");
     
     Ok(())
 }

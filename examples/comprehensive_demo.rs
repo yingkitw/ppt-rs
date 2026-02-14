@@ -1662,7 +1662,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 2: Comparison Matrix
     println!("   │   ├── Comparison Matrix (features vs products):");
-    let matrix_table = TablePart::new()
+    let _matrix_table = TablePart::new()
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("Feature").bold().center().background("4472C4").color("FFFFFF"),
             TableCellPart::new("Basic").bold().center().background("4472C4").color("FFFFFF"),
@@ -1697,7 +1697,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 3: Schedule/Timeline Table
     println!("   │   └── Schedule Table (with row spans):");
-    let schedule_table = TablePart::new()
+    let _schedule_table = TablePart::new()
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("Time").bold().center().background("70AD47").color("FFFFFF"),
             TableCellPart::new("Monday").bold().center().background("70AD47").color("FFFFFF"),
@@ -1761,7 +1761,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let exit = Animation::new(6, AnimationEffect::FadeOut)
         .trigger(AnimationTrigger::AfterPrevious)
         .duration(500);
-    let emphasis_seq = SlideAnimations::new()
+    let _emphasis_seq = SlideAnimations::new()
         .add(emphasis)
         .add(exit);
     println!("   │   │   ├── Pulse 3x on click, then fade out");
@@ -1769,7 +1769,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Sequence 3: Motion path
     println!("   │   └── Motion Path Animation:");
-    let motion = Animation::new(7, AnimationEffect::Lines)
+    let _motion = Animation::new(7, AnimationEffect::Lines)
         .trigger(AnimationTrigger::OnClick)
         .duration(2000);
     println!("   │       └── Custom path: Lines, Arcs, Turns, Loops");
@@ -1801,7 +1801,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Venn diagram
     println!("   │   ├── Venn Diagram:");
-    let venn = SmartArtPart::new(4, SmartArtLayout::BasicVenn)
+    let _venn = SmartArtPart::new(4, SmartArtLayout::BasicVenn)
         .add_items(vec!["Skills", "Passion", "Market Need"]);
     println!("   │   │   └── 3-circle Venn for Ikigai concept");
 
@@ -1818,7 +1818,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Product showcase
     println!("   │   ┌── Product Showcase:");
-    let product_3d = Model3DPart::new(1, Model3DFormat::Glb, vec![0; 100])
+    let _product_3d = Model3DPart::new(1, Model3DFormat::Glb, vec![0; 100])
         .camera(CameraPreset::IsometricTopUp)
         .rotation(0.0, 45.0, 0.0)
         .zoom(1.2)
@@ -1830,7 +1830,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Architectural model
     println!("   │   ├── Architectural Model:");
-    let arch_3d = Model3DPart::new(2, Model3DFormat::Gltf, vec![0; 100])
+    let _arch_3d = Model3DPart::new(2, Model3DFormat::Gltf, vec![0; 100])
         .camera(CameraPreset::Front)
         .rotation(15.0, -30.0, 0.0)
         .ambient_light("FFFFCC");
@@ -1839,7 +1839,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Technical diagram
     println!("   │   └── Technical Diagram:");
-    let tech_3d = Model3DPart::new(3, Model3DFormat::Obj, vec![0; 100])
+    let _tech_3d = Model3DPart::new(3, Model3DFormat::Obj, vec![0; 100])
         .camera(CameraPreset::IsometricOffAxis1Top)
         .rotation(0.0, 0.0, 0.0);
     println!("   │       └── Camera: Off-axis isometric for exploded view");
@@ -1888,7 +1888,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   ├── VBA + Custom XML Integration:");
     
     // VBA with multiple modules
-    let vba_project = VbaProjectPart::new()
+    let _vba_project = VbaProjectPart::new()
         .add_module(VbaModule::new("AutoRun", r#"
 Sub Auto_Open()
     MsgBox "Welcome to the presentation!"

@@ -13,10 +13,6 @@ pub mod props_xml;
 // Modular layout system
 pub mod layouts;
 
-// Re-export module for backward compatibility
-#[doc(hidden)]
-pub mod xml;
-
 // Builder and content modules
 pub mod builder;
 
@@ -28,9 +24,6 @@ pub mod shapes_xml;
 
 // Table module (modularized)
 pub mod table;
-// Keep old modules for backward compatibility
-pub mod tables;
-pub mod tables_xml;
 
 pub mod images;
 pub mod images_xml;
@@ -53,12 +46,12 @@ pub mod media;
 
 pub use builder::{create_pptx, create_pptx_with_content, create_pptx_with_settings};
 pub use notes_xml::{create_notes_xml, create_notes_rels_xml, create_notes_master_xml, create_notes_master_rels_xml};
-pub use xml::{SlideContent, SlideLayout};
+pub use slide_content::{SlideContent, SlideLayout};
 pub use slide_content::{CodeBlock, BulletStyle, BulletPoint, BulletTextFormat, TransitionType, Comment, CommentAuthor, CommentAuthorList, SlideComments, SlideSection, SectionManager, DigitalSignature, SignerInfo, HashAlgorithm, SignatureCommitment, InkAnnotations, InkStroke, InkPen, InkPoint, PenTip, SlideShowSettings, ShowType, PenColor, SlideRange, PrintSettings, HandoutLayout, PrintColorMode, PrintWhat, Orientation, TableMergeMap, MergeRegion, CellMergeState, EmbeddedFontList, EmbeddedFont, FontStyle, FontCharset, PresentationSettings};
 pub use text::{TextFormat, FormattedText, TextFrame, Paragraph, Run, TextAlign, TextAnchor, TextDirection, RtlLanguage, RtlTextProps};
 pub use shapes::{Shape, ShapeType, ShapeFill, ShapeLine, GradientFill as ShapeGradientFill, GradientStop as ShapeGradientStop, GradientDirection as ShapeGradientDirection, FillType, emu_to_inches, inches_to_emu, cm_to_emu};
 pub use shapes_xml::{generate_shape_xml, generate_shapes_xml, generate_connector_xml};
-pub use tables::{Table, TableRow, TableCell, TableBuilder, CellAlign, CellVAlign};
+pub use table::{Table, TableRow, TableCell, TableBuilder, CellAlign, CellVAlign, generate_table_xml as generate_table_xml_new};
 pub use images::{Image, ImageBuilder, ImageSource};
 pub use images_xml::{generate_image_xml, generate_image_relationship, generate_image_content_type};
 pub use charts::{Chart, ChartType, ChartSeries, ChartBuilder, generate_chart_part_xml, generate_chart_ref_xml};
