@@ -2,8 +2,9 @@
 //!
 //! Represents [Content_Types].xml which defines MIME types for all parts.
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
+use crate::oxml::XmlParser;
 
 /// Default content type mapping (by extension)
 #[derive(Debug, Clone)]
@@ -49,7 +50,10 @@ impl ContentTypesPart {
     pub fn new() -> Self {
         ContentTypesPart {
             defaults: vec![
-                DefaultType::new("rels", "application/vnd.openxmlformats-package.relationships+xml"),
+                DefaultType::new(
+                    "rels",
+                    "application/vnd.openxmlformats-package.relationships+xml",
+                ),
                 DefaultType::new("xml", "application/xml"),
                 DefaultType::new("jpeg", "image/jpeg"),
                 DefaultType::new("jpg", "image/jpeg"),
@@ -68,19 +72,21 @@ impl ContentTypesPart {
 
     /// Add a default type
     pub fn add_default(&mut self, extension: impl Into<String>, content_type: impl Into<String>) {
-        self.defaults.push(DefaultType::new(extension, content_type));
+        self.defaults
+            .push(DefaultType::new(extension, content_type));
     }
 
     /// Add an override type
     pub fn add_override(&mut self, part_name: impl Into<String>, content_type: impl Into<String>) {
-        self.overrides.push(OverrideType::new(part_name, content_type));
+        self.overrides
+            .push(OverrideType::new(part_name, content_type));
     }
 
     /// Add presentation part
     pub fn add_presentation(&mut self) {
         self.add_override(
             "/ppt/presentation.xml",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
         );
     }
 
@@ -88,7 +94,7 @@ impl ContentTypesPart {
     pub fn add_slide(&mut self, slide_number: usize) {
         self.add_override(
             format!("/ppt/slides/slide{}.xml", slide_number),
-            "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.slide+xml",
         );
     }
 
@@ -96,7 +102,7 @@ impl ContentTypesPart {
     pub fn add_slide_layout(&mut self, layout_number: usize) {
         self.add_override(
             format!("/ppt/slideLayouts/slideLayout{}.xml", layout_number),
-            "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml",
         );
     }
 
@@ -104,7 +110,7 @@ impl ContentTypesPart {
     pub fn add_slide_master(&mut self, master_number: usize) {
         self.add_override(
             format!("/ppt/slideMasters/slideMaster{}.xml", master_number),
-            "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml",
         );
     }
 
@@ -112,7 +118,7 @@ impl ContentTypesPart {
     pub fn add_theme(&mut self, theme_number: usize) {
         self.add_override(
             format!("/ppt/theme/theme{}.xml", theme_number),
-            "application/vnd.openxmlformats-officedocument.theme+xml"
+            "application/vnd.openxmlformats-officedocument.theme+xml",
         );
     }
 
@@ -120,7 +126,7 @@ impl ContentTypesPart {
     pub fn add_notes_slide(&mut self, notes_number: usize) {
         self.add_override(
             format!("/ppt/notesSlides/notesSlide{}.xml", notes_number),
-            "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml",
         );
     }
 
@@ -128,7 +134,7 @@ impl ContentTypesPart {
     pub fn add_chart(&mut self, chart_number: usize) {
         self.add_override(
             format!("/ppt/charts/chart{}.xml", chart_number),
-            "application/vnd.openxmlformats-officedocument.drawingml.chart+xml"
+            "application/vnd.openxmlformats-officedocument.drawingml.chart+xml",
         );
     }
 
@@ -136,7 +142,7 @@ impl ContentTypesPart {
     pub fn add_core_properties(&mut self) {
         self.add_override(
             "/docProps/core.xml",
-            "application/vnd.openxmlformats-package.core-properties+xml"
+            "application/vnd.openxmlformats-package.core-properties+xml",
         );
     }
 
@@ -144,18 +150,71 @@ impl ContentTypesPart {
     pub fn add_app_properties(&mut self) {
         self.add_override(
             "/docProps/app.xml",
-            "application/vnd.openxmlformats-officedocument.extended-properties+xml"
+            "application/vnd.openxmlformats-officedocument.extended-properties+xml",
         );
     }
 
+    /// Get content type for a given part path
+    pub fn get_content_type(&self, part_path: &str) -> Option<&str> {
+        // Normalize path (add leading slash if missing)
+        let normalized = if part_path.starts_with('/') {
+            part_path.to_string()
+        } else {
+            format!("/{}", part_path)
+        };
+
+        // First check overrides (exact match)
+        for override_type in &self.overrides {
+            if override_type.part_name == normalized {
+                return Some(&override_type.content_type);
+            }
+        }
+
+        // Then check defaults (by extension)
+        if let Some(ext) = part_path.rsplit('.').next() {
+            let ext_lower = ext.to_lowercase();
+            for default_type in &self.defaults {
+                if default_type.extension.to_lowercase() == ext_lower {
+                    return Some(&default_type.content_type);
+                }
+            }
+        }
+
+        None
+    }
+
+    /// Get all defaults
+    pub fn defaults(&self) -> &[DefaultType] {
+        &self.defaults
+    }
+
+    /// Get all overrides
+    pub fn overrides(&self) -> &[OverrideType] {
+        &self.overrides
+    }
+
     fn generate_xml(&self) -> String {
-        let defaults_xml: String = self.defaults.iter()
-            .map(|d| format!(r#"<Default Extension="{}" ContentType="{}"/>"#, d.extension, d.content_type))
+        let defaults_xml: String = self
+            .defaults
+            .iter()
+            .map(|d| {
+                format!(
+                    r#"<Default Extension="{}" ContentType="{}"/>"#,
+                    d.extension, d.content_type
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n  ");
 
-        let overrides_xml: String = self.overrides.iter()
-            .map(|o| format!(r#"<Override PartName="{}" ContentType="{}"/>"#, o.part_name, o.content_type))
+        let overrides_xml: String = self
+            .overrides
+            .iter()
+            .map(|o| {
+                format!(
+                    r#"<Override PartName="{}" ContentType="{}"/>"#,
+                    o.part_name, o.content_type
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n  ");
 
@@ -165,8 +224,7 @@ impl ContentTypesPart {
   {}
   {}
 </Types>"#,
-            defaults_xml,
-            overrides_xml
+            defaults_xml, overrides_xml
         )
     }
 }
@@ -194,9 +252,31 @@ impl Part for ContentTypesPart {
         Ok(self.generate_xml())
     }
 
-    fn from_xml(_xml: &str) -> Result<Self, PptxError> {
-        // TODO: Parse XML
-        Ok(ContentTypesPart::new())
+    fn from_xml(xml: &str) -> Result<Self, PptxError> {
+        let root = XmlParser::parse_str(xml)?;
+        let mut ct = ContentTypesPart::default();
+
+        // Parse Default elements
+        for default in root.find_all("Default") {
+            if let (Some(ext), Some(content_type)) =
+                (default.attr("Extension"), default.attr("ContentType"))
+            {
+                ct.defaults.push(DefaultType::new(ext, content_type));
+            }
+        }
+
+        // Parse Override elements
+        for override_elem in root.find_all("Override") {
+            if let (Some(part_name), Some(content_type)) = (
+                override_elem.attr("PartName"),
+                override_elem.attr("ContentType"),
+            ) {
+                ct.overrides
+                    .push(OverrideType::new(part_name, content_type));
+            }
+        }
+
+        Ok(ct)
     }
 }
 
@@ -246,5 +326,81 @@ mod tests {
         ct.add_core_properties();
         ct.add_app_properties();
         assert_eq!(ct.overrides.len(), 7);
+    }
+
+    #[test]
+    fn test_content_types_from_xml() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+        <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+            <Default Extension="png" ContentType="image/png"/>
+            <Default Extension="jpeg" ContentType="image/jpeg"/>
+            <Default Extension="xml" ContentType="application/xml"/>
+            <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
+            <Override PartName="/ppt/slides/slide1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>
+        </Types>"#;
+
+        let ct = ContentTypesPart::from_xml(xml).unwrap();
+        // from_xml creates fresh instance, not using new() defaults
+        assert!(ct.defaults().len() >= 3);
+        assert!(ct.overrides().len() >= 2);
+
+        // Verify specific values were parsed
+        assert!(ct.get_content_type("test.png").is_some());
+        assert!(ct.get_content_type("ppt/presentation.xml").is_some());
+    }
+
+    #[test]
+    fn test_get_content_type_by_extension() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+        <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+            <Default Extension="png" ContentType="image/png"/>
+            <Default Extension="jpeg" ContentType="image/jpeg"/>
+            <Default Extension="emf" ContentType="image/x-emf"/>
+        </Types>"#;
+
+        let ct = ContentTypesPart::from_xml(xml).unwrap();
+
+        // Test by extension (Default)
+        assert_eq!(
+            ct.get_content_type("ppt/media/image1.png"),
+            Some("image/png")
+        );
+        assert_eq!(
+            ct.get_content_type("ppt/media/image2.jpeg"),
+            Some("image/jpeg")
+        );
+        assert_eq!(
+            ct.get_content_type("ppt/media/image3.emf"),
+            Some("image/x-emf")
+        );
+    }
+
+    #[test]
+    fn test_get_content_type_by_override() {
+        let xml = r#"<?xml version="1.0" encoding="UTF-8"?>
+        <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+            <Default Extension="xml" ContentType="application/xml"/>
+            <Override PartName="/ppt/slides/slide1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>
+        </Types>"#;
+
+        let ct = ContentTypesPart::from_xml(xml).unwrap();
+
+        // Override takes precedence
+        assert_eq!(
+            ct.get_content_type("ppt/slides/slide1.xml"),
+            Some("application/vnd.openxmlformats-officedocument.presentationml.slide+xml")
+        );
+
+        // Fallback to default for non-overridden paths
+        assert_eq!(
+            ct.get_content_type("ppt/other.xml"),
+            Some("application/xml")
+        );
+    }
+
+    #[test]
+    fn test_get_content_type_not_found() {
+        let ct = ContentTypesPart::new();
+        assert_eq!(ct.get_content_type("unknown/file.xyz"), None);
     }
 }
