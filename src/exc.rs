@@ -18,7 +18,7 @@ pub enum PptxError {
     Io(#[from] std::io::Error),
 
     #[error("ZIP error: {0}")]
-    Zip(String),
+    Zip(#[from] zip::result::ZipError),
 
     #[error("XML parse error: {0}")]
     XmlParse(String),

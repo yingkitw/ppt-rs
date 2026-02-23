@@ -1,18 +1,17 @@
 # TODO - ppt-rs
 
-**Tests**: 816 passing | **Warnings**: 0 | **Clippy**: clean
+**Tests**: 845 passing | **Warnings**: 0 | **Clippy**: clean
 
 ## Active
 
-- [ ] Migrate `Box<dyn Error>` returns in generator to `PptxError` for consistency
-- [ ] Review and refactor large functions
+*(All items completed - see below)*
 
 ## Backlog
 
 ### Code Quality
 - [ ] Profile memory usage with large presentations
-- [ ] Lazy loading for slide content
-- [ ] Streaming ZIP operations
+
+### Features
 
 ### Features
 - [ ] Digital signatures (XML generation done; needs Content_Types + _rels wiring)
@@ -25,7 +24,6 @@
 - [ ] Property-based testing
 - [ ] Benchmark suite
 - [ ] Cross-platform testing (Windows, macOS, Linux)
-- [ ] Compatibility testing with Office 2007+, LibreOffice, Google Slides
 
 ### Documentation
 - [ ] Complete API documentation with examples
@@ -33,6 +31,60 @@
 - [ ] Tutorial: Markdown to PPTX workflow
 
 ## Completed
+
+<details>
+<summary>v0.2.9 — Bug Fix: Compatibility Test Sorting</summary>
+
+- Fixed `test_get_slide_files` to handle alphabetically sorted slide filenames correctly
+- Removed unused `Chart` import from compatibility_test.rs
+- All 845 tests passing, 0 warnings
+</details>
+
+<details>
+<summary>v0.2.8 — Compatibility Testing Infrastructure</summary>
+
+- **PptxValidator**: Struct for validating PPTX file structure
+  - `validate_zip_structure()` - checks for required files and valid ZIP format
+  - `validate_content_types()` - validates Content_Types.xml structure
+  - `validate_presentation()` - checks presentation XML and namespaces
+  - `validate_slide()` - validates individual slide XML files
+  - `get_slide_files()` - lists all slide files in the presentation
+- **CompatibilityTestSuite**: Generates test PPTX files for manual verification
+  - 8 test files covering: basic, shapes, charts, images, large (100 slides), streaming, and lazy loading
+- **Automated validation tests** (6 tests) - all passing
+- Provides framework for continuous compatibility validation
+- Test files output to `test_output/compatibility/` for manual verification in PowerPoint, LibreOffice, and Google Slides
+</details>
+
+<details>
+<summary>v0.2.7 — Streaming ZIP & Lazy Loading</summary>
+
+- **Streaming ZIP operations**: Added `create_pptx_to_writer()` and `create_pptx_with_content_to_writer()` APIs for writing PPTX files directly to any `Write + Seek` target (files, streams, etc.)
+- **Lazy slide loading**: Added `LazySlideSource` trait and `create_pptx_lazy_to_writer()` for on-demand slide generation
+- Benefits:
+  - Memory efficiency for large presentations (no need to buffer entire ZIP in memory)
+  - Support for dynamically generated slide content
+  - Better performance for streaming data sources
+- All internal write functions now use generic `W: Write + Seek` instead of hardcoded `Cursor<Vec<u8>>`
+- Added comprehensive tests for new APIs (7 new tests)
+- Backward compatible - existing `Vec<u8>`-returning APIs unchanged
+</details>
+
+<details>
+<summary>v0.2.6 — Error Handling & Refactoring</summary>
+
+- Migrated `Box<dyn Error>` returns to `PptxError` in generator/builder.rs
+- Added `From<ZipError>` implementation for automatic error conversion
+- Refactored `write_package_files` into smaller helper functions:
+  - `write_content_types` - handles content types XML
+  - `write_presentation_relationships` - handles presentation relationships
+  - `write_presentation_properties` - handles presProps.xml
+  - `write_notes_master` - handles notes master files
+  - `write_theme_and_layouts` - handles theme and layout files
+  - `write_document_properties` - handles core and app properties
+- Added `ChartInfo` struct and `collect_chart_info` helper
+- Removed wasm-bindgen dependency (chrono now uses specific features)
+</details>
 
 <details>
 <summary>v0.2.5 — Codebase Cleanup</summary>

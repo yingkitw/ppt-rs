@@ -28,15 +28,12 @@ impl Package {
 
     /// Open a package from a reader
     pub fn open_reader<R: Read + std::io::Seek>(reader: R) -> Result<Self> {
-        let mut archive = zip::ZipArchive::new(reader)
-            .map_err(|e| crate::exc::PptxError::Zip(e.to_string()))?;
+        let mut archive = zip::ZipArchive::new(reader)?;
 
         let mut parts = HashMap::new();
 
         for i in 0..archive.len() {
-            let mut file = archive
-                .by_index(i)
-                .map_err(|e| crate::exc::PptxError::Zip(e.to_string()))?;
+            let mut file = archive.by_index(i)?;
 
             if !file.is_dir() {
                 let mut content = Vec::new();
@@ -61,15 +58,11 @@ impl Package {
 
         for (path, content) in &self.parts {
             let options = zip::write::FileOptions::default();
-            archive
-                .start_file(path, options)
-                .map_err(|e| crate::exc::PptxError::Zip(e.to_string()))?;
+            archive.start_file(path, options)?;
             std::io::Write::write_all(&mut archive, content)?;
         }
 
-        archive
-            .finish()
-            .map_err(|e| crate::exc::PptxError::Zip(e.to_string()))?;
+        archive.finish()?;
 
         Ok(())
     }

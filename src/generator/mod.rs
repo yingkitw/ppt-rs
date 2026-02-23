@@ -44,7 +44,11 @@ pub mod hyperlinks;
 pub mod gradients;
 pub mod media;
 
-pub use builder::{create_pptx, create_pptx_with_content, create_pptx_with_settings};
+pub use builder::{
+    create_pptx, create_pptx_with_content, create_pptx_with_settings,
+    create_pptx_to_writer, create_pptx_with_content_to_writer, create_pptx_lazy_to_writer,
+    LazySlideSource,
+};
 pub use notes_xml::{create_notes_xml, create_notes_rels_xml, create_notes_master_xml, create_notes_master_rels_xml};
 pub use slide_content::{SlideContent, SlideLayout};
 pub use slide_content::{CodeBlock, BulletStyle, BulletPoint, BulletTextFormat, TransitionType, Comment, CommentAuthor, CommentAuthorList, SlideComments, SlideSection, SectionManager, DigitalSignature, SignerInfo, HashAlgorithm, SignatureCommitment, InkAnnotations, InkStroke, InkPen, InkPoint, PenTip, SlideShowSettings, ShowType, PenColor, SlideRange, PrintSettings, HandoutLayout, PrintColorMode, PrintWhat, Orientation, TableMergeMap, MergeRegion, CellMergeState, EmbeddedFontList, EmbeddedFont, FontStyle, FontCharset, PresentationSettings};

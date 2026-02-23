@@ -169,7 +169,7 @@ impl QuickPptx {
     }
     
     /// Build the presentation and return the PPTX data
-    pub fn build(self) -> std::result::Result<Vec<u8>, Box<dyn std::error::Error>> {
+    pub fn build(self) -> crate::exc::Result<Vec<u8>> {
         if self.slides.is_empty() {
             // Create at least one slide
             create_pptx(&self.title, 1)
@@ -177,9 +177,9 @@ impl QuickPptx {
             create_pptx_with_content(&self.title, self.slides)
         }
     }
-    
+
     /// Build and save to a file
-    pub fn save(self, path: &str) -> std::result::Result<(), Box<dyn std::error::Error>> {
+    pub fn save(self, path: &str) -> crate::exc::Result<()> {
         let data = self.build()?;
         std::fs::write(path, data)?;
         Ok(())

@@ -75,7 +75,10 @@ pub use core::{ToXml, escape_xml};
 pub use elements::{Color, RgbColor, SchemeColor, Position, Size, Transform};
 pub use exc::{PptxError, Result};
 pub use generator::{
-    create_pptx, create_pptx_with_content, create_pptx_with_settings, SlideContent, SlideLayout,
+    create_pptx, create_pptx_with_content, create_pptx_with_settings,
+    create_pptx_to_writer, create_pptx_with_content_to_writer, create_pptx_lazy_to_writer,
+    LazySlideSource,
+    SlideContent, SlideLayout,
     TextFormat, FormattedText,
     Table, TableRow, TableCell, TableBuilder,
     Shape, ShapeType, ShapeFill, ShapeLine,
@@ -132,4 +135,4 @@ pub use web2ppt::{
     html_to_pptx, html_to_pptx_with_options, url_to_pptx, url_to_pptx_with_options,
 };
 
-pub const VERSION: &str = "0.2.4";
+pub const VERSION: &str = "0.2.7";
