@@ -131,40 +131,183 @@ fn generate_line_xml(line: &Option<ShapeLine>) -> String {
     }
 }
 
+/// Font metrics for different font families
+struct FontMetrics {
+    /// Average character width as ratio of font size (in points)
+    char_width_ratio: f64,
+    /// Line height as ratio of font size
+    line_height_ratio: f64,
+    /// Is monospace font
+    is_monospace: bool,
+}
+
+impl FontMetrics {
+    /// Get metrics for a font family
+    fn for_font(font_family: &str) -> Self {
+        match font_family.to_lowercase().as_str() {
+            "consolas" | "courier" | "courier new" | "monaco" | "menlo" => {
+                FontMetrics {
+                    char_width_ratio: 0.6,  // Monospace: wider chars
+                    line_height_ratio: 1.2,
+                    is_monospace: true,
+                }
+            }
+            "arial" | "helvetica" | "calibri" | "segoe ui" => {
+                FontMetrics {
+                    char_width_ratio: 0.5,  // Proportional: average width
+                    line_height_ratio: 1.15,
+                    is_monospace: false,
+                }
+            }
+            "times" | "times new roman" | "georgia" => {
+                FontMetrics {
+                    char_width_ratio: 0.45, // Serif: narrower
+                    line_height_ratio: 1.2,
+                    is_monospace: false,
+                }
+            }
+            _ => {
+                // Default to Calibri-like metrics
+                FontMetrics {
+                    char_width_ratio: 0.5,
+                    line_height_ratio: 1.15,
+                    is_monospace: false,
+                }
+            }
+        }
+    }
+    
+    /// Default metrics (Calibri)
+    fn default() -> Self {
+        FontMetrics {
+            char_width_ratio: 0.5,
+            line_height_ratio: 1.15,
+            is_monospace: false,
+        }
+    }
+}
+
 /// Calculate optimal font size based on shape dimensions and text content
+/// 
+/// Enhanced algorithm that considers:
+/// - Font family metrics (monospace vs proportional)
+/// - Word wrapping and line breaks
+/// - Configurable padding and margins
+/// - Character width variations
+/// - Line spacing
 fn calculate_font_size(text: &str, width_emu: u32, height_emu: u32) -> u32 {
-    // Convert EMU to approximate character width
-    // 1 inch = 914400 EMU, average char width at 18pt ≈ 0.1 inch
-    let width_inches = width_emu as f64 / 914400.0;
-    let height_inches = height_emu as f64 / 914400.0;
+    calculate_font_size_with_font(text, width_emu, height_emu, None)
+}
+
+/// Calculate optimal font size with specific font family
+fn calculate_font_size_with_font(
+    text: &str,
+    width_emu: u32,
+    height_emu: u32,
+    font_family: Option<&str>,
+) -> u32 {
+    // Convert EMU to points (1 inch = 914400 EMU, 1 inch = 72 points)
+    let width_pt = (width_emu as f64 / 914400.0) * 72.0;
+    let height_pt = (height_emu as f64 / 914400.0) * 72.0;
     
-    // Account for padding (roughly 10% on each side)
-    let usable_width = width_inches * 0.8;
-    let usable_height = height_inches * 0.8;
+    // Get font metrics
+    let metrics = font_family
+        .map(FontMetrics::for_font)
+        .unwrap_or_else(FontMetrics::default);
     
-    // Get text metrics
+    // Configurable padding (EMU to points)
+    // Default: 0.1 inch (7.2 pt) on each side
+    let padding_horizontal = 14.4; // 0.2 inch total (left + right)
+    let padding_vertical = 14.4;   // 0.2 inch total (top + bottom)
+    
+    let usable_width = (width_pt - padding_horizontal).max(10.0);
+    let usable_height = (height_pt - padding_vertical).max(10.0);
+    
+    // Analyze text structure
     let lines: Vec<&str> = text.lines().collect();
     let num_lines = lines.len().max(1);
-    let max_line_len = lines.iter().map(|l| l.chars().count()).max().unwrap_or(1);
     
-    // Calculate font size based on width constraint
-    // At 18pt (1800 hundredths), average char is ~0.1 inch
-    // So chars_per_inch ≈ 10 at 18pt, scales inversely with font size
-    let chars_that_fit_width = usable_width * 10.0; // at 18pt
-    let width_scale = chars_that_fit_width / max_line_len as f64;
-    let font_from_width = (1800.0 * width_scale).min(4400.0); // max 44pt
+    // Calculate effective line count with word wrapping
+    let (effective_lines, max_chars_per_line) = if metrics.is_monospace {
+        // Monospace: simple character counting
+        let max_len = lines.iter().map(|l| l.chars().count()).max().unwrap_or(1);
+        (num_lines as f64, max_len as f64)
+    } else {
+        // Proportional: estimate with word wrapping
+        estimate_wrapped_lines(text, &lines)
+    };
     
-    // Calculate font size based on height constraint
-    // At 18pt, line height ≈ 0.25 inch
-    let lines_that_fit = usable_height / 0.25;
-    let height_scale = lines_that_fit / num_lines as f64;
-    let font_from_height = (1800.0 * height_scale).min(4400.0);
+    // Calculate font size from width constraint
+    // char_width = font_size * char_width_ratio
+    // total_width = char_width * chars_per_line
+    // font_size = usable_width / (chars_per_line * char_width_ratio)
+    let font_from_width = if max_chars_per_line > 0.0 {
+        usable_width / (max_chars_per_line * metrics.char_width_ratio)
+    } else {
+        72.0 // Default to 72pt if no text
+    };
     
-    // Use the smaller of the two to ensure text fits
-    let optimal_size = font_from_width.min(font_from_height);
+    // Calculate font size from height constraint
+    // line_height = font_size * line_height_ratio
+    // total_height = line_height * num_lines
+    // font_size = usable_height / (num_lines * line_height_ratio)
+    let font_from_height = if effective_lines > 0.0 {
+        usable_height / (effective_lines * metrics.line_height_ratio)
+    } else {
+        72.0
+    };
     
-    // Clamp to reasonable range: 800 (8pt) to 4400 (44pt)
-    optimal_size.clamp(800.0, 4400.0) as u32
+    // Use the smaller to ensure text fits in both dimensions
+    let optimal_size_pt = font_from_width.min(font_from_height);
+    
+    // Convert points to hundredths of a point (PowerPoint format)
+    let optimal_size_hundredths = (optimal_size_pt * 100.0) as u32;
+    
+    // Clamp to reasonable range: 600 (6pt) to 7200 (72pt)
+    // More generous range for better flexibility
+    optimal_size_hundredths.clamp(600, 7200)
+}
+
+/// Estimate number of lines after word wrapping for proportional fonts
+fn estimate_wrapped_lines(text: &str, lines: &[&str]) -> (f64, f64) {
+    let mut total_lines = 0.0;
+    let mut max_chars: f64 = 0.0;
+    
+    for line in lines {
+        if line.is_empty() {
+            total_lines += 1.0;
+            continue;
+        }
+        
+        // Estimate average word length
+        let words: Vec<&str> = line.split_whitespace().collect();
+        let word_count = words.len();
+        
+        if word_count == 0 {
+            total_lines += 1.0;
+            continue;
+        }
+        
+        // Average characters per word (including space)
+        let avg_word_len = (line.chars().count() as f64) / (word_count as f64);
+        
+        // Estimate: longer lines might wrap
+        let char_count = line.chars().count() as f64;
+        max_chars = max_chars.max(char_count);
+        
+        // If line is very long, assume it might wrap
+        // This is a heuristic - actual wrapping depends on font size
+        if char_count > 50.0 {
+            // Estimate 1.5x lines for very long text
+            total_lines += 1.5;
+        } else if char_count > 30.0 {
+            total_lines += 1.2;
+        } else {
+            total_lines += 1.0;
+        }
+    }
+    
+    (total_lines, max_chars)
 }
 
 /// Calculate if a color is dark (needs white text) or light (needs black text)
@@ -233,22 +376,33 @@ fn generate_text_xml_with_autofit(text: &Option<String>, width: u32, height: u32
                 let alignment = if is_multiline { "l" } else { "ctr" };
                 let anchor = if is_multiline { "t" } else { "ctr" };
                 
+                // Calculate proper text insets (margins) in EMU
+                // Standard insets: 0.1 inch (91440 EMU) on left/right, 0.05 inch (45720 EMU) on top/bottom
+                let left_inset = 91440;   // 0.1 inch
+                let top_inset = 45720;    // 0.05 inch
+                let right_inset = 91440;  // 0.1 inch
+                let bottom_inset = 45720; // 0.05 inch
+                
                 // Use PowerPoint's auto-fit feature for additional safety
                 format!(
                     r#"<p:txBody>
-<a:bodyPr wrap="square" rtlCol="0" anchor="{}">
-<a:normAutofit/>
+<a:bodyPr wrap="square" rtlCol="0" anchor="{}" lIns="{}" tIns="{}" rIns="{}" bIns="{}">
+<a:normAutofit fontScale="100000" lnSpcReduction="0"/>
 </a:bodyPr>
 <a:lstStyle/>
 <a:p>
-<a:pPr algn="{}"/>
+<a:pPr algn="{}" marL="0" marR="0" indent="0"/>
 <a:r>
-<a:rPr lang="en-US" sz="{}" dirty="0"><a:solidFill><a:srgbClr val="{}"/></a:solidFill></a:rPr>
+<a:rPr lang="en-US" sz="{}" dirty="0" smtClean="0"><a:solidFill><a:srgbClr val="{}"/></a:solidFill></a:rPr>
 <a:t>{}</a:t>
 </a:r>
 </a:p>
 </p:txBody>"#,
                     anchor,
+                    left_inset,
+                    top_inset,
+                    right_inset,
+                    bottom_inset,
                     alignment,
                     font_size,
                     text_color,
@@ -397,7 +551,7 @@ mod tests {
         // Small shape with long text should get smaller font
         let font_size = calculate_font_size("This is a very long text that needs to fit", 500_000, 300_000);
         assert!(font_size < 1800, "Font should be smaller than 18pt for small shape with long text");
-        assert!(font_size >= 800, "Font should not be smaller than 8pt");
+        assert!(font_size >= 600, "Font should not be smaller than 6pt");
     }
 
     #[test]
@@ -405,6 +559,7 @@ mod tests {
         // Large shape with short text should get larger font
         let font_size = calculate_font_size("Hi", 3_000_000, 2_000_000);
         assert!(font_size >= 1800, "Font should be at least 18pt for large shape with short text");
+        assert!(font_size <= 7200, "Font should not exceed 72pt");
     }
 
     #[test]
@@ -412,6 +567,61 @@ mod tests {
         // Multi-line text should account for height
         let font_size = calculate_font_size("Line 1\nLine 2\nLine 3\nLine 4", 2_000_000, 500_000);
         assert!(font_size < 1800, "Font should be smaller for multi-line text in short shape");
+    }
+
+    #[test]
+    fn test_font_size_with_monospace_font() {
+        // Monospace fonts have different width ratios
+        let font_size = calculate_font_size_with_font("Code text here", 1_000_000, 500_000, Some("Consolas"));
+        assert!(font_size >= 600 && font_size <= 7200, "Font size should be in valid range");
+    }
+
+    #[test]
+    fn test_font_size_with_proportional_font() {
+        // Proportional fonts (Arial, Calibri) have different metrics
+        let font_size_arial = calculate_font_size_with_font("Sample text", 1_000_000, 500_000, Some("Arial"));
+        let font_size_times = calculate_font_size_with_font("Sample text", 1_000_000, 500_000, Some("Times New Roman"));
+        
+        // Times New Roman is narrower, should allow slightly larger font
+        assert!(font_size_times >= font_size_arial, "Serif fonts should allow larger sizes");
+    }
+
+    #[test]
+    fn test_font_size_word_wrapping_estimation() {
+        // Very long single line should estimate wrapping
+        let long_text = "This is a very long line of text that will definitely need to wrap when displayed in a shape";
+        let font_size = calculate_font_size(long_text, 1_000_000, 1_000_000);
+        
+        // Should be smaller due to wrapping estimation
+        assert!(font_size < 2000, "Long text should get smaller font due to wrapping");
+    }
+
+    #[test]
+    fn test_font_metrics_for_different_families() {
+        // Test that different font families have different metrics
+        let consolas = FontMetrics::for_font("Consolas");
+        let arial = FontMetrics::for_font("Arial");
+        let times = FontMetrics::for_font("Times New Roman");
+        
+        assert!(consolas.is_monospace);
+        assert!(!arial.is_monospace);
+        assert!(!times.is_monospace);
+        
+        // Monospace should have wider char ratio
+        assert!(consolas.char_width_ratio > arial.char_width_ratio);
+        // Serif should have narrower char ratio
+        assert!(times.char_width_ratio < arial.char_width_ratio);
+    }
+
+    #[test]
+    fn test_estimate_wrapped_lines() {
+        let text = "Short line\nThis is a medium length line\nThis is a very long line that will probably wrap when rendered in a shape with limited width";
+        let lines: Vec<&str> = text.lines().collect();
+        let (total_lines, max_chars) = estimate_wrapped_lines(text, &lines);
+        
+        // Should estimate more than 3 lines due to wrapping
+        assert!(total_lines > 3.0, "Should estimate wrapped lines");
+        assert!(max_chars > 50.0, "Should track longest line");
     }
 
     #[test]
