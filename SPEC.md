@@ -210,48 +210,50 @@ GradientFill::custom(vec![
 
 #### Image Effects (v0.2.10)
 
+**Simplified API** - Chainable methods with auto-detection:
+
 ```rust
 use ppt_rs::generator::ImageBuilder;
+use ppt_rs::prelude::inches;
 
-// Shadow effect
-ImageBuilder::from_bytes(bytes, width, height, "JPEG")
-    .position(x, y)
+// Simple: Load from file (auto-detects format)
+let img = ImageBuilder::from_file("photo.jpg")
+    .at(inches(1.0), inches(2.0))
+    .build();
+
+// Auto-detect format from bytes
+let img = ImageBuilder::auto(bytes)
+    .at(inches(2.0), inches(3.0))
+    .build();
+
+// Chainable effects
+let img = ImageBuilder::from_file("photo.jpg")
+    .at(inches(1.0), inches(2.0))
+    .shadow()           // Add shadow
+    .reflection()       // Add reflection
+    .glow()            // Add glow
+    .build();
+
+// With sizing and cropping
+let img = ImageBuilder::from_file("photo.jpg")
+    .size(inches(3.0), inches(2.0))
+    .at(inches(2.0), inches(3.0))
+    .crop(0.1, 0.1, 0.1, 0.1)  // 10% crop from all sides
+    .build();
+```
+
+**Legacy API** - Still supported:
+
+```rust
+// Explicit width/height/format
+ImageBuilder::from_bytes(bytes, 2000000, 2000000, "JPEG")
+    .position(500000, 1500000)
     .build_with_shadow()
 
-// Reflection effect
-ImageBuilder::from_bytes(bytes, width, height, "JPEG")
-    .position(x, y)
+// Base64 with explicit parameters
+ImageBuilder::from_base64(data, 2000000, 2000000, "PNG")
+    .position(800000, 1200000)
     .build_with_reflection()
-
-// Glow effect
-ImageBuilder::from_bytes(bytes, width, height, "JPEG")
-    .position(x, y)
-    .build_with_glow()
-
-// Soft edges effect
-ImageBuilder::from_bytes(bytes, width, height, "JPEG")
-    .position(x, y)
-    .build_with_soft_edges()
-
-// Inner shadow effect
-ImageBuilder::from_bytes(bytes, width, height, "JPEG")
-    .position(x, y)
-    .build_with_inner_shadow()
-
-// Blur effect
-ImageBuilder::from_bytes(bytes, width, height, "JPEG")
-    .position(x, y)
-    .build_with_blur()
-
-// Cropping (left, top, right, bottom as 0.0-1.0 ratios)
-ImageBuilder::from_bytes(bytes, width, height, "JPEG")
-    .position(x, y)
-    .build_with_crop(0.1, 0.1, 0.1, 0.1)  // 10% crop from all sides
-
-// Combined effects (shadow + reflection)
-ImageBuilder::from_bytes(bytes, width, height, "JPEG")
-    .position(x, y)
-    .build_with_effects()
 ```
 
 | Effect | Description | OOXML Element |

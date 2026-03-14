@@ -450,52 +450,64 @@ let img = ImageBuilder::from_base64(base64_png, inches(2.0), inches(2.0), "PNG")
     .build();
 ```
 
-### Image Effects (NEW in v0.2.7)
+### Image Effects (NEW in v0.2.10)
 
-Apply professional visual effects to images:
+Apply professional visual effects to images with a simple, chainable API:
 
 ```rust
 use ppt_rs::generator::ImageBuilder;
+use ppt_rs::prelude::inches;
 
-// Shadow effect
-let img_shadow = ImageBuilder::from_bytes(image_bytes.clone(), 2000000, 2000000, "JPEG")
-    .position(500000, 1500000)
-    .build_with_shadow();
+// Simple: Load from file with auto-detection
+let img = ImageBuilder::from_file("photo.jpg")
+    .at(inches(1.0), inches(2.0))
+    .build();
 
-// Reflection effect
-let img_reflection = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
-    .position(800000, 1200000)
-    .build_with_reflection();
+// Auto-detect format from bytes
+let bytes = std::fs::read("photo.jpg")?;
+let img = ImageBuilder::auto(bytes)
+    .at(inches(2.0), inches(3.0))
+    .build();
 
-// Glow effect (golden aura)
-let img_glow = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
-    .position(900000, 1400000)
-    .build_with_glow();
+// Chainable effects - shadow
+let img = ImageBuilder::from_file("photo.jpg")
+    .at(inches(1.0), inches(2.0))
+    .shadow()
+    .build();
 
-// Soft edges (feathered borders)
-let img_soft = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
-    .position(900000, 1400000)
-    .build_with_soft_edges();
+// Chainable effects - reflection
+let img = ImageBuilder::from_file("photo.jpg")
+    .at(inches(3.0), inches(2.0))
+    .reflection()
+    .build();
 
-// Inner shadow (depth effect)
-let img_inner = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
-    .position(900000, 1400000)
-    .build_with_inner_shadow();
+// Chainable effects - glow
+let img = ImageBuilder::from_file("photo.jpg")
+    .at(inches(5.0), inches(2.0))
+    .glow()
+    .build();
 
-// Blur effect (artistic)
-let img_blur = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
-    .position(900000, 1400000)
-    .build_with_blur();
+// Multiple effects combined
+let img = ImageBuilder::from_file("photo.jpg")
+    .at(inches(1.0), inches(4.0))
+    .shadow()
+    .reflection()
+    .build();
 
-// Cropping (left, top, right, bottom as 0.0-1.0 ratios)
-let img_crop = ImageBuilder::from_bytes(image_bytes.clone(), 1800000, 1800000, "JPEG")
-    .position(1200000, 1800000)
-    .build_with_crop(0.1, 0.1, 0.1, 0.1); // 10% crop from all sides
+// With cropping (10% from each side)
+let img = ImageBuilder::from_file("photo.jpg")
+    .at(inches(3.0), inches(4.0))
+    .crop(0.1, 0.1, 0.1, 0.1)
+    .build();
 
-// Combined effects (shadow + reflection)
-let img_combined = ImageBuilder::from_bytes(image_bytes, 2200000, 2200000, "JPEG")
-    .position(900000, 1400000)
-    .build_with_effects();
+// All together: size, position, effects, crop
+let img = ImageBuilder::from_file("photo.jpg")
+    .size(inches(3.0), inches(2.0))
+    .at(inches(2.0), inches(3.0))
+    .shadow()
+    .glow()
+    .crop(0.05, 0.05, 0.05, 0.05)
+    .build();
 ```
 
 **Supported Effects:**

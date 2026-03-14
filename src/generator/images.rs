@@ -367,6 +367,8 @@ pub struct ImageBuilder {
     y: u32,
     format: String,
     source: Option<ImageSource>,
+    effects: Vec<ImageEffect>,
+    crop: Option<Crop>,
 }
 
 impl ImageBuilder {
@@ -386,7 +388,22 @@ impl ImageBuilder {
             y: 0,
             format,
             source: Some(ImageSource::File(filename.to_string())),
+            effects: Vec::new(),
+            crop: None,
         }
+    }
+    
+    /// Create image from file with default size (2 inches square)
+    /// 
+    /// # Example
+    /// ```
+    /// use ppt_rs::generator::ImageBuilder;
+    /// 
+    /// let img = ImageBuilder::from_file("photo.jpg").build();
+    /// ```
+    pub fn from_file(filename: &str) -> Self {
+        const DEFAULT_SIZE: u32 = 1828800; // 2 inches in EMU
+        Self::new(filename, DEFAULT_SIZE, DEFAULT_SIZE)
     }
     
     /// Create image builder from base64 data
@@ -397,7 +414,22 @@ impl ImageBuilder {
             width, height, x: 0, y: 0,
             format: upper,
             source: Some(ImageSource::Base64(data.to_string())),
+            effects: Vec::new(),
+            crop: None,
         }
+    }
+    
+    /// Create image from base64 with default size (2 inches square)
+    /// 
+    /// # Example
+    /// ```
+    /// use ppt_rs::generator::ImageBuilder;
+    /// 
+    /// let img = ImageBuilder::base64("iVBORw0KG...", "PNG").build();
+    /// ```
+    pub fn base64(data: &str, format: &str) -> Self {
+        const DEFAULT_SIZE: u32 = 1828800; // 2 inches in EMU
+        Self::from_base64(data, DEFAULT_SIZE, DEFAULT_SIZE, format)
     }
     
     /// Create image builder from bytes
@@ -408,13 +440,71 @@ impl ImageBuilder {
             width, height, x: 0, y: 0,
             format: upper,
             source: Some(ImageSource::Bytes(data)),
+            effects: Vec::new(),
+            crop: None,
         }
+    }
+    
+    /// Create image from bytes with default size (2 inches square)
+    /// 
+    /// # Example
+    /// ```no_run
+    /// use ppt_rs::generator::ImageBuilder;
+    /// 
+    /// let bytes = std::fs::read("photo.jpg").unwrap();
+    /// let img = ImageBuilder::bytes(bytes, "JPEG").build();
+    /// ```
+    pub fn bytes(data: Vec<u8>, format: &str) -> Self {
+        const DEFAULT_SIZE: u32 = 1828800; // 2 inches in EMU
+        Self::from_bytes(data, DEFAULT_SIZE, DEFAULT_SIZE, format)
+    }
+    
+    /// Auto-detect format from bytes and create image with default size
+    /// 
+    /// # Example
+    /// ```no_run
+    /// use ppt_rs::generator::ImageBuilder;
+    /// 
+    /// let bytes = std::fs::read("photo.jpg").unwrap();
+    /// let img = ImageBuilder::auto(bytes).build();
+    /// ```
+    pub fn auto(data: Vec<u8>) -> Self {
+        const DEFAULT_SIZE: u32 = 1828800; // 2 inches in EMU
+        
+        // Detect format from magic bytes
+        let format = if data.len() >= 4 {
+            if &data[0..4] == b"\x89PNG" {
+                "PNG"
+            } else if data.len() >= 2 && &data[0..2] == b"\xFF\xD8" {
+                "JPEG"
+            } else if data.len() >= 6 && &data[0..6] == b"GIF89a" || &data[0..6] == b"GIF87a" {
+                "GIF"
+            } else {
+                "PNG" // default
+            }
+        } else {
+            "PNG"
+        };
+        
+        Self::from_bytes(data, DEFAULT_SIZE, DEFAULT_SIZE, format)
     }
 
     /// Set image position
     pub fn position(mut self, x: u32, y: u32) -> Self {
         self.x = x;
         self.y = y;
+        self
+    }
+    
+    /// Set image position at (x, y) - alias for position()
+    pub fn at(self, x: u32, y: u32) -> Self {
+        self.position(x, y)
+    }
+    
+    /// Set image size
+    pub fn size(mut self, width: u32, height: u32) -> Self {
+        self.width = width;
+        self.height = height;
         self
     }
 
@@ -424,7 +514,7 @@ impl ImageBuilder {
         self
     }
 
-    /// Scale to width
+    /// Scale to width (maintains aspect ratio)
     pub fn scale_to_width(mut self, width: u32) -> Self {
         let ratio = self.width as f64 / self.height as f64;
         self.width = width;
@@ -432,11 +522,53 @@ impl ImageBuilder {
         self
     }
 
-    /// Scale to height
+    /// Scale to height (maintains aspect ratio)
     pub fn scale_to_height(mut self, height: u32) -> Self {
         let ratio = self.width as f64 / self.height as f64;
         self.height = height;
         self.width = (height as f64 * ratio) as u32;
+        self
+    }
+    
+    /// Add shadow effect (chainable)
+    pub fn shadow(mut self) -> Self {
+        self.effects.push(ImageEffect::Shadow);
+        self
+    }
+    
+    /// Add reflection effect (chainable)
+    pub fn reflection(mut self) -> Self {
+        self.effects.push(ImageEffect::Reflection);
+        self
+    }
+    
+    /// Add glow effect (chainable)
+    pub fn glow(mut self) -> Self {
+        self.effects.push(ImageEffect::Glow);
+        self
+    }
+    
+    /// Add soft edges effect (chainable)
+    pub fn soft_edges(mut self) -> Self {
+        self.effects.push(ImageEffect::SoftEdges);
+        self
+    }
+    
+    /// Add inner shadow effect (chainable)
+    pub fn inner_shadow(mut self) -> Self {
+        self.effects.push(ImageEffect::InnerShadow);
+        self
+    }
+    
+    /// Add blur effect (chainable)
+    pub fn blur(mut self) -> Self {
+        self.effects.push(ImageEffect::Blur);
+        self
+    }
+    
+    /// Add crop (chainable)
+    pub fn crop(mut self, left: f64, top: f64, right: f64, bottom: f64) -> Self {
+        self.crop = Some(Crop::new(left, top, right, bottom));
         self
     }
 
@@ -450,8 +582,8 @@ impl ImageBuilder {
             y: self.y,
             format: self.format,
             source: self.source,
-            crop: None,
-            effects: Vec::new(),
+            crop: self.crop,
+            effects: self.effects,
         }
     }
     

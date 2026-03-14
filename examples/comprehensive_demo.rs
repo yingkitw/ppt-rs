@@ -463,15 +463,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let photo3 = &stock_photos[2 % photo_count];
     
     // SLIDE 13: Shadow Effects
-    let img1_shadow = ImageBuilder::from_bytes(photo1.0.clone(), 2000000, 2000000, &photo1.1)
-        .position(500000, 1500000)
-        .build_with_shadow();
-    let img2_shadow = ImageBuilder::from_bytes(photo2.0.clone(), 2500000, 1800000, &photo2.1)
-        .position(3200000, 1500000)
-        .build_with_shadow();
-    let img3_shadow = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1800000, &photo3.1)
-        .position(6200000, 1500000)
-        .build_with_shadow();
+    let img1_shadow = ImageBuilder::auto(photo1.0.clone())
+        .size(2000000, 2000000)
+        .at(500000, 1500000)
+        .shadow()
+        .build();
+    let img2_shadow = ImageBuilder::auto(photo2.0.clone())
+        .size(2500000, 1800000)
+        .at(3200000, 1500000)
+        .shadow()
+        .build();
+    let img3_shadow = ImageBuilder::auto(photo3.0.clone())
+        .size(2300000, 1800000)
+        .at(6200000, 1500000)
+        .shadow()
+        .build();
     
     slides.push(
         SlideContent::new("Image Effects: Shadow (Outer Shadow)")
@@ -486,15 +492,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // =========================================================================
     println!("🖼️  Slide 14: Images with Reflection Effects");
     
-    let img1_reflection = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
-        .position(800000, 1200000)
-        .build_with_reflection();
-    let img2_reflection = ImageBuilder::from_bytes(photo2.0.clone(), 2800000, 2000000, &photo2.1)
-        .position(3500000, 1200000)
-        .build_with_reflection();
-    let img3_reflection = ImageBuilder::from_bytes(photo3.0.clone(), 2400000, 2000000, &photo3.1)
-        .position(6500000, 1200000)
-        .build_with_reflection();
+    let img1_reflection = ImageBuilder::auto(photo1.0.clone())
+        .size(2200000, 2200000)
+        .at(800000, 1200000)
+        .reflection()
+        .build();
+    let img2_reflection = ImageBuilder::auto(photo2.0.clone())
+        .size(2800000, 2000000)
+        .at(3500000, 1200000)
+        .reflection()
+        .build();
+    let img3_reflection = ImageBuilder::auto(photo3.0.clone())
+        .size(2400000, 2000000)
+        .at(6500000, 1200000)
+        .reflection()
+        .build();
     
     slides.push(
         SlideContent::new("Image Effects: Reflection (Mirror Effect)")
@@ -509,15 +521,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // =========================================================================
     println!("🖼️  Slide 15: Images with Cropping");
     
-    let img1_crop = ImageBuilder::from_bytes(photo1.0.clone(), 1800000, 1800000, &photo1.1)
-        .position(1200000, 1800000)
-        .build_with_crop(0.1, 0.1, 0.1, 0.1);
-    let img2_crop = ImageBuilder::from_bytes(photo2.0.clone(), 3500000, 1500000, &photo2.1)
-        .position(3500000, 1800000)
-        .build_with_crop(0.0, 0.2, 0.0, 0.2);
-    let img3_crop = ImageBuilder::from_bytes(photo3.0.clone(), 2000000, 2000000, &photo3.1)
-        .position(7200000, 1800000)
-        .build_with_crop(0.15, 0.0, 0.15, 0.0);
+    let img1_crop = ImageBuilder::auto(photo1.0.clone())
+        .size(1800000, 1800000)
+        .at(1200000, 1800000)
+        .crop(0.1, 0.1, 0.1, 0.1)
+        .build();
+    let img2_crop = ImageBuilder::auto(photo2.0.clone())
+        .size(3500000, 1500000)
+        .at(3500000, 1800000)
+        .crop(0.0, 0.2, 0.0, 0.2)
+        .build();
+    let img3_crop = ImageBuilder::auto(photo3.0.clone())
+        .size(2000000, 2000000)
+        .at(7200000, 1800000)
+        .crop(0.15, 0.0, 0.15, 0.0)
+        .build();
     
     slides.push(
         SlideContent::new("Image Cropping: All Sides, Top/Bottom, Left/Right")
@@ -532,15 +550,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // =========================================================================
     println!("🖼️  Slide 16: Images with Glow Effects");
     
-    let img1_glow = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
-        .position(900000, 1400000)
-        .build_with_glow();
-    let img2_glow = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
-        .position(3600000, 1400000)
-        .build_with_glow();
-    let img3_glow = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
-        .position(6600000, 1400000)
-        .build_with_glow();
+    let img1_glow = ImageBuilder::auto(photo1.0.clone())
+        .size(2200000, 2200000)
+        .at(900000, 1400000)
+        .glow()
+        .build();
+    let img2_glow = ImageBuilder::auto(photo2.0.clone())
+        .size(2600000, 1900000)
+        .at(3600000, 1400000)
+        .glow()
+        .build();
+    let img3_glow = ImageBuilder::auto(photo3.0.clone())
+        .size(2300000, 1900000)
+        .at(6600000, 1400000)
+        .glow()
+        .build();
     
     slides.push(
         SlideContent::new("Image Effects: Glow (Golden Aura)")
@@ -555,15 +579,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // =========================================================================
     println!("🖼️  Slide 17: Images with Soft Edges");
     
-    let img1_soft = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
-        .position(900000, 1400000)
-        .build_with_soft_edges();
-    let img2_soft = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
-        .position(3600000, 1400000)
-        .build_with_soft_edges();
-    let img3_soft = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
-        .position(6600000, 1400000)
-        .build_with_soft_edges();
+    let img1_soft = ImageBuilder::auto(photo1.0.clone())
+        .size(2200000, 2200000)
+        .at(900000, 1400000)
+        .soft_edges()
+        .build();
+    let img2_soft = ImageBuilder::auto(photo2.0.clone())
+        .size(2600000, 1900000)
+        .at(3600000, 1400000)
+        .soft_edges()
+        .build();
+    let img3_soft = ImageBuilder::auto(photo3.0.clone())
+        .size(2300000, 1900000)
+        .at(6600000, 1400000)
+        .soft_edges()
+        .build();
     
     slides.push(
         SlideContent::new("Image Effects: Soft Edges (Feathered)")
@@ -578,15 +608,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // =========================================================================
     println!("🖼️  Slide 18: Images with Inner Shadow");
     
-    let img1_inner = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
-        .position(900000, 1400000)
-        .build_with_inner_shadow();
-    let img2_inner = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
-        .position(3600000, 1400000)
-        .build_with_inner_shadow();
-    let img3_inner = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
-        .position(6600000, 1400000)
-        .build_with_inner_shadow();
+    let img1_inner = ImageBuilder::auto(photo1.0.clone())
+        .size(2200000, 2200000)
+        .at(900000, 1400000)
+        .inner_shadow()
+        .build();
+    let img2_inner = ImageBuilder::auto(photo2.0.clone())
+        .size(2600000, 1900000)
+        .at(3600000, 1400000)
+        .inner_shadow()
+        .build();
+    let img3_inner = ImageBuilder::auto(photo3.0.clone())
+        .size(2300000, 1900000)
+        .at(6600000, 1400000)
+        .inner_shadow()
+        .build();
     
     slides.push(
         SlideContent::new("Image Effects: Inner Shadow (Depth)")
@@ -601,15 +637,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // =========================================================================
     println!("🖼️  Slide 19: Images with Blur Effect");
     
-    let img1_blur = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
-        .position(900000, 1400000)
-        .build_with_blur();
-    let img2_blur = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
-        .position(3600000, 1400000)
-        .build_with_blur();
-    let img3_blur = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
-        .position(6600000, 1400000)
-        .build_with_blur();
+    let img1_blur = ImageBuilder::auto(photo1.0.clone())
+        .size(2200000, 2200000)
+        .at(900000, 1400000)
+        .blur()
+        .build();
+    let img2_blur = ImageBuilder::auto(photo2.0.clone())
+        .size(2600000, 1900000)
+        .at(3600000, 1400000)
+        .blur()
+        .build();
+    let img3_blur = ImageBuilder::auto(photo3.0.clone())
+        .size(2300000, 1900000)
+        .at(6600000, 1400000)
+        .blur()
+        .build();
     
     slides.push(
         SlideContent::new("Image Effects: Blur (Artistic)")
@@ -624,15 +666,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // =========================================================================
     println!("🖼️  Slide 20: Images with Combined Effects");
     
-    let img1_combined = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
-        .position(900000, 1400000)
-        .build_with_effects();
-    let img2_combined = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
-        .position(3600000, 1400000)
-        .build_with_effects();
-    let img3_combined = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
-        .position(6600000, 1400000)
-        .build_with_effects();
+    let img1_combined = ImageBuilder::auto(photo1.0.clone())
+        .size(2200000, 2200000)
+        .at(900000, 1400000)
+        .shadow()
+        .reflection()
+        .build();
+    let img2_combined = ImageBuilder::auto(photo2.0.clone())
+        .size(2600000, 1900000)
+        .at(3600000, 1400000)
+        .shadow()
+        .reflection()
+        .build();
+    let img3_combined = ImageBuilder::auto(photo3.0.clone())
+        .size(2300000, 1900000)
+        .at(6600000, 1400000)
+        .shadow()
+        .reflection()
+        .build();
     
     slides.push(
         SlideContent::new("Combined Effects: Shadow + Reflection")
