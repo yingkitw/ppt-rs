@@ -37,6 +37,14 @@ pub use crate::elements::{Color, RgbColor, Position, Size};
 pub use crate::core::{Dimension, FlexPosition, FlexSize};
 pub use crate::exc::Result;
 
+// Re-export simplified helpers
+pub use crate::helpers::{
+    rect, circle, ellipse, rounded_rect, triangle, diamond,
+    image, image_file,
+    rgb, hex,
+    ShapeExt,
+};
+
 /// Font size module with common presets (in points)
 /// 
 /// These values can be used directly with `content_size()` and `title_size()`:

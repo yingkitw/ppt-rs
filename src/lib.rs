@@ -56,6 +56,9 @@ pub mod shared;
 // Easy-to-use prelude
 pub mod prelude;
 
+// Simplified helper functions
+pub mod helpers;
+
 // Templates for common presentations
 pub mod templates;
 

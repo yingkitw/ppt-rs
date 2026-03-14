@@ -24,8 +24,7 @@ use ppt_rs::generator::{
     create_pptx_with_settings, SlideContent, SlideLayout,
     TableRow, TableCell, TableBuilder,
     ChartType, ChartSeries, ChartBuilder,
-    Shape, ShapeType, ShapeFill, ShapeLine,
-    Image, ImageBuilder,
+    ImageBuilder, ShapeType, ShapeFill,
     Connector, ConnectorLine, ArrowType, ArrowSize, LineDash,
     BulletStyle, BulletPoint,
     // Advanced features actually embedded in PPTX output
@@ -35,7 +34,12 @@ use ppt_rs::generator::{
     PresentationSettings,
 };
 use ppt_rs::generator::shapes::{GradientFill, GradientDirection};
-use ppt_rs::prelude::{colors, themes, font_sizes, Dimension};
+use ppt_rs::prelude::{
+    colors, themes, font_sizes, inches, Dimension,
+    // New simplified API helpers
+    rect, circle, ellipse, rounded_rect, triangle, diamond,
+    hex, ShapeExt, shapes,
+};
 use ppt_rs::opc::Package;
 use ppt_rs::parts::{
     SlideLayoutPart, LayoutType,
@@ -234,33 +238,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // =========================================================================
     println!("🔷 Slide 9: Shapes with Fills");
     
-    let rect = Shape::new(ShapeType::Rectangle, 500000, 1600000, 2000000, 1000000)
-        .with_fill(ShapeFill::new("4F81BD"))
-        .with_text("Rectangle");
+    let rect_shape = rect(0.5, 1.75, 2.2, 1.1)
+        .fill(hex("4F81BD"))
+        .text("Rectangle");
     
-    let ellipse = Shape::new(ShapeType::Ellipse, 3000000, 1600000, 2000000, 1000000)
-        .with_fill(ShapeFill::new("9BBB59"))
-        .with_text("Ellipse");
+    let ellipse_shape = ellipse(3.3, 1.75, 2.2, 1.1)
+        .fill(hex("9BBB59"))
+        .text("Ellipse");
     
-    let rounded = Shape::new(ShapeType::RoundedRectangle, 5500000, 1600000, 2000000, 1000000)
-        .with_fill(ShapeFill::new("C0504D"))
-        .with_text("Rounded");
+    let rounded = rounded_rect(6.0, 1.75, 2.2, 1.1)
+        .fill(hex("C0504D"))
+        .text("Rounded");
     
-    let triangle = Shape::new(ShapeType::Triangle, 1500000, 3000000, 1500000, 1200000)
-        .with_fill(ShapeFill::new("8064A2"))
-        .with_text("Triangle");
+    let triangle_shape = triangle(1.6, 3.3, 1.6, 1.3)
+        .fill(hex("8064A2"))
+        .text("Triangle");
     
-    let diamond = Shape::new(ShapeType::Diamond, 4000000, 3000000, 1500000, 1200000)
-        .with_fill(ShapeFill::new("F79646"))
-        .with_text("Diamond");
+    let diamond_shape = diamond(4.4, 3.3, 1.6, 1.3)
+        .fill(hex("F79646"))
+        .text("Diamond");
     
     slides.push(
         SlideContent::new("Shape Types with Color Fills")
-            .add_shape(rect)
-            .add_shape(ellipse)
+            .add_shape(rect_shape)
+            .add_shape(ellipse_shape)
             .add_shape(rounded)
-            .add_shape(triangle)
-            .add_shape(diamond)
+            .add_shape(triangle_shape)
+            .add_shape(diamond_shape)
             .title_color("1F497D")
     );
 
@@ -270,29 +274,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🌈 Slide 10: Gradient Fills");
     
     // Horizontal gradient
-    let gradient_h = Shape::new(ShapeType::Rectangle, 500000, 1600000, 2500000, 1200000)
+    let gradient_h = rect(0.5, 1.75, 2.7, 1.3)
         .with_gradient(GradientFill::linear("1565C0", "42A5F5", GradientDirection::Horizontal))
-        .with_text("Horizontal");
+        .text("Horizontal");
     
     // Vertical gradient
-    let gradient_v = Shape::new(ShapeType::Rectangle, 3200000, 1600000, 2500000, 1200000)
+    let gradient_v = rect(3.5, 1.75, 2.7, 1.3)
         .with_gradient(GradientFill::linear("2E7D32", "81C784", GradientDirection::Vertical))
-        .with_text("Vertical");
+        .text("Vertical");
     
     // Diagonal gradient
-    let gradient_d = Shape::new(ShapeType::RoundedRectangle, 5900000, 1600000, 2500000, 1200000)
+    let gradient_d = rounded_rect(6.5, 1.75, 2.7, 1.3)
         .with_gradient(GradientFill::linear("C62828", "EF9A9A", GradientDirection::DiagonalDown))
-        .with_text("Diagonal");
+        .text("Diagonal");
     
     // Three-color gradient
-    let gradient_3 = Shape::new(ShapeType::Ellipse, 1800000, 3200000, 2500000, 1200000)
+    let gradient_3 = ellipse(2.0, 3.5, 2.7, 1.3)
         .with_gradient(GradientFill::three_color("FF6F00", "FFC107", "FFEB3B", GradientDirection::Horizontal))
-        .with_text("3-Color");
+        .text("3-Color");
     
     // Custom angle gradient
-    let gradient_angle = Shape::new(ShapeType::RoundedRectangle, 4800000, 3200000, 2500000, 1200000)
+    let gradient_angle = rounded_rect(5.2, 3.5, 2.7, 1.3)
         .with_gradient(GradientFill::linear("7B1FA2", "E1BEE7", GradientDirection::Angle(135)))
-        .with_text("135° Angle");
+        .text("135° Angle");
     
     slides.push(
         SlideContent::new("Gradient Fills - Multiple Directions")
@@ -310,27 +314,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("👻 Slide 11: Transparency Effects");
     
     // Base shape (fully opaque)
-    let base = Shape::new(ShapeType::Rectangle, 1000000, 1800000, 3000000, 2000000)
-        .with_fill(ShapeFill::new("1565C0"))
-        .with_text("Base (100%)");
+    let base = rect(1.1, 2.0, 3.3, 2.2)
+        .fill(hex("1565C0"))
+        .text("Base (100%)");
     
     // 25% transparent overlay
-    let trans_25 = Shape::new(ShapeType::Rectangle, 2000000, 2200000, 2500000, 1500000)
+    let trans_25 = rect(2.2, 2.4, 2.7, 1.6)
         .with_fill(ShapeFill::new("F44336").with_transparency(25))
-        .with_line(ShapeLine::new("B71C1C", 25400))
-        .with_text("25% Transparent");
+        .stroke(hex("B71C1C"), 2.0)
+        .text("25% Transparent");
     
     // 50% transparent overlay
-    let trans_50 = Shape::new(ShapeType::Ellipse, 4500000, 1800000, 2500000, 2000000)
+    let trans_50 = ellipse(4.9, 2.0, 2.7, 2.2)
         .with_fill(ShapeFill::new("4CAF50").with_transparency(50))
-        .with_line(ShapeLine::new("1B5E20", 25400))
-        .with_text("50% Transparent");
+        .stroke(hex("1B5E20"), 2.0)
+        .text("50% Transparent");
     
     // 75% transparent overlay
-    let trans_75 = Shape::new(ShapeType::RoundedRectangle, 5500000, 2500000, 2500000, 1500000)
+    let trans_75 = rounded_rect(6.0, 2.7, 2.7, 1.6)
         .with_fill(ShapeFill::new("FF9800").with_transparency(75))
-        .with_line(ShapeLine::new("E65100", 25400))
-        .with_text("75% Transparent");
+        .stroke(hex("E65100"), 2.0)
+        .text("75% Transparent");
     
     slides.push(
         SlideContent::new("Transparency Effects - Overlapping Shapes")
@@ -347,20 +351,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔗 Slide 12: Styled Connectors");
     
     // Create shapes to connect
-    let box1 = Shape::new(ShapeType::RoundedRectangle, 500000, 1800000, 1800000, 800000)
+    let box1 = rounded_rect(0.5, 2.0, 2.0, 0.9)
         .with_id(100)
-        .with_fill(ShapeFill::new("1565C0"))
-        .with_text("Start");
+        .fill(hex("1565C0"))
+        .text("Start");
     
-    let box2 = Shape::new(ShapeType::RoundedRectangle, 3500000, 1800000, 1800000, 800000)
+    let box2 = rounded_rect(3.8, 2.0, 2.0, 0.9)
         .with_id(101)
-        .with_fill(ShapeFill::new("2E7D32"))
-        .with_text("Process");
+        .fill(hex("2E7D32"))
+        .text("Process");
     
-    let box3 = Shape::new(ShapeType::RoundedRectangle, 6500000, 1800000, 1800000, 800000)
+    let box3 = rounded_rect(7.1, 2.0, 2.0, 0.9)
         .with_id(102)
-        .with_fill(ShapeFill::new("C62828"))
-        .with_text("End");
+        .fill(hex("C62828"))
+        .text("End");
     
     // Straight connector with arrow
     let conn1 = Connector::straight(2300000, 2200000, 3500000, 2200000)
@@ -375,20 +379,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_arrow_size(ArrowSize::Medium);
     
     // Curved connector examples
-    let box4 = Shape::new(ShapeType::Ellipse, 1000000, 3200000, 1500000, 800000)
+    let box4 = ellipse(1.1, 3.5, 1.6, 0.9)
         .with_id(103)
-        .with_fill(ShapeFill::new("7B1FA2"))
-        .with_text("A");
+        .fill(hex("7B1FA2"))
+        .text("A");
     
-    let box5 = Shape::new(ShapeType::Ellipse, 4000000, 3200000, 1500000, 800000)
+    let box5 = ellipse(4.4, 3.5, 1.6, 0.9)
         .with_id(104)
-        .with_fill(ShapeFill::new("00838F"))
-        .with_text("B");
+        .fill(hex("00838F"))
+        .text("B");
     
-    let box6 = Shape::new(ShapeType::Ellipse, 7000000, 3200000, 1500000, 800000)
+    let box6 = ellipse(7.7, 3.5, 1.6, 0.9)
         .with_id(105)
-        .with_fill(ShapeFill::new("EF6C00"))
-        .with_text("C");
+        .fill(hex("EF6C00"))
+        .text("C");
     
     // Curved connector with diamond arrow
     let conn3 = Connector::curved(2500000, 3600000, 4000000, 3600000)
@@ -464,18 +468,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // SLIDE 13: Shadow Effects
     let img1_shadow = ImageBuilder::auto(photo1.0.clone())
-        .size(2000000, 2000000)
-        .at(500000, 1500000)
+        .size(inches(2.2), inches(2.2))
+        .at(inches(0.5), inches(1.6))
         .shadow()
         .build();
     let img2_shadow = ImageBuilder::auto(photo2.0.clone())
-        .size(2500000, 1800000)
-        .at(3200000, 1500000)
+        .size(inches(2.7), inches(2.0))
+        .at(inches(3.5), inches(1.6))
         .shadow()
         .build();
     let img3_shadow = ImageBuilder::auto(photo3.0.clone())
-        .size(2300000, 1800000)
-        .at(6200000, 1500000)
+        .size(inches(2.5), inches(2.0))
+        .at(inches(6.8), inches(1.6))
         .shadow()
         .build();
     
@@ -493,18 +497,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🖼️  Slide 14: Images with Reflection Effects");
     
     let img1_reflection = ImageBuilder::auto(photo1.0.clone())
-        .size(2200000, 2200000)
-        .at(800000, 1200000)
+        .size(inches(2.4), inches(2.4))
+        .at(inches(0.9), inches(1.3))
         .reflection()
         .build();
     let img2_reflection = ImageBuilder::auto(photo2.0.clone())
-        .size(2800000, 2000000)
-        .at(3500000, 1200000)
+        .size(inches(3.1), inches(2.2))
+        .at(inches(3.8), inches(1.3))
         .reflection()
         .build();
     let img3_reflection = ImageBuilder::auto(photo3.0.clone())
-        .size(2400000, 2000000)
-        .at(6500000, 1200000)
+        .size(inches(2.6), inches(2.2))
+        .at(inches(7.1), inches(1.3))
         .reflection()
         .build();
     
@@ -522,18 +526,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🖼️  Slide 15: Images with Cropping");
     
     let img1_crop = ImageBuilder::auto(photo1.0.clone())
-        .size(1800000, 1800000)
-        .at(1200000, 1800000)
+        .size(inches(2.0), inches(2.0))
+        .at(inches(1.3), inches(2.0))
         .crop(0.1, 0.1, 0.1, 0.1)
         .build();
     let img2_crop = ImageBuilder::auto(photo2.0.clone())
-        .size(3500000, 1500000)
-        .at(3500000, 1800000)
+        .size(inches(3.8), inches(1.6))
+        .at(inches(3.8), inches(2.0))
         .crop(0.0, 0.2, 0.0, 0.2)
         .build();
     let img3_crop = ImageBuilder::auto(photo3.0.clone())
-        .size(2000000, 2000000)
-        .at(7200000, 1800000)
+        .size(inches(2.2), inches(2.2))
+        .at(inches(7.9), inches(2.0))
         .crop(0.15, 0.0, 0.15, 0.0)
         .build();
     
@@ -551,18 +555,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🖼️  Slide 16: Images with Glow Effects");
     
     let img1_glow = ImageBuilder::auto(photo1.0.clone())
-        .size(2200000, 2200000)
-        .at(900000, 1400000)
+        .size(inches(2.4), inches(2.4))
+        .at(inches(1.0), inches(1.5))
         .glow()
         .build();
     let img2_glow = ImageBuilder::auto(photo2.0.clone())
-        .size(2600000, 1900000)
-        .at(3600000, 1400000)
+        .size(inches(2.9), inches(2.1))
+        .at(inches(4.0), inches(1.5))
         .glow()
         .build();
     let img3_glow = ImageBuilder::auto(photo3.0.clone())
-        .size(2300000, 1900000)
-        .at(6600000, 1400000)
+        .size(inches(2.5), inches(2.1))
+        .at(inches(7.2), inches(1.5))
         .glow()
         .build();
     
@@ -580,18 +584,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🖼️  Slide 17: Images with Soft Edges");
     
     let img1_soft = ImageBuilder::auto(photo1.0.clone())
-        .size(2200000, 2200000)
-        .at(900000, 1400000)
+        .size(inches(2.4), inches(2.4))
+        .at(inches(1.0), inches(1.5))
         .soft_edges()
         .build();
     let img2_soft = ImageBuilder::auto(photo2.0.clone())
-        .size(2600000, 1900000)
-        .at(3600000, 1400000)
+        .size(inches(2.9), inches(2.1))
+        .at(inches(4.0), inches(1.5))
         .soft_edges()
         .build();
     let img3_soft = ImageBuilder::auto(photo3.0.clone())
-        .size(2300000, 1900000)
-        .at(6600000, 1400000)
+        .size(inches(2.5), inches(2.1))
+        .at(inches(7.2), inches(1.5))
         .soft_edges()
         .build();
     
@@ -609,18 +613,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🖼️  Slide 18: Images with Inner Shadow");
     
     let img1_inner = ImageBuilder::auto(photo1.0.clone())
-        .size(2200000, 2200000)
-        .at(900000, 1400000)
+        .size(inches(2.4), inches(2.4))
+        .at(inches(1.0), inches(1.5))
         .inner_shadow()
         .build();
     let img2_inner = ImageBuilder::auto(photo2.0.clone())
-        .size(2600000, 1900000)
-        .at(3600000, 1400000)
+        .size(inches(2.9), inches(2.1))
+        .at(inches(4.0), inches(1.5))
         .inner_shadow()
         .build();
     let img3_inner = ImageBuilder::auto(photo3.0.clone())
-        .size(2300000, 1900000)
-        .at(6600000, 1400000)
+        .size(inches(2.5), inches(2.1))
+        .at(inches(7.2), inches(1.5))
         .inner_shadow()
         .build();
     
@@ -638,18 +642,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🖼️  Slide 19: Images with Blur Effect");
     
     let img1_blur = ImageBuilder::auto(photo1.0.clone())
-        .size(2200000, 2200000)
-        .at(900000, 1400000)
+        .size(inches(2.4), inches(2.4))
+        .at(inches(1.0), inches(1.5))
         .blur()
         .build();
     let img2_blur = ImageBuilder::auto(photo2.0.clone())
-        .size(2600000, 1900000)
-        .at(3600000, 1400000)
+        .size(inches(2.9), inches(2.1))
+        .at(inches(4.0), inches(1.5))
         .blur()
         .build();
     let img3_blur = ImageBuilder::auto(photo3.0.clone())
-        .size(2300000, 1900000)
-        .at(6600000, 1400000)
+        .size(inches(2.5), inches(2.1))
+        .at(inches(7.2), inches(1.5))
         .blur()
         .build();
     
@@ -667,20 +671,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🖼️  Slide 20: Images with Combined Effects");
     
     let img1_combined = ImageBuilder::auto(photo1.0.clone())
-        .size(2200000, 2200000)
-        .at(900000, 1400000)
+        .size(inches(2.4), inches(2.4))
+        .at(inches(1.0), inches(1.5))
         .shadow()
         .reflection()
         .build();
     let img2_combined = ImageBuilder::auto(photo2.0.clone())
-        .size(2600000, 1900000)
-        .at(3600000, 1400000)
+        .size(inches(2.9), inches(2.1))
+        .at(inches(4.0), inches(1.5))
         .shadow()
         .reflection()
         .build();
     let img3_combined = ImageBuilder::auto(photo3.0.clone())
-        .size(2300000, 1900000)
-        .at(6600000, 1400000)
+        .size(inches(2.5), inches(2.1))
+        .at(inches(7.2), inches(1.5))
         .shadow()
         .reflection()
         .build();
@@ -798,24 +802,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔷 Slide 13: Process Flow (SmartArt-style)");
     
     // Create process flow using shapes
-    let step1 = Shape::new(ShapeType::RoundedRectangle, 300000, 2000000, 1400000, 800000)
-        .with_fill(ShapeFill::new("4472C4"))
-        .with_text("1. Research");
-    let arrow1 = Shape::new(ShapeType::RightArrow, 1800000, 2200000, 400000, 400000)
-        .with_fill(ShapeFill::new("A5A5A5"));
-    let step2 = Shape::new(ShapeType::RoundedRectangle, 2300000, 2000000, 1400000, 800000)
-        .with_fill(ShapeFill::new("ED7D31"))
-        .with_text("2. Design");
-    let arrow2 = Shape::new(ShapeType::RightArrow, 3800000, 2200000, 400000, 400000)
-        .with_fill(ShapeFill::new("A5A5A5"));
-    let step3 = Shape::new(ShapeType::RoundedRectangle, 4300000, 2000000, 1400000, 800000)
-        .with_fill(ShapeFill::new("70AD47"))
-        .with_text("3. Develop");
-    let arrow3 = Shape::new(ShapeType::RightArrow, 5800000, 2200000, 400000, 400000)
-        .with_fill(ShapeFill::new("A5A5A5"));
-    let step4 = Shape::new(ShapeType::RoundedRectangle, 6300000, 2000000, 1400000, 800000)
-        .with_fill(ShapeFill::new("5B9BD5"))
-        .with_text("4. Deploy");
+    let step1 = rounded_rect(0.3, 2.2, 1.5, 0.9)
+        .fill(hex("4472C4"))
+        .text("1. Research");
+    let arrow1 = shapes::arrow_right(2.0, 2.4, 0.4, 0.4)
+        .fill(hex("A5A5A5"));
+    let step2 = rounded_rect(2.5, 2.2, 1.5, 0.9)
+        .fill(hex("ED7D31"))
+        .text("2. Design");
+    let arrow2 = shapes::arrow_right(4.2, 2.4, 0.4, 0.4)
+        .fill(hex("A5A5A5"));
+    let step3 = rounded_rect(4.7, 2.2, 1.5, 0.9)
+        .fill(hex("70AD47"))
+        .text("3. Develop");
+    let arrow3 = shapes::arrow_right(6.3, 2.4, 0.4, 0.4)
+        .fill(hex("A5A5A5"));
+    let step4 = rounded_rect(6.9, 2.2, 1.5, 0.9)
+        .fill(hex("5B9BD5"))
+        .text("4. Deploy");
     
     slides.push(
         SlideContent::new("Development Process Flow")
@@ -836,44 +840,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔷 Slide 14: Organization Chart");
     
     // CEO at top
-    let ceo = Shape::new(ShapeType::RoundedRectangle, 3500000, 1400000, 2000000, 600000)
-        .with_fill(ShapeFill::new("1F4E79"))
-        .with_text("CEO");
+    let ceo = rounded_rect(3.8, 1.5, 2.2, 0.7)
+        .fill(hex("1F4E79"))
+        .text("CEO");
     
     // Vertical line from CEO
-    let line1 = Shape::new(ShapeType::Rectangle, 4450000, 2000000, 100000, 400000)
-        .with_fill(ShapeFill::new("A5A5A5"));
+    let line1 = rect(4.9, 2.2, 0.1, 0.4)
+        .fill(hex("A5A5A5"));
     
     // Horizontal connector
-    let hline = Shape::new(ShapeType::Rectangle, 1950000, 2400000, 5100000, 50000)
-        .with_fill(ShapeFill::new("A5A5A5"));
+    let hline = rect(2.1, 2.6, 5.6, 0.05)
+        .fill(hex("A5A5A5"));
     
     // CTO, CFO, COO
-    let cto = Shape::new(ShapeType::RoundedRectangle, 1000000, 2600000, 1800000, 500000)
-        .with_fill(ShapeFill::new("2E75B6"))
-        .with_text("CTO");
-    let cfo = Shape::new(ShapeType::RoundedRectangle, 3600000, 2600000, 1800000, 500000)
-        .with_fill(ShapeFill::new("2E75B6"))
-        .with_text("CFO");
-    let coo = Shape::new(ShapeType::RoundedRectangle, 6200000, 2600000, 1800000, 500000)
-        .with_fill(ShapeFill::new("2E75B6"))
-        .with_text("COO");
+    let cto = rounded_rect(1.1, 2.8, 2.0, 0.5)
+        .fill(hex("2E75B6"))
+        .text("CTO");
+    let cfo = rounded_rect(3.9, 2.8, 2.0, 0.5)
+        .fill(hex("2E75B6"))
+        .text("CFO");
+    let coo = rounded_rect(6.8, 2.8, 2.0, 0.5)
+        .fill(hex("2E75B6"))
+        .text("COO");
     
     // Vertical lines to departments
-    let vline1 = Shape::new(ShapeType::Rectangle, 1850000, 2450000, 50000, 150000)
-        .with_fill(ShapeFill::new("A5A5A5"));
-    let vline2 = Shape::new(ShapeType::Rectangle, 4450000, 2450000, 50000, 150000)
-        .with_fill(ShapeFill::new("A5A5A5"));
-    let vline3 = Shape::new(ShapeType::Rectangle, 7050000, 2450000, 50000, 150000)
-        .with_fill(ShapeFill::new("A5A5A5"));
+    let vline1 = rect(2.0, 2.7, 0.05, 0.16)
+        .fill(hex("A5A5A5"));
+    let vline2 = rect(4.9, 2.7, 0.05, 0.16)
+        .fill(hex("A5A5A5"));
+    let vline3 = rect(7.7, 2.7, 0.05, 0.16)
+        .fill(hex("A5A5A5"));
     
     // Teams under CTO
-    let eng = Shape::new(ShapeType::Rectangle, 500000, 3300000, 1200000, 400000)
-        .with_fill(ShapeFill::new("BDD7EE"))
-        .with_text("Engineering");
-    let product = Shape::new(ShapeType::Rectangle, 1800000, 3300000, 1200000, 400000)
-        .with_fill(ShapeFill::new("BDD7EE"))
-        .with_text("Product");
+    let eng = rect(0.5, 3.6, 1.3, 0.4)
+        .fill(hex("BDD7EE"))
+        .text("Engineering");
+    let product = rect(2.0, 3.6, 1.3, 0.4)
+        .fill(hex("BDD7EE"))
+        .text("Product");
     
     slides.push(
         SlideContent::new("Organization Structure")
@@ -898,28 +902,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔷 Slide 15: PDCA Cycle Diagram");
     
     // Four quadrants for PDCA
-    let plan = Shape::new(ShapeType::RoundedRectangle, 1500000, 1600000, 2500000, 1500000)
-        .with_fill(ShapeFill::new("4472C4"))
-        .with_text("PLAN\n\nDefine goals\nand strategy");
-    let do_box = Shape::new(ShapeType::RoundedRectangle, 4500000, 1600000, 2500000, 1500000)
-        .with_fill(ShapeFill::new("ED7D31"))
-        .with_text("DO\n\nImplement\nthe plan");
-    let check = Shape::new(ShapeType::RoundedRectangle, 4500000, 3300000, 2500000, 1500000)
-        .with_fill(ShapeFill::new("70AD47"))
-        .with_text("CHECK\n\nMeasure\nresults");
-    let act = Shape::new(ShapeType::RoundedRectangle, 1500000, 3300000, 2500000, 1500000)
-        .with_fill(ShapeFill::new("FFC000"))
-        .with_text("ACT\n\nAdjust and\nimprove");
+    let plan = rounded_rect(1.6, 1.75, 2.7, 1.6)
+        .fill(hex("4472C4"))
+        .text("PLAN\n\nDefine goals\nand strategy");
+    let do_box = rounded_rect(4.9, 1.75, 2.7, 1.6)
+        .fill(hex("ED7D31"))
+        .text("DO\n\nImplement\nthe plan");
+    let check = rounded_rect(4.9, 3.6, 2.7, 1.6)
+        .fill(hex("70AD47"))
+        .text("CHECK\n\nMeasure\nresults");
+    let act = rounded_rect(1.6, 3.6, 2.7, 1.6)
+        .fill(hex("FFC000"))
+        .text("ACT\n\nAdjust and\nimprove");
     
     // Arrows between quadrants
-    let arr1 = Shape::new(ShapeType::RightArrow, 4100000, 2100000, 300000, 300000)
-        .with_fill(ShapeFill::new("A5A5A5"));
-    let arr2 = Shape::new(ShapeType::DownArrow, 5600000, 3200000, 300000, 200000)
-        .with_fill(ShapeFill::new("A5A5A5"));
-    let arr3 = Shape::new(ShapeType::LeftArrow, 4100000, 3800000, 300000, 300000)
-        .with_fill(ShapeFill::new("A5A5A5"));
-    let arr4 = Shape::new(ShapeType::UpArrow, 2600000, 3200000, 300000, 200000)
-        .with_fill(ShapeFill::new("A5A5A5"));
+    let arr1 = shapes::arrow_right(4.5, 2.3, 0.3, 0.3)
+        .fill(hex("A5A5A5"));
+    let arr2 = shapes::arrow_down(6.1, 3.5, 0.3, 0.2)
+        .fill(hex("A5A5A5"));
+    let arr3 = shapes::arrow_left(4.5, 4.2, 0.3, 0.3)
+        .fill(hex("A5A5A5"));
+    let arr4 = shapes::arrow_up(2.8, 3.5, 0.3, 0.2)
+        .fill(hex("A5A5A5"));
     
     slides.push(
         SlideContent::new("PDCA Continuous Improvement Cycle")
@@ -941,21 +945,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔷 Slide 16: Pyramid Diagram");
     
     // Build pyramid from bottom to top
-    let level5 = Shape::new(ShapeType::Trapezoid, 500000, 4000000, 8000000, 600000)
-        .with_fill(ShapeFill::new("C00000"))
-        .with_text("Physiological Needs - Food, Water, Shelter");
-    let level4 = Shape::new(ShapeType::Trapezoid, 1000000, 3400000, 7000000, 600000)
-        .with_fill(ShapeFill::new("ED7D31"))
-        .with_text("Safety Needs - Security, Stability");
-    let level3 = Shape::new(ShapeType::Trapezoid, 1500000, 2800000, 6000000, 600000)
-        .with_fill(ShapeFill::new("FFC000"))
-        .with_text("Love & Belonging - Relationships");
-    let level2 = Shape::new(ShapeType::Trapezoid, 2000000, 2200000, 5000000, 600000)
-        .with_fill(ShapeFill::new("70AD47"))
-        .with_text("Esteem - Achievement, Respect");
-    let level1 = Shape::new(ShapeType::Triangle, 2500000, 1500000, 4000000, 700000)
-        .with_fill(ShapeFill::new("4472C4"))
-        .with_text("Self-Actualization");
+    let level5 = shapes::dim(ShapeType::Trapezoid, Dimension::Inches(0.5), Dimension::Inches(4.4), Dimension::Inches(8.7), Dimension::Inches(0.7))
+        .fill(hex("C00000"))
+        .text("Physiological Needs - Food, Water, Shelter");
+    let level4 = shapes::dim(ShapeType::Trapezoid, Dimension::Inches(1.1), Dimension::Inches(3.7), Dimension::Inches(7.7), Dimension::Inches(0.7))
+        .fill(hex("ED7D31"))
+        .text("Safety Needs - Security, Stability");
+    let level3 = shapes::dim(ShapeType::Trapezoid, Dimension::Inches(1.6), Dimension::Inches(3.1), Dimension::Inches(6.6), Dimension::Inches(0.7))
+        .fill(hex("FFC000"))
+        .text("Love & Belonging - Relationships");
+    let level2 = shapes::dim(ShapeType::Trapezoid, Dimension::Inches(2.2), Dimension::Inches(2.4), Dimension::Inches(5.5), Dimension::Inches(0.7))
+        .fill(hex("70AD47"))
+        .text("Esteem - Achievement, Respect");
+    let level1 = triangle(2.7, 1.6, 4.4, 0.8)
+        .fill(hex("4472C4"))
+        .text("Self-Actualization");
     
     slides.push(
         SlideContent::new("Maslow's Hierarchy of Needs")
@@ -974,20 +978,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔷 Slide 17: Venn Diagram");
     
     // Three overlapping circles
-    let circle1 = Shape::new(ShapeType::Ellipse, 1500000, 1800000, 3000000, 3000000)
-        .with_fill(ShapeFill::new("4472C4"))
-        .with_text("Skills");
-    let circle2 = Shape::new(ShapeType::Ellipse, 3500000, 1800000, 3000000, 3000000)
-        .with_fill(ShapeFill::new("ED7D31"))
-        .with_text("Passion");
-    let circle3 = Shape::new(ShapeType::Ellipse, 2500000, 3200000, 3000000, 3000000)
-        .with_fill(ShapeFill::new("70AD47"))
-        .with_text("Market Need");
+    let circle1 = circle(1.6, 2.0, 3.3)
+        .fill(hex("4472C4"))
+        .text("Skills");
+    let circle2 = circle(3.8, 2.0, 3.3)
+        .fill(hex("ED7D31"))
+        .text("Passion");
+    let circle3 = circle(2.7, 3.5, 3.3)
+        .fill(hex("70AD47"))
+        .text("Market Need");
     
     // Center label
-    let center = Shape::new(ShapeType::Ellipse, 3200000, 2800000, 1600000, 800000)
-        .with_fill(ShapeFill::new("FFFFFF"))
-        .with_text("IKIGAI");
+    let center = ellipse(3.5, 3.1, 1.75, 0.9)
+        .fill(hex("FFFFFF"))
+        .text("IKIGAI");
     
     slides.push(
         SlideContent::new("Finding Your Ikigai - Venn Diagram")
@@ -1042,43 +1046,39 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🔷 Slide 19: Dashboard with KPIs (Dimension API)");
     
     // KPI boxes using ratio-based positioning — automatically adapts to any slide size
-    let kpi1 = Shape::from_dimensions(ShapeType::RoundedRectangle,
+    let kpi1 = shapes::dim(ShapeType::RoundedRectangle,
         Dimension::percent(3.0), Dimension::percent(23.0),
-        Dimension::percent(22.0), Dimension::percent(18.0),
-    ).with_fill(ShapeFill::new("4472C4")).with_text("Revenue\n\n$2.14M\n+15% YoY");
+        Dimension::percent(22.0), Dimension::percent(18.0))
+        .fill(hex("4472C4"))
+        .text("Revenue\n\n$2.14M\n+15% YoY");
 
-    let kpi2 = Shape::from_dimensions(ShapeType::RoundedRectangle,
+    let kpi2 = shapes::dim(ShapeType::RoundedRectangle,
         Dimension::percent(27.0), Dimension::percent(23.0),
-        Dimension::percent(22.0), Dimension::percent(18.0),
-    ).with_fill(ShapeFill::new("70AD47")).with_text("Customers\n\n12,450\n+22% YoY");
+        Dimension::percent(22.0), Dimension::percent(18.0))
+        .fill(hex("70AD47"))
+        .text("Customers\n\n12,450\n+22% YoY");
 
-    let kpi3 = Shape::from_dimensions(ShapeType::RoundedRectangle,
+    let kpi3 = shapes::dim(ShapeType::RoundedRectangle,
         Dimension::percent(51.0), Dimension::percent(23.0),
-        Dimension::percent(22.0), Dimension::percent(18.0),
-    ).with_fill(ShapeFill::new("ED7D31")).with_text("NPS Score\n\n72\n+8 pts");
+        Dimension::percent(22.0), Dimension::percent(18.0))
+        .fill(hex("ED7D31"))
+        .text("NPS Score\n\n72\n+8 pts");
 
-    let kpi4 = Shape::from_dimensions(ShapeType::RoundedRectangle,
+    let kpi4 = shapes::dim(ShapeType::RoundedRectangle,
         Dimension::percent(75.0), Dimension::percent(23.0),
-        Dimension::percent(22.0), Dimension::percent(18.0),
-    ).with_fill(ShapeFill::new("5B9BD5")).with_text("Retention\n\n94%\n+3% YoY");
+        Dimension::percent(22.0), Dimension::percent(18.0))
+        .fill(hex("5B9BD5"))
+        .text("Retention\n\n94%\n+3% YoY");
     
     // Status indicators using mixed units: percent for X, inches for size
-    let status1 = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
-        .at(Dimension::percent(14.0), Dimension::percent(42.0))
-        .with_dimensions(Dimension::Inches(0.3), Dimension::Inches(0.3))
-        .with_fill(ShapeFill::new("70AD47"));
-    let status2 = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
-        .at(Dimension::percent(38.0), Dimension::percent(42.0))
-        .with_dimensions(Dimension::Inches(0.3), Dimension::Inches(0.3))
-        .with_fill(ShapeFill::new("70AD47"));
-    let status3 = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
-        .at(Dimension::percent(62.0), Dimension::percent(42.0))
-        .with_dimensions(Dimension::Inches(0.3), Dimension::Inches(0.3))
-        .with_fill(ShapeFill::new("FFC000"));
-    let status4 = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
-        .at(Dimension::percent(86.0), Dimension::percent(42.0))
-        .with_dimensions(Dimension::Inches(0.3), Dimension::Inches(0.3))
-        .with_fill(ShapeFill::new("70AD47"));
+    let status1 = shapes::dim(ShapeType::Ellipse, Dimension::percent(14.0), Dimension::percent(42.0), Dimension::Inches(0.3), Dimension::Inches(0.3))
+        .fill(hex("70AD47"));
+    let status2 = shapes::dim(ShapeType::Ellipse, Dimension::percent(38.0), Dimension::percent(42.0), Dimension::Inches(0.3), Dimension::Inches(0.3))
+        .fill(hex("70AD47"));
+    let status3 = shapes::dim(ShapeType::Ellipse, Dimension::percent(62.0), Dimension::percent(42.0), Dimension::Inches(0.3), Dimension::Inches(0.3))
+        .fill(hex("FFC000"));
+    let status4 = shapes::dim(ShapeType::Ellipse, Dimension::percent(86.0), Dimension::percent(42.0), Dimension::Inches(0.3), Dimension::Inches(0.3))
+        .fill(hex("70AD47"));
     
     slides.push(
         SlideContent::new("Executive Dashboard - Q1 2024")
@@ -1262,33 +1262,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🎨 Slide 28: Theme Colors (NEW)");
     
     // Create shapes with theme colors
-    let corporate_shape = Shape::new(ShapeType::Rectangle, 500000, 1600000, 1800000, 800000)
-        .with_fill(ShapeFill::new(themes::CORPORATE.primary))
-        .with_text("Corporate");
+    let corporate_shape = rect(0.5, 1.75, 2.0, 0.9)
+        .fill(hex(themes::CORPORATE.primary))
+        .text("Corporate");
     
-    let modern_shape = Shape::new(ShapeType::Rectangle, 2500000, 1600000, 1800000, 800000)
-        .with_fill(ShapeFill::new(themes::MODERN.primary))
-        .with_text("Modern");
+    let modern_shape = rect(2.7, 1.75, 2.0, 0.9)
+        .fill(hex(themes::MODERN.primary))
+        .text("Modern");
     
-    let vibrant_shape = Shape::new(ShapeType::Rectangle, 4500000, 1600000, 1800000, 800000)
-        .with_fill(ShapeFill::new(themes::VIBRANT.primary))
-        .with_text("Vibrant");
+    let vibrant_shape = rect(4.9, 1.75, 2.0, 0.9)
+        .fill(hex(themes::VIBRANT.primary))
+        .text("Vibrant");
     
-    let dark_shape = Shape::new(ShapeType::Rectangle, 6500000, 1600000, 1800000, 800000)
-        .with_fill(ShapeFill::new(themes::DARK.primary))
-        .with_text("Dark");
+    let dark_shape = rect(7.1, 1.75, 2.0, 0.9)
+        .fill(hex(themes::DARK.primary))
+        .text("Dark");
     
-    let nature_shape = Shape::new(ShapeType::Rectangle, 500000, 2700000, 1800000, 800000)
-        .with_fill(ShapeFill::new(themes::NATURE.primary))
-        .with_text("Nature");
+    let nature_shape = rect(0.5, 3.0, 2.0, 0.9)
+        .fill(hex(themes::NATURE.primary))
+        .text("Nature");
     
-    let tech_shape = Shape::new(ShapeType::Rectangle, 2500000, 2700000, 1800000, 800000)
-        .with_fill(ShapeFill::new(themes::TECH.primary))
-        .with_text("Tech");
+    let tech_shape = rect(2.7, 3.0, 2.0, 0.9)
+        .fill(hex(themes::TECH.primary))
+        .text("Tech");
     
-    let carbon_shape = Shape::new(ShapeType::Rectangle, 4500000, 2700000, 1800000, 800000)
-        .with_fill(ShapeFill::new(themes::CARBON.primary))
-        .with_text("Carbon");
+    let carbon_shape = rect(4.9, 3.0, 2.0, 0.9)
+        .fill(hex(themes::CARBON.primary))
+        .text("Carbon");
     
     slides.push(
         SlideContent::new("Theme Color Palettes")
@@ -1310,46 +1310,46 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🌈 Slide 29: Material & Carbon Colors (NEW)");
     
     // Material Design colors
-    let material_red = Shape::new(ShapeType::Rectangle, 500000, 1600000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::MATERIAL_RED))
-        .with_text("M-Red");
+    let material_red = rect(0.5, 1.75, 1.3, 0.7)
+        .fill(hex(colors::MATERIAL_RED))
+        .text("M-Red");
     
-    let material_blue = Shape::new(ShapeType::Rectangle, 1900000, 1600000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::MATERIAL_BLUE))
-        .with_text("M-Blue");
+    let material_blue = rect(2.1, 1.75, 1.3, 0.7)
+        .fill(hex(colors::MATERIAL_BLUE))
+        .text("M-Blue");
     
-    let material_green = Shape::new(ShapeType::Rectangle, 3300000, 1600000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::MATERIAL_GREEN))
-        .with_text("M-Green");
+    let material_green = rect(3.6, 1.75, 1.3, 0.7)
+        .fill(hex(colors::MATERIAL_GREEN))
+        .text("M-Green");
     
-    let material_orange = Shape::new(ShapeType::Rectangle, 4700000, 1600000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::MATERIAL_ORANGE))
-        .with_text("M-Orange");
+    let material_orange = rect(5.1, 1.75, 1.3, 0.7)
+        .fill(hex(colors::MATERIAL_ORANGE))
+        .text("M-Orange");
     
-    let material_purple = Shape::new(ShapeType::Rectangle, 6100000, 1600000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::MATERIAL_PURPLE))
-        .with_text("M-Purple");
+    let material_purple = rect(6.7, 1.75, 1.3, 0.7)
+        .fill(hex(colors::MATERIAL_PURPLE))
+        .text("M-Purple");
     
     // Carbon Design colors
-    let carbon_blue = Shape::new(ShapeType::Rectangle, 500000, 2500000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::CARBON_BLUE_60))
-        .with_text("C-Blue");
+    let carbon_blue = rect(0.5, 2.7, 1.3, 0.7)
+        .fill(hex(colors::CARBON_BLUE_60))
+        .text("C-Blue");
     
-    let carbon_green = Shape::new(ShapeType::Rectangle, 1900000, 2500000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::CARBON_GREEN_50))
-        .with_text("C-Green");
+    let carbon_green = rect(2.1, 2.7, 1.3, 0.7)
+        .fill(hex(colors::CARBON_GREEN_50))
+        .text("C-Green");
     
-    let carbon_red = Shape::new(ShapeType::Rectangle, 3300000, 2500000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::CARBON_RED_60))
-        .with_text("C-Red");
+    let carbon_red = rect(3.6, 2.7, 1.3, 0.7)
+        .fill(hex(colors::CARBON_RED_60))
+        .text("C-Red");
     
-    let carbon_purple = Shape::new(ShapeType::Rectangle, 4700000, 2500000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::CARBON_PURPLE_60))
-        .with_text("C-Purple");
+    let carbon_purple = rect(5.1, 2.7, 1.3, 0.7)
+        .fill(hex(colors::CARBON_PURPLE_60))
+        .text("C-Purple");
     
-    let carbon_gray = Shape::new(ShapeType::Rectangle, 6100000, 2500000, 1200000, 600000)
-        .with_fill(ShapeFill::new(colors::CARBON_GRAY_100))
-        .with_text("C-Gray");
+    let carbon_gray = rect(6.7, 2.7, 1.3, 0.7)
+        .fill(hex(colors::CARBON_GRAY_100))
+        .text("C-Gray");
     
     slides.push(
         SlideContent::new("Material & Carbon Design Colors")
@@ -1470,15 +1470,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build();
 
     // Mode icons
-    let icon_speaker = Shape::new(ShapeType::RoundedRectangle, 300000, 4200000, 2500000, 600000)
-        .with_fill(ShapeFill::new("4472C4"))
-        .with_text("Speaker: Full control");
-    let icon_kiosk = Shape::new(ShapeType::RoundedRectangle, 3100000, 4200000, 2500000, 600000)
-        .with_fill(ShapeFill::new("ED7D31"))
-        .with_text("Kiosk: Auto-loop");
-    let icon_browsed = Shape::new(ShapeType::RoundedRectangle, 5900000, 4200000, 2500000, 600000)
-        .with_fill(ShapeFill::new("70AD47"))
-        .with_text("Browsed: Scrollbar");
+    let icon_speaker = rounded_rect(0.3, 4.6, 2.7, 0.7)
+        .fill(hex("4472C4"))
+        .text("Speaker: Full control");
+    let icon_kiosk = rounded_rect(3.4, 4.6, 2.7, 0.7)
+        .fill(hex("ED7D31"))
+        .text("Kiosk: Auto-loop");
+    let icon_browsed = rounded_rect(6.5, 4.6, 2.7, 0.7)
+        .fill(hex("70AD47"))
+        .text("Browsed: Scrollbar");
 
     slides.push(
         SlideContent::new("Slide Show Settings - Mode Comparison")
@@ -1508,33 +1508,33 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _handout_xml = print.to_handout_master_xml();
 
     // Visual: 6-slide handout grid (2 cols x 3 rows)
-    let hdr = Shape::new(ShapeType::Rectangle, 300000, 1500000, 4200000, 300000)
-        .with_fill(ShapeFill::new("E7E6E6"))
-        .with_text("Q1 2025 Strategy Review");
+    let hdr = rect(0.3, 1.6, 4.6, 0.3)
+        .fill(hex("E7E6E6"))
+        .text("Q1 2025 Strategy Review");
     // Row 1
-    let s1 = Shape::new(ShapeType::Rectangle, 400000, 2000000, 1800000, 1100000)
-        .with_line(ShapeLine::new("999999", 12700))
-        .with_text("Slide 1");
-    let s2 = Shape::new(ShapeType::Rectangle, 2500000, 2000000, 1800000, 1100000)
-        .with_line(ShapeLine::new("999999", 12700))
-        .with_text("Slide 2");
+    let s1 = rect(0.4, 2.2, 2.0, 1.2)
+        .stroke(hex("999999"), 1.0)
+        .text("Slide 1");
+    let s2 = rect(2.7, 2.2, 2.0, 1.2)
+        .stroke(hex("999999"), 1.0)
+        .text("Slide 2");
     // Row 2
-    let s3 = Shape::new(ShapeType::Rectangle, 400000, 3200000, 1800000, 1100000)
-        .with_line(ShapeLine::new("999999", 12700))
-        .with_text("Slide 3");
-    let s4 = Shape::new(ShapeType::Rectangle, 2500000, 3200000, 1800000, 1100000)
-        .with_line(ShapeLine::new("999999", 12700))
-        .with_text("Slide 4");
+    let s3 = rect(0.4, 3.5, 2.0, 1.2)
+        .stroke(hex("999999"), 1.0)
+        .text("Slide 3");
+    let s4 = rect(2.7, 3.5, 2.0, 1.2)
+        .stroke(hex("999999"), 1.0)
+        .text("Slide 4");
     // Row 3
-    let s5 = Shape::new(ShapeType::Rectangle, 400000, 4400000, 1800000, 1100000)
-        .with_line(ShapeLine::new("999999", 12700))
-        .with_text("Slide 5");
-    let s6 = Shape::new(ShapeType::Rectangle, 2500000, 4400000, 1800000, 1100000)
-        .with_line(ShapeLine::new("999999", 12700))
-        .with_text("Slide 6");
-    let ftr = Shape::new(ShapeType::Rectangle, 300000, 5600000, 4200000, 300000)
-        .with_fill(ShapeFill::new("E7E6E6"))
-        .with_text("Confidential - Internal Use Only");
+    let s5 = rect(0.4, 4.8, 2.0, 1.2)
+        .stroke(hex("999999"), 1.0)
+        .text("Slide 5");
+    let s6 = rect(2.7, 4.8, 2.0, 1.2)
+        .stroke(hex("999999"), 1.0)
+        .text("Slide 6");
+    let ftr = rect(0.3, 6.1, 4.6, 0.3)
+        .fill(hex("E7E6E6"))
+        .text("Confidential - Internal Use Only");
 
     // Settings summary table on the right
     let print_table = TableBuilder::new(vec![1800000, 2000000])
@@ -1638,18 +1638,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build();
 
     // Legend shapes
-    let legend_anchor = Shape::new(ShapeType::RoundedRectangle, 300000, 4400000, 2000000, 400000)
-        .with_fill(ShapeFill::new("4472C4"))
-        .with_text("Anchor (gridSpan/rowSpan)");
-    let legend_hmerge = Shape::new(ShapeType::RoundedRectangle, 2500000, 4400000, 2000000, 400000)
-        .with_fill(ShapeFill::new("ED7D31"))
-        .with_text("hMerge (col covered)");
-    let legend_vmerge = Shape::new(ShapeType::RoundedRectangle, 4700000, 4400000, 2000000, 400000)
-        .with_fill(ShapeFill::new("70AD47"))
-        .with_text("vMerge (row covered)");
-    let legend_normal = Shape::new(ShapeType::RoundedRectangle, 6900000, 4400000, 2000000, 400000)
-        .with_fill(ShapeFill::new("A5A5A5"))
-        .with_text("Normal (no merge)");
+    let legend_anchor = rounded_rect(0.3, 4.8, 2.2, 0.4)
+        .fill(hex("4472C4"))
+        .text("Anchor (gridSpan/rowSpan)");
+    let legend_hmerge = rounded_rect(2.7, 4.8, 2.2, 0.4)
+        .fill(hex("ED7D31"))
+        .text("hMerge (col covered)");
+    let legend_vmerge = rounded_rect(5.1, 4.8, 2.2, 0.4)
+        .fill(hex("70AD47"))
+        .text("vMerge (row covered)");
+    let legend_normal = rounded_rect(7.5, 4.8, 2.2, 0.4)
+        .fill(hex("A5A5A5"))
+        .text("Normal (no merge)");
 
     slides.push(
         SlideContent::new("Advanced Table Merging - Merged Cells")
