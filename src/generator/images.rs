@@ -59,6 +59,14 @@ pub enum ImageEffect {
     Shadow,
     /// Reflection
     Reflection,
+    /// Glow effect
+    Glow,
+    /// Soft edges
+    SoftEdges,
+    /// Inner shadow
+    InnerShadow,
+    /// Blur effect
+    Blur,
 }
 
 /// Image metadata and properties
@@ -444,6 +452,126 @@ impl ImageBuilder {
             source: self.source,
             crop: None,
             effects: Vec::new(),
+        }
+    }
+    
+    /// Build with crop
+    pub fn build_with_crop(self, left: f64, top: f64, right: f64, bottom: f64) -> Image {
+        Image {
+            filename: self.filename,
+            width: self.width,
+            height: self.height,
+            x: self.x,
+            y: self.y,
+            format: self.format,
+            source: self.source,
+            crop: Some(Crop::new(left, top, right, bottom)),
+            effects: Vec::new(),
+        }
+    }
+    
+    /// Build with shadow effect
+    pub fn build_with_shadow(self) -> Image {
+        Image {
+            filename: self.filename,
+            width: self.width,
+            height: self.height,
+            x: self.x,
+            y: self.y,
+            format: self.format,
+            source: self.source,
+            crop: None,
+            effects: vec![ImageEffect::Shadow],
+        }
+    }
+    
+    /// Build with reflection effect
+    pub fn build_with_reflection(self) -> Image {
+        Image {
+            filename: self.filename,
+            width: self.width,
+            height: self.height,
+            x: self.x,
+            y: self.y,
+            format: self.format,
+            source: self.source,
+            crop: None,
+            effects: vec![ImageEffect::Reflection],
+        }
+    }
+    
+    /// Build with both shadow and reflection effects
+    pub fn build_with_effects(self) -> Image {
+        Image {
+            filename: self.filename,
+            width: self.width,
+            height: self.height,
+            x: self.x,
+            y: self.y,
+            format: self.format,
+            source: self.source,
+            crop: None,
+            effects: vec![ImageEffect::Shadow, ImageEffect::Reflection],
+        }
+    }
+    
+    /// Build with glow effect
+    pub fn build_with_glow(self) -> Image {
+        Image {
+            filename: self.filename,
+            width: self.width,
+            height: self.height,
+            x: self.x,
+            y: self.y,
+            format: self.format,
+            source: self.source,
+            crop: None,
+            effects: vec![ImageEffect::Glow],
+        }
+    }
+    
+    /// Build with soft edges effect
+    pub fn build_with_soft_edges(self) -> Image {
+        Image {
+            filename: self.filename,
+            width: self.width,
+            height: self.height,
+            x: self.x,
+            y: self.y,
+            format: self.format,
+            source: self.source,
+            crop: None,
+            effects: vec![ImageEffect::SoftEdges],
+        }
+    }
+    
+    /// Build with inner shadow effect
+    pub fn build_with_inner_shadow(self) -> Image {
+        Image {
+            filename: self.filename,
+            width: self.width,
+            height: self.height,
+            x: self.x,
+            y: self.y,
+            format: self.format,
+            source: self.source,
+            crop: None,
+            effects: vec![ImageEffect::InnerShadow],
+        }
+    }
+    
+    /// Build with blur effect
+    pub fn build_with_blur(self) -> Image {
+        Image {
+            filename: self.filename,
+            width: self.width,
+            height: self.height,
+            x: self.x,
+            y: self.y,
+            format: self.format,
+            source: self.source,
+            crop: None,
+            effects: vec![ImageEffect::Blur],
         }
     }
 }

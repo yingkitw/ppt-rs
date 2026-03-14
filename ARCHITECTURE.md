@@ -514,6 +514,79 @@ src/cli/
 - [x] 12 Mermaid diagram types
 - [x] Table merging (rowspan/colspan)
 - [x] HTML/PDF export
+- [x] Image effects (shadow, reflection, glow, soft edges, inner shadow, blur, crop)
+
+## Image Effects System (v0.2.10)
+
+### Architecture
+
+```
+ImageBuilder
+    ↓
+Image struct (with effects, crop)
+    ↓
+generate_image_xml() → OOXML with effects
+    ↓
+Embedded in slide with relationships
+```
+
+### Supported Effects
+
+- **Shadow** (`ImageEffect::Shadow`) - Outer drop shadow with blur and offset
+- **Reflection** (`ImageEffect::Reflection`) - Mirror effect below image
+- **Glow** (`ImageEffect::Glow`) - Golden aura around image
+- **Soft Edges** (`ImageEffect::SoftEdges`) - Feathered borders
+- **Inner Shadow** (`ImageEffect::InnerShadow`) - Inset shadow for depth
+- **Blur** (`ImageEffect::Blur`) - Artistic defocus effect
+
+### Cropping
+
+- Percentage-based (0.0-1.0) for left, top, right, bottom
+- Applied via `<a:srcRect>` in OOXML
+
+### Builder Methods
+
+```rust
+// Single effects
+.build_with_shadow()
+.build_with_reflection()
+.build_with_glow()
+.build_with_soft_edges()
+.build_with_inner_shadow()
+.build_with_blur()
+
+// Cropping
+.build_with_crop(left, top, right, bottom)
+
+// Combined
+.build_with_effects() // shadow + reflection
+```
+
+### XML Generation
+
+Effects are rendered in `<a:effectLst>` within `<p:spPr>`:
+
+```xml
+<a:effectLst>
+  <a:outerShdw blurRad="40000" dist="20000" dir="5400000" rotWithShape="0">
+    <a:srgbClr val="000000"><a:alpha val="40000"/></a:srgbClr>
+  </a:outerShdw>
+  <a:reflection blurRad="6350" stA="50000" endA="300" endPos="35000".../>
+</a:effectLst>
+```
+
+### Relationship Handling
+
+- Image files written to `ppt/media/imageN.{ext}` with correct extension
+- Relationships use actual file extensions (`.jpg`, `.png`, `.gif`)
+- Fixed in v0.2.10 to support JPEG images correctly
+
+### Implementation Files
+
+- `src/generator/images.rs` - ImageEffect enum, ImageBuilder methods
+- `src/generator/images_xml.rs` - XML generation for effects
+- `src/generator/builder.rs` - Image extension collection and passing
+- `src/generator/package_xml.rs` - Relationship generation with extensions
 
 ## Future Enhancements
 

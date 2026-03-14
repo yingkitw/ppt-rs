@@ -12,11 +12,13 @@ pub fn render_additional_content(xml: &mut String, content: &SlideContent, chart
         xml.push_str(&generate_shape_xml(shape, shape_id));
     }
 
-    // Render image placeholders
+    // Render images (actual picture elements, not placeholders)
     let image_start_id = 20 + content.shapes.len();
     for (i, image) in content.images.iter().enumerate() {
         xml.push('\n');
-        xml.push_str(&generate_image_placeholder(image_start_id + i, image));
+        // Use rel_id starting from 2 (rId1 is slideLayout)
+        let rel_id = i + 2;
+        xml.push_str(&crate::generator::images_xml::generate_image_xml(image, image_start_id + i, rel_id));
     }
 
     // Render code blocks with syntax highlighting

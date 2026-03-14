@@ -87,6 +87,10 @@ pub fn create_content_types_xml_with_notes_and_charts(
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
 <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
 <Default Extension="xml" ContentType="application/xml"/>
+<Default Extension="png" ContentType="image/png"/>
+<Default Extension="jpeg" ContentType="image/jpeg"/>
+<Default Extension="jpg" ContentType="image/jpeg"/>
+<Default Extension="gif" ContentType="image/gif"/>
 <Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>"#.to_string();
 
     for i in 1..=slides {
@@ -165,6 +169,44 @@ pub fn create_slide_rels_xml_extended(slide_num: usize, has_notes: bool, chart_r
         ));
     }
 
+    for (rid, target) in chart_rels {
+        xml.push_str(&format!(
+            "\n<Relationship Id=\"{}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart\" Target=\"{}\"/>",
+            rid, target
+        ));
+    }
+
+    xml.push_str("\n</Relationships>");
+    xml
+}
+
+/// Create slide relationship XML with notes, charts, and images
+pub fn create_slide_rels_xml_with_images(slide_num: usize, has_notes: bool, chart_rels: &[(String, String)], image_count: usize, image_start_num: usize, image_extensions: &[String]) -> String {
+    let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>"#.to_string();
+
+    // Add image relationships (starting from rId2)
+    for i in 0..image_count {
+        let rel_id = i + 2;
+        let img_num = image_start_num + i;
+        let ext = image_extensions.get(i).map(|s| s.as_str()).unwrap_or("png");
+        xml.push_str(&format!(
+            "\n<Relationship Id=\"rId{}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"../media/image{}.{}\"/>",
+            rel_id, img_num, ext
+        ));
+    }
+
+    // Notes relationship comes after images
+    if has_notes {
+        let notes_rid = 2 + image_count;
+        xml.push_str(&format!(
+            "\n<Relationship Id=\"rId{}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/notesSlide\" Target=\"../notesSlides/notesSlide{}.xml\"/>",
+            notes_rid, slide_num
+        ));
+    }
+
+    // Chart relationships come after notes
     for (rid, target) in chart_rels {
         xml.push_str(&format!(
             "\n<Relationship Id=\"{}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart\" Target=\"{}\"/>",

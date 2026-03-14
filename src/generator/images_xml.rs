@@ -48,7 +48,19 @@ pub fn generate_image_xml(image: &Image, shape_id: usize, rel_id: usize) -> Stri
                     effects_xml.push_str(r#"<a:outerShdw blurRad="40000" dist="20000" dir="5400000" rotWithShape="0"><a:srgbClr val="000000"><a:alpha val="40000"/></a:srgbClr></a:outerShdw>"#);
                 }
                 ImageEffect::Reflection => {
-                    effects_xml.push_str(r#"<a:ref blurRad="6350" stA="50000" endA="300" endPos="35000" dist="0" dir="5400000" sy="-100000" algn="bl" rotWithShape="0"/>"#);
+                    effects_xml.push_str(r#"<a:reflection blurRad="6350" stA="50000" endA="300" endPos="35000" dist="0" dir="5400000" sy="-100000" algn="bl" rotWithShape="0"/>"#);
+                }
+                ImageEffect::Glow => {
+                    effects_xml.push_str(r#"<a:glow rad="50800"><a:srgbClr val="FFD700"><a:alpha val="60000"/></a:srgbClr></a:glow>"#);
+                }
+                ImageEffect::SoftEdges => {
+                    effects_xml.push_str(r#"<a:softEdge rad="50800"/>"#);
+                }
+                ImageEffect::InnerShadow => {
+                    effects_xml.push_str(r#"<a:innerShdw blurRad="40000" dist="20000" dir="2700000"><a:srgbClr val="000000"><a:alpha val="50000"/></a:srgbClr></a:innerShdw>"#);
+                }
+                ImageEffect::Blur => {
+                    effects_xml.push_str(r#"<a:blur rad="38100" grow="1"/>"#);
                 }
             }
         }

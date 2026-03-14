@@ -450,6 +450,70 @@ let img = ImageBuilder::from_base64(base64_png, inches(2.0), inches(2.0), "PNG")
     .build();
 ```
 
+### Image Effects (NEW in v0.2.7)
+
+Apply professional visual effects to images:
+
+```rust
+use ppt_rs::generator::ImageBuilder;
+
+// Shadow effect
+let img_shadow = ImageBuilder::from_bytes(image_bytes.clone(), 2000000, 2000000, "JPEG")
+    .position(500000, 1500000)
+    .build_with_shadow();
+
+// Reflection effect
+let img_reflection = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
+    .position(800000, 1200000)
+    .build_with_reflection();
+
+// Glow effect (golden aura)
+let img_glow = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
+    .position(900000, 1400000)
+    .build_with_glow();
+
+// Soft edges (feathered borders)
+let img_soft = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
+    .position(900000, 1400000)
+    .build_with_soft_edges();
+
+// Inner shadow (depth effect)
+let img_inner = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
+    .position(900000, 1400000)
+    .build_with_inner_shadow();
+
+// Blur effect (artistic)
+let img_blur = ImageBuilder::from_bytes(image_bytes.clone(), 2200000, 2200000, "JPEG")
+    .position(900000, 1400000)
+    .build_with_blur();
+
+// Cropping (left, top, right, bottom as 0.0-1.0 ratios)
+let img_crop = ImageBuilder::from_bytes(image_bytes.clone(), 1800000, 1800000, "JPEG")
+    .position(1200000, 1800000)
+    .build_with_crop(0.1, 0.1, 0.1, 0.1); // 10% crop from all sides
+
+// Combined effects (shadow + reflection)
+let img_combined = ImageBuilder::from_bytes(image_bytes, 2200000, 2200000, "JPEG")
+    .position(900000, 1400000)
+    .build_with_effects();
+```
+
+**Supported Effects:**
+- **Shadow** - Outer drop shadow with blur and offset
+- **Reflection** - Mirror effect below the image
+- **Glow** - Golden aura around the image
+- **Soft Edges** - Feathered/vignette borders
+- **Inner Shadow** - Inset shadow for depth
+- **Blur** - Artistic defocus effect
+- **Crop** - Trim edges (percentage-based)
+- **Combined** - Multiple effects together
+
+**Supported Formats:**
+- JPEG/JPG - Full support with all effects
+- PNG - Full support with all effects
+- GIF - Basic support
+- Dynamic loading from `examples/assets/` folder
+
 ## What Makes This Different
 
 Unlike other Rust PPTX crates that:

@@ -416,23 +416,230 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // =========================================================================
-    // SLIDE 13: Images
+    // SLIDE 13: Images with Shadow Effects
     // =========================================================================
-    println!("🖼️  Slide 13: Image Placeholders");
+    println!("🖼️  Slide 13: Images with Shadow Effects");
     
-    let img1 = Image::new("logo.png", 2500000, 1800000, "png")
-        .position(500000, 1600000);
-    let img2 = Image::new("photo.jpg", 2500000, 1800000, "jpg")
-        .position(3500000, 1600000);
-    let img3 = Image::new("diagram.png", 2000000, 1800000, "png")
-        .position(6500000, 1600000);
+    // Dynamically load optimized stock photos from assets folder
+    let assets_dir = "examples/assets";
+    let mut stock_photos: Vec<(Vec<u8>, String, String)> = Vec::new();
+    
+    // Scan for optimized image files in assets folder
+    if let Ok(entries) = std::fs::read_dir(assets_dir) {
+        let mut files: Vec<_> = entries.flatten().collect();
+        files.sort_by_key(|e| e.file_name());
+        
+        for entry in files {
+            if let Some(filename) = entry.file_name().to_str() {
+                // Skip text files
+                if filename.ends_with(".txt") {
+                    continue;
+                }
+                
+                if let Ok(path) = entry.path().canonicalize() {
+                    if let Some(ext) = path.extension() {
+                        let ext_str = ext.to_string_lossy().to_lowercase();
+                        if ext_str == "jpg" || ext_str == "jpeg" || ext_str == "png" {
+                            if let Ok(bytes) = std::fs::read(&path) {
+                                let format = if ext_str == "png" { "PNG" } else { "JPEG" };
+                                let size_kb = bytes.len() as f64 / 1024.0;
+                                stock_photos.push((bytes, format.to_string(), filename.to_string()));
+                                println!("   Loaded: {} ({:.1} KB)", filename, size_kb);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Use first 3 photos, or repeat if fewer available
+    if stock_photos.is_empty() {
+        panic!("No stock photos found in examples/assets/");
+    }
+    let photo_count = stock_photos.len();
+    let photo1 = &stock_photos[0 % photo_count];
+    let photo2 = &stock_photos[1 % photo_count];
+    let photo3 = &stock_photos[2 % photo_count];
+    
+    // SLIDE 13: Shadow Effects
+    let img1_shadow = ImageBuilder::from_bytes(photo1.0.clone(), 2000000, 2000000, &photo1.1)
+        .position(500000, 1500000)
+        .build_with_shadow();
+    let img2_shadow = ImageBuilder::from_bytes(photo2.0.clone(), 2500000, 1800000, &photo2.1)
+        .position(3200000, 1500000)
+        .build_with_shadow();
+    let img3_shadow = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1800000, &photo3.1)
+        .position(6200000, 1500000)
+        .build_with_shadow();
     
     slides.push(
-        SlideContent::new("Image Placeholders")
-            .add_image(img1)
-            .add_image(img2)
-            .add_image(img3)
+        SlideContent::new("Image Effects: Shadow (Outer Shadow)")
+            .add_image(img1_shadow)
+            .add_image(img2_shadow)
+            .add_image(img3_shadow)
             .title_color("1F497D")
+    );
+
+    // =========================================================================
+    // SLIDE 14: Images with Reflection Effects
+    // =========================================================================
+    println!("🖼️  Slide 14: Images with Reflection Effects");
+    
+    let img1_reflection = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
+        .position(800000, 1200000)
+        .build_with_reflection();
+    let img2_reflection = ImageBuilder::from_bytes(photo2.0.clone(), 2800000, 2000000, &photo2.1)
+        .position(3500000, 1200000)
+        .build_with_reflection();
+    let img3_reflection = ImageBuilder::from_bytes(photo3.0.clone(), 2400000, 2000000, &photo3.1)
+        .position(6500000, 1200000)
+        .build_with_reflection();
+    
+    slides.push(
+        SlideContent::new("Image Effects: Reflection (Mirror Effect)")
+            .add_image(img1_reflection)
+            .add_image(img2_reflection)
+            .add_image(img3_reflection)
+            .title_color("2E75B5")
+    );
+
+    // =========================================================================
+    // SLIDE 15: Images with Cropping
+    // =========================================================================
+    println!("🖼️  Slide 15: Images with Cropping");
+    
+    let img1_crop = ImageBuilder::from_bytes(photo1.0.clone(), 1800000, 1800000, &photo1.1)
+        .position(1200000, 1800000)
+        .build_with_crop(0.1, 0.1, 0.1, 0.1);
+    let img2_crop = ImageBuilder::from_bytes(photo2.0.clone(), 3500000, 1500000, &photo2.1)
+        .position(3500000, 1800000)
+        .build_with_crop(0.0, 0.2, 0.0, 0.2);
+    let img3_crop = ImageBuilder::from_bytes(photo3.0.clone(), 2000000, 2000000, &photo3.1)
+        .position(7200000, 1800000)
+        .build_with_crop(0.15, 0.0, 0.15, 0.0);
+    
+    slides.push(
+        SlideContent::new("Image Cropping: All Sides, Top/Bottom, Left/Right")
+            .add_image(img1_crop)
+            .add_image(img2_crop)
+            .add_image(img3_crop)
+            .title_color("70AD47")
+    );
+
+    // =========================================================================
+    // SLIDE 16: Images with Glow Effects
+    // =========================================================================
+    println!("🖼️  Slide 16: Images with Glow Effects");
+    
+    let img1_glow = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
+        .position(900000, 1400000)
+        .build_with_glow();
+    let img2_glow = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
+        .position(3600000, 1400000)
+        .build_with_glow();
+    let img3_glow = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
+        .position(6600000, 1400000)
+        .build_with_glow();
+    
+    slides.push(
+        SlideContent::new("Image Effects: Glow (Golden Aura)")
+            .add_image(img1_glow)
+            .add_image(img2_glow)
+            .add_image(img3_glow)
+            .title_color("C55A11")
+    );
+
+    // =========================================================================
+    // SLIDE 17: Images with Soft Edges
+    // =========================================================================
+    println!("🖼️  Slide 17: Images with Soft Edges");
+    
+    let img1_soft = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
+        .position(900000, 1400000)
+        .build_with_soft_edges();
+    let img2_soft = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
+        .position(3600000, 1400000)
+        .build_with_soft_edges();
+    let img3_soft = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
+        .position(6600000, 1400000)
+        .build_with_soft_edges();
+    
+    slides.push(
+        SlideContent::new("Image Effects: Soft Edges (Feathered)")
+            .add_image(img1_soft)
+            .add_image(img2_soft)
+            .add_image(img3_soft)
+            .title_color("9B59B6")
+    );
+
+    // =========================================================================
+    // SLIDE 18: Images with Inner Shadow
+    // =========================================================================
+    println!("🖼️  Slide 18: Images with Inner Shadow");
+    
+    let img1_inner = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
+        .position(900000, 1400000)
+        .build_with_inner_shadow();
+    let img2_inner = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
+        .position(3600000, 1400000)
+        .build_with_inner_shadow();
+    let img3_inner = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
+        .position(6600000, 1400000)
+        .build_with_inner_shadow();
+    
+    slides.push(
+        SlideContent::new("Image Effects: Inner Shadow (Depth)")
+            .add_image(img1_inner)
+            .add_image(img2_inner)
+            .add_image(img3_inner)
+            .title_color("E74C3C")
+    );
+
+    // =========================================================================
+    // SLIDE 19: Images with Blur Effect
+    // =========================================================================
+    println!("🖼️  Slide 19: Images with Blur Effect");
+    
+    let img1_blur = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
+        .position(900000, 1400000)
+        .build_with_blur();
+    let img2_blur = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
+        .position(3600000, 1400000)
+        .build_with_blur();
+    let img3_blur = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
+        .position(6600000, 1400000)
+        .build_with_blur();
+    
+    slides.push(
+        SlideContent::new("Image Effects: Blur (Artistic)")
+            .add_image(img1_blur)
+            .add_image(img2_blur)
+            .add_image(img3_blur)
+            .title_color("3498DB")
+    );
+
+    // =========================================================================
+    // SLIDE 20: Images with Combined Effects
+    // =========================================================================
+    println!("🖼️  Slide 20: Images with Combined Effects");
+    
+    let img1_combined = ImageBuilder::from_bytes(photo1.0.clone(), 2200000, 2200000, &photo1.1)
+        .position(900000, 1400000)
+        .build_with_effects();
+    let img2_combined = ImageBuilder::from_bytes(photo2.0.clone(), 2600000, 1900000, &photo2.1)
+        .position(3600000, 1400000)
+        .build_with_effects();
+    let img3_combined = ImageBuilder::from_bytes(photo3.0.clone(), 2300000, 1900000, &photo3.1)
+        .position(6600000, 1400000)
+        .build_with_effects();
+    
+    slides.push(
+        SlideContent::new("Combined Effects: Shadow + Reflection")
+            .add_image(img1_combined)
+            .add_image(img2_combined)
+            .add_image(img3_combined)
+            .title_color("16A085")
     );
 
     // =========================================================================

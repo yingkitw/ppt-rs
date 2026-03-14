@@ -33,6 +33,35 @@
 ## Completed
 
 <details>
+<summary>v0.2.10 — Image Effects & Dynamic Loading</summary>
+
+- **Image Effects**: 8 professional visual effects for images
+  - Shadow (outer drop shadow with blur and offset)
+  - Reflection (mirror effect below image)
+  - Glow (golden aura around image)
+  - Soft Edges (feathered/vignette borders)
+  - Inner Shadow (inset shadow for depth)
+  - Blur (artistic defocus effect)
+  - Crop (percentage-based edge trimming)
+  - Combined (multiple effects together)
+- **ImageBuilder API**: New builder methods for effects
+  - `build_with_shadow()`, `build_with_reflection()`, `build_with_glow()`
+  - `build_with_soft_edges()`, `build_with_inner_shadow()`, `build_with_blur()`
+  - `build_with_crop(left, top, right, bottom)`, `build_with_effects()`
+- **Dynamic Image Loading**: Comprehensive demo auto-loads stock photos from `examples/assets/`
+  - Sorted alphabetically for consistent ordering
+  - Supports JPEG, PNG, GIF formats
+  - Skips non-image files automatically
+- **Bug Fix**: Fixed JPEG image relationships to use correct file extensions
+  - Updated `create_slide_rels_xml_with_images()` to accept image extensions
+  - Relationships now correctly point to `.jpg` files instead of hardcoded `.png`
+- **comprehensive_demo.rs**: Enhanced with 8 image effect slides (Slides 13-20)
+  - Each effect demonstrated with 3 stock photos
+  - Total 24 images with effects across 8 slides
+- All tests passing, JPEG and PNG images display correctly in PowerPoint
+</details>
+
+<details>
 <summary>v0.2.9 — Bug Fix: Compatibility Test Sorting</summary>
 
 - Fixed `test_get_slide_files` to handle alphabetically sorted slide filenames correctly

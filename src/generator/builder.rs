@@ -468,6 +468,9 @@ fn write_package_files<W: Write + Seek>(
         write_charts(zip, options, custom_slides, &chart_info.slide_start_indices)?;
     }
 
+    // 12. Images
+    write_images(zip, options, custom_slides)?;
+
     Ok(())
 }
 
@@ -743,14 +746,24 @@ fn write_slide_relationships_extended<W: Write + Seek>(
     slide_chart_start_indices: &[usize],
     slide_count: usize,
 ) -> Result<()> {
+    let mut total_images = 0;
+    
     match custom_slides {
         Some(slides) => {
             for (i, slide) in slides.iter().enumerate() {
                 let slide_num = i + 1;
+                let image_count = slide.images.len();
+                let image_start_num = total_images + 1;
+
+                // Collect image extensions for this slide
+                let image_extensions: Vec<String> = slide.images.iter()
+                    .map(|img| img.extension())
+                    .collect();
 
                 let mut chart_rels = Vec::new();
                 let start_chart_idx = slide_chart_start_indices[i];
-                let start_rid = if slide.notes.is_some() { 3 } else { 2 };
+                // Chart rIds come after images and notes
+                let start_rid = 2 + image_count + if slide.notes.is_some() { 1 } else { 0 };
 
                 for j in 0..slide.charts.len() {
                     let rid = format!("rId{}", start_rid + j);
@@ -758,9 +771,18 @@ fn write_slide_relationships_extended<W: Write + Seek>(
                     chart_rels.push((rid, target));
                 }
 
-                let slide_rels = create_slide_rels_xml_extended(slide_num, slide.notes.is_some(), &chart_rels);
+                let slide_rels = super::package_xml::create_slide_rels_xml_with_images(
+                    slide_num, 
+                    slide.notes.is_some(), 
+                    &chart_rels,
+                    image_count,
+                    image_start_num,
+                    &image_extensions
+                );
                 zip.start_file(format!("ppt/slides/_rels/slide{slide_num}.xml.rels"), *options)?;
                 zip.write_all(slide_rels.as_bytes())?;
+                
+                total_images += image_count;
             }
         }
         None => {
@@ -809,6 +831,30 @@ fn write_notes_relationships<W: Write + Seek>(
                 let notes_rels = create_notes_rels_xml(slide_num);
                 zip.start_file(format!("ppt/notesSlides/_rels/notesSlide{slide_num}.xml.rels"), *options)?;
                 zip.write_all(notes_rels.as_bytes())?;
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Write image files to ppt/media/
+fn write_images<W: Write + Seek>(
+    zip: &mut ZipWriter<W>,
+    options: &FileOptions,
+    custom_slides: Option<&Vec<SlideContent>>,
+) -> Result<()> {
+    if let Some(slides) = custom_slides {
+        let mut image_counter = 1;
+        
+        for slide in slides {
+            for image in &slide.images {
+                if let Some(bytes) = image.get_bytes() {
+                    let ext = image.extension();
+                    let filename = format!("ppt/media/image{}.{}", image_counter, ext);
+                    zip.start_file(filename, *options)?;
+                    zip.write_all(&bytes)?;
+                    image_counter += 1;
+                }
             }
         }
     }

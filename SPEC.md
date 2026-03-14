@@ -208,6 +208,67 @@ GradientFill::custom(vec![
 | DiagonalUp | 135° |
 | Angle(n) | n° |
 
+#### Image Effects (v0.2.10)
+
+```rust
+use ppt_rs::generator::ImageBuilder;
+
+// Shadow effect
+ImageBuilder::from_bytes(bytes, width, height, "JPEG")
+    .position(x, y)
+    .build_with_shadow()
+
+// Reflection effect
+ImageBuilder::from_bytes(bytes, width, height, "JPEG")
+    .position(x, y)
+    .build_with_reflection()
+
+// Glow effect
+ImageBuilder::from_bytes(bytes, width, height, "JPEG")
+    .position(x, y)
+    .build_with_glow()
+
+// Soft edges effect
+ImageBuilder::from_bytes(bytes, width, height, "JPEG")
+    .position(x, y)
+    .build_with_soft_edges()
+
+// Inner shadow effect
+ImageBuilder::from_bytes(bytes, width, height, "JPEG")
+    .position(x, y)
+    .build_with_inner_shadow()
+
+// Blur effect
+ImageBuilder::from_bytes(bytes, width, height, "JPEG")
+    .position(x, y)
+    .build_with_blur()
+
+// Cropping (left, top, right, bottom as 0.0-1.0 ratios)
+ImageBuilder::from_bytes(bytes, width, height, "JPEG")
+    .position(x, y)
+    .build_with_crop(0.1, 0.1, 0.1, 0.1)  // 10% crop from all sides
+
+// Combined effects (shadow + reflection)
+ImageBuilder::from_bytes(bytes, width, height, "JPEG")
+    .position(x, y)
+    .build_with_effects()
+```
+
+| Effect | Description | OOXML Element |
+|--------|-------------|---------------|
+| Shadow | Outer drop shadow with blur and offset | `<a:outerShdw>` |
+| Reflection | Mirror effect below image | `<a:reflection>` |
+| Glow | Golden aura around image | `<a:glow>` |
+| Soft Edges | Feathered/vignette borders | `<a:softEdge>` |
+| Inner Shadow | Inset shadow for depth | `<a:innerShdw>` |
+| Blur | Artistic defocus effect | `<a:blur>` |
+| Crop | Percentage-based edge trimming | `<a:srcRect>` |
+
+**Supported Image Formats:**
+- JPEG/JPG - Full support with all effects
+- PNG - Full support with all effects
+- GIF - Basic support
+
 ### Markdown to PPTX
 
 The CLI converts Markdown to PPTX:
