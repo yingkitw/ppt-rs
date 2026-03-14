@@ -43,6 +43,15 @@ pub use crate::helpers::{
     image, image_file,
     rgb, hex,
     ShapeExt,
+    // Color utilities
+    ColorValue,
+    red, green, blue, yellow, cyan, magenta, white, black, gray,
+    orange, purple, pink, brown,
+    material_red, material_blue, material_green, material_orange,
+    corporate_blue, corporate_green,
+    // Table utilities
+    simple_table, table_with_widths, table_from_data, table_with_header,
+    QuickTable, cell, header_cell, highlight_cell,
 };
 
 /// Font size module with common presets (in points)

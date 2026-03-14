@@ -39,6 +39,10 @@ use ppt_rs::prelude::{
     // New simplified API helpers
     rect, circle, ellipse, rounded_rect, triangle, diamond,
     hex, ShapeExt, shapes,
+    // Color utilities
+    ColorValue, red, blue, green, orange, material_blue, material_green,
+    // Table utilities (for simple cases)
+    QuickTable, cell, header_cell,
 };
 use ppt_rs::opc::Package;
 use ppt_rs::parts::{
@@ -320,19 +324,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // 25% transparent overlay
     let trans_25 = rect(2.2, 2.4, 2.7, 1.6)
-        .with_fill(ShapeFill::new("F44336").with_transparency(25))
+        .fill(ColorValue::from_hex("F44336").transparent(25).to_color())
         .stroke(hex("B71C1C"), 2.0)
         .text("25% Transparent");
     
     // 50% transparent overlay
     let trans_50 = ellipse(4.9, 2.0, 2.7, 2.2)
-        .with_fill(ShapeFill::new("4CAF50").with_transparency(50))
+        .fill(ColorValue::from_hex("4CAF50").transparent(50).to_color())
         .stroke(hex("1B5E20"), 2.0)
         .text("50% Transparent");
     
     // 75% transparent overlay
     let trans_75 = rounded_rect(6.0, 2.7, 2.7, 1.6)
-        .with_fill(ShapeFill::new("FF9800").with_transparency(75))
+        .fill(ColorValue::from_hex("FF9800").transparent(75).to_color())
         .stroke(hex("E65100"), 2.0)
         .text("75% Transparent");
     

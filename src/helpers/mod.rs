@@ -14,10 +14,14 @@
 //!     .text("Hello");
 //!
 //! // Create images easily
+//! let bytes = vec![0u8; 100]; // Example image bytes
 //! let img = image(bytes)
-//!     .size(2.0, 2.0)
-//!     .at(1.0, 1.0);
+//!     .size(914400 * 2, 914400 * 2)  // 2 inches in EMUs
+//!     .at(914400, 914400);           // 1 inch in EMUs
 //! ```
+
+pub mod colors;
+pub mod tables;
 
 use crate::generator::{
     Shape, ShapeType, ShapeFill, ShapeLine,
@@ -26,6 +30,25 @@ use crate::generator::{
 };
 use crate::elements::{Color, RgbColor};
 use crate::core::Dimension;
+
+// Re-export color utilities
+pub use colors::ColorValue;
+pub use colors::{
+    red, green, blue, yellow, cyan, magenta, white, black, gray, grey,
+    light_gray, light_grey, dark_gray, dark_grey, silver,
+    orange, purple, pink, brown, navy, teal, olive, maroon, lime, aqua,
+    material_red, material_pink, material_purple, material_indigo,
+    material_blue, material_cyan, material_teal, material_green,
+    material_lime, material_amber, material_orange, material_brown,
+    material_gray, material_grey,
+    corporate_blue, corporate_green, corporate_red, corporate_orange,
+};
+
+// Re-export table utilities
+pub use tables::{
+    simple_table, table_with_widths, table_from_data, table_with_header,
+    QuickTable, cell, header_cell, highlight_cell,
+};
 
 // ============================================================================
 // Shape Helpers
@@ -156,7 +179,9 @@ pub fn diamond(x: f64, y: f64, width: f64, height: f64) -> Shape {
 /// use ppt_rs::helpers::image;
 ///
 /// let bytes = std::fs::read("photo.jpg").unwrap();
-/// let img = image(bytes).size(2.0, 2.0).at(1.0, 1.0);
+/// let img = image(bytes)
+///     .size(914400 * 2, 914400 * 2)  // 2 inches in EMUs
+///     .at(914400, 914400);           // 1 inch in EMUs
 /// ```
 pub fn image<T: Into<Vec<u8>>>(data: T) -> ImageBuilder {
     ImageBuilder::auto(data.into())
@@ -169,8 +194,8 @@ pub fn image<T: Into<Vec<u8>>>(data: T) -> ImageBuilder {
 /// use ppt_rs::helpers::image_file;
 ///
 /// let img = image_file("photo.jpg").unwrap()
-///     .size(2.0, 2.0)
-///     .at(1.0, 1.0);
+///     .size(914400 * 2, 914400 * 2)  // 2 inches in EMUs
+///     .at(914400, 914400);           // 1 inch in EMUs
 /// ```
 pub fn image_file(path: &str) -> crate::exc::Result<ImageBuilder> {
     let bytes = std::fs::read(path)?;
@@ -324,6 +349,7 @@ impl ShapeExt for Shape {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::core::{Positioned, ElementSized};
 
     #[test]
     fn test_rect_helper() {
@@ -334,7 +360,7 @@ mod tests {
 
     #[test]
     fn test_circle_helper() {
-        let shape = circle(1.0, 1.0, 2.0);
+        let shape = circle(2.0, 3.0, 1.5);
         assert_eq!(shape.width(), shape.height()); // Circle is square
     }
 

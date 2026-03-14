@@ -77,18 +77,21 @@ fn main() -> Result<()> {
                     .size(inches(2.0), inches(2.0))
                     .at(inches(1.0), inches(1.5))
                     .shadow()
+                    .build()
             )
             .add_image(
                 image(photo_bytes.clone())
                     .size(inches(2.0), inches(2.0))
                     .at(inches(4.0), inches(1.5))
                     .reflection()
+                    .build()
             )
             .add_image(
                 image(photo_bytes)
                     .size(inches(2.0), inches(2.0))
                     .at(inches(7.0), inches(1.5))
                     .glow()
+                    .build()
             )
     } else {
         SlideContent::new("Simplified Image API")
@@ -96,7 +99,63 @@ fn main() -> Result<()> {
     };
 
     // =========================================================================
-    // Example 4: Using Prelude Color Constants
+    // Example 4: Color Aliases and Adjustments (NEW)
+    // =========================================================================
+    
+    let slide4 = SlideContent::new("Color Aliases & Adjustments")
+        .add_shape(
+            rect(0.5, 1.5, 1.5, 0.8)
+                .fill(red().to_color())
+                .text("red()")
+        )
+        .add_shape(
+            rect(2.5, 1.5, 1.5, 0.8)
+                .fill(blue().to_color())
+                .text("blue()")
+        )
+        .add_shape(
+            rect(4.5, 1.5, 1.5, 0.8)
+                .fill(green().to_color())
+                .text("green()")
+        )
+        .add_shape(
+            rect(6.5, 1.5, 1.5, 0.8)
+                .fill(orange().to_color())
+                .text("orange()")
+        )
+        .add_shape(
+            rect(1.5, 2.8, 1.5, 0.8)
+                .fill(material_blue().lighter(0.3).to_color())
+                .text("lighter()")
+        )
+        .add_shape(
+            rect(3.5, 2.8, 1.5, 0.8)
+                .fill(material_blue().darker(0.3).to_color())
+                .text("darker()")
+        )
+        .add_shape(
+            rect(5.5, 2.8, 1.5, 0.8)
+                .fill(red().mix(&blue(), 0.5).to_color())
+                .text("mix()")
+        );
+
+    // =========================================================================
+    // Example 5: Simple Table Creation (NEW)
+    // =========================================================================
+    
+    let slide5 = SlideContent::new("Simple Table Creation")
+        .table(
+            QuickTable::new(4)
+                .header(&["Name", "Role", "Department", "Status"])
+                .row(&["Alice", "Engineer", "Product", "Active"])
+                .row(&["Bob", "Designer", "UX", "Active"])
+                .row(&["Carol", "Manager", "Ops", "On Leave"])
+                .at(1.0, 1.5)
+                .build()
+        );
+
+    // =========================================================================
+    // Example 6: Using Prelude Color Constants
     // =========================================================================
     
     let slide4 = SlideContent::new("Prelude Color Constants")

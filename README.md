@@ -52,27 +52,50 @@ pptcli md2ppt slides.md --title "My Presentation"
 
 That's it! You now have a valid PowerPoint file that opens in PowerPoint, Google Slides, LibreOffice, and more.
 
-### Library (Simple API)
+### Library (Simplified API - NEW!)
 
 ```rust
 use ppt_rs::prelude::*;
 
-fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    // Quick presentation with macros
-    let pptx = pptx!("My Presentation")
-        .title_slide("Welcome", "Introduction to ppt-rs")
-        .slide("Key Points", vec!["Point 1", "Point 2", "Point 3"])
-        .shapes_slide("Shapes", vec![
-            shapes::rect(inches(1.0), inches(2.0), inches(2.0), inches(1.0))
-                .with_fill(ShapeFill::new(colors::BLUE))
-                .with_text("Hello"),
-        ])
-        .build()?;
+fn main() -> Result<()> {
+    let slides = vec![
+        // Shapes with color aliases
+        SlideContent::new("Colorful Shapes")
+            .add_shape(
+                rect(0.5, 1.5, 2.0, 1.0)
+                    .fill(blue().to_color())
+                    .text("Blue Rectangle")
+            )
+            .add_shape(
+                circle(3.0, 1.5, 1.5)
+                    .fill(red().lighter(0.3).to_color())
+                    .text("Light Red Circle")
+            ),
+        
+        // Quick table creation
+        SlideContent::new("Employee Directory")
+            .table(
+                QuickTable::new(3)
+                    .header(&["Name", "Role", "Status"])
+                    .row(&["Alice", "Engineer", "Active"])
+                    .row(&["Bob", "Designer", "Active"])
+                    .at(1.0, 1.5)
+                    .build()
+            ),
+    ];
     
+    let pptx = create_pptx_with_content("My Presentation", slides)?;
     std::fs::write("output.pptx", pptx)?;
     Ok(())
 }
 ```
+
+**New Features:**
+- 🎨 **Color Aliases**: `red()`, `blue()`, `green()`, `orange()`, `material_blue()`, etc.
+- 🌈 **Color Adjustments**: `.lighter()`, `.darker()`, `.opacity()`, `.mix()`
+- 📊 **Quick Tables**: `QuickTable::new(cols).header().row().build()`
+- 🔷 **Shape Helpers**: `rect()`, `circle()`, `ellipse()`, `triangle()`, `diamond()`
+- ✨ **Extension Methods**: `.fill()`, `.stroke()`, `.text()` (shorter than `.with_fill()`, etc.)
 
 ### Library (Full API)
 
