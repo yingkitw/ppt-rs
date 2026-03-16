@@ -19,13 +19,16 @@ pub mod theme;
 pub mod xmlchemy;
 
 // Core XML parsing
-pub use xmlchemy::{XmlElement, XmlParser, BaseOxmlElement};
+pub use xmlchemy::{BaseOxmlElement, XmlElement, XmlParser};
 
 // Slide parsing
-pub use slide::{SlideParser, ParsedSlide, ParsedShape, ParsedTable, ParsedTableCell, Paragraph, TextRun};
+pub use slide::{
+    Paragraph, ParsedImage, ParsedShape, ParsedSlide, ParsedTable, ParsedTableCell, SlideParser,
+    TextRun,
+};
 
 // Presentation reading
-pub use presentation::{PresentationReader, PresentationInfo};
+pub use presentation::{PresentationInfo, PresentationReader};
 
 // Presentation editing
 pub use editor::PresentationEditor;
@@ -34,23 +37,33 @@ pub use editor::PresentationEditor;
 pub use ns::Namespace;
 
 // Text elements
-pub use text::{TextBody, TextParagraph, TextRun as OxmlTextRun, RunProperties, ParagraphProperties, BodyProperties};
+pub use text::{
+    BodyProperties, ParagraphProperties, RunProperties, TextBody, TextParagraph,
+    TextRun as OxmlTextRun,
+};
 
 // Table elements
-pub use table::{Table as OxmlTable, TableRow as OxmlTableRow, TableCell as OxmlTableCell, GridColumn, TableCellProperties};
+pub use table::{
+    GridColumn, Table as OxmlTable, TableCell as OxmlTableCell, TableCellProperties,
+    TableRow as OxmlTableRow,
+};
 
 // Shape elements
-pub use shapes::{Transform2D, PresetGeometry, SolidFill, LineProperties, ShapeProperties, NonVisualProperties};
+pub use shapes::{
+    LineProperties, NonVisualProperties, PresetGeometry, ShapeProperties, SolidFill, Transform2D,
+};
 
 // DML elements
 pub use dml::{
-    Color, Fill, Outline, GradientFill, GradientStop, PatternFill, PictureFill, TextureFill,
-    EffectExtent, Point, Size, Shadow, Glow, Reflection,
-    LineCap, LineJoin, DashPattern,
+    Color, DashPattern, EffectExtent, Fill, Glow, GradientFill, GradientStop, LineCap, LineJoin,
+    Outline, PatternFill, PictureFill, Point, Reflection, Shadow, Size, TextureFill,
 };
 
 // Chart elements
-pub use chart::{ChartKind, ChartSeries as OxmlChartSeries, ChartAxis, ChartLegend, ChartTitle, NumericData, StringData, DataPoint, CategoryPoint};
+pub use chart::{
+    CategoryPoint, ChartAxis, ChartKind, ChartLegend, ChartSeries as OxmlChartSeries, ChartTitle,
+    DataPoint, NumericData, StringData,
+};
 
 // Repair functionality
 pub use repair::{PptxRepair, RepairIssue, RepairResult};
