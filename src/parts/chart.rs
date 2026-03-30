@@ -2,9 +2,9 @@
 //!
 //! Represents a chart embedded in the presentation.
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
-use crate::generator::charts::{Chart, generate_chart_part_xml};
+use crate::generator::charts::{generate_chart_part_xml, Chart};
 
 /// Chart part (ppt/charts/chartN.xml)
 #[derive(Debug, Clone)]
@@ -81,7 +81,9 @@ impl Part for ChartPart {
         }
 
         // Return minimal chart XML
-        Err(PptxError::InvalidOperation("No chart data available".to_string()))
+        Err(PptxError::InvalidOperation(
+            "No chart data available".to_string(),
+        ))
     }
 
     fn from_xml(xml: &str) -> Result<Self, PptxError> {
@@ -98,7 +100,7 @@ impl Part for ChartPart {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::generator::charts::{ChartBuilder, ChartType, ChartSeries};
+    use crate::generator::charts::{ChartBuilder, ChartSeries, ChartType};
 
     #[test]
     fn test_chart_part_new() {
@@ -113,7 +115,7 @@ mod tests {
             .categories(vec!["A", "B"])
             .add_series(ChartSeries::new("Data", vec![1.0, 2.0]))
             .build();
-        
+
         let part = ChartPart::from_chart(2, chart);
         assert_eq!(part.chart_number(), 2);
         assert!(part.chart().is_some());
@@ -125,10 +127,10 @@ mod tests {
             .categories(vec!["Q1", "Q2"])
             .add_series(ChartSeries::new("2024", vec![100.0, 150.0]))
             .build();
-        
+
         let part = ChartPart::from_chart(1, chart);
         let xml = part.to_xml().unwrap();
-        
+
         assert!(xml.contains("c:chart"));
     }
 

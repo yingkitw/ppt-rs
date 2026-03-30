@@ -36,11 +36,21 @@ impl RgbColor {
     }
 
     /// Common colors
-    pub fn black() -> Self { Self::new(0, 0, 0) }
-    pub fn white() -> Self { Self::new(255, 255, 255) }
-    pub fn red() -> Self { Self::new(255, 0, 0) }
-    pub fn green() -> Self { Self::new(0, 255, 0) }
-    pub fn blue() -> Self { Self::new(0, 0, 255) }
+    pub fn black() -> Self {
+        Self::new(0, 0, 0)
+    }
+    pub fn white() -> Self {
+        Self::new(255, 255, 255)
+    }
+    pub fn red() -> Self {
+        Self::new(255, 0, 0)
+    }
+    pub fn green() -> Self {
+        Self::new(0, 255, 0)
+    }
+    pub fn blue() -> Self {
+        Self::new(0, 0, 255)
+    }
 }
 
 impl ToXml for RgbColor {

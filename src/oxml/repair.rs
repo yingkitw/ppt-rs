@@ -20,7 +20,11 @@ pub enum RepairIssue {
     /// Invalid XML content
     InvalidXml { path: String, error: String },
     /// Broken relationship reference
-    BrokenRelationship { source: String, target: String, rel_id: String },
+    BrokenRelationship {
+        source: String,
+        target: String,
+        rel_id: String,
+    },
     /// Missing slide in presentation
     MissingSlideReference { slide_path: String },
     /// Orphan slide (not referenced in presentation)
@@ -75,11 +79,21 @@ impl RepairIssue {
             RepairIssue::InvalidXml { path, error } => {
                 format!("Invalid XML in '{}': {}", path, error)
             }
-            RepairIssue::BrokenRelationship { source, target, rel_id } => {
-                format!("Broken relationship in '{}': {} -> {} ({})", source, rel_id, target, rel_id)
+            RepairIssue::BrokenRelationship {
+                source,
+                target,
+                rel_id,
+            } => {
+                format!(
+                    "Broken relationship in '{}': {} -> {} ({})",
+                    source, rel_id, target, rel_id
+                )
             }
             RepairIssue::MissingSlideReference { slide_path } => {
-                format!("Slide '{}' exists but not referenced in presentation", slide_path)
+                format!(
+                    "Slide '{}' exists but not referenced in presentation",
+                    slide_path
+                )
             }
             RepairIssue::OrphanSlide { slide_path } => {
                 format!("Orphan slide reference: '{}' does not exist", slide_path)
@@ -130,7 +144,10 @@ impl RepairResult {
 
     /// Get number of critical issues
     pub fn critical_issues(&self) -> usize {
-        self.issues_found.iter().filter(|i| i.severity() == 3).count()
+        self.issues_found
+            .iter()
+            .filter(|i| i.severity() == 3)
+            .count()
     }
 
     /// Check if all issues were repaired
@@ -151,7 +168,10 @@ impl PptxRepair {
         ("[Content_Types].xml", "Content types definition"),
         ("_rels/.rels", "Package relationships"),
         ("ppt/presentation.xml", "Presentation document"),
-        ("ppt/_rels/presentation.xml.rels", "Presentation relationships"),
+        (
+            "ppt/_rels/presentation.xml.rels",
+            "Presentation relationships",
+        ),
     ];
 
     /// Open a PPTX file for repair
@@ -176,32 +196,32 @@ impl PptxRepair {
     /// Validate the PPTX file and return found issues
     pub fn validate(&mut self) -> Vec<RepairIssue> {
         self.issues.clear();
-        
+
         // Check required parts
         self.check_required_parts();
-        
+
         // Check XML validity
         self.check_xml_validity();
-        
+
         // Check relationships
         self.check_relationships();
-        
+
         // Check slide references
         self.check_slide_references();
-        
+
         // Check content types
         self.check_content_types();
-        
+
         self.issues.clone()
     }
 
     /// Repair all detected issues
     pub fn repair(&mut self) -> RepairResult {
         let mut result = RepairResult::new();
-        
+
         // First validate to find issues
         result.issues_found = self.validate();
-        
+
         if result.issues_found.is_empty() {
             result.is_valid = true;
             return result;
@@ -222,7 +242,7 @@ impl PptxRepair {
         // Re-validate to check if repairs were successful
         let remaining_issues = self.validate();
         result.is_valid = remaining_issues.is_empty();
-        
+
         result
     }
 
@@ -262,7 +282,9 @@ impl PptxRepair {
     }
 
     fn check_xml_validity(&mut self) {
-        let xml_parts: Vec<String> = self.package.part_paths()
+        let xml_parts: Vec<String> = self
+            .package
+            .part_paths()
             .iter()
             .filter(|p| p.ends_with(".xml") || p.ends_with(".rels"))
             .map(|s| s.to_string())
@@ -272,10 +294,7 @@ impl PptxRepair {
             if let Some(content) = self.package.get_part(&path) {
                 let xml_str = String::from_utf8_lossy(content);
                 if let Err(e) = self.validate_xml(&xml_str) {
-                    self.issues.push(RepairIssue::InvalidXml {
-                        path,
-                        error: e,
-                    });
+                    self.issues.push(RepairIssue::InvalidXml { path, error: e });
                 }
             }
         }
@@ -328,12 +347,14 @@ impl PptxRepair {
     fn check_relationships(&mut self) {
         // Check _rels/.rels
         self.check_rels_file("_rels/.rels");
-        
+
         // Check ppt/_rels/presentation.xml.rels
         self.check_rels_file("ppt/_rels/presentation.xml.rels");
-        
+
         // Check slide relationship files
-        let slide_rels: Vec<String> = self.package.part_paths()
+        let slide_rels: Vec<String> = self
+            .package
+            .part_paths()
             .iter()
             .filter(|p| p.starts_with("ppt/slides/_rels/") && p.ends_with(".xml.rels"))
             .map(|s| s.to_string())
@@ -347,21 +368,21 @@ impl PptxRepair {
     fn check_rels_file(&mut self, rels_path: &str) {
         if let Some(content) = self.package.get_part(rels_path) {
             let xml_str = String::from_utf8_lossy(content);
-            
+
             // Parse relationships and check targets exist
             for line in xml_str.lines() {
                 if line.contains("Relationship") && line.contains("Target=") {
                     if let Some(target) = self.extract_attribute(line, "Target") {
                         let rel_id = self.extract_attribute(line, "Id").unwrap_or_default();
-                        
+
                         // Skip external relationships
                         if target.starts_with("http://") || target.starts_with("https://") {
                             continue;
                         }
-                        
+
                         // Resolve relative path
                         let full_path = self.resolve_path(rels_path, &target);
-                        
+
                         if !self.package.has_part(&full_path) && !target.contains("..") {
                             self.issues.push(RepairIssue::BrokenRelationship {
                                 source: rels_path.to_string(),
@@ -393,8 +414,11 @@ impl PptxRepair {
 
         // Get directory of rels file
         let rels_dir = rels_path.rsplit_once('/').map(|(d, _)| d).unwrap_or("");
-        let base_dir = rels_dir.replace("_rels", "").trim_end_matches('/').to_string();
-        
+        let base_dir = rels_dir
+            .replace("_rels", "")
+            .trim_end_matches('/')
+            .to_string();
+
         if target.starts_with("../") {
             // Go up one directory
             let parent = base_dir.rsplit_once('/').map(|(d, _)| d).unwrap_or("");
@@ -411,7 +435,7 @@ impl PptxRepair {
     fn check_slide_references(&mut self) {
         // Get slides from presentation.xml.rels
         let mut referenced_slides: HashSet<String> = HashSet::new();
-        
+
         if let Some(rels_content) = self.package.get_part("ppt/_rels/presentation.xml.rels") {
             let xml_str = String::from_utf8_lossy(rels_content);
             for line in xml_str.lines() {
@@ -429,9 +453,13 @@ impl PptxRepair {
         }
 
         // Get actual slide files
-        let actual_slides: HashSet<String> = self.package.part_paths()
+        let actual_slides: HashSet<String> = self
+            .package
+            .part_paths()
             .iter()
-            .filter(|p| p.starts_with("ppt/slides/slide") && p.ends_with(".xml") && !p.contains("_rels"))
+            .filter(|p| {
+                p.starts_with("ppt/slides/slide") && p.ends_with(".xml") && !p.contains("_rels")
+            })
             .map(|s| s.to_string())
             .collect();
 
@@ -457,19 +485,19 @@ impl PptxRepair {
     fn check_content_types(&mut self) {
         if let Some(content) = self.package.get_part("[Content_Types].xml") {
             let xml_str = String::from_utf8_lossy(content);
-            
+
             // Check that all parts have content types
             let parts = self.package.part_paths();
             for part in parts {
                 if part == "[Content_Types].xml" {
                     continue;
                 }
-                
+
                 // Check if part has Override or matches Default
                 let has_override = xml_str.contains(&format!("PartName=\"/{}\"", part));
                 let extension = part.rsplit('.').next().unwrap_or("");
                 let has_default = xml_str.contains(&format!("Extension=\"{}\"", extension));
-                
+
                 if !has_override && !has_default && !part.ends_with(".rels") {
                     self.issues.push(RepairIssue::InvalidContentType {
                         path: part.to_string(),
@@ -485,27 +513,25 @@ impl PptxRepair {
         match issue {
             RepairIssue::MissingPart { path, .. } => self.repair_missing_part(path),
             RepairIssue::InvalidXml { path, .. } => self.repair_invalid_xml(path),
-            RepairIssue::BrokenRelationship { source, target, rel_id } => {
-                self.repair_broken_relationship(source, target, rel_id)
-            }
+            RepairIssue::BrokenRelationship {
+                source,
+                target,
+                rel_id,
+            } => self.repair_broken_relationship(source, target, rel_id),
             RepairIssue::MissingSlideReference { slide_path } => {
                 self.repair_missing_slide_reference(slide_path)
             }
-            RepairIssue::OrphanSlide { slide_path } => {
-                self.repair_orphan_slide(slide_path)
-            }
-            RepairIssue::InvalidContentType { path } => {
-                self.repair_invalid_content_type(path)
-            }
+            RepairIssue::OrphanSlide { slide_path } => self.repair_orphan_slide(slide_path),
+            RepairIssue::InvalidContentType { path } => self.repair_invalid_content_type(path),
             RepairIssue::MissingNamespace { path, namespace } => {
                 self.repair_missing_namespace(path, namespace)
             }
             RepairIssue::EmptyRequiredElement { path, element } => {
                 self.repair_empty_element(path, element)
             }
-            RepairIssue::CorruptedEntry { .. } => {
-                Err(PptxError::Generic("Cannot repair corrupted entry".to_string()))
-            }
+            RepairIssue::CorruptedEntry { .. } => Err(PptxError::Generic(
+                "Cannot repair corrupted entry".to_string(),
+            )),
         }
     }
 
@@ -515,34 +541,44 @@ impl PptxRepair {
             "_rels/.rels" => self.generate_package_rels(),
             "ppt/presentation.xml" => self.generate_presentation_xml(),
             "ppt/_rels/presentation.xml.rels" => self.generate_presentation_rels(),
-            _ => return Err(PptxError::Generic(format!("Cannot generate part: {}", path))),
+            _ => {
+                return Err(PptxError::Generic(format!(
+                    "Cannot generate part: {}",
+                    path
+                )))
+            }
         };
-        
-        self.package.add_part(path.to_string(), content.into_bytes());
+
+        self.package
+            .add_part(path.to_string(), content.into_bytes());
         Ok(())
     }
 
     fn repair_invalid_xml(&mut self, path: &str) -> Result<()> {
         if let Some(content) = self.package.get_part(path) {
             let xml_str = String::from_utf8_lossy(content).to_string();
-            
+
             // Try to repair using anyrepair for JSON-like structures
             // For XML, we try basic fixes
             let repaired = self.attempt_xml_repair(&xml_str);
-            
-            self.package.add_part(path.to_string(), repaired.into_bytes());
+
+            self.package
+                .add_part(path.to_string(), repaired.into_bytes());
         }
         Ok(())
     }
 
     fn attempt_xml_repair(&self, xml: &str) -> String {
         let mut repaired = xml.to_string();
-        
+
         // Ensure XML declaration
         if !repaired.trim().starts_with("<?xml") {
-            repaired = format!("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n{}", repaired);
+            repaired = format!(
+                "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n{}",
+                repaired
+            );
         }
-        
+
         // Fix common issues
         // Replace bare & with &amp; (but not existing entities)
         // Since Rust regex doesn't support look-ahead, we use a different approach
@@ -554,12 +590,15 @@ impl PptxRepair {
                 let mut entity = String::from("&");
                 let mut is_entity = false;
                 let mut temp_chars: Vec<char> = Vec::new();
-                
+
                 while let Some(&next) = chars.peek() {
                     if next == ';' {
                         entity.push(chars.next().unwrap());
-                        is_entity = entity == "&amp;" || entity == "&lt;" || entity == "&gt;" 
-                            || entity == "&quot;" || entity == "&apos;"
+                        is_entity = entity == "&amp;"
+                            || entity == "&lt;"
+                            || entity == "&gt;"
+                            || entity == "&quot;"
+                            || entity == "&apos;"
                             || entity.starts_with("&#");
                         break;
                     } else if next.is_alphanumeric() || next == '#' || next == 'x' {
@@ -572,7 +611,7 @@ impl PptxRepair {
                         break;
                     }
                 }
-                
+
                 if is_entity {
                     result.push_str(&entity);
                 } else {
@@ -586,23 +625,30 @@ impl PptxRepair {
             }
         }
         repaired = result;
-        
+
         repaired
     }
 
-    fn repair_broken_relationship(&mut self, source: &str, _target: &str, rel_id: &str) -> Result<()> {
+    fn repair_broken_relationship(
+        &mut self,
+        source: &str,
+        _target: &str,
+        rel_id: &str,
+    ) -> Result<()> {
         // Remove the broken relationship from the rels file
         if let Some(content) = self.package.get_part(source) {
             let xml_str = String::from_utf8_lossy(content).to_string();
-            
+
             // Remove the relationship line with this ID
             let pattern = format!("Id=\"{}\"", rel_id);
-            let lines: Vec<&str> = xml_str.lines()
+            let lines: Vec<&str> = xml_str
+                .lines()
                 .filter(|line| !line.contains(&pattern))
                 .collect();
-            
+
             let repaired = lines.join("\n");
-            self.package.add_part(source.to_string(), repaired.into_bytes());
+            self.package
+                .add_part(source.to_string(), repaired.into_bytes());
         }
         Ok(())
     }
@@ -611,23 +657,29 @@ impl PptxRepair {
         // Add the slide to presentation.xml.rels
         if let Some(content) = self.package.get_part("ppt/_rels/presentation.xml.rels") {
             let xml_str = String::from_utf8_lossy(content).to_string();
-            
+
             // Find the highest rId
             let max_id = self.find_max_rel_id(&xml_str);
             let new_id = format!("rId{}", max_id + 1);
-            
+
             // Extract slide number from path
             let slide_target = slide_path.replace("ppt/", "");
-            
+
             // Add new relationship before </Relationships>
             let new_rel = format!(
                 "  <Relationship Id=\"{}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"{}\"/>",
                 new_id, slide_target
             );
-            
-            let repaired = xml_str.replace("</Relationships>", &format!("{}\n</Relationships>", new_rel));
-            self.package.add_part("ppt/_rels/presentation.xml.rels".to_string(), repaired.into_bytes());
-            
+
+            let repaired = xml_str.replace(
+                "</Relationships>",
+                &format!("{}\n</Relationships>", new_rel),
+            );
+            self.package.add_part(
+                "ppt/_rels/presentation.xml.rels".to_string(),
+                repaired.into_bytes(),
+            );
+
             // Also update presentation.xml sldIdLst
             self.add_slide_to_presentation(&new_id)?;
         }
@@ -637,24 +689,34 @@ impl PptxRepair {
     fn add_slide_to_presentation(&mut self, rel_id: &str) -> Result<()> {
         if let Some(content) = self.package.get_part("ppt/presentation.xml") {
             let xml_str = String::from_utf8_lossy(content).to_string();
-            
+
             // Find highest slide ID
             let max_slide_id = self.find_max_slide_id(&xml_str);
             let new_slide_id = max_slide_id + 1;
-            
+
             // Add to sldIdLst
             let new_entry = format!("<p:sldId id=\"{}\" r:id=\"{}\"/>", new_slide_id, rel_id);
-            
+
             let repaired = if xml_str.contains("</p:sldIdLst>") {
                 xml_str.replace("</p:sldIdLst>", &format!("{}\n</p:sldIdLst>", new_entry))
             } else if xml_str.contains("<p:sldIdLst/>") {
-                xml_str.replace("<p:sldIdLst/>", &format!("<p:sldIdLst>{}</p:sldIdLst>", new_entry))
+                xml_str.replace(
+                    "<p:sldIdLst/>",
+                    &format!("<p:sldIdLst>{}</p:sldIdLst>", new_entry),
+                )
             } else {
                 // Insert sldIdLst after sldMasterIdLst
-                xml_str.replace("</p:sldMasterIdLst>", &format!("</p:sldMasterIdLst>\n<p:sldIdLst>{}</p:sldIdLst>", new_entry))
+                xml_str.replace(
+                    "</p:sldMasterIdLst>",
+                    &format!(
+                        "</p:sldMasterIdLst>\n<p:sldIdLst>{}</p:sldIdLst>",
+                        new_entry
+                    ),
+                )
             };
-            
-            self.package.add_part("ppt/presentation.xml".to_string(), repaired.into_bytes());
+
+            self.package
+                .add_part("ppt/presentation.xml".to_string(), repaired.into_bytes());
         }
         Ok(())
     }
@@ -680,14 +742,18 @@ impl PptxRepair {
         if let Some(content) = self.package.get_part("ppt/_rels/presentation.xml.rels") {
             let xml_str = String::from_utf8_lossy(content).to_string();
             let slide_target = slide_path.replace("ppt/", "");
-            
+
             // Find and remove the relationship
-            let lines: Vec<&str> = xml_str.lines()
+            let lines: Vec<&str> = xml_str
+                .lines()
                 .filter(|line| !line.contains(&format!("Target=\"{}\"", slide_target)))
                 .collect();
-            
+
             let repaired = lines.join("\n");
-            self.package.add_part("ppt/_rels/presentation.xml.rels".to_string(), repaired.into_bytes());
+            self.package.add_part(
+                "ppt/_rels/presentation.xml.rels".to_string(),
+                repaired.into_bytes(),
+            );
         }
         Ok(())
     }
@@ -695,18 +761,19 @@ impl PptxRepair {
     fn repair_invalid_content_type(&mut self, path: &str) -> Result<()> {
         if let Some(content) = self.package.get_part("[Content_Types].xml") {
             let xml_str = String::from_utf8_lossy(content).to_string();
-            
+
             // Determine content type based on path
             let content_type = self.infer_content_type(path);
-            
+
             // Add Override entry
             let new_override = format!(
                 "  <Override PartName=\"/{}\" ContentType=\"{}\"/>",
                 path, content_type
             );
-            
+
             let repaired = xml_str.replace("</Types>", &format!("{}\n</Types>", new_override));
-            self.package.add_part("[Content_Types].xml".to_string(), repaired.into_bytes());
+            self.package
+                .add_part("[Content_Types].xml".to_string(), repaired.into_bytes());
         }
         Ok(())
     }
@@ -732,7 +799,7 @@ impl PptxRepair {
     fn repair_missing_namespace(&mut self, path: &str, namespace: &str) -> Result<()> {
         if let Some(content) = self.package.get_part(path) {
             let xml_str = String::from_utf8_lossy(content).to_string();
-            
+
             // Add namespace to root element
             let ns_decl = match namespace {
                 "p" => "xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"",
@@ -740,12 +807,13 @@ impl PptxRepair {
                 "r" => "xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"",
                 _ => return Ok(()),
             };
-            
+
             // Find first element and add namespace
             if let Some(pos) = xml_str.find('>') {
                 if !xml_str[..pos].contains(ns_decl) {
                     let repaired = format!("{} {}{}", &xml_str[..pos], ns_decl, &xml_str[pos..]);
-                    self.package.add_part(path.to_string(), repaired.into_bytes());
+                    self.package
+                        .add_part(path.to_string(), repaired.into_bytes());
                 }
             }
         }
@@ -755,13 +823,14 @@ impl PptxRepair {
     fn repair_empty_element(&mut self, path: &str, element: &str) -> Result<()> {
         if let Some(content) = self.package.get_part(path) {
             let xml_str = String::from_utf8_lossy(content).to_string();
-            
+
             // Add minimal content to empty element
             let empty_pattern = format!("<{}/>", element);
             let filled = format!("<{}></{}>", element, element);
-            
+
             let repaired = xml_str.replace(&empty_pattern, &filled);
-            self.package.add_part(path.to_string(), repaired.into_bytes());
+            self.package
+                .add_part(path.to_string(), repaired.into_bytes());
         }
         Ok(())
     }
@@ -769,19 +838,24 @@ impl PptxRepair {
     // Template generators
 
     fn generate_content_types(&self) -> String {
-        let mut content = String::from(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        let mut content = String::from(
+            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Default Extension="jpeg" ContentType="image/jpeg"/>
   <Default Extension="png" ContentType="image/png"/>
-"#);
+"#,
+        );
 
         // Add overrides for existing parts
         for path in self.package.part_paths() {
             if path.ends_with(".xml") && path != "[Content_Types].xml" {
                 let ct = self.infer_content_type(path);
-                content.push_str(&format!("  <Override PartName=\"/{}\" ContentType=\"{}\"/>\n", path, ct));
+                content.push_str(&format!(
+                    "  <Override PartName=\"/{}\" ContentType=\"{}\"/>\n",
+                    path, ct
+                ));
             }
         }
 
@@ -906,7 +980,7 @@ mod tests {
             package: Package::new(),
             issues: Vec::new(),
         };
-        
+
         assert_eq!(
             repair.infer_content_type("ppt/slides/slide1.xml"),
             "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
@@ -923,7 +997,7 @@ mod tests {
             package: Package::new(),
             issues: Vec::new(),
         };
-        
+
         assert_eq!(
             repair.resolve_path("ppt/_rels/presentation.xml.rels", "slides/slide1.xml"),
             "ppt/slides/slide1.xml"
@@ -940,13 +1014,13 @@ mod tests {
             package: Package::new(),
             issues: Vec::new(),
         };
-        
+
         let xml = r#"<Relationships>
             <Relationship Id="rId1" Target="a"/>
             <Relationship Id="rId5" Target="b"/>
             <Relationship Id="rId3" Target="c"/>
         </Relationships>"#;
-        
+
         assert_eq!(repair.find_max_rel_id(xml), 5);
     }
 
@@ -956,13 +1030,13 @@ mod tests {
             package: Package::new(),
             issues: Vec::new(),
         };
-        
+
         let xml = r#"<p:sldIdLst>
             <p:sldId id="256" r:id="rId1"/>
             <p:sldId id="260" r:id="rId2"/>
             <p:sldId id="258" r:id="rId3"/>
         </p:sldIdLst>"#;
-        
+
         assert_eq!(repair.find_max_slide_id(xml), 260);
     }
 
@@ -972,10 +1046,16 @@ mod tests {
             package: Package::new(),
             issues: Vec::new(),
         };
-        
+
         let line = r#"<Relationship Id="rId1" Target="slides/slide1.xml"/>"#;
-        assert_eq!(repair.extract_attribute(line, "Id"), Some("rId1".to_string()));
-        assert_eq!(repair.extract_attribute(line, "Target"), Some("slides/slide1.xml".to_string()));
+        assert_eq!(
+            repair.extract_attribute(line, "Id"),
+            Some("rId1".to_string())
+        );
+        assert_eq!(
+            repair.extract_attribute(line, "Target"),
+            Some("slides/slide1.xml".to_string())
+        );
         assert_eq!(repair.extract_attribute(line, "Missing"), None);
     }
 
@@ -985,7 +1065,7 @@ mod tests {
             package: Package::new(),
             issues: Vec::new(),
         };
-        
+
         let content = repair.generate_content_types();
         assert!(content.contains("<?xml"));
         assert!(content.contains("<Types"));
@@ -998,7 +1078,7 @@ mod tests {
             package: Package::new(),
             issues: Vec::new(),
         };
-        
+
         let content = repair.generate_package_rels();
         assert!(content.contains("<?xml"));
         assert!(content.contains("<Relationships"));
@@ -1011,7 +1091,7 @@ mod tests {
             package: Package::new(),
             issues: Vec::new(),
         };
-        
+
         let content = repair.generate_presentation_xml();
         assert!(content.contains("<?xml"));
         assert!(content.contains("<p:presentation"));
@@ -1024,12 +1104,12 @@ mod tests {
             package: Package::new(),
             issues: Vec::new(),
         };
-        
+
         // Test adding XML declaration
         let xml = "<root><child/></root>";
         let repaired = repair.attempt_xml_repair(xml);
         assert!(repaired.starts_with("<?xml"));
-        
+
         // Test ampersand fix
         let xml = "<?xml version=\"1.0\"?><root>A & B</root>";
         let repaired = repair.attempt_xml_repair(xml);

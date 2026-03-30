@@ -71,12 +71,16 @@ impl PresentationReader {
 
     /// Get slide by index (0-based)
     pub fn get_slide(&self, index: usize) -> Result<ParsedSlide, PptxError> {
-        let path = self.slide_paths.get(index)
+        let path = self
+            .slide_paths
+            .get(index)
             .ok_or_else(|| PptxError::NotFound(format!("Slide {index} not found")))?;
-        
-        let xml = self.package.get_part(path)
+
+        let xml = self
+            .package
+            .get_part(path)
             .ok_or_else(|| PptxError::NotFound(format!("Slide file not found: {path}")))?;
-        
+
         let xml_str = String::from_utf8_lossy(xml);
         SlideParser::parse(&xml_str)
     }
@@ -103,10 +107,10 @@ impl PresentationReader {
     fn parse_structure(&mut self) -> Result<(), PptxError> {
         // Parse core properties
         self.parse_core_properties()?;
-        
+
         // Parse presentation.xml to get slide list
         self.parse_presentation_xml()?;
-        
+
         Ok(())
     }
 
@@ -114,27 +118,33 @@ impl PresentationReader {
         if let Some(core_xml) = self.package.get_part("docProps/core.xml") {
             let xml_str = String::from_utf8_lossy(core_xml);
             if let Ok(root) = XmlParser::parse_str(&xml_str) {
-                self.info.title = root.find_descendant("title")
+                self.info.title = root
+                    .find_descendant("title")
                     .map(|e| e.text_content())
                     .filter(|s| !s.is_empty());
-                
-                self.info.creator = root.find_descendant("creator")
+
+                self.info.creator = root
+                    .find_descendant("creator")
                     .map(|e| e.text_content())
                     .filter(|s| !s.is_empty());
-                
-                self.info.last_modified_by = root.find_descendant("lastModifiedBy")
+
+                self.info.last_modified_by = root
+                    .find_descendant("lastModifiedBy")
                     .map(|e| e.text_content())
                     .filter(|s| !s.is_empty());
-                
-                self.info.created = root.find_descendant("created")
+
+                self.info.created = root
+                    .find_descendant("created")
                     .map(|e| e.text_content())
                     .filter(|s| !s.is_empty());
-                
-                self.info.modified = root.find_descendant("modified")
+
+                self.info.modified = root
+                    .find_descendant("modified")
                     .map(|e| e.text_content())
                     .filter(|s| !s.is_empty());
-                
-                self.info.revision = root.find_descendant("revision")
+
+                self.info.revision = root
+                    .find_descendant("revision")
                     .and_then(|e| e.text_content().parse().ok());
             }
         }
@@ -147,10 +157,13 @@ impl PresentationReader {
             let xml_str = String::from_utf8_lossy(rels_xml);
             if let Ok(root) = XmlParser::parse_str(&xml_str) {
                 let mut slide_rels: Vec<(String, String)> = Vec::new();
-                
+
                 for rel in root.find_all("Relationship") {
                     let rel_type = rel.attr("Type").unwrap_or("");
-                    if rel_type.contains("/slide") && !rel_type.contains("Layout") && !rel_type.contains("Master") {
+                    if rel_type.contains("/slide")
+                        && !rel_type.contains("Layout")
+                        && !rel_type.contains("Master")
+                    {
                         if let (Some(id), Some(target)) = (rel.attr("Id"), rel.attr("Target")) {
                             let full_path = if target.starts_with('/') {
                                 target[1..].to_string()
@@ -161,29 +174,32 @@ impl PresentationReader {
                         }
                     }
                 }
-                
+
                 // Sort by relationship ID to maintain slide order
                 slide_rels.sort_by(|a, b| {
                     let num_a: u32 = a.0.trim_start_matches("rId").parse().unwrap_or(0);
                     let num_b: u32 = b.0.trim_start_matches("rId").parse().unwrap_or(0);
                     num_a.cmp(&num_b)
                 });
-                
+
                 self.slide_paths = slide_rels.into_iter().map(|(_, path)| path).collect();
             }
         }
-        
+
         // Fallback: scan for slide files
         if self.slide_paths.is_empty() {
             let paths = self.package.part_paths();
-            let mut slides: Vec<String> = paths.into_iter()
-                .filter(|p| p.starts_with("ppt/slides/slide") && p.ends_with(".xml") && !p.contains("_rels"))
+            let mut slides: Vec<String> = paths
+                .into_iter()
+                .filter(|p| {
+                    p.starts_with("ppt/slides/slide") && p.ends_with(".xml") && !p.contains("_rels")
+                })
                 .map(|s| s.to_string())
                 .collect();
             slides.sort();
             self.slide_paths = slides;
         }
-        
+
         self.info.slide_count = self.slide_paths.len();
         Ok(())
     }
@@ -203,22 +219,21 @@ mod tests {
             SlideContent::new("Test Title")
                 .add_bullet("Bullet 1")
                 .add_bullet("Bullet 2"),
-            SlideContent::new("Second Slide")
-                .add_bullet("More content"),
+            SlideContent::new("Second Slide").add_bullet("More content"),
         ];
-        
+
         let pptx_data = create_pptx_with_content("Test Presentation", slides).unwrap();
         fs::write("test_read.pptx", &pptx_data).unwrap();
-        
+
         // Read it back
         let reader = PresentationReader::open("test_read.pptx").unwrap();
-        
+
         assert_eq!(reader.slide_count(), 2);
         assert!(reader.info().title.is_some());
-        
+
         let slide1 = reader.get_slide(0).unwrap();
         assert!(slide1.title.is_some());
-        
+
         // Cleanup
         fs::remove_file("test_read.pptx").ok();
     }
@@ -229,19 +244,18 @@ mod tests {
             SlideContent::new("Title One")
                 .add_bullet("Point A")
                 .add_bullet("Point B"),
-            SlideContent::new("Title Two")
-                .add_bullet("Point C"),
+            SlideContent::new("Title Two").add_bullet("Point C"),
         ];
-        
+
         let pptx_data = create_pptx_with_content("Text Extract Test", slides).unwrap();
         fs::write("test_extract.pptx", &pptx_data).unwrap();
-        
+
         let reader = PresentationReader::open("test_extract.pptx").unwrap();
         let all_text = reader.extract_all_text().unwrap();
-        
+
         assert!(all_text.iter().any(|t| t.contains("Title One")));
         assert!(all_text.iter().any(|t| t.contains("Point A")));
-        
+
         fs::remove_file("test_extract.pptx").ok();
     }
 }

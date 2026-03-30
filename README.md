@@ -129,7 +129,8 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 - **Shapes** - 100+ shape types with gradient fills and transparency
 - **Connectors** - Straight, elbow, curved with arrows and dash styles
 - **Charts** - Bar, line, pie charts with multiple series
-- **Images** - Embed from files, base64, or bytes
+- **Images** - Embed from files, bytes, base64, URL, auto-detect format, 8 visual effects
+- **Media** - Video (mp4, webm) and audio (mp3, wav) embedding
 - **Reading** - Parse and modify existing PPTX files
 - **Repair** - Validate and fix damaged PPTX files
 - **Export** - Export presentations to HTML and PDF
@@ -247,7 +248,7 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-ppt-rs = "0.1"
+ppt-rs = "0.2"
 ```
 
 ## Examples
@@ -559,7 +560,7 @@ Unlike other Rust PPTX crates that:
 
 `ppt-rs`:
 - ✅ Generates **valid PPTX files** from day one
-- ✅ **Actively maintained** with comprehensive test coverage (800+ tests)
+- ✅ **Actively maintained** with comprehensive test coverage (750+ tests)
 - ✅ **Complete XML structure** following ECMA-376 standard
 - ✅ **Validation tools** - Built-in validation command for quality assurance
 - ✅ **Alignment testing** - Framework for ensuring compatibility with python-pptx
@@ -569,7 +570,7 @@ Unlike other Rust PPTX crates that:
 
 ### Validation
 - Built-in validation command for ECMA-376 compliance checking
-- Comprehensive test suite (800+ tests)
+- Comprehensive test suite (750+ tests)
 - Integration tests for end-to-end validation
 
 ### Alignment Testing
@@ -579,12 +580,12 @@ Unlike other Rust PPTX crates that:
 
 ## Technical Details
 
-- **Version**: 0.2.3
+- **Version**: 0.2.11
 - **Format**: Microsoft PowerPoint 2007+ (.pptx)
 - **Standard**: ECMA-376 Office Open XML
 - **Compatibility**: PowerPoint, LibreOffice, Google Slides, Keynote
 - **Architecture**: Modular design with clear separation of concerns
-- **Test Coverage**: 800+ tests covering all major features
+- **Test Coverage**: 750+ tests covering all major features
 
 ## Templates
 

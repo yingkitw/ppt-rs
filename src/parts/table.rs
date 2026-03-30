@@ -11,9 +11,9 @@
 //! - Font customization (size, color, family)
 //! - Table styles
 
-use super::base::{Part, PartType, ContentType};
-use crate::exc::PptxError;
+use super::base::{ContentType, Part, PartType};
 use crate::core::{escape_xml, ToXml};
+use crate::exc::PptxError;
 
 /// Horizontal alignment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -81,7 +81,7 @@ impl BorderStyle {
 /// Cell border
 #[derive(Debug, Clone, Default)]
 pub struct CellBorder {
-    pub width: i32,        // in EMU (12700 = 1pt)
+    pub width: i32, // in EMU (12700 = 1pt)
     pub color: String,
     pub style: BorderStyle,
 }
@@ -138,7 +138,11 @@ impl CellBorders {
     }
 
     pub fn none() -> Self {
-        let no_border = CellBorder { width: 0, color: String::new(), style: BorderStyle::None };
+        let no_border = CellBorder {
+            width: 0,
+            color: String::new(),
+            style: BorderStyle::None,
+        };
         CellBorders {
             left: Some(no_border.clone()),
             right: Some(no_border.clone()),
@@ -149,10 +153,18 @@ impl CellBorders {
 
     pub fn to_xml(&self) -> String {
         let mut xml = String::new();
-        if let Some(ref b) = self.left { xml.push_str(&b.to_xml("lnL")); }
-        if let Some(ref b) = self.right { xml.push_str(&b.to_xml("lnR")); }
-        if let Some(ref b) = self.top { xml.push_str(&b.to_xml("lnT")); }
-        if let Some(ref b) = self.bottom { xml.push_str(&b.to_xml("lnB")); }
+        if let Some(ref b) = self.left {
+            xml.push_str(&b.to_xml("lnL"));
+        }
+        if let Some(ref b) = self.right {
+            xml.push_str(&b.to_xml("lnR"));
+        }
+        if let Some(ref b) = self.top {
+            xml.push_str(&b.to_xml("lnT"));
+        }
+        if let Some(ref b) = self.bottom {
+            xml.push_str(&b.to_xml("lnB"));
+        }
         xml
     }
 }
@@ -166,7 +178,7 @@ impl ToXml for CellBorders {
 /// Cell margins
 #[derive(Debug, Clone)]
 pub struct CellMargins {
-    pub left: i32,   // in EMU
+    pub left: i32, // in EMU
     pub right: i32,
     pub top: i32,
     pub bottom: i32,
@@ -175,9 +187,9 @@ pub struct CellMargins {
 impl Default for CellMargins {
     fn default() -> Self {
         CellMargins {
-            left: 91440,   // 0.1 inch
+            left: 91440, // 0.1 inch
             right: 91440,
-            top: 45720,    // 0.05 inch
+            top: 45720, // 0.05 inch
             bottom: 45720,
         }
     }
@@ -185,7 +197,12 @@ impl Default for CellMargins {
 
 impl CellMargins {
     pub fn uniform(margin: i32) -> Self {
-        CellMargins { left: margin, right: margin, top: margin, bottom: margin }
+        CellMargins {
+            left: margin,
+            right: margin,
+            top: margin,
+            bottom: margin,
+        }
     }
 }
 
@@ -207,7 +224,7 @@ pub struct TableCellPart {
     pub v_align: VerticalAlign,
     pub borders: Option<CellBorders>,
     pub margins: Option<CellMargins>,
-    pub is_merged: bool,  // For cells that are part of a merge (not the anchor)
+    pub is_merged: bool, // For cells that are part of a merge (not the anchor)
 }
 
 impl TableCellPart {
@@ -353,27 +370,51 @@ impl TableCellPart {
         }
 
         // Background fill
-        let bg_xml = self.background_color.as_ref()
-            .map(|c| format!(r#"<a:solidFill><a:srgbClr val="{}"/></a:solidFill>"#, c.trim_start_matches('#')))
+        let bg_xml = self
+            .background_color
+            .as_ref()
+            .map(|c| {
+                format!(
+                    r#"<a:solidFill><a:srgbClr val="{}"/></a:solidFill>"#,
+                    c.trim_start_matches('#')
+                )
+            })
             .unwrap_or_default();
 
         // Text run properties
         let mut rpr_attrs = String::new();
-        if self.bold { rpr_attrs.push_str(r#" b="1""#); }
-        if self.italic { rpr_attrs.push_str(r#" i="1""#); }
-        if self.underline { rpr_attrs.push_str(r#" u="sng""#); }
-        if self.strikethrough { rpr_attrs.push_str(r#" strike="sngStrike""#); }
+        if self.bold {
+            rpr_attrs.push_str(r#" b="1""#);
+        }
+        if self.italic {
+            rpr_attrs.push_str(r#" i="1""#);
+        }
+        if self.underline {
+            rpr_attrs.push_str(r#" u="sng""#);
+        }
+        if self.strikethrough {
+            rpr_attrs.push_str(r#" strike="sngStrike""#);
+        }
         if let Some(size) = self.font_size {
             rpr_attrs.push_str(&format!(r#" sz="{}""#, size * 100));
         }
 
         // Text color
-        let color_xml = self.text_color.as_ref()
-            .map(|c| format!(r#"<a:solidFill><a:srgbClr val="{}"/></a:solidFill>"#, c.trim_start_matches('#')))
+        let color_xml = self
+            .text_color
+            .as_ref()
+            .map(|c| {
+                format!(
+                    r#"<a:solidFill><a:srgbClr val="{}"/></a:solidFill>"#,
+                    c.trim_start_matches('#')
+                )
+            })
             .unwrap_or_default();
 
         // Font family
-        let font_xml = self.font_family.as_ref()
+        let font_xml = self
+            .font_family
+            .as_ref()
             .map(|f| format!(r#"<a:latin typeface="{}"/>"#, f))
             .unwrap_or_default();
 
@@ -383,12 +424,16 @@ impl TableCellPart {
         // Cell properties
         let mut tcpr_attrs = format!(r#" anchor="{}""#, self.v_align.as_str());
         if let Some(ref m) = self.margins {
-            tcpr_attrs.push_str(&format!(r#" marL="{}" marR="{}" marT="{}" marB="{}""#, 
-                m.left, m.right, m.top, m.bottom));
+            tcpr_attrs.push_str(&format!(
+                r#" marL="{}" marR="{}" marT="{}" marB="{}""#,
+                m.left, m.right, m.top, m.bottom
+            ));
         }
 
         // Borders
-        let borders_xml = self.borders.as_ref()
+        let borders_xml = self
+            .borders
+            .as_ref()
             .map(|b| b.to_xml())
             .unwrap_or_default();
 
@@ -449,11 +494,14 @@ impl TableRowPart {
 
     /// Generate XML for this row
     pub fn to_xml(&self) -> String {
-        let height_attr = self.height
+        let height_attr = self
+            .height
             .map(|h| format!(r#" h="{}""#, h))
             .unwrap_or_default();
 
-        let cells_xml: String = self.cells.iter()
+        let cells_xml: String = self
+            .cells
+            .iter()
             .map(|c| c.to_xml())
             .collect::<Vec<_>>()
             .join("\n        ");
@@ -462,8 +510,7 @@ impl TableRowPart {
             r#"<a:tr{}>
         {}
       </a:tr>"#,
-            height_attr,
-            cells_xml
+            height_attr, cells_xml
         )
     }
 }
@@ -491,9 +538,9 @@ impl TablePart {
         TablePart {
             rows: vec![],
             col_widths: vec![],
-            x: 914400,      // 1 inch
-            y: 1828800,     // 2 inches
-            width: 7315200, // 8 inches
+            x: 914400,       // 1 inch
+            y: 1828800,      // 2 inches
+            width: 7315200,  // 8 inches
             height: 1828800, // 2 inches
         }
     }
@@ -532,12 +579,16 @@ impl TablePart {
 
     /// Generate table XML for embedding in a slide
     pub fn to_slide_xml(&self, shape_id: usize) -> String {
-        let grid_cols: String = self.col_widths.iter()
+        let grid_cols: String = self
+            .col_widths
+            .iter()
             .map(|w| format!(r#"<a:gridCol w="{}"/>"#, w))
             .collect::<Vec<_>>()
             .join("\n        ");
 
-        let rows_xml: String = self.rows.iter()
+        let rows_xml: String = self
+            .rows
+            .iter()
             .map(|r| r.to_xml())
             .collect::<Vec<_>>()
             .join("\n      ");
@@ -567,14 +618,7 @@ impl TablePart {
     </a:graphicData>
   </a:graphic>
 </p:graphicFrame>"#,
-            shape_id,
-            shape_id,
-            self.x,
-            self.y,
-            self.width,
-            self.height,
-            grid_cols,
-            rows_xml
+            shape_id, shape_id, self.x, self.y, self.width, self.height, grid_cols, rows_xml
         )
     }
 }
@@ -631,19 +675,14 @@ mod tests {
 
     #[test]
     fn test_table_cell_span() {
-        let cell = TableCellPart::new("Merged")
-            .row_span(2)
-            .col_span(3);
+        let cell = TableCellPart::new("Merged").row_span(2).col_span(3);
         assert_eq!(cell.row_span, 2);
         assert_eq!(cell.col_span, 3);
     }
 
     #[test]
     fn test_table_row_new() {
-        let row = TableRowPart::new(vec![
-            TableCellPart::new("A"),
-            TableCellPart::new("B"),
-        ]);
+        let row = TableRowPart::new(vec![TableCellPart::new("A"), TableCellPart::new("B")]);
         assert_eq!(row.cells.len(), 2);
     }
 
@@ -664,10 +703,7 @@ mod tests {
 
     #[test]
     fn test_table_to_xml() {
-        let table = TablePart::new()
-            .add_row(TableRowPart::new(vec![
-                TableCellPart::new("Test"),
-            ]));
+        let table = TablePart::new().add_row(TableRowPart::new(vec![TableCellPart::new("Test")]));
         let xml = table.to_slide_xml(5);
         assert!(xml.contains("p:graphicFrame"));
         assert!(xml.contains("a:tbl"));

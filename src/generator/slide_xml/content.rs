@@ -1,7 +1,7 @@
 //! Additional content rendering (shapes, images, code blocks, connectors)
 
-use crate::generator::slide_content::SlideContent;
 use crate::generator::shapes_xml::generate_shape_xml;
+use crate::generator::slide_content::SlideContent;
 
 /// Render additional content elements (shapes, images, code blocks, connectors, charts)
 pub fn render_additional_content(xml: &mut String, content: &SlideContent, chart_rids: &[String]) {
@@ -18,7 +18,11 @@ pub fn render_additional_content(xml: &mut String, content: &SlideContent, chart
         xml.push('\n');
         // Use rel_id starting from 2 (rId1 is slideLayout)
         let rel_id = i + 2;
-        xml.push_str(&crate::generator::images_xml::generate_image_xml(image, image_start_id + i, rel_id));
+        xml.push_str(&crate::generator::images_xml::generate_image_xml(
+            image,
+            image_start_id + i,
+            rel_id,
+        ));
     }
 
     // Render code blocks with syntax highlighting
@@ -29,32 +33,44 @@ pub fn render_additional_content(xml: &mut String, content: &SlideContent, chart
     }
 
     // Render connectors
-    let connector_start_id = 50 + content.shapes.len() + content.images.len() + content.code_blocks.len();
+    let connector_start_id =
+        50 + content.shapes.len() + content.images.len() + content.code_blocks.len();
     for (i, connector) in content.connectors.iter().enumerate() {
         xml.push('\n');
         let id = connector_start_id + i;
-        xml.push_str(&crate::generator::connectors::generate_connector_xml(connector, id));
+        xml.push_str(&crate::generator::connectors::generate_connector_xml(
+            connector, id,
+        ));
     }
 
     // Render charts
-    let chart_start_id = 100 + content.shapes.len() + content.images.len() + content.code_blocks.len() + content.connectors.len();
+    let chart_start_id = 100
+        + content.shapes.len()
+        + content.images.len()
+        + content.code_blocks.len()
+        + content.connectors.len();
     for (i, chart) in content.charts.iter().enumerate() {
         if i < chart_rids.len() {
             xml.push('\n');
             let r_id = &chart_rids[i];
-            xml.push_str(&crate::generator::charts::generate_chart_ref_xml(chart, r_id, chart_start_id + i));
+            xml.push_str(&crate::generator::charts::generate_chart_ref_xml(
+                chart,
+                r_id,
+                chart_start_id + i,
+            ));
         }
     }
 }
 
 /// Generate image placeholder XML
+#[allow(dead_code)]
 fn generate_image_placeholder(id: usize, image: &crate::generator::images::Image) -> String {
     let filename = &image.filename;
     let x = image.x;
     let y = image.y;
     let width = image.width;
     let height = image.height;
-    
+
     format!(
         r#"<p:sp>
 <p:nvSpPr>
@@ -87,13 +103,17 @@ fn generate_image_placeholder(id: usize, image: &crate::generator::images::Image
 }
 
 /// Generate code block XML with syntax highlighting
-fn generate_code_block(id: usize, code_block: &crate::generator::slide_content::CodeBlock) -> String {
-    let highlighted_xml = crate::cli::syntax::generate_highlighted_code_xml(&code_block.code, &code_block.language);
+fn generate_code_block(
+    id: usize,
+    code_block: &crate::generator::slide_content::CodeBlock,
+) -> String {
+    let highlighted_xml =
+        crate::cli::syntax::generate_highlighted_code_xml(&code_block.code, &code_block.language);
     let x = code_block.x;
     let y = code_block.y;
     let width = code_block.width;
     let height = code_block.height;
-    
+
     format!(
         r#"<p:sp>
 <p:nvSpPr>

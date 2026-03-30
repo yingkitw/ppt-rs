@@ -2,9 +2,9 @@
 //!
 //! Manages relationships between parts in a PPTX package.
 
+use crate::core::ToXml;
 use crate::exc::PptxError;
 use crate::oxml::XmlParser;
-use crate::core::ToXml;
 
 /// Relationship types
 #[derive(Debug, Clone, PartialEq)]
@@ -86,7 +86,9 @@ impl Relationship {
     pub fn to_xml(&self) -> String {
         format!(
             r#"<Relationship Id="{}" Type="{}" Target="{}"/>"#,
-            self.id, self.rel_type.uri(), self.target
+            self.id,
+            self.rel_type.uri(),
+            self.target
         )
     }
 }
@@ -117,13 +119,15 @@ impl Relationships {
     pub fn add(&mut self, rel_type: RelationshipType, target: &str) -> String {
         let id = format!("rId{}", self.next_id);
         self.next_id += 1;
-        self.relationships.push(Relationship::new(&id, rel_type, target));
+        self.relationships
+            .push(Relationship::new(&id, rel_type, target));
         id
     }
 
     /// Add a relationship with specific ID
     pub fn add_with_id(&mut self, id: &str, rel_type: RelationshipType, target: &str) {
-        self.relationships.push(Relationship::new(id, rel_type, target));
+        self.relationships
+            .push(Relationship::new(id, rel_type, target));
         // Update next_id if needed
         if let Some(num) = id.strip_prefix("rId").and_then(|s| s.parse::<u32>().ok()) {
             if num >= self.next_id {
@@ -139,7 +143,10 @@ impl Relationships {
 
     /// Get all relationships of a type
     pub fn get_by_type(&self, rel_type: &RelationshipType) -> Vec<&Relationship> {
-        self.relationships.iter().filter(|r| &r.rel_type == rel_type).collect()
+        self.relationships
+            .iter()
+            .filter(|r| &r.rel_type == rel_type)
+            .collect()
     }
 
     /// Get all relationships
@@ -159,18 +166,19 @@ impl Relationships {
 
     /// Generate XML for all relationships
     pub fn to_xml(&self) -> String {
-        let mut xml = String::from(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"#);
-        
+        let mut xml = String::from(
+            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">"#,
+        );
+
         for rel in &self.relationships {
             xml.push_str("\n    ");
             xml.push_str(&rel.to_xml());
         }
-        
+
         xml.push_str("\n</Relationships>");
         xml
     }
-
 }
 
 impl ToXml for Relationships {
@@ -211,7 +219,9 @@ mod tests {
 
     #[test]
     fn test_relationship_type_from_uri() {
-        let slide = RelationshipType::from_uri("http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide");
+        let slide = RelationshipType::from_uri(
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide",
+        );
         assert_eq!(slide, RelationshipType::Slide);
     }
 
@@ -220,7 +230,7 @@ mod tests {
         let mut rels = Relationships::new();
         let id1 = rels.add(RelationshipType::Slide, "slides/slide1.xml");
         let id2 = rels.add(RelationshipType::Slide, "slides/slide2.xml");
-        
+
         assert_eq!(id1, "rId1");
         assert_eq!(id2, "rId2");
         assert_eq!(rels.len(), 2);
@@ -229,9 +239,12 @@ mod tests {
     #[test]
     fn test_relationships_to_xml() {
         let mut rels = Relationships::new();
-        rels.add(RelationshipType::SlideMaster, "slideMasters/slideMaster1.xml");
+        rels.add(
+            RelationshipType::SlideMaster,
+            "slideMasters/slideMaster1.xml",
+        );
         rels.add(RelationshipType::Theme, "theme/theme1.xml");
-        
+
         let xml = rels.to_xml();
         assert!(xml.contains("rId1"));
         assert!(xml.contains("slideMaster"));
@@ -245,7 +258,7 @@ mod tests {
             <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide1.xml"/>
             <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>
         </Relationships>"#;
-        
+
         let rels = Relationships::from_xml(xml).unwrap();
         assert_eq!(rels.len(), 2);
         assert!(rels.get("rId1").is_some());

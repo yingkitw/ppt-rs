@@ -2,7 +2,7 @@
 //!
 //! Represents docProps/app.xml with application-specific metadata.
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
 
 /// Application properties part (docProps/app.xml)
@@ -70,7 +70,9 @@ impl AppPropertiesPart {
     }
 
     fn generate_xml(&self) -> String {
-        let company_xml = self.company.as_ref()
+        let company_xml = self
+            .company
+            .as_ref()
             .map(|c| format!("<Company>{}</Company>", c))
             .unwrap_or_default();
 

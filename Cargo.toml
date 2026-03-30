@@ -1,6 +1,6 @@
 [package]
 name = "ppt-rs"
-version = "0.2.7"
+version = "0.2.8"
 edition = "2024"
 authors = ["Ying Kit WONG"]
 description = "Create, read, and update PowerPoint 2007+ (.pptx) files with rich formatting, bullet styles, themes, and templates."
@@ -14,19 +14,18 @@ readme = "README.md"
 zip = "0.6"
 xml-rs = "0.8"
 uuid = { version = "1.0", features = ["v4"] }
-regex = "1.10"
+regex = { version = "1.10", default-features = false, features = ["std", "perf-dfa"] }
 thiserror = "1.0"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 clap = { version = "4.5", features = ["derive"] }
 pulldown-cmark = "0.10"
-syntect = "5.2"
-# Web2PPT dependencies
+syntect = { version = "5.2", default-features = false, features = ["parsing", "regex-fancy", "dump-load", "default-syntaxes", "default-themes"] }
 reqwest = { version = "0.11", features = ["blocking"], optional = true }
 scraper = { version = "0.18", optional = true }
 url = { version = "2.5", optional = true }
 
 [features]
-default = ["web2ppt"]
+default = []
 web2ppt = ["reqwest", "scraper", "url"]
 
 [dev-dependencies]
@@ -42,3 +41,4 @@ path = "src/bin/pptcli.rs"
 [profile.release]
 opt-level = 3
 lto = true
+strip = true

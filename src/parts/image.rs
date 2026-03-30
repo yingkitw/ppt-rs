@@ -2,7 +2,7 @@
 //!
 //! Represents an image embedded in the presentation.
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
 use std::path::Path;
 
@@ -25,7 +25,7 @@ impl ImagePart {
             "jpeg" => "jpg",
             other => other,
         };
-        
+
         ImagePart {
             path: format!("ppt/media/image{}.{}", image_number, ext),
             image_number,
@@ -44,7 +44,7 @@ impl ImagePart {
             .and_then(|e| e.to_str())
             .unwrap_or("png")
             .to_lowercase();
-        
+
         Ok(Self::new(image_number, &format, data))
     }
 
@@ -120,11 +120,15 @@ impl Part for ImagePart {
 
     fn to_xml(&self) -> Result<String, PptxError> {
         // Images don't have XML content, they're binary
-        Err(PptxError::InvalidOperation("Images don't have XML content".to_string()))
+        Err(PptxError::InvalidOperation(
+            "Images don't have XML content".to_string(),
+        ))
     }
 
     fn from_xml(_xml: &str) -> Result<Self, PptxError> {
-        Err(PptxError::InvalidOperation("Cannot create image from XML".to_string()))
+        Err(PptxError::InvalidOperation(
+            "Cannot create image from XML".to_string(),
+        ))
     }
 }
 
@@ -136,7 +140,7 @@ mod tests {
     fn test_image_part_new() {
         let data = vec![0x89, 0x50, 0x4E, 0x47]; // PNG header
         let part = ImagePart::new(1, "png", data);
-        
+
         assert_eq!(part.image_number(), 1);
         assert_eq!(part.format(), "png");
         assert_eq!(part.path(), "ppt/media/image1.png");
@@ -146,7 +150,7 @@ mod tests {
     fn test_image_mime_type() {
         let part = ImagePart::new(1, "jpeg", vec![]);
         assert_eq!(part.mime_type(), "image/jpeg");
-        
+
         let part2 = ImagePart::new(2, "png", vec![]);
         assert_eq!(part2.mime_type(), "image/png");
     }

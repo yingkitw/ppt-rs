@@ -1,8 +1,8 @@
 //! CLI commands implementation
 
+use crate::generator;
 use std::fs;
 use std::path::PathBuf;
-use crate::generator;
 
 pub struct CreateCommand;
 pub struct FromMarkdownCommand;
@@ -31,22 +31,17 @@ impl CreateCommand {
             .map_err(|e| format!("Failed to generate PPTX: {e}"))?;
 
         // Write to file
-        fs::write(output, pptx_data)
-            .map_err(|e| format!("Failed to write file: {e}"))?;
+        fs::write(output, pptx_data).map_err(|e| format!("Failed to write file: {e}"))?;
 
         Ok(())
     }
 }
 
 impl FromMarkdownCommand {
-    pub fn execute(
-        input: &str,
-        output: &str,
-        title: Option<&str>,
-    ) -> Result<(), String> {
+    pub fn execute(input: &str, output: &str, title: Option<&str>) -> Result<(), String> {
         // Read markdown file
-        let md_content = fs::read_to_string(input)
-            .map_err(|e| format!("Failed to read markdown file: {e}"))?;
+        let md_content =
+            fs::read_to_string(input).map_err(|e| format!("Failed to read markdown file: {e}"))?;
 
         // Parse markdown into slides using enhanced parser
         let slides = super::markdown::parse_markdown(&md_content)?;
@@ -70,18 +65,15 @@ impl FromMarkdownCommand {
             .map_err(|e| format!("Failed to generate PPTX: {e}"))?;
 
         // Write to file
-        fs::write(output, pptx_data)
-            .map_err(|e| format!("Failed to write file: {e}"))?;
+        fs::write(output, pptx_data).map_err(|e| format!("Failed to write file: {e}"))?;
 
         Ok(())
     }
 }
 
-
 impl InfoCommand {
     pub fn execute(file: &str) -> Result<(), String> {
-        let metadata = fs::metadata(file)
-            .map_err(|e| format!("File not found: {e}"))?;
+        let metadata = fs::metadata(file).map_err(|e| format!("File not found: {e}"))?;
 
         let size = metadata.len();
         let modified = metadata
@@ -134,19 +126,17 @@ impl ValidateCommand {
         println!("{}", "=".repeat(60));
 
         // Check file exists
-        let metadata = fs::metadata(file)
-            .map_err(|e| format!("File not found: {e}"))?;
-        
+        let metadata = fs::metadata(file).map_err(|e| format!("File not found: {e}"))?;
+
         if !metadata.is_file() {
             return Err(format!("Path is not a file: {file}"));
         }
 
         // Try to open as ZIP archive
-        let file_handle = fs::File::open(file)
-            .map_err(|e| format!("Failed to open file: {e}"))?;
-        
-        let mut archive = ZipArchive::new(file_handle)
-            .map_err(|e| format!("Invalid ZIP archive: {e}"))?;
+        let file_handle = fs::File::open(file).map_err(|e| format!("Failed to open file: {e}"))?;
+
+        let mut archive =
+            ZipArchive::new(file_handle).map_err(|e| format!("Invalid ZIP archive: {e}"))?;
 
         println!("✓ File is a valid ZIP archive");
         println!("  Total entries: {}", archive.len());
@@ -157,7 +147,8 @@ impl ValidateCommand {
 
         // Collect all file names
         for i in 0..archive.len() {
-            let file = archive.by_index(i)
+            let file = archive
+                .by_index(i)
                 .map_err(|e| format!("Failed to read archive entry: {e}"))?;
             found_files.insert(file.name().to_string());
         }
@@ -183,15 +174,16 @@ impl ValidateCommand {
         // Check XML validity
         println!("\nChecking XML validity...");
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i)
+            let mut file = archive
+                .by_index(i)
                 .map_err(|e| format!("Failed to read archive entry: {e}"))?;
-            
+
             let name = file.name().to_string();
             if name.ends_with(".xml") || name.ends_with(".rels") {
                 let mut content = String::new();
                 file.read_to_string(&mut content)
                     .map_err(|e| format!("Failed to read XML file {}: {e}", name))?;
-                
+
                 // Basic XML validation (check for well-formedness)
                 if content.trim().is_empty() {
                     issues.push(format!("Empty XML file: {}", name));
@@ -242,15 +234,6 @@ impl ValidateCommand {
     }
 }
 
-#[allow(dead_code)]
-fn escape_xml(s: &str) -> String {
-    s.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("\"", "&quot;")
-        .replace("'", "&apos;")
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -263,13 +246,14 @@ mod tests {
         let result = CreateCommand::execute(output, Some("Test"), 3, None);
         assert!(result.is_ok());
         assert!(Path::new(output).exists());
-        
+
         // Cleanup
         let _ = fs::remove_file(output);
     }
 
     #[test]
     fn test_escape_xml() {
+        use crate::core::escape_xml;
         assert_eq!(escape_xml("a & b"), "a &amp; b");
         assert_eq!(escape_xml("<tag>"), "&lt;tag&gt;");
         assert_eq!(escape_xml("\"quoted\""), "&quot;quoted&quot;");

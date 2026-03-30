@@ -896,7 +896,7 @@ mod tests {
             self.with_notes && index < self.count
         }
 
-        fn slide_chart_count(&self, index: usize) -> usize {
+        fn slide_chart_count(&self, _index: usize) -> usize {
             0
         }
     }

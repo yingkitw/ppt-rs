@@ -1,7 +1,7 @@
 //! Mermaid diagram parsing and rendering
 //!
 //! Parses Mermaid diagram code and generates actual PPTX shapes and connectors.
-//! 
+//!
 //! Supported diagram types:
 //! - Flowchart (graph/flowchart)
 //! - Sequence diagrams
@@ -16,28 +16,28 @@
 //! - Quadrant charts
 //! - Git graphs
 
-mod types;
-mod flowchart;
-mod sequence;
-mod pie;
-mod gantt;
 mod class_diagram;
-mod state_diagram;
 mod er_diagram;
-mod mindmap;
-mod timeline;
-mod journey;
-mod quadrant;
+mod flowchart;
+mod gantt;
 mod gitgraph;
+mod journey;
+mod mindmap;
+mod pie;
+mod quadrant;
+mod sequence;
+mod state_diagram;
+mod timeline;
+mod types;
 
 pub use types::*;
 
-use crate::generator::{Shape, ShapeType, ShapeFill, ShapeLine};
+use crate::generator::{Shape, ShapeFill, ShapeLine, ShapeType};
 
 /// Detect the type of Mermaid diagram from code
 pub fn detect_type(code: &str) -> MermaidType {
     let first_line = code.lines().next().unwrap_or("").trim().to_lowercase();
-    
+
     if first_line.starts_with("graph") || first_line.starts_with("flowchart") {
         MermaidType::Flowchart
     } else if first_line.starts_with("sequencediagram") || first_line.starts_with("sequence") {
@@ -70,7 +70,7 @@ pub fn detect_type(code: &str) -> MermaidType {
 /// Create shapes and connectors for a Mermaid diagram (main entry point)
 pub fn create_diagram_elements(code: &str) -> DiagramElements {
     let diagram_type = detect_type(code);
-    
+
     match diagram_type {
         MermaidType::Flowchart => {
             let fc = flowchart::parse(code);
@@ -81,50 +81,39 @@ pub fn create_diagram_elements(code: &str) -> DiagramElements {
             let shapes = pie::generate_shapes(&slices);
             DiagramElements::from_shapes(shapes)
         }
-        MermaidType::Sequence => {
-            DiagramElements::from_shapes(sequence::generate_shapes(code))
-        }
-        MermaidType::Gantt => {
-            DiagramElements::from_shapes(gantt::generate_shapes(code))
-        }
-        MermaidType::ClassDiagram => {
-            class_diagram::generate_elements(code)
-        }
-        MermaidType::StateDiagram => {
-            state_diagram::generate_elements(code)
-        }
-        MermaidType::ErDiagram => {
-            er_diagram::generate_elements(code)
-        }
-        MermaidType::Mindmap => {
-            DiagramElements::from_shapes(mindmap::generate_shapes(code))
-        }
-        MermaidType::Timeline => {
-            DiagramElements::from_shapes(timeline::generate_shapes(code))
-        }
-        MermaidType::Journey => {
-            DiagramElements::from_shapes(journey::generate_shapes(code))
-        }
-        MermaidType::Quadrant => {
-            DiagramElements::from_shapes(quadrant::generate_shapes(code))
-        }
-        MermaidType::GitGraph => {
-            DiagramElements::from_shapes(gitgraph::generate_shapes(code))
-        }
+        MermaidType::Sequence => DiagramElements::from_shapes(sequence::generate_shapes(code)),
+        MermaidType::Gantt => DiagramElements::from_shapes(gantt::generate_shapes(code)),
+        MermaidType::ClassDiagram => class_diagram::generate_elements(code),
+        MermaidType::StateDiagram => state_diagram::generate_elements(code),
+        MermaidType::ErDiagram => er_diagram::generate_elements(code),
+        MermaidType::Mindmap => DiagramElements::from_shapes(mindmap::generate_shapes(code)),
+        MermaidType::Timeline => DiagramElements::from_shapes(timeline::generate_shapes(code)),
+        MermaidType::Journey => DiagramElements::from_shapes(journey::generate_shapes(code)),
+        MermaidType::Quadrant => DiagramElements::from_shapes(quadrant::generate_shapes(code)),
+        MermaidType::GitGraph => DiagramElements::from_shapes(gitgraph::generate_shapes(code)),
         _ => {
             // Fallback: create a placeholder
-            DiagramElements::from_shapes(vec![
-                Shape::new(ShapeType::Rectangle, 1_000_000, 2_000_000, 7_000_000, 3_000_000)
-                    .with_fill(ShapeFill::new("F5F5F5"))
-                    .with_line(ShapeLine::new("757575", 1))
-                    .with_text(&format!("Diagram: {}", code.lines().next().unwrap_or("Unknown")))
-            ])
+            DiagramElements::from_shapes(vec![Shape::new(
+                ShapeType::Rectangle,
+                1_000_000,
+                2_000_000,
+                7_000_000,
+                3_000_000,
+            )
+            .with_fill(ShapeFill::new("F5F5F5"))
+            .with_line(ShapeLine::new("757575", 1))
+            .with_text(&format!(
+                "Diagram: {}",
+                code.lines().next().unwrap_or("Unknown")
+            ))])
         }
     }
 }
 
 /// Get diagram style info (for backward compatibility)
-pub fn get_diagram_style(diagram_type: MermaidType) -> (&'static str, &'static str, &'static str, &'static str) {
+pub fn get_diagram_style(
+    diagram_type: MermaidType,
+) -> (&'static str, &'static str, &'static str, &'static str) {
     match diagram_type {
         MermaidType::Flowchart => ("E3F2FD", "1565C0", "Flowchart", ""),
         MermaidType::Sequence => ("F3E5F5", "7B1FA2", "Sequence Diagram", ""),

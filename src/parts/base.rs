@@ -29,13 +29,25 @@ impl ContentType {
     /// Get the MIME type string
     pub fn mime_type(&self) -> &'static str {
         match self {
-            ContentType::Presentation => "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
-            ContentType::Slide => "application/vnd.openxmlformats-officedocument.presentationml.slide+xml",
-            ContentType::SlideLayout => "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml",
-            ContentType::SlideMaster => "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml",
+            ContentType::Presentation => {
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"
+            }
+            ContentType::Slide => {
+                "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
+            }
+            ContentType::SlideLayout => {
+                "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"
+            }
+            ContentType::SlideMaster => {
+                "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"
+            }
             ContentType::Theme => "application/vnd.openxmlformats-officedocument.theme+xml",
-            ContentType::NotesSlide => "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml",
-            ContentType::NotesMaster => "application/vnd.openxmlformats-officedocument.presentationml.notesMaster+xml",
+            ContentType::NotesSlide => {
+                "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml"
+            }
+            ContentType::NotesMaster => {
+                "application/vnd.openxmlformats-officedocument.presentationml.notesMaster+xml"
+            }
             ContentType::Image(fmt) => match fmt.as_str() {
                 "png" => "image/png",
                 "jpeg" | "jpg" => "image/jpeg",
@@ -58,12 +70,22 @@ impl ContentType {
                 "ogg" => "audio/ogg",
                 _ => "application/octet-stream",
             },
-            ContentType::Chart => "application/vnd.openxmlformats-officedocument.drawingml.chart+xml",
-            ContentType::Table => "application/vnd.openxmlformats-officedocument.drawingml.table+xml",
-            ContentType::CoreProperties => "application/vnd.openxmlformats-package.core-properties+xml",
-            ContentType::ExtendedProperties => "application/vnd.openxmlformats-officedocument.extended-properties+xml",
+            ContentType::Chart => {
+                "application/vnd.openxmlformats-officedocument.drawingml.chart+xml"
+            }
+            ContentType::Table => {
+                "application/vnd.openxmlformats-officedocument.drawingml.table+xml"
+            }
+            ContentType::CoreProperties => {
+                "application/vnd.openxmlformats-package.core-properties+xml"
+            }
+            ContentType::ExtendedProperties => {
+                "application/vnd.openxmlformats-officedocument.extended-properties+xml"
+            }
             ContentType::ContentTypes => "application/vnd.openxmlformats-package.content-types+xml",
-            ContentType::Relationships => "application/vnd.openxmlformats-package.relationships+xml",
+            ContentType::Relationships => {
+                "application/vnd.openxmlformats-package.relationships+xml"
+            }
             ContentType::Xml => "application/xml",
         }
     }
@@ -116,18 +138,20 @@ impl PartType {
 pub trait Part {
     /// Get the part path within the package
     fn path(&self) -> &str;
-    
+
     /// Get the part type
     fn part_type(&self) -> PartType;
-    
+
     /// Get the content type
     fn content_type(&self) -> ContentType;
-    
+
     /// Generate XML content for this part
     fn to_xml(&self) -> Result<String, PptxError>;
-    
+
     /// Parse XML content into this part
-    fn from_xml(xml: &str) -> Result<Self, PptxError> where Self: Sized;
+    fn from_xml(xml: &str) -> Result<Self, PptxError>
+    where
+        Self: Sized;
 }
 
 #[cfg(test)]
@@ -136,10 +160,18 @@ mod tests {
 
     #[test]
     fn test_content_type_mime() {
-        assert_eq!(ContentType::Slide.mime_type(), 
-            "application/vnd.openxmlformats-officedocument.presentationml.slide+xml");
-        assert_eq!(ContentType::Image("png".to_string()).mime_type(), "image/png");
-        assert_eq!(ContentType::Image("jpeg".to_string()).mime_type(), "image/jpeg");
+        assert_eq!(
+            ContentType::Slide.mime_type(),
+            "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
+        );
+        assert_eq!(
+            ContentType::Image("png".to_string()).mime_type(),
+            "image/png"
+        );
+        assert_eq!(
+            ContentType::Image("jpeg".to_string()).mime_type(),
+            "image/jpeg"
+        );
     }
 
     #[test]

@@ -2,7 +2,7 @@
 //!
 //! Represents [Content_Types].xml which defines MIME types for all parts.
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
 
 /// Default content type mapping (by extension)
@@ -49,7 +49,10 @@ impl ContentTypesPart {
     pub fn new() -> Self {
         ContentTypesPart {
             defaults: vec![
-                DefaultType::new("rels", "application/vnd.openxmlformats-package.relationships+xml"),
+                DefaultType::new(
+                    "rels",
+                    "application/vnd.openxmlformats-package.relationships+xml",
+                ),
                 DefaultType::new("xml", "application/xml"),
                 DefaultType::new("jpeg", "image/jpeg"),
                 DefaultType::new("jpg", "image/jpeg"),
@@ -68,19 +71,21 @@ impl ContentTypesPart {
 
     /// Add a default type
     pub fn add_default(&mut self, extension: impl Into<String>, content_type: impl Into<String>) {
-        self.defaults.push(DefaultType::new(extension, content_type));
+        self.defaults
+            .push(DefaultType::new(extension, content_type));
     }
 
     /// Add an override type
     pub fn add_override(&mut self, part_name: impl Into<String>, content_type: impl Into<String>) {
-        self.overrides.push(OverrideType::new(part_name, content_type));
+        self.overrides
+            .push(OverrideType::new(part_name, content_type));
     }
 
     /// Add presentation part
     pub fn add_presentation(&mut self) {
         self.add_override(
             "/ppt/presentation.xml",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml",
         );
     }
 
@@ -88,7 +93,7 @@ impl ContentTypesPart {
     pub fn add_slide(&mut self, slide_number: usize) {
         self.add_override(
             format!("/ppt/slides/slide{}.xml", slide_number),
-            "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.slide+xml",
         );
     }
 
@@ -96,7 +101,7 @@ impl ContentTypesPart {
     pub fn add_slide_layout(&mut self, layout_number: usize) {
         self.add_override(
             format!("/ppt/slideLayouts/slideLayout{}.xml", layout_number),
-            "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml",
         );
     }
 
@@ -104,7 +109,7 @@ impl ContentTypesPart {
     pub fn add_slide_master(&mut self, master_number: usize) {
         self.add_override(
             format!("/ppt/slideMasters/slideMaster{}.xml", master_number),
-            "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml",
         );
     }
 
@@ -112,7 +117,7 @@ impl ContentTypesPart {
     pub fn add_theme(&mut self, theme_number: usize) {
         self.add_override(
             format!("/ppt/theme/theme{}.xml", theme_number),
-            "application/vnd.openxmlformats-officedocument.theme+xml"
+            "application/vnd.openxmlformats-officedocument.theme+xml",
         );
     }
 
@@ -120,7 +125,7 @@ impl ContentTypesPart {
     pub fn add_notes_slide(&mut self, notes_number: usize) {
         self.add_override(
             format!("/ppt/notesSlides/notesSlide{}.xml", notes_number),
-            "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml"
+            "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml",
         );
     }
 
@@ -128,7 +133,7 @@ impl ContentTypesPart {
     pub fn add_chart(&mut self, chart_number: usize) {
         self.add_override(
             format!("/ppt/charts/chart{}.xml", chart_number),
-            "application/vnd.openxmlformats-officedocument.drawingml.chart+xml"
+            "application/vnd.openxmlformats-officedocument.drawingml.chart+xml",
         );
     }
 
@@ -136,7 +141,7 @@ impl ContentTypesPart {
     pub fn add_core_properties(&mut self) {
         self.add_override(
             "/docProps/core.xml",
-            "application/vnd.openxmlformats-package.core-properties+xml"
+            "application/vnd.openxmlformats-package.core-properties+xml",
         );
     }
 
@@ -144,18 +149,32 @@ impl ContentTypesPart {
     pub fn add_app_properties(&mut self) {
         self.add_override(
             "/docProps/app.xml",
-            "application/vnd.openxmlformats-officedocument.extended-properties+xml"
+            "application/vnd.openxmlformats-officedocument.extended-properties+xml",
         );
     }
 
     fn generate_xml(&self) -> String {
-        let defaults_xml: String = self.defaults.iter()
-            .map(|d| format!(r#"<Default Extension="{}" ContentType="{}"/>"#, d.extension, d.content_type))
+        let defaults_xml: String = self
+            .defaults
+            .iter()
+            .map(|d| {
+                format!(
+                    r#"<Default Extension="{}" ContentType="{}"/>"#,
+                    d.extension, d.content_type
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n  ");
 
-        let overrides_xml: String = self.overrides.iter()
-            .map(|o| format!(r#"<Override PartName="{}" ContentType="{}"/>"#, o.part_name, o.content_type))
+        let overrides_xml: String = self
+            .overrides
+            .iter()
+            .map(|o| {
+                format!(
+                    r#"<Override PartName="{}" ContentType="{}"/>"#,
+                    o.part_name, o.content_type
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n  ");
 
@@ -165,8 +184,7 @@ impl ContentTypesPart {
   {}
   {}
 </Types>"#,
-            defaults_xml,
-            overrides_xml
+            defaults_xml, overrides_xml
         )
     }
 }

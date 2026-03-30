@@ -1,8 +1,8 @@
 //! Shared types for Mermaid diagram parsing
 
-use crate::generator::{Shape, ShapeType, ShapeFill, ShapeLine};
-use crate::generator::shapes::{GradientFill, GradientDirection};
 use crate::generator::connectors::Connector;
+use crate::generator::shapes::{GradientDirection, GradientFill};
+use crate::generator::{Shape, ShapeFill, ShapeLine, ShapeType};
 
 /// Mermaid diagram types
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -25,10 +25,10 @@ pub enum MermaidType {
 /// Direction of flowchart layout
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FlowDirection {
-    LeftToRight,  // LR
-    RightToLeft,  // RL
-    TopToBottom,  // TB/TD
-    BottomToTop,  // BT
+    LeftToRight, // LR
+    RightToLeft, // RL
+    TopToBottom, // TB/TD
+    BottomToTop, // BT
 }
 
 /// A parsed flowchart node
@@ -42,12 +42,12 @@ pub struct FlowNode {
 /// Node shape types in Mermaid
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum NodeShape {
-    Rectangle,      // [text]
-    RoundedRect,    // (text)
-    Stadium,        // ([text])
-    Diamond,        // {text}
-    Circle,         // ((text))
-    Hexagon,        // {{text}}
+    Rectangle,   // [text]
+    RoundedRect, // (text)
+    Stadium,     // ([text])
+    Diamond,     // {text}
+    Circle,      // ((text))
+    Hexagon,     // {{text}}
 }
 
 /// A connection between nodes
@@ -62,10 +62,10 @@ pub struct FlowConnection {
 /// Arrow styles
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ArrowStyle {
-    Arrow,      // -->
-    Open,       // ---
-    Dotted,     // -.->
-    Thick,      // ==>
+    Arrow,  // -->
+    Open,   // ---
+    Dotted, // -.->
+    Thick,  // ==>
 }
 
 /// A subgraph grouping
@@ -99,19 +99,19 @@ impl DiagramBounds {
         if positions.is_empty() {
             return None;
         }
-        
+
         let mut min_x = u32::MAX;
         let mut min_y = u32::MAX;
         let mut max_x = 0u32;
         let mut max_y = 0u32;
-        
+
         for &(x, y, w, h) in positions {
             min_x = min_x.min(x);
             min_y = min_y.min(y);
             max_x = max_x.max(x + w);
             max_y = max_y.max(y + h);
         }
-        
+
         Some(Self {
             x: min_x,
             y: min_y,
@@ -140,7 +140,7 @@ impl DiagramElements {
             .map(|s| (s.x, s.y, s.width, s.height))
             .collect();
         let bounds = DiagramBounds::from_elements(&element_bounds);
-        
+
         Self {
             shapes,
             connectors: Vec::new(),
@@ -148,7 +148,7 @@ impl DiagramElements {
             grouped: true,
         }
     }
-    
+
     /// Create from shapes and connectors
     pub fn from_shapes_and_connectors(shapes: Vec<Shape>, connectors: Vec<Connector>) -> Self {
         let element_bounds: Vec<(u32, u32, u32, u32)> = shapes
@@ -156,7 +156,7 @@ impl DiagramElements {
             .map(|s| (s.x, s.y, s.width, s.height))
             .collect();
         let bounds = DiagramBounds::from_elements(&element_bounds);
-        
+
         Self {
             shapes,
             connectors,
@@ -190,7 +190,7 @@ pub fn create_labeled_shape(
     label_pos: LabelPosition,
 ) -> Vec<Shape> {
     let mut shapes = Vec::new();
-    
+
     // Background shape (no text)
     let mut bg = Shape::new(shape_type, x, y, width, height);
     if let Some(color) = fill_color {
@@ -200,37 +200,35 @@ pub fn create_labeled_shape(
         bg = bg.with_line(ShapeLine::new(color, 12700));
     }
     shapes.push(bg);
-    
+
     // Label shape
     let label_height = 200_000u32;
     let label_width = width.max(800_000);
-    
+
     let (lx, ly) = match label_pos {
         LabelPosition::Above => (
             x + width / 2 - label_width / 2,
-            y.saturating_sub(label_height + 50_000)
+            y.saturating_sub(label_height + 50_000),
         ),
-        LabelPosition::Below => (
-            x + width / 2 - label_width / 2,
-            y + height + 50_000
-        ),
-        LabelPosition::Right => (
-            x + width + 50_000,
-            y + height / 2 - label_height / 2
-        ),
-        LabelPosition::Inside => (
-            x + 50_000,
-            y + 50_000
-        ),
+        LabelPosition::Below => (x + width / 2 - label_width / 2, y + height + 50_000),
+        LabelPosition::Right => (x + width + 50_000, y + height / 2 - label_height / 2),
+        LabelPosition::Inside => (x + 50_000, y + 50_000),
     };
-    
-    let lw = if matches!(label_pos, LabelPosition::Inside) { width - 100_000 } else { label_width };
-    let lh = if matches!(label_pos, LabelPosition::Inside) { height - 100_000 } else { label_height };
-    
-    let label = Shape::new(ShapeType::Rectangle, lx, ly, lw, lh)
-        .with_text(text);
+
+    let lw = if matches!(label_pos, LabelPosition::Inside) {
+        width - 100_000
+    } else {
+        label_width
+    };
+    let lh = if matches!(label_pos, LabelPosition::Inside) {
+        height - 100_000
+    } else {
+        label_height
+    };
+
+    let label = Shape::new(ShapeType::Rectangle, lx, ly, lw, lh).with_text(text);
     shapes.push(label);
-    
+
     shapes
 }
 
@@ -245,43 +243,35 @@ pub fn create_labeled_dot(
     label_pos: LabelPosition,
 ) -> Vec<Shape> {
     let mut shapes = Vec::new();
-    
+
     // Dot shape
-    let mut dot = Shape::new(ShapeType::Circle, x, y, size, size)
-        .with_fill(ShapeFill::new(fill_color));
+    let mut dot =
+        Shape::new(ShapeType::Circle, x, y, size, size).with_fill(ShapeFill::new(fill_color));
     if let Some(color) = line_color {
         dot = dot.with_line(ShapeLine::new(color, 25400));
     }
     shapes.push(dot);
-    
+
     // Label
     let label_width = 800_000u32;
     let label_height = 200_000u32;
-    
+
     let (lx, ly) = match label_pos {
         LabelPosition::Above => (
             x + size / 2 - label_width / 2,
-            y.saturating_sub(label_height + 50_000)
+            y.saturating_sub(label_height + 50_000),
         ),
-        LabelPosition::Below => (
-            x + size / 2 - label_width / 2,
-            y + size + 50_000
-        ),
-        LabelPosition::Right => (
-            x + size + 50_000,
-            y + size / 2 - label_height / 2
-        ),
-        LabelPosition::Inside => (
-            x, y
-        ),
+        LabelPosition::Below => (x + size / 2 - label_width / 2, y + size + 50_000),
+        LabelPosition::Right => (x + size + 50_000, y + size / 2 - label_height / 2),
+        LabelPosition::Inside => (x, y),
     };
-    
+
     if !matches!(label_pos, LabelPosition::Inside) {
-        let label = Shape::new(ShapeType::Rectangle, lx, ly, label_width, label_height)
-            .with_text(text);
+        let label =
+            Shape::new(ShapeType::Rectangle, lx, ly, label_width, label_height).with_text(text);
         shapes.push(label);
     }
-    
+
     shapes
 }
 
@@ -301,46 +291,43 @@ pub fn create_gradient_shape(
     label_pos: LabelPosition,
 ) -> Vec<Shape> {
     let mut shapes = Vec::new();
-    
+
     // Background shape with gradient (no text)
     let gradient = GradientFill::linear(start_color, end_color, direction);
-    let mut bg = Shape::new(shape_type, x, y, width, height)
-        .with_gradient(gradient);
+    let mut bg = Shape::new(shape_type, x, y, width, height).with_gradient(gradient);
     if let Some(color) = line_color {
         bg = bg.with_line(ShapeLine::new(color, 12700));
     }
     shapes.push(bg);
-    
+
     // Label shape
     let label_height = 200_000u32;
     let label_width = width.max(800_000);
-    
+
     let (lx, ly) = match label_pos {
         LabelPosition::Above => (
             x + width / 2 - label_width / 2,
-            y.saturating_sub(label_height + 50_000)
+            y.saturating_sub(label_height + 50_000),
         ),
-        LabelPosition::Below => (
-            x + width / 2 - label_width / 2,
-            y + height + 50_000
-        ),
-        LabelPosition::Right => (
-            x + width + 50_000,
-            y + height / 2 - label_height / 2
-        ),
-        LabelPosition::Inside => (
-            x + 50_000,
-            y + 50_000
-        ),
+        LabelPosition::Below => (x + width / 2 - label_width / 2, y + height + 50_000),
+        LabelPosition::Right => (x + width + 50_000, y + height / 2 - label_height / 2),
+        LabelPosition::Inside => (x + 50_000, y + 50_000),
     };
-    
-    let lw = if matches!(label_pos, LabelPosition::Inside) { width - 100_000 } else { label_width };
-    let lh = if matches!(label_pos, LabelPosition::Inside) { height - 100_000 } else { label_height };
-    
-    let label = Shape::new(ShapeType::Rectangle, lx, ly, lw, lh)
-        .with_text(text);
+
+    let lw = if matches!(label_pos, LabelPosition::Inside) {
+        width - 100_000
+    } else {
+        label_width
+    };
+    let lh = if matches!(label_pos, LabelPosition::Inside) {
+        height - 100_000
+    } else {
+        label_height
+    };
+
+    let label = Shape::new(ShapeType::Rectangle, lx, ly, lw, lh).with_text(text);
     shapes.push(label);
-    
+
     shapes
 }
 
@@ -358,15 +345,14 @@ pub fn create_transparent_shape(
     text: Option<&str>,
 ) -> Shape {
     let fill = ShapeFill::new(fill_color).with_transparency(transparency_percent);
-    let mut shape = Shape::new(shape_type, x, y, width, height)
-        .with_fill(fill);
-    
+    let mut shape = Shape::new(shape_type, x, y, width, height).with_fill(fill);
+
     if let Some(color) = line_color {
         shape = shape.with_line(ShapeLine::new(color, 12700));
     }
     if let Some(t) = text {
         shape = shape.with_text(t);
     }
-    
+
     shape
 }

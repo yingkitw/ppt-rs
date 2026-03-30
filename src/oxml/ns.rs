@@ -38,14 +38,29 @@ impl NamespaceRegistry {
     /// Create a new NamespaceRegistry
     pub fn new() -> Self {
         let mut namespaces = HashMap::new();
-        
+
         // Register standard namespaces
-        namespaces.insert("p".to_string(), "http://schemas.openxmlformats.org/presentationml/2006/main".to_string());
-        namespaces.insert("a".to_string(), "http://schemas.openxmlformats.org/drawingml/2006/main".to_string());
-        namespaces.insert("r".to_string(), "http://schemas.openxmlformats.org/officeDocument/2006/relationships".to_string());
-        namespaces.insert("rel".to_string(), "http://schemas.openxmlformats.org/package/2006/relationships".to_string());
-        namespaces.insert("c".to_string(), "http://schemas.openxmlformats.org/drawingml/2006/chart".to_string());
-        
+        namespaces.insert(
+            "p".to_string(),
+            "http://schemas.openxmlformats.org/presentationml/2006/main".to_string(),
+        );
+        namespaces.insert(
+            "a".to_string(),
+            "http://schemas.openxmlformats.org/drawingml/2006/main".to_string(),
+        );
+        namespaces.insert(
+            "r".to_string(),
+            "http://schemas.openxmlformats.org/officeDocument/2006/relationships".to_string(),
+        );
+        namespaces.insert(
+            "rel".to_string(),
+            "http://schemas.openxmlformats.org/package/2006/relationships".to_string(),
+        );
+        namespaces.insert(
+            "c".to_string(),
+            "http://schemas.openxmlformats.org/drawingml/2006/chart".to_string(),
+        );
+
         NamespaceRegistry { namespaces }
     }
 
@@ -74,10 +89,13 @@ impl Default for NamespaceRegistry {
 // Standard namespace constants
 pub const PML: &str = "http://schemas.openxmlformats.org/presentationml/2006/main";
 pub const DML: &str = "http://schemas.openxmlformats.org/drawingml/2006/main";
-pub const RELATIONSHIPS: &str = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
-pub const PACKAGE_RELATIONSHIPS: &str = "http://schemas.openxmlformats.org/package/2006/relationships";
+pub const RELATIONSHIPS: &str =
+    "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+pub const PACKAGE_RELATIONSHIPS: &str =
+    "http://schemas.openxmlformats.org/package/2006/relationships";
 pub const CHART: &str = "http://schemas.openxmlformats.org/drawingml/2006/chart";
-pub const CORE_PROPERTIES: &str = "http://schemas.openxmlformats.org/package/2006/metadata/core-properties";
+pub const CORE_PROPERTIES: &str =
+    "http://schemas.openxmlformats.org/package/2006/metadata/core-properties";
 
 #[cfg(test)]
 mod tests {

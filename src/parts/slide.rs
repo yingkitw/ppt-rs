@@ -2,12 +2,12 @@
 //!
 //! Represents a slide.xml part.
 
-use super::base::{Part, PartType, ContentType};
-use super::relationships::{Relationships, RelationshipType};
+use super::base::{ContentType, Part, PartType};
+use super::relationships::{RelationshipType, Relationships};
 use crate::exc::PptxError;
-use crate::generator::SlideContent;
 use crate::generator::slide_xml::create_slide_xml_with_content;
-use crate::oxml::{SlideParser, ParsedSlide};
+use crate::generator::SlideContent;
+use crate::oxml::{ParsedSlide, SlideParser};
 
 /// Slide part (ppt/slides/slideN.xml)
 #[derive(Debug, Clone)]
@@ -70,7 +70,8 @@ impl SlidePart {
 
     /// Get body text from parsed content
     pub fn body_text(&self) -> Vec<&str> {
-        self.parsed.as_ref()
+        self.parsed
+            .as_ref()
             .map(|p| p.body_text.iter().map(|s| s.as_str()).collect())
             .unwrap_or_default()
     }
@@ -83,7 +84,10 @@ impl SlidePart {
     /// Create default relationships for slide
     pub fn create_relationships(&self) -> Relationships {
         let mut rels = Relationships::new();
-        rels.add(RelationshipType::SlideLayout, "../slideLayouts/slideLayout1.xml");
+        rels.add(
+            RelationshipType::SlideLayout,
+            "../slideLayouts/slideLayout1.xml",
+        );
         rels
     }
 
@@ -138,11 +142,11 @@ impl Part for SlidePart {
 
     fn from_xml(xml: &str) -> Result<Self, PptxError> {
         let parsed = SlideParser::parse(xml)?;
-        
+
         // Try to determine slide number from parsed content
         // Default to 1 if unknown
         let slide_number = 1;
-        
+
         Ok(SlidePart {
             path: format!("ppt/slides/slide{}.xml", slide_number),
             slide_number,
@@ -156,7 +160,7 @@ impl Part for SlidePart {
 /// Parse slide from XML with known slide number
 pub fn parse_slide(xml: &str, slide_number: usize) -> Result<SlidePart, PptxError> {
     let parsed = SlideParser::parse(xml)?;
-    
+
     Ok(SlidePart {
         path: format!("ppt/slides/slide{}.xml", slide_number),
         slide_number,
@@ -179,20 +183,18 @@ mod tests {
 
     #[test]
     fn test_slide_part_from_content() {
-        let content = SlideContent::new("Test Title")
-            .add_bullet("Bullet 1");
+        let content = SlideContent::new("Test Title").add_bullet("Bullet 1");
         let part = SlidePart::from_content(2, content);
-        
+
         assert_eq!(part.slide_number(), 2);
         assert!(part.content().is_some());
     }
 
     #[test]
     fn test_slide_part_to_xml() {
-        let content = SlideContent::new("Test")
-            .add_bullet("Point");
+        let content = SlideContent::new("Test").add_bullet("Point");
         let part = SlidePart::from_content(1, content);
-        
+
         let xml = part.to_xml().unwrap();
         assert!(xml.contains("p:sld"));
         assert!(xml.contains("Test"));
@@ -202,7 +204,7 @@ mod tests {
     fn test_slide_part_rels() {
         let part = SlidePart::new(1);
         let rels_xml = part.rels_xml();
-        
+
         assert!(rels_xml.contains("slideLayout"));
         assert!(rels_xml.contains("rId1"));
     }

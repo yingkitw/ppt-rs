@@ -2,7 +2,7 @@
 //!
 //! Represents a slide layout template (ppt/slideLayouts/slideLayoutN.xml).
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
 
 /// Slide layout types

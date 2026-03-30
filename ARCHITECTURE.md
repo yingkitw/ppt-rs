@@ -17,7 +17,7 @@ The PPTX library is organized into several layers that handle different aspects 
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │              Core Traits (core/)                            │
-│         ToXml, Positioned, Styled, XmlWriter                │
+│         ToXml, Positioned, ElementSized                        │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -71,19 +71,21 @@ The PPTX library is organized into several layers that handle different aspects 
   - Color constants: `colors::RED`, `colors::BLUE`, `colors::CORPORATE_BLUE`
 - **Usage**: `use ppt_rs::prelude::*;`
 
-### API Layer (`lib.rs`)
-- **Purpose**: Provide user-friendly functions for common tasks
-- **Key Functions**:
-  - `presentation()` - Create or open a presentation
-  - `presentation_from_reader()` - Load from a reader
-- **Exports**: `Presentation` struct and related types
+### API Layer (`api.rs`)
+- **Purpose**: High-level presentation builder
+- **Key Types**:
+  - `Presentation` - Create, build, save, import, and export presentations
+  - `Presentation::new()` / `Presentation::with_title()` - Create new presentations
+  - `Presentation::from_path()` - Import existing PPTX files
+  - `.save()`, `.build()`, `.save_as_html()`, `.save_as_pdf()`, `.save_as_png()` - Output
 
-### Package Layer (`package.rs`)
+### Package Layer (`opc/`)
 - **Purpose**: Handle .pptx files as ZIP containers
 - **Responsibilities**:
-  - Open/save ZIP files
-  - Manage relationships between parts
-  - Handle package structure
+  - Open/save ZIP files via `Package` struct
+  - Stream writing to any `Write + Seek` target
+  - Content type declarations
+  - Relationship management
 - **Key Types**: `Package`
 
 ### Parts Layer (`parts/`)
@@ -101,55 +103,44 @@ The PPTX library is organized into several layers that handle different aspects 
 
 ### OXML Layer (`oxml/`)
 - **Purpose**: Parse and manipulate Office XML elements
-- **Submodules**:
-  - `ns.rs` - XML namespace handling
-  - `xmlchemy.rs` - Base element classes
-  - `presentation.rs` - Presentation XML elements
-  - `slide.rs` - Slide XML elements
-  - `shapes/` - Shape XML elements
-  - `text.rs` - Text XML elements
-  - `chart/` - Chart XML elements
-  - `dml/` - Drawing Markup Language elements
-  - `table.rs` - Table XML elements
+- **Key Types**:
+  - `PresentationReader` / `PresentationInfo` - Read PPTX metadata
+  - `PresentationEditor` - Edit existing PPTX files
+  - `SlideParser` / `ParsedSlide` - Parse slide content
+  - `PptxRepair` / `RepairIssue` / `RepairResult` - Validate and repair PPTX files
+  - `XmlElement` / `XmlParser` / `Namespace` - XML parsing utilities
 
 ### OPC Layer (`opc/`)
 - **Purpose**: Handle Open Packaging Convention (ZIP) specifics
-- **Modules**:
-  - `constants.rs` - Content types and relationship types
-  - `package.rs` - ZIP file operations
-  - `packuri.rs` - Package URI handling
-  - `shared.rs` - Relationship definitions
+- **Key Types**: `Package` for ZIP file operations
 
 ### Utility Layers
 
-#### Enumerations (`enums/`)
-- **Purpose**: Type-safe enumeration values
+#### Helpers (`helpers/`)
+- **Purpose**: Simplified helpers for common operations
 - **Modules**:
-  - `base.rs` - Base enum types
-  - `action.rs` - Click action types
-  - `chart.rs` - Chart-related enums
-  - `dml.rs` - Drawing markup language enums
-  - `shapes.rs` - Shape type enums
-  - `text.rs` - Text formatting enums
-  - `lang.rs` - Language identifiers
+  - `colors.rs` - 40+ color aliases (`red()`, `blue()`, `material_blue()`, etc.), `ColorValue` with `.lighter()`, `.darker()`, `.opacity()`, `.mix()`, `.grayscale()`, `.invert()`
+  - `tables.rs` - `simple_table()`, `table_from_data()`, `table_with_header()`, `QuickTable` builder, cell helpers
+  - `shapes.rs` - `rect()`, `circle()`, `ellipse()`, `triangle()`, `diamond()` with inch-based dimensions
+  - `ext.rs` - `ShapeExt` trait: `.fill()`, `.stroke()`, `.text()` extension methods
 
-#### Utilities (`util.rs`)
-- **Purpose**: Common utility functions
+#### Core Types (`core/`)
+- **Purpose**: Foundational traits and types
 - **Key Types**:
-  - `Length` - EMU (English Metric Unit) conversions
-  - Conversion functions: `inches()`, `cm()`, `mm()`, `pt()`, `emu()`
+  - `ToXml` trait - XML serialization
+  - `Positioned` trait - Position interface (`.x()`, `.y()`, `.set_position()`)
+  - `ElementSized` trait (re-exported as `Sized`) - Size interface (`.width()`, `.height()`)
+  - `Dimension` enum - Flexible dimensions: EMU, Inches, Cm, Pt, Ratio, Percent
+  - `FlexPosition` / `FlexSize` - Mixed-unit positioning
 
-#### Shared (`shared.rs`)
-- **Purpose**: Shared proxy classes
-- **Key Types**:
-  - `ElementProxy` - Base proxy for XML elements
-  - `ParentedElementProxy` - Proxy with parent reference
-  - `PartElementProxy` - Proxy for part root elements
+#### Element Types (`elements/`)
+- **Purpose**: Unified element types used across the library
+- **Key Types**: `Color`, `RgbColor`, `SchemeColor`, `Position`, `Size`, `Transform`
 
 #### Exceptions (`exc.rs`)
 - **Purpose**: Error types
 - **Key Types**:
-  - `PptxError` - Main error enum
+  - `PptxError` - Main error enum (Generic, Io, Zip, XmlParse, InvalidValue, NotFound, etc.)
   - `Result<T>` - Result type alias
 
 ## Data Flow
@@ -157,11 +148,9 @@ The PPTX library is organized into several layers that handle different aspects 
 ### Opening a Presentation
 
 ```
-User calls presentation(path)
+User calls Presentation::from_path(path)
     ↓
-api::presentation() opens file
-    ↓
-Package::open() reads ZIP
+Package reads ZIP via opc::Package
     ↓
 OPC layer extracts relationships
     ↓
@@ -175,17 +164,19 @@ Presentation object returned to user
 ### Creating a Presentation
 
 ```
-User calls Presentation::new()
+User calls Presentation::new() or Presentation::with_title()
     ↓
-Default template is loaded
+Slides are added via .add_slide() or .add_presentation()
     ↓
-Package structure is created
+User calls .build() or .save(path)
     ↓
-Parts are initialized
+Generator creates package structure
     ↓
-OXML elements are created
+XML is generated for each part
     ↓
-Presentation object returned
+Parts are written to ZIP
+    ↓
+File is saved
 ```
 
 ### Saving a Presentation
@@ -195,7 +186,7 @@ User calls presentation.save(path)
     ↓
 OXML elements are serialized to XML
     ↓
-Parts are written to ZIP
+Parts are written to ZIP (or streamed via Write + Seek)
     ↓
 Relationships are written
     ↓
@@ -204,76 +195,78 @@ ZIP file is saved
 
 ## Key Design Patterns
 
-### 1. Proxy Pattern
-- `ElementProxy` wraps XML elements
-- Provides convenient API while maintaining XML structure
-- Used throughout for shapes, text, tables, etc.
+### 1. Builder Pattern
+- `SlideContent` uses builder methods (`.add_bullet()`, `.table()`, `.add_shape()`)
+- `TableBuilder`, `ChartBuilder`, `ImageBuilder` provide fluent APIs
+- `QuickPptx` in prelude for quick presentation creation
 
-### 2. Factory Pattern
-- `PartFactory` creates appropriate part types based on content type
-- Ensures correct part class is instantiated
+### 2. Factory Functions
+- `create_pptx()`, `create_pptx_with_content()` create PPTX files
+- `rect()`, `circle()`, `triangle()` in helpers create shapes with inch-based dimensions
+- `simple_table()`, `QuickTable::new()` create tables
 
-### 3. Lazy Initialization
-- Parts are loaded on demand
-- Relationships are resolved lazily
-- Improves performance for large presentations
+### 3. Trait-Based Dispatch
+- `ToXml` for XML serialization across types
+- `Positioned` and `ElementSized` for generic positioning/size operations
+- `LazySlideSource` trait for on-demand slide generation
 
-### 4. Type Safety
-- Enumerations prevent invalid values
-- Traits define capabilities
-- Result types for error handling
+### 4. Streaming / Lazy Generation
+- `create_pptx_to_writer()` streams directly to `Write + Seek`
+- `create_pptx_lazy_to_writer()` generates slides on demand
+- Memory-efficient for large presentations
 
 ## File Organization
 
 ```
 src/
-├── lib.rs                 # Library root
-├── prelude.rs           # Simplified API (v0.1.8)
-├── api.rs               # Public API
-├── package.rs           # Package handling
-├── presentation.rs      # Presentation type
-├── exc.rs              # Exception types
-├── util.rs             # Utility functions
-├── types.rs            # Type traits
-├── shared.rs           # Shared proxy classes
-├── enums/              # Enumeration types
+├── lib.rs                 # Library root, re-exports public API
+├── prelude.rs             # Simplified API: macros, unit helpers, shapes, colors, themes
+├── api.rs                 # High-level Presentation builder (new, save, import, export)
+├── templates.rs           # Pre-built templates (business_proposal, status_report, etc.)
+├── exc.rs                 # Error types (PptxError, Result)
+├── core/                  # Core traits and types
 │   ├── mod.rs
-│   ├── base.rs
-│   ├── action.rs
-│   ├── chart.rs
-│   ├── dml.rs
-│   ├── shapes.rs
-│   ├── text.rs
-│   └── lang.rs
-├── opc/                # Open Packaging Convention
+│   ├── dimension.rs       # Dimension enum (EMU, Inches, Cm, Pt, Ratio)
+│   └── xml_utils.rs       # Shared XML utilities (escape_xml)
+├── elements/              # Unified element types
 │   ├── mod.rs
-│   ├── constants.rs
-│   ├── package.rs
-│   ├── packuri.rs
-│   └── shared.rs
-├── oxml/               # Office XML
+│   ├── color.rs           # Color, RgbColor, SchemeColor
+│   ├── position.rs        # Position, Size, Transform
+│   └── ...
+├── generator/             # PPTX generation (ZIP + XML)
 │   ├── mod.rs
-│   ├── ns.rs
-│   ├── xmlchemy.rs
-│   ├── action.rs
-│   ├── presentation.rs
-│   ├── slide.rs
-│   ├── text.rs
-│   ├── table.rs
-│   ├── theme.rs
-│   ├── coreprops.rs
-│   ├── simpletypes.rs
-│   ├── chart/
-│   ├── dml/
-│   └── shapes/
-├── parts/              # Package parts
-├── shapes/             # Shape types
-├── text/               # Text handling
-├── chart/              # Chart handling
-├── dml/                # Drawing markup language
-├── slide.rs            # Slide type
-├── table.rs            # Table type
-└── media.rs            # Media handling
+│   ├── builder.rs         # create_pptx(), create_pptx_with_content()
+│   ├── slide_xml/         # Modular slide XML generation
+│   ├── slide_content/     # SlideContent, bullets, transitions
+│   ├── charts/            # Chart types and XML
+│   ├── table/             # Table builder and XML
+│   ├── shapes.rs          # Shape types
+│   ├── shapes_xml.rs      # Shape XML generation
+│   ├── images.rs          # Image types, effects, ImageBuilder
+│   ├── images_xml.rs      # Image XML generation
+│   ├── connectors.rs      # Connector types
+│   ├── hyperlinks.rs      # Hyperlink support
+│   ├── gradients.rs       # Gradient fills
+│   ├── media.rs           # Video/audio embedding
+│   ├── package_xml.rs     # Package-level XML
+│   ├── theme_xml.rs       # Theme XML
+│   ├── props_xml.rs       # Properties XML
+│   └── notes_xml.rs       # Notes XML
+├── parts/                 # Package parts (SlidePart, ImagePart, etc.)
+├── opc/                   # Open Packaging Convention (ZIP handling)
+├── oxml/                  # Office XML parsing (reader, editor, parser, repair)
+├── helpers/               # Simplified helpers
+│   ├── mod.rs
+│   ├── colors.rs          # 40+ color aliases, ColorValue
+│   ├── tables.rs          # QuickTable, table helpers
+│   ├── shapes.rs          # rect(), circle(), etc.
+│   └── ext.rs             # ShapeExt extension methods
+├── export/                # HTML export
+├── import/                # PPTX import
+├── cli/                   # CLI commands + Markdown parser + Mermaid renderers
+├── web2ppt/               # (Optional) Web-to-PPTX conversion
+└── bin/
+    └── pptcli.rs          # CLI binary entry point
 ```
 
 ## PPTX Generation Approach
@@ -590,8 +583,11 @@ Effects are rendered in `<a:effectLst>` within `<p:spPr>`:
 
 ## Future Enhancements
 
-- [ ] RTL text support
-- [ ] Ink annotations
-- [ ] Comments and review features
-- [ ] Slide sections
-- [ ] Digital signatures
+- [ ] Advanced theme customization
+- [ ] Complete digital signature wiring (XML done, needs Content_Types + _rels)
+- [ ] Ink annotations wiring (XML done, needs ink part + relationship)
+- [ ] Embedded fonts in output (XML done, needs font data parts + rId wiring)
+- [ ] Fuzzing tests for PPTX parsing
+- [ ] Property-based testing
+- [ ] Benchmark suite
+- [ ] Cross-platform testing (Windows, macOS, Linux)

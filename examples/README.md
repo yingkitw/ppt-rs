@@ -166,4 +166,5 @@ All generated presentations are saved to `examples/output/` and are valid Micros
 
 - [README.md](../README.md) - Main project documentation
 - [ARCHITECTURE.md](../ARCHITECTURE.md) - Architecture overview
-- [CODEBASE.md](../CODEBASE.md) - Codebase organization
+- [API_GUIDE.md](../API_GUIDE.md) - Simplified API reference
+- [SPEC.md](../SPEC.md) - Technical specifications

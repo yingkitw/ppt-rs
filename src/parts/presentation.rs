@@ -2,8 +2,8 @@
 //!
 //! Represents the main presentation.xml part.
 
-use super::base::{Part, PartType, ContentType};
-use super::relationships::{Relationships, RelationshipType};
+use super::base::{ContentType, Part, PartType};
+use super::relationships::{RelationshipType, Relationships};
 use crate::exc::PptxError;
 use crate::oxml::XmlParser;
 
@@ -77,21 +77,28 @@ impl PresentationPart {
     /// Create default relationships for presentation
     pub fn create_relationships(&self) -> Relationships {
         let mut rels = Relationships::new();
-        
+
         // Add slide master
         if let Some(ref r_id) = self.slide_master_r_id {
-            rels.add_with_id(r_id, RelationshipType::SlideMaster, "slideMasters/slideMaster1.xml");
+            rels.add_with_id(
+                r_id,
+                RelationshipType::SlideMaster,
+                "slideMasters/slideMaster1.xml",
+            );
         } else {
-            rels.add(RelationshipType::SlideMaster, "slideMasters/slideMaster1.xml");
+            rels.add(
+                RelationshipType::SlideMaster,
+                "slideMasters/slideMaster1.xml",
+            );
         }
-        
+
         // Add theme
         if let Some(ref r_id) = self.theme_r_id {
             rels.add_with_id(r_id, RelationshipType::Theme, "theme/theme1.xml");
         } else {
             rels.add(RelationshipType::Theme, "theme/theme1.xml");
         }
-        
+
         // Add slides
         for (i, slide_ref) in self.slide_refs.iter().enumerate() {
             rels.add_with_id(
@@ -100,7 +107,7 @@ impl PresentationPart {
                 &format!("slides/slide{}.xml", i + 1),
             );
         }
-        
+
         rels
     }
 }
@@ -208,7 +215,7 @@ mod tests {
         let mut part = PresentationPart::new();
         part.add_slide("rId3");
         part.add_slide("rId4");
-        
+
         assert_eq!(part.slide_count(), 2);
         assert_eq!(part.slides()[0].r_id, "rId3");
     }
@@ -218,7 +225,7 @@ mod tests {
         let mut part = PresentationPart::new();
         part.set_slide_master("rId1");
         part.add_slide("rId3");
-        
+
         let xml = part.to_xml().unwrap();
         assert!(xml.contains("p:presentation"));
         assert!(xml.contains("p:sldId"));
@@ -239,7 +246,7 @@ mod tests {
             </p:sldIdLst>
             <p:sldSz cx="9144000" cy="6858000"/>
         </p:presentation>"#;
-        
+
         let part = PresentationPart::from_xml(xml).unwrap();
         assert_eq!(part.slide_count(), 2);
         assert_eq!(part.slides()[0].id, 257);

@@ -170,8 +170,7 @@ mod tests {
 
     #[test]
     fn test_transform_with_rotation() {
-        let transform = Transform::from_inches(0.0, 0.0, 1.0, 1.0)
-            .with_rotation(45.0);
+        let transform = Transform::from_inches(0.0, 0.0, 1.0, 1.0).with_rotation(45.0);
         let xml = transform.to_xml();
         assert!(xml.contains("rot=\"2700000\"")); // 45 * 60000
     }

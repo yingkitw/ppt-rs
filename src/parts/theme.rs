@@ -2,7 +2,7 @@
 //!
 //! Represents a theme (ppt/theme/themeN.xml).
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
 
 /// Theme color
@@ -121,8 +121,15 @@ impl ThemePart {
     }
 
     fn generate_xml(&self) -> String {
-        let colors_xml: String = self.colors.iter()
-            .map(|c| format!(r#"<a:{} val="{}"><a:srgbClr val="{}"/></a:{}>"#, c.name, c.name, c.value, c.name))
+        let colors_xml: String = self
+            .colors
+            .iter()
+            .map(|c| {
+                format!(
+                    r#"<a:{} val="{}"><a:srgbClr val="{}"/></a:{}>"#,
+                    c.name, c.name, c.value, c.name
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n        ");
 
@@ -171,10 +178,7 @@ impl ThemePart {
   <a:objectDefaults/>
   <a:extraClrSchemeLst/>
 </a:theme>"#,
-            self.name,
-            colors_xml,
-            self.major_font.typeface,
-            self.minor_font.typeface
+            self.name, colors_xml, self.major_font.typeface, self.minor_font.typeface
         )
     }
 }

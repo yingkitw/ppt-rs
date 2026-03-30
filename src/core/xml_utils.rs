@@ -11,13 +11,6 @@ pub fn escape_xml(s: &str) -> String {
         .replace('\'', "&apos;")
 }
 
-/// Normalize color string (remove # prefix, uppercase)
-#[inline]
-#[allow(dead_code)]
-pub fn normalize_color(color: &str) -> String {
-    color.trim_start_matches('#').to_uppercase()
-}
-
 /// XML writer helper for building XML strings efficiently
 #[allow(dead_code)]
 pub struct XmlWriter {
@@ -45,7 +38,8 @@ impl XmlWriter {
 
     /// Write XML declaration
     pub fn xml_declaration(&mut self) -> &mut Self {
-        self.buffer.push_str(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#);
+        self.buffer
+            .push_str(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#);
         self.buffer.push('\n');
         self
     }
@@ -128,13 +122,6 @@ mod tests {
         assert_eq!(escape_xml("a & b"), "a &amp; b");
         assert_eq!(escape_xml("<tag>"), "&lt;tag&gt;");
         assert_eq!(escape_xml("\"quoted\""), "&quot;quoted&quot;");
-    }
-
-    #[test]
-    fn test_normalize_color() {
-        assert_eq!(normalize_color("#ff0000"), "FF0000");
-        assert_eq!(normalize_color("FF0000"), "FF0000");
-        assert_eq!(normalize_color("#abc"), "ABC");
     }
 
     #[test]

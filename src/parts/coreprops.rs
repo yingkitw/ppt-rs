@@ -2,7 +2,7 @@
 //!
 //! Represents docProps/core.xml with document metadata.
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
 use crate::oxml::XmlParser;
 use chrono::Utc;
@@ -26,7 +26,7 @@ impl CorePropertiesPart {
     /// Create a new core properties part
     pub fn new() -> Self {
         let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
-        
+
         CorePropertiesPart {
             path: "docProps/core.xml".to_string(),
             title: None,
@@ -114,28 +114,49 @@ impl Part for CorePropertiesPart {
             elements.push(format!("<dc:title>{}</dc:title>", Self::escape_xml(title)));
         }
         if let Some(ref subject) = self.subject {
-            elements.push(format!("<dc:subject>{}</dc:subject>", Self::escape_xml(subject)));
+            elements.push(format!(
+                "<dc:subject>{}</dc:subject>",
+                Self::escape_xml(subject)
+            ));
         }
         if let Some(ref creator) = self.creator {
-            elements.push(format!("<dc:creator>{}</dc:creator>", Self::escape_xml(creator)));
+            elements.push(format!(
+                "<dc:creator>{}</dc:creator>",
+                Self::escape_xml(creator)
+            ));
         }
         if let Some(ref keywords) = self.keywords {
-            elements.push(format!("<cp:keywords>{}</cp:keywords>", Self::escape_xml(keywords)));
+            elements.push(format!(
+                "<cp:keywords>{}</cp:keywords>",
+                Self::escape_xml(keywords)
+            ));
         }
         if let Some(ref description) = self.description {
-            elements.push(format!("<dc:description>{}</dc:description>", Self::escape_xml(description)));
+            elements.push(format!(
+                "<dc:description>{}</dc:description>",
+                Self::escape_xml(description)
+            ));
         }
         if let Some(ref last_modified_by) = self.last_modified_by {
-            elements.push(format!("<cp:lastModifiedBy>{}</cp:lastModifiedBy>", Self::escape_xml(last_modified_by)));
+            elements.push(format!(
+                "<cp:lastModifiedBy>{}</cp:lastModifiedBy>",
+                Self::escape_xml(last_modified_by)
+            ));
         }
         if let Some(revision) = self.revision {
             elements.push(format!("<cp:revision>{}</cp:revision>", revision));
         }
         if let Some(ref created) = self.created {
-            elements.push(format!(r#"<dcterms:created xsi:type="dcterms:W3CDTF">{}</dcterms:created>"#, created));
+            elements.push(format!(
+                r#"<dcterms:created xsi:type="dcterms:W3CDTF">{}</dcterms:created>"#,
+                created
+            ));
         }
         if let Some(ref modified) = self.modified {
-            elements.push(format!(r#"<dcterms:modified xsi:type="dcterms:W3CDTF">{}</dcterms:modified>"#, modified));
+            elements.push(format!(
+                r#"<dcterms:modified xsi:type="dcterms:W3CDTF">{}</dcterms:modified>"#,
+                modified
+            ));
         }
 
         let xml = format!(
@@ -153,15 +174,41 @@ impl Part for CorePropertiesPart {
         let root = XmlParser::parse_str(xml)?;
         let mut part = CorePropertiesPart::new();
 
-        part.title = root.find_descendant("title").map(|e| e.text_content()).filter(|s| !s.is_empty());
-        part.subject = root.find_descendant("subject").map(|e| e.text_content()).filter(|s| !s.is_empty());
-        part.creator = root.find_descendant("creator").map(|e| e.text_content()).filter(|s| !s.is_empty());
-        part.keywords = root.find_descendant("keywords").map(|e| e.text_content()).filter(|s| !s.is_empty());
-        part.description = root.find_descendant("description").map(|e| e.text_content()).filter(|s| !s.is_empty());
-        part.last_modified_by = root.find_descendant("lastModifiedBy").map(|e| e.text_content()).filter(|s| !s.is_empty());
-        part.revision = root.find_descendant("revision").and_then(|e| e.text_content().parse().ok());
-        part.created = root.find_descendant("created").map(|e| e.text_content()).filter(|s| !s.is_empty());
-        part.modified = root.find_descendant("modified").map(|e| e.text_content()).filter(|s| !s.is_empty());
+        part.title = root
+            .find_descendant("title")
+            .map(|e| e.text_content())
+            .filter(|s| !s.is_empty());
+        part.subject = root
+            .find_descendant("subject")
+            .map(|e| e.text_content())
+            .filter(|s| !s.is_empty());
+        part.creator = root
+            .find_descendant("creator")
+            .map(|e| e.text_content())
+            .filter(|s| !s.is_empty());
+        part.keywords = root
+            .find_descendant("keywords")
+            .map(|e| e.text_content())
+            .filter(|s| !s.is_empty());
+        part.description = root
+            .find_descendant("description")
+            .map(|e| e.text_content())
+            .filter(|s| !s.is_empty());
+        part.last_modified_by = root
+            .find_descendant("lastModifiedBy")
+            .map(|e| e.text_content())
+            .filter(|s| !s.is_empty());
+        part.revision = root
+            .find_descendant("revision")
+            .and_then(|e| e.text_content().parse().ok());
+        part.created = root
+            .find_descendant("created")
+            .map(|e| e.text_content())
+            .filter(|s| !s.is_empty());
+        part.modified = root
+            .find_descendant("modified")
+            .map(|e| e.text_content())
+            .filter(|s| !s.is_empty());
 
         Ok(part)
     }
@@ -183,7 +230,7 @@ mod tests {
     fn test_core_props_set_title() {
         let mut part = CorePropertiesPart::new();
         part.set_title("My Presentation");
-        
+
         assert_eq!(part.title, Some("My Presentation".to_string()));
     }
 
@@ -192,7 +239,7 @@ mod tests {
         let mut part = CorePropertiesPart::new();
         part.set_title("Test Title");
         part.set_creator("Test Author");
-        
+
         let xml = part.to_xml().unwrap();
         assert!(xml.contains("dc:title"));
         assert!(xml.contains("Test Title"));
@@ -209,7 +256,7 @@ mod tests {
             <dc:creator>Parsed Author</dc:creator>
             <cp:revision>5</cp:revision>
         </cp:coreProperties>"#;
-        
+
         let part = CorePropertiesPart::from_xml(xml).unwrap();
         assert_eq!(part.title, Some("Parsed Title".to_string()));
         assert_eq!(part.creator, Some("Parsed Author".to_string()));
@@ -220,9 +267,9 @@ mod tests {
     fn test_core_props_touch() {
         let mut part = CorePropertiesPart::new();
         let original_rev = part.revision;
-        
+
         part.touch();
-        
+
         assert_eq!(part.revision, Some(original_rev.unwrap() + 1));
     }
 }

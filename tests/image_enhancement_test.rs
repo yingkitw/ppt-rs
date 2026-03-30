@@ -1,5 +1,5 @@
-use ppt_rs::generator::{Image, ImageSource, generate_image_xml};
-use ppt_rs::generator::images::{Crop, ImageEffect};
+use ppt_rs::generator::{Image, generate_image_xml};
+use ppt_rs::generator::images::ImageEffect;
 
 #[test]
 fn test_image_crop_xml() {

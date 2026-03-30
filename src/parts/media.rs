@@ -2,7 +2,7 @@
 //!
 //! Represents embedded media (video/audio) in the presentation.
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
 
 /// Media format
@@ -55,7 +55,14 @@ impl MediaFormat {
 
     /// Check if this is a video format
     pub fn is_video(&self) -> bool {
-        matches!(self, MediaFormat::Mp4 | MediaFormat::Webm | MediaFormat::Avi | MediaFormat::Wmv | MediaFormat::Mov)
+        matches!(
+            self,
+            MediaFormat::Mp4
+                | MediaFormat::Webm
+                | MediaFormat::Avi
+                | MediaFormat::Wmv
+                | MediaFormat::Mov
+        )
     }
 
     /// Check if this is an audio format
@@ -110,10 +117,10 @@ impl MediaPart {
             .extension()
             .and_then(|e| e.to_str())
             .ok_or_else(|| PptxError::InvalidValue("No file extension".to_string()))?;
-        
+
         let format = MediaFormat::from_extension(ext)
             .ok_or_else(|| PptxError::InvalidValue(format!("Unsupported media format: {}", ext)))?;
-        
+
         Ok(Self::new(media_number, format, data))
     }
 
@@ -154,7 +161,11 @@ impl MediaPart {
 
     /// Get relative path for relationships
     pub fn rel_target(&self) -> String {
-        format!("../media/media{}.{}", self.media_number, self.format.extension())
+        format!(
+            "../media/media{}.{}",
+            self.media_number,
+            self.format.extension()
+        )
     }
 }
 
@@ -173,11 +184,15 @@ impl Part for MediaPart {
 
     fn to_xml(&self) -> Result<String, PptxError> {
         // Media parts are binary, not XML
-        Err(PptxError::InvalidOperation("Media parts are binary, not XML".to_string()))
+        Err(PptxError::InvalidOperation(
+            "Media parts are binary, not XML".to_string(),
+        ))
     }
 
     fn from_xml(_xml: &str) -> Result<Self, PptxError> {
-        Err(PptxError::InvalidOperation("Media parts cannot be created from XML".to_string()))
+        Err(PptxError::InvalidOperation(
+            "Media parts cannot be created from XML".to_string(),
+        ))
     }
 }
 

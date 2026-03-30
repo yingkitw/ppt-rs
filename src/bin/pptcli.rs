@@ -1,33 +1,37 @@
 //! PPTX CLI - Command-line tool for creating PowerPoint presentations
 
 use clap::Parser;
-use ppt_rs::cli::{Cli, Commands, CreateCommand, FromMarkdownCommand, InfoCommand, ValidateCommand, ExportFormat};
 use ppt_rs::api::Presentation;
+use ppt_rs::cli::{
+    Cli, Commands, CreateCommand, ExportFormat, FromMarkdownCommand, InfoCommand, ValidateCommand,
+};
 
 fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Create { output, title, slides, template } => {
-            match CreateCommand::execute(
-                &output,
-                title.as_deref(),
-                slides,
-                template.as_deref(),
-            ) {
-                Ok(_) => {
-                    println!("✓ Created presentation: {output}");
-                    let title = title.as_deref().unwrap_or("Presentation");
-                    println!("  Title: {title}");
-                    println!("  Slides: {slides}");
-                }
-                Err(e) => {
-                    eprintln!("✗ Error: {e}");
-                    std::process::exit(1);
-                }
+        Commands::Create {
+            output,
+            title,
+            slides,
+            template,
+        } => match CreateCommand::execute(&output, title.as_deref(), slides, template.as_deref()) {
+            Ok(_) => {
+                println!("✓ Created presentation: {output}");
+                let title = title.as_deref().unwrap_or("Presentation");
+                println!("  Title: {title}");
+                println!("  Slides: {slides}");
             }
-        }
-        Commands::Md2Ppt { input, output, title } => {
+            Err(e) => {
+                eprintln!("✗ Error: {e}");
+                std::process::exit(1);
+            }
+        },
+        Commands::Md2Ppt {
+            input,
+            output,
+            title,
+        } => {
             // Auto-generate output if not provided
             let output_path = output.unwrap_or_else(|| {
                 use std::path::Path;
@@ -46,12 +50,8 @@ fn main() {
                     format!("{}.pptx", input)
                 }
             });
-            
-            match FromMarkdownCommand::execute(
-                &input,
-                &output_path,
-                title.as_deref(),
-            ) {
+
+            match FromMarkdownCommand::execute(&input, &output_path, title.as_deref()) {
                 Ok(_) => {
                     println!("✓ Created presentation: {output_path}");
                     println!("  Input: {input}");
@@ -64,27 +64,27 @@ fn main() {
                 }
             }
         }
-        Commands::Info { file } => {
-            match InfoCommand::execute(&file) {
-                Ok(_) => {}
-                Err(e) => {
-                    eprintln!("✗ Error: {e}");
-                    std::process::exit(1);
-                }
+        Commands::Info { file } => match InfoCommand::execute(&file) {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("✗ Error: {e}");
+                std::process::exit(1);
             }
-        }
-        Commands::Validate { file } => {
-            match ValidateCommand::execute(&file) {
-                Ok(_) => {
-                    println!("\n✓ Validation completed successfully");
-                }
-                Err(e) => {
-                    eprintln!("✗ Error: {e}");
-                    std::process::exit(1);
-                }
+        },
+        Commands::Validate { file } => match ValidateCommand::execute(&file) {
+            Ok(_) => {
+                println!("\n✓ Validation completed successfully");
             }
-        }
-        Commands::Export { input, output, format } => {
+            Err(e) => {
+                eprintln!("✗ Error: {e}");
+                std::process::exit(1);
+            }
+        },
+        Commands::Export {
+            input,
+            output,
+            format,
+        } => {
             println!("Exporting {}...", input);
             let pres = match Presentation::from_path(&input) {
                 Ok(p) => p,
@@ -94,25 +94,27 @@ fn main() {
                 }
             };
 
-            let format = format.or_else(|| {
-                let out_lower = output.to_lowercase();
-                if out_lower.ends_with(".pdf") {
-                    Some(ExportFormat::Pdf)
-                } else if out_lower.ends_with(".html") {
-                    Some(ExportFormat::Html)
-                } else if out_lower.ends_with(".png") {
-                    Some(ExportFormat::Png)
-                } else {
-                    None
-                }
-            }).unwrap_or(ExportFormat::Pdf);
+            let format = format
+                .or_else(|| {
+                    let out_lower = output.to_lowercase();
+                    if out_lower.ends_with(".pdf") {
+                        Some(ExportFormat::Pdf)
+                    } else if out_lower.ends_with(".html") {
+                        Some(ExportFormat::Html)
+                    } else if out_lower.ends_with(".png") {
+                        Some(ExportFormat::Png)
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(ExportFormat::Pdf);
 
             let result = match format {
                 ExportFormat::Pdf => pres.save_as_pdf(&output),
                 ExportFormat::Html => pres.save_as_html(&output),
                 ExportFormat::Png => pres.save_as_png(&output),
             };
-            
+
             match result {
                 Ok(_) => println!("✓ Export completed: {}", output),
                 Err(e) => {
@@ -130,7 +132,7 @@ fn main() {
                     std::process::exit(1);
                 }
             };
-            
+
             for input in inputs.iter().skip(1) {
                 match Presentation::from_path(input) {
                     Ok(p) => {
@@ -142,7 +144,7 @@ fn main() {
                     }
                 }
             }
-            
+
             match final_pres.save(&output) {
                 Ok(_) => println!("✓ Merge completed: {}", output),
                 Err(e) => {
@@ -156,26 +158,49 @@ fn main() {
                 let path = std::path::Path::new(&input);
                 path.with_extension("pptx").to_string_lossy().to_string()
             });
-            
+
             println!("Converting {} to {}...", input, output);
             match Presentation::from_pdf(&input) {
-                Ok(p) => {
-                    match p.save(&output) {
-                        Ok(_) => println!("✓ Conversion completed: {}", output),
-                        Err(e) => {
-                            eprintln!("✗ Error saving presentation: {}", e);
-                            std::process::exit(1);
-                        }
+                Ok(p) => match p.save(&output) {
+                    Ok(_) => println!("✓ Conversion completed: {}", output),
+                    Err(e) => {
+                        eprintln!("✗ Error saving presentation: {}", e);
+                        std::process::exit(1);
                     }
-                }
+                },
                 Err(e) => {
                     eprintln!("✗ Error converting PDF: {}", e);
                     std::process::exit(1);
                 }
             }
         }
-        Commands::Web2Ppt { url, output, title, max_slides, max_bullets, no_images, no_tables, no_code, no_source_url, timeout, verbose } => {
-            execute_web2ppt(url, output, title, max_slides, max_bullets, no_images, no_tables, no_code, no_source_url, timeout, verbose);
+        #[cfg(feature = "web2ppt")]
+        Commands::Web2Ppt {
+            url,
+            output,
+            title,
+            max_slides,
+            max_bullets,
+            no_images,
+            no_tables,
+            no_code,
+            no_source_url,
+            timeout,
+            verbose,
+        } => {
+            execute_web2ppt(
+                url,
+                output,
+                title,
+                max_slides,
+                max_bullets,
+                no_images,
+                no_tables,
+                no_code,
+                no_source_url,
+                timeout,
+                verbose,
+            );
         }
     }
 }
@@ -194,7 +219,7 @@ fn execute_web2ppt(
     timeout: u64,
     verbose: bool,
 ) {
-    use ppt_rs::{Web2PptConfig, ConversionOptions, WebFetcher, WebParser, Web2Ppt};
+    use ppt_rs::{ConversionOptions, Web2Ppt, Web2PptConfig, WebFetcher, WebParser};
 
     if verbose {
         println!("🌐 Web2PPT - Converting webpage to PowerPoint");
@@ -219,8 +244,7 @@ fn execute_web2ppt(
         .timeout(timeout);
 
     // Build options
-    let mut options = ConversionOptions::new()
-        .with_source_url(!no_source_url);
+    let mut options = ConversionOptions::new().with_source_url(!no_source_url);
 
     if let Some(t) = title.as_ref() {
         options = options.title(t);
@@ -255,12 +279,17 @@ fn execute_web2ppt(
             if verbose {
                 println!("📄 Parsed content:");
                 println!("   Title: {}", c.title);
-                println!("   Description: {}", c.description.as_deref().unwrap_or("(none)"));
+                println!(
+                    "   Description: {}",
+                    c.description.as_deref().unwrap_or("(none)")
+                );
                 println!("   Content blocks: {}", c.blocks.len());
                 println!("   Images: {}", c.images.len());
-                
+
                 // Show headings found
-                let headings: Vec<_> = c.blocks.iter()
+                let headings: Vec<_> = c
+                    .blocks
+                    .iter()
                     .filter(|b| b.is_heading())
                     .map(|b| b.text.as_str())
                     .take(10)
@@ -305,6 +334,7 @@ fn execute_web2ppt(
 }
 
 #[cfg(not(feature = "web2ppt"))]
+#[allow(dead_code)]
 fn execute_web2ppt(
     _url: String,
     _output: String,

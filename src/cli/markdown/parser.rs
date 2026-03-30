@@ -2,9 +2,11 @@
 //!
 //! Handles parsing of markdown content into slide structures.
 
-use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
-use crate::generator::{SlideContent, TableBuilder, TableRow, TableCell, Shape, ShapeType, ShapeFill, CodeBlock};
 use super::mermaid;
+use crate::generator::{
+    CodeBlock, Shape, ShapeFill, ShapeType, SlideContent, TableBuilder, TableCell, TableRow,
+};
+use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 
 /// Parse markdown content into slides
 pub fn parse(content: &str) -> Result<Vec<SlideContent>, String> {
@@ -65,22 +67,21 @@ impl MarkdownParser {
     }
 
     fn parse(&mut self, content: &str) -> Result<Vec<SlideContent>, String> {
-        let options = Options::ENABLE_TABLES 
-            | Options::ENABLE_STRIKETHROUGH
-            | Options::ENABLE_TASKLISTS;
-        
+        let options =
+            Options::ENABLE_TABLES | Options::ENABLE_STRIKETHROUGH | Options::ENABLE_TASKLISTS;
+
         let parser = Parser::new_ext(content, options);
-        
+
         for event in parser {
             self.handle_event(event);
         }
-        
+
         self.finalize_current_slide();
-        
+
         if self.slides.is_empty() {
             return Err("No slides found in markdown file".to_string());
         }
-        
+
         Ok(std::mem::take(&mut self.slides))
     }
 
@@ -102,7 +103,7 @@ impl MarkdownParser {
                     *slide = slide.clone().add_bullet(&formatted);
                 }
             }
-            
+
             // Lists
             Event::Start(Tag::List(_)) => {
                 self.in_list = true;
@@ -121,7 +122,7 @@ impl MarkdownParser {
                     self.list_items.push(item);
                 }
             }
-            
+
             // Tables
             Event::Start(Tag::Table(_)) => {
                 self.in_table = true;
@@ -154,9 +155,10 @@ impl MarkdownParser {
                 self.current_cell.clear();
             }
             Event::End(TagEnd::TableCell) => {
-                self.current_row.push(std::mem::take(&mut self.current_cell).trim().to_string());
+                self.current_row
+                    .push(std::mem::take(&mut self.current_cell).trim().to_string());
             }
-            
+
             // Code blocks
             Event::Start(Tag::CodeBlock(kind)) => {
                 self.in_code_block = true;
@@ -164,7 +166,11 @@ impl MarkdownParser {
                 self.code_language = match kind {
                     pulldown_cmark::CodeBlockKind::Fenced(lang) => {
                         let lang_str = lang.to_string();
-                        if lang_str.is_empty() { None } else { Some(lang_str) }
+                        if lang_str.is_empty() {
+                            None
+                        } else {
+                            Some(lang_str)
+                        }
                     }
                     _ => None,
                 };
@@ -173,7 +179,7 @@ impl MarkdownParser {
                 self.in_code_block = false;
                 self.flush_code_block();
             }
-            
+
             // Blockquotes (speaker notes)
             Event::Start(Tag::BlockQuote) => {
                 self.in_blockquote = true;
@@ -183,7 +189,7 @@ impl MarkdownParser {
                 self.in_blockquote = false;
                 self.flush_blockquote();
             }
-            
+
             // Inline formatting
             Event::Start(Tag::Strong) => self.is_bold = true,
             Event::End(TagEnd::Strong) => self.is_bold = false,
@@ -193,9 +199,11 @@ impl MarkdownParser {
                 let formatted = format!("`{}`", code);
                 self.push_text(&formatted);
             }
-            
+
             // Images
-            Event::Start(Tag::Image { dest_url, title, .. }) => {
+            Event::Start(Tag::Image {
+                dest_url, title, ..
+            }) => {
                 self.pending_image = Some((dest_url.to_string(), title.to_string()));
             }
             Event::End(TagEnd::Image) => {
@@ -203,7 +211,7 @@ impl MarkdownParser {
                     self.add_image_placeholder(&url, &alt);
                 }
             }
-            
+
             // Horizontal rule = slide break
             Event::Rule => {
                 self.finalize_current_slide();
@@ -212,7 +220,7 @@ impl MarkdownParser {
                     self.current_slide = Some(SlideContent::new(&title));
                 }
             }
-            
+
             // Text content
             Event::Text(text) => {
                 self.push_text(&text);
@@ -220,7 +228,7 @@ impl MarkdownParser {
             Event::SoftBreak | Event::HardBreak => {
                 self.push_text(" ");
             }
-            
+
             // Paragraphs
             Event::Start(Tag::Paragraph) => {
                 if !self.in_list && !self.in_table && !self.in_blockquote && !self.in_code_block {
@@ -235,7 +243,7 @@ impl MarkdownParser {
                     }
                 }
             }
-            
+
             _ => {}
         }
     }
@@ -250,7 +258,7 @@ impl MarkdownParser {
         } else {
             text.to_string()
         };
-        
+
         if self.in_code_block {
             self.code_content.push_str(text);
         } else if self.in_table {
@@ -276,9 +284,9 @@ impl MarkdownParser {
         if self.list_items.is_empty() {
             return;
         }
-        
+
         let items = std::mem::take(&mut self.list_items);
-        
+
         if let Some(ref mut slide) = self.current_slide {
             for item in items {
                 *slide = slide.clone().add_bullet(&item);
@@ -296,33 +304,36 @@ impl MarkdownParser {
         if self.table_rows.is_empty() {
             return;
         }
-        
+
         let rows = std::mem::take(&mut self.table_rows);
         let col_count = rows.iter().map(|r| r.len()).max().unwrap_or(1);
         let col_width = 8000000u32 / col_count as u32;
         let col_widths: Vec<u32> = vec![col_width; col_count];
-        
+
         let mut builder = TableBuilder::new(col_widths);
-        
+
         for (i, row_data) in rows.iter().enumerate() {
-            let cells: Vec<TableCell> = row_data.iter().map(|cell_text| {
-                let mut cell = TableCell::new(cell_text);
-                if i == 0 {
-                    cell = cell.bold().background_color("4472C4").text_color("FFFFFF");
-                }
-                cell
-            }).collect();
-            
+            let cells: Vec<TableCell> = row_data
+                .iter()
+                .map(|cell_text| {
+                    let mut cell = TableCell::new(cell_text);
+                    if i == 0 {
+                        cell = cell.bold().background_color("4472C4").text_color("FFFFFF");
+                    }
+                    cell
+                })
+                .collect();
+
             let mut cells = cells;
             while cells.len() < col_count {
                 cells.push(TableCell::new(""));
             }
-            
+
             builder = builder.add_row(TableRow::new(cells));
         }
-        
+
         let table = builder.position(500000, 1800000).build();
-        
+
         if let Some(ref mut slide) = self.current_slide {
             slide.table = Some(table);
             slide.has_table = true;
@@ -338,18 +349,18 @@ impl MarkdownParser {
         if self.code_content.is_empty() {
             return;
         }
-        
+
         let code = std::mem::take(&mut self.code_content);
         let lang = self.code_language.take();
         let lang_str = lang.as_deref().unwrap_or("text");
-        
+
         if lang_str == "mermaid" {
             self.add_mermaid_diagram(&code);
             return;
         }
-        
+
         let code_block = CodeBlock::new(code.trim(), lang_str);
-        
+
         if let Some(ref mut slide) = self.current_slide {
             slide.code_blocks.push(code_block);
         } else {
@@ -363,41 +374,52 @@ impl MarkdownParser {
         let elements = mermaid::create_diagram_elements(code);
         let diagram_type = mermaid::detect_type(code);
         let (_, _, title, _) = mermaid::get_diagram_style(diagram_type);
-        
+
         // Center diagram on slide if bounds are available
         // Slide dimensions: 9144000 x 6858000 EMU (standard 16:9)
         let slide_width = 9_144_000u32;
         let slide_height = 6_858_000u32;
         let title_offset = 1_200_000u32; // Leave space for title
-        
+
         let (offset_x, offset_y) = if let Some(bounds) = &elements.bounds {
             // Calculate offset to center diagram
             let available_height = slide_height - title_offset;
             let center_x = (slide_width.saturating_sub(bounds.width)) / 2;
             let center_y = title_offset + (available_height.saturating_sub(bounds.height)) / 2;
-            
+
             // Offset from current position to centered position
-            (center_x.saturating_sub(bounds.x) as i32, center_y.saturating_sub(bounds.y) as i32)
+            (
+                center_x.saturating_sub(bounds.x) as i32,
+                center_y.saturating_sub(bounds.y) as i32,
+            )
         } else {
             (0, 0)
         };
-        
+
         // Apply offset to shapes
-        let shapes: Vec<_> = elements.shapes.into_iter().map(|mut shape| {
-            shape.x = (shape.x as i32 + offset_x).max(0) as u32;
-            shape.y = (shape.y as i32 + offset_y).max(0) as u32;
-            shape
-        }).collect();
-        
+        let shapes: Vec<_> = elements
+            .shapes
+            .into_iter()
+            .map(|mut shape| {
+                shape.x = (shape.x as i32 + offset_x).max(0) as u32;
+                shape.y = (shape.y as i32 + offset_y).max(0) as u32;
+                shape
+            })
+            .collect();
+
         // Apply offset to connectors
-        let connectors: Vec<_> = elements.connectors.into_iter().map(|mut conn| {
-            conn.start_x = (conn.start_x as i32 + offset_x).max(0) as u32;
-            conn.start_y = (conn.start_y as i32 + offset_y).max(0) as u32;
-            conn.end_x = (conn.end_x as i32 + offset_x).max(0) as u32;
-            conn.end_y = (conn.end_y as i32 + offset_y).max(0) as u32;
-            conn
-        }).collect();
-        
+        let connectors: Vec<_> = elements
+            .connectors
+            .into_iter()
+            .map(|mut conn| {
+                conn.start_x = (conn.start_x as i32 + offset_x).max(0) as u32;
+                conn.start_y = (conn.start_y as i32 + offset_y).max(0) as u32;
+                conn.end_x = (conn.end_x as i32 + offset_x).max(0) as u32;
+                conn.end_y = (conn.end_y as i32 + offset_y).max(0) as u32;
+                conn
+            })
+            .collect();
+
         if let Some(ref mut slide) = self.current_slide {
             for shape in shapes {
                 slide.shapes.push(shape);
@@ -421,9 +443,9 @@ impl MarkdownParser {
         if self.blockquote_text.is_empty() {
             return;
         }
-        
+
         let notes = std::mem::take(&mut self.blockquote_text).trim().to_string();
-        
+
         if let Some(ref mut slide) = self.current_slide {
             slide.notes = Some(notes);
         }
@@ -431,11 +453,11 @@ impl MarkdownParser {
 
     fn add_image_placeholder(&mut self, url: &str, alt: &str) {
         let label = if alt.is_empty() { url } else { alt };
-        
+
         let shape = Shape::new(ShapeType::Rectangle, 2000000, 2000000, 5000000, 3000000)
             .with_fill(ShapeFill::new("E0E0E0"))
             .with_text(&format!("[Image: {}]", label));
-        
+
         if let Some(ref mut slide) = self.current_slide {
             slide.shapes.push(shape);
         } else {
@@ -447,7 +469,7 @@ impl MarkdownParser {
 
     fn finalize_current_slide(&mut self) {
         self.flush_list_items();
-        
+
         if let Some(slide) = self.current_slide.take() {
             self.slides.push(slide);
         }

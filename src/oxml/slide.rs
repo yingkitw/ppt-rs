@@ -87,7 +87,8 @@ impl ParsedShape {
 
     /// Get all text from shape
     pub fn text(&self) -> String {
-        self.paragraphs.iter()
+        self.paragraphs
+            .iter()
             .map(|p| p.text())
             .collect::<Vec<_>>()
             .join("\n")
@@ -214,7 +215,8 @@ impl SlideParser {
 
     fn parse_shape(sp: &XmlElement) -> Option<ParsedShape> {
         // Get shape name from nvSpPr/cNvPr
-        let name = sp.find_descendant("cNvPr")
+        let name = sp
+            .find_descendant("cNvPr")
             .and_then(|e| e.attr("name"))
             .unwrap_or("Shape");
 
@@ -267,8 +269,14 @@ impl SlideParser {
 
                 // Parse run properties
                 if let Some(rpr) = r.find("rPr") {
-                    run.bold = rpr.attr("b").map(|v| v == "1" || v == "true").unwrap_or(false);
-                    run.italic = rpr.attr("i").map(|v| v == "1" || v == "true").unwrap_or(false);
+                    run.bold = rpr
+                        .attr("b")
+                        .map(|v| v == "1" || v == "true")
+                        .unwrap_or(false);
+                    run.italic = rpr
+                        .attr("i")
+                        .map(|v| v == "1" || v == "true")
+                        .unwrap_or(false);
                     run.underline = rpr.attr("u").is_some();
                     run.font_size = rpr.attr("sz").and_then(|v| v.parse().ok());
 
@@ -343,12 +351,16 @@ impl SlideParser {
         for tr in tbl.find_all("tr") {
             let mut row = Vec::new();
             for tc in tr.find_all("tc") {
-                let text = tc.find_descendant("t")
+                let text = tc
+                    .find_descendant("t")
                     .map(|t| t.text_content())
                     .unwrap_or_default();
-                
+
                 let row_span = tc.attr("rowSpan").and_then(|v| v.parse().ok()).unwrap_or(1);
-                let col_span = tc.attr("gridSpan").and_then(|v| v.parse().ok()).unwrap_or(1);
+                let col_span = tc
+                    .attr("gridSpan")
+                    .and_then(|v| v.parse().ok())
+                    .unwrap_or(1);
 
                 row.push(ParsedTableCell {
                     text,

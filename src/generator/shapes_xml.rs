@@ -269,7 +269,7 @@ fn calculate_font_size_with_font(
 }
 
 /// Estimate number of lines after word wrapping for proportional fonts
-fn estimate_wrapped_lines(text: &str, lines: &[&str]) -> (f64, f64) {
+fn estimate_wrapped_lines(_text: &str, lines: &[&str]) -> (f64, f64) {
     let mut total_lines = 0.0;
     let mut max_chars: f64 = 0.0;
     
@@ -289,7 +289,7 @@ fn estimate_wrapped_lines(text: &str, lines: &[&str]) -> (f64, f64) {
         }
         
         // Average characters per word (including space)
-        let avg_word_len = (line.chars().count() as f64) / (word_count as f64);
+        let _avg_word_len = (line.chars().count() as f64) / (word_count as f64);
         
         // Estimate: longer lines might wrap
         let char_count = line.chars().count() as f64;

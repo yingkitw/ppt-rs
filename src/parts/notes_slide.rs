@@ -2,9 +2,9 @@
 //!
 //! Represents speaker notes for a slide (ppt/notesSlides/notesSlideN.xml).
 
-use super::base::{Part, PartType, ContentType};
-use crate::exc::PptxError;
+use super::base::{ContentType, Part, PartType};
 use crate::core::escape_xml;
+use crate::exc::PptxError;
 
 /// Notes slide part (ppt/notesSlides/notesSlideN.xml)
 #[derive(Debug, Clone)]

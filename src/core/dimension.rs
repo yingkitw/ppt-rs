@@ -86,17 +86,29 @@ impl From<u32> for Dimension {
 /// Shorthand constructors for ergonomic API
 impl Dimension {
     /// Create from inches
-    pub fn inches(v: f64) -> Self { Dimension::Inches(v) }
+    pub fn inches(v: f64) -> Self {
+        Dimension::Inches(v)
+    }
     /// Create from centimeters
-    pub fn cm(v: f64) -> Self { Dimension::Cm(v) }
+    pub fn cm(v: f64) -> Self {
+        Dimension::Cm(v)
+    }
     /// Create from points
-    pub fn pt(v: f64) -> Self { Dimension::Pt(v) }
+    pub fn pt(v: f64) -> Self {
+        Dimension::Pt(v)
+    }
     /// Create from ratio (0.0–1.0 of slide dimension)
-    pub fn ratio(v: f64) -> Self { Dimension::Ratio(v) }
+    pub fn ratio(v: f64) -> Self {
+        Dimension::Ratio(v)
+    }
     /// Create from EMU
-    pub fn emu(v: u32) -> Self { Dimension::Emu(v) }
+    pub fn emu(v: u32) -> Self {
+        Dimension::Emu(v)
+    }
     /// Create from percentage (0–100) of slide dimension
-    pub fn percent(v: f64) -> Self { Dimension::Ratio(v / 100.0) }
+    pub fn percent(v: f64) -> Self {
+        Dimension::Ratio(v / 100.0)
+    }
 }
 
 /// A 2D position expressed in flexible dimensions.
@@ -141,7 +153,10 @@ impl FlexSize {
 
     /// Resolve to (width_emu, height_emu) using custom slide dimensions
     pub fn to_emu_with(&self, slide_width: u32, slide_height: u32) -> (u32, u32) {
-        (self.width.to_emu(slide_width), self.height.to_emu(slide_height))
+        (
+            self.width.to_emu(slide_width),
+            self.height.to_emu(slide_height),
+        )
     }
 }
 

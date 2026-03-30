@@ -2,12 +2,10 @@
 //!
 //! High-level API for working with PowerPoint presentations.
 
-use crate::exc::{Result, PptxError};
-use crate::opc::Package;
-use crate::generator::{SlideContent, create_pptx_with_content, Image};
-use crate::import::import_pptx;
+use crate::exc::{PptxError, Result};
 use crate::export::html::export_to_html;
-use std::io::{Read, Seek};
+use crate::generator::{create_pptx_with_content, Image, SlideContent};
+use crate::import::import_pptx;
 use std::path::Path;
 use std::process::Command;
 
@@ -98,7 +96,7 @@ impl Presentation {
     }
 
     /// Export the presentation to PDF using LibreOffice
-    /// 
+    ///
     /// Requires LibreOffice to be installed and available via `soffice` command.
     /// On macOS, it also checks `/Applications/LibreOffice.app/Contents/MacOS/soffice`.
     pub fn save_as_pdf<P: AsRef<Path>>(&self, output_path: P) -> Result<()> {
@@ -106,10 +104,10 @@ impl Presentation {
         let temp_dir = std::env::temp_dir();
         let temp_filename = format!("ppt_rs_{}.pptx", uuid::Uuid::new_v4());
         let temp_path = temp_dir.join(&temp_filename);
-        
+
         // Save current presentation to temp file
         self.save(&temp_path)?;
-        
+
         // Try to find soffice
         let soffice_cmd = if cfg!(target_os = "macos") {
             if Path::new("/Applications/LibreOffice.app/Contents/MacOS/soffice").exists() {
@@ -123,7 +121,7 @@ impl Presentation {
 
         // Get output directory
         let output_parent = output_path.as_ref().parent().unwrap_or(Path::new("."));
-        
+
         // Run conversion
         // soffice --headless --convert-to pdf <temp_path> --outdir <output_dir>
         let result = Command::new(soffice_cmd)
@@ -142,29 +140,35 @@ impl Presentation {
             Ok(output) => {
                 if !output.status.success() {
                     let stderr = String::from_utf8_lossy(&output.stderr);
-                    return Err(PptxError::Generic(format!("LibreOffice conversion failed: {}", stderr)));
+                    return Err(PptxError::Generic(format!(
+                        "LibreOffice conversion failed: {}",
+                        stderr
+                    )));
                 }
-            },
+            }
             Err(e) => {
-                return Err(PptxError::Generic(format!("Failed to execute libreoffice: {}", e)));
+                return Err(PptxError::Generic(format!(
+                    "Failed to execute libreoffice: {}",
+                    e
+                )));
             }
         }
-        
+
         // LibreOffice creates file with same basename but .pdf extension in outdir
         // The generated file will be temp_filename.pdf (since input was temp_filename.pptx)
         let generated_pdf_name = temp_filename.replace(".pptx", ".pdf");
         let generated_pdf_path = output_parent.join(&generated_pdf_name);
-        
+
         if generated_pdf_path.exists() {
-             std::fs::rename(&generated_pdf_path, output_path.as_ref())?;
-             Ok(())
+            std::fs::rename(&generated_pdf_path, output_path.as_ref())?;
+            Ok(())
         } else {
-             Err(PptxError::Generic("PDF output file not found".to_string()))
+            Err(PptxError::Generic("PDF output file not found".to_string()))
         }
     }
 
     /// Export slides to PNG images
-    /// 
+    ///
     /// Requires LibreOffice (for PDF conversion) and `pdftoppm` (from poppler).
     /// Images will be named `slide-1.png`, `slide-2.png`, etc. in the output directory.
     pub fn save_as_png<P: AsRef<Path>>(&self, output_dir: P) -> Result<()> {
@@ -177,59 +181,62 @@ impl Presentation {
         let temp_dir = std::env::temp_dir();
         let temp_pdf_name = format!("ppt_rs_temp_{}.pdf", uuid::Uuid::new_v4());
         let temp_pdf_path = temp_dir.join(&temp_pdf_name);
-        
+
         // Convert to PDF first
         self.save_as_pdf(&temp_pdf_path)?;
-        
+
         // Convert PDF to PNGs using pdftoppm
         // pdftoppm -png <pdf_file> <image_prefix>
         let prefix = output_dir.join("slide");
-        
+
         let status = Command::new("pdftoppm")
             .arg("-png")
             .arg(&temp_pdf_path)
             .arg(&prefix)
             .status()
             .map_err(|e| PptxError::Generic(format!("Failed to execute pdftoppm: {}", e)))?;
-            
+
         // Cleanup temp PDF
         let _ = std::fs::remove_file(&temp_pdf_path);
-        
+
         if !status.success() {
             return Err(PptxError::Generic("pdftoppm conversion failed".to_string()));
         }
-        
+
         Ok(())
     }
 
     /// Create a presentation from a PDF file (each page becomes a slide)
-    /// 
+    ///
     /// Requires `pdftoppm` (from poppler) to be installed.
     pub fn from_pdf<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
         if !path.exists() {
-            return Err(PptxError::NotFound(format!("PDF file not found: {}", path.display())));
+            return Err(PptxError::NotFound(format!(
+                "PDF file not found: {}",
+                path.display()
+            )));
         }
 
         // Create temp dir for images
         let temp_dir = std::env::temp_dir().join(format!("ppt_rs_import_{}", uuid::Uuid::new_v4()));
         std::fs::create_dir_all(&temp_dir)?;
-        
+
         // Convert PDF to PNGs
         let prefix = temp_dir.join("page");
-        
+
         let status = Command::new("pdftoppm")
             .arg("-png")
             .arg(path)
             .arg(&prefix)
             .status()
             .map_err(|e| PptxError::Generic(format!("Failed to execute pdftoppm: {}", e)))?;
-            
+
         if !status.success() {
             let _ = std::fs::remove_dir_all(&temp_dir);
             return Err(PptxError::Generic("pdftoppm failed".to_string()));
         }
-        
+
         // Read images and create slides
         let mut pres = Presentation::new();
         // Set title from filename
@@ -241,7 +248,7 @@ impl Presentation {
         let mut entries: Vec<_> = std::fs::read_dir(&temp_dir)?
             .filter_map(|e| e.ok())
             .collect();
-            
+
         // Sort by filename to ensure page order
         // pdftoppm names files like page-1.png, page-2.png... page-10.png
         // Default string sort might put page-10 before page-2
@@ -256,7 +263,7 @@ impl Presentation {
             if let Some(start) = name.rfind('-') {
                 if let Some(end) = name.rfind('.') {
                     if start < end {
-                        if let Ok(num) = name[start+1..end].parse::<u32>() {
+                        if let Ok(num) = name[start + 1..end].parse::<u32>() {
                             return num;
                         }
                     }
@@ -264,14 +271,13 @@ impl Presentation {
             }
             0 // Fallback
         });
-        
+
         for entry in entries {
             let path = entry.path();
             if path.extension().map_or(false, |e| e == "png") {
                 // Create slide with full screen image
-                let image = Image::from_path(&path)
-                    .map_err(|e| PptxError::Generic(e))?;
-                
+                let image = Image::from_path(&path).map_err(|e| PptxError::Generic(e))?;
+
                 // Add image to slide
                 // Use a default layout?
                 // Just create a slide with this image
@@ -280,26 +286,16 @@ impl Presentation {
                 // But we don't know image dimensions here easily without reading it.
                 // Image builder defaults to auto size?
                 // Let's just add it.
-                
+
                 let mut slide = SlideContent::new("");
                 slide.images.push(image);
                 pres = pres.add_slide(slide);
             }
         }
-        
+
         let _ = std::fs::remove_dir_all(&temp_dir);
         Ok(pres)
     }
-}
-
-/// Open a presentation from a file path
-pub fn open<P: AsRef<Path>>(path: P) -> Result<Package> {
-    Package::open(path)
-}
-
-/// Open a presentation from a reader
-pub fn open_reader<R: Read + Seek>(reader: R) -> Result<Package> {
-    Package::open_reader(reader)
 }
 
 #[cfg(test)]
@@ -310,16 +306,15 @@ mod tests {
     fn test_presentation_builder() {
         let pres = Presentation::with_title("Test")
             .add_slide(SlideContent::new("Slide 1").add_bullet("Point 1"));
-        
+
         assert_eq!(pres.get_title(), "Test");
         assert_eq!(pres.slide_count(), 1);
     }
 
     #[test]
     fn test_presentation_build() {
-        let pres = Presentation::with_title("Test")
-            .add_slide(SlideContent::new("Slide 1"));
-        
+        let pres = Presentation::with_title("Test").add_slide(SlideContent::new("Slide 1"));
+
         let result = pres.build();
         assert!(result.is_ok());
     }

@@ -1,9 +1,9 @@
 //! OPC Package handling
 
+use crate::exc::Result;
+use std::collections::HashMap;
 use std::io::Read;
 use std::path::Path;
-use std::collections::HashMap;
-use crate::exc::Result;
 
 /// Represents an OPC package (ZIP file)
 pub struct Package {
@@ -104,7 +104,9 @@ impl Package {
 
     /// Get part as string (for XML parts)
     pub fn get_part_string(&self, path: &str) -> Option<String> {
-        self.parts.get(path).map(|v| String::from_utf8_lossy(v).to_string())
+        self.parts
+            .get(path)
+            .map(|v| String::from_utf8_lossy(v).to_string())
     }
 }
 

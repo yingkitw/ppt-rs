@@ -102,7 +102,7 @@ fn main() -> Result<()> {
     // Example 4: Color Aliases and Adjustments (NEW)
     // =========================================================================
     
-    let slide4 = SlideContent::new("Color Aliases & Adjustments")
+    let _slide4 = SlideContent::new("Color Aliases & Adjustments")
         .add_shape(
             rect(0.5, 1.5, 1.5, 0.8)
                 .fill(red().to_color())
@@ -143,7 +143,7 @@ fn main() -> Result<()> {
     // Example 5: Simple Table Creation (NEW)
     // =========================================================================
     
-    let slide5 = SlideContent::new("Simple Table Creation")
+    let _slide5 = SlideContent::new("Simple Table Creation")
         .table(
             QuickTable::new(4)
                 .header(&["Name", "Role", "Department", "Status"])

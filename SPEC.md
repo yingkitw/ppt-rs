@@ -392,7 +392,7 @@ pptcli repair <input.pptx> <output.pptx>         # Repair PPTX
 | File size overhead | ~10-15 KB base |
 | Generation speed | ~1000 slides/sec |
 | Memory usage | ~2 MB + content |
-| Test coverage | 650+ tests |
+| Test coverage | 750+ tests |
 
 ## Error Handling
 
@@ -402,9 +402,9 @@ use ppt_rs::{PptxError, Result};
 // All operations return Result<T, PptxError>
 match create_pptx("title", 5) {
     Ok(data) => { /* success */ }
-    Err(PptxError::IoError(e)) => { /* I/O error */ }
-    Err(PptxError::XmlError(e)) => { /* XML error */ }
-    Err(PptxError::ZipError(e)) => { /* ZIP error */ }
+    Err(PptxError::Io(e)) => { /* I/O error */ }
+    Err(PptxError::Zip(e)) => { /* ZIP error */ }
+    Err(PptxError::XmlParse(e)) => { /* XML error */ }
     Err(PptxError::InvalidOperation(msg)) => { /* logic error */ }
 }
 ```
@@ -413,6 +413,17 @@ match create_pptx("title", 5) {
 
 | Version | Features |
 |---------|----------|
+| 0.2.11 | Color aliases (40+), table helpers, extension methods, API guide |
+| 0.2.10 | Image effects system (8 effects), ImageBuilder chainable API, JPEG fix |
+| 0.2.9 | Compatibility test sorting fix |
+| 0.2.8 | Compatibility testing infrastructure (PptxValidator, CompatibilityTestSuite) |
+| 0.2.7 | Streaming ZIP and lazy loading |
+| 0.2.6 | Error handling refactoring, From<ZipError> |
+| 0.2.5 | Codebase cleanup, merged table modules |
+| 0.2.4 | Dimension API (EMU, inches, cm, pt, ratio), trait refactoring |
+| 0.2.3 | Transitions, connectors, gradients, cell merging, charts |
+| 0.2.1 | Bullet styles, text enhancements, image from URL/base64 |
+| 0.2.0 | Templates, prelude, themes, layout helpers |
 | 0.1.8 | Prelude, gradients, transparency, connectors |
 | 0.1.7 | 12 Mermaid diagram types |
 | 0.1.6 | Syntax highlighting |

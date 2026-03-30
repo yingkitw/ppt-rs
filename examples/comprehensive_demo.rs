@@ -20,56 +20,63 @@
 //! 17. NEW: Print settings, Advanced table merging, Embedded fonts
 //! 18. NEW: Flexible Dimension API (EMU/inches/cm/pt/ratio/percent)
 
+use ppt_rs::elements::{Color, Position, RgbColor, SchemeColor, Size, Transform, EMU_PER_INCH};
+use ppt_rs::generator::shapes::{GradientDirection, GradientFill};
 use ppt_rs::generator::{
-    create_pptx_with_settings, SlideContent, SlideLayout,
-    TableRow, TableCell, TableBuilder,
-    ChartType, ChartSeries, ChartBuilder,
-    ImageBuilder, ShapeType, ShapeFill,
-    Connector, ConnectorLine, ArrowType, ArrowSize, LineDash,
-    BulletStyle, BulletPoint,
-    // Advanced features actually embedded in PPTX output
-    SlideShowSettings, ShowType, PenColor, SlideRange,
-    PrintSettings, HandoutLayout as GenHandoutLayout, PrintColorMode, PrintWhat,
-    TableMergeMap,
+    create_pptx_with_settings,
+    ArrowSize,
+    ArrowType,
+    BulletPoint,
+    BulletStyle,
+    ChartBuilder,
+    ChartSeries,
+    ChartType,
+    Connector,
+    ConnectorLine,
+    HandoutLayout as GenHandoutLayout,
+    ImageBuilder,
+    LineDash,
+    PenColor,
     PresentationSettings,
-};
-use ppt_rs::generator::shapes::{GradientFill, GradientDirection};
-use ppt_rs::prelude::{
-    colors, themes, font_sizes, inches, Dimension,
-    // New simplified API helpers
-    rect, circle, ellipse, rounded_rect, triangle, diamond,
-    hex, ShapeExt, shapes,
-    // Color utilities
-    ColorValue, red, blue, green, orange, material_blue, material_green,
-    // Table utilities (for simple cases)
-    QuickTable, cell, header_cell,
+    PrintColorMode,
+    PrintSettings,
+    PrintWhat,
+    ShapeType,
+    ShowType,
+    SlideContent,
+    SlideLayout,
+    SlideRange,
+    // Advanced features actually embedded in PPTX output
+    SlideShowSettings,
+    TableBuilder,
+    TableCell,
+    TableMergeMap,
+    TableRow,
 };
 use ppt_rs::opc::Package;
 use ppt_rs::parts::{
-    SlideLayoutPart, LayoutType,
-    SlideMasterPart,
-    ThemePart,
-    NotesSlidePart,
-    AppPropertiesPart,
-    MediaPart, MediaFormat,
-    TablePart, TableRowPart, TableCellPart,
-    HorizontalAlign, VerticalAlign,
-    ContentTypesPart,
-    Part,
-    // Advanced features
-    Animation, AnimationEffect, AnimationTrigger, AnimationDirection,
-    SlideTransition, TransitionEffect, SlideAnimations,
-    HandoutMasterPart, HandoutLayout,
-    CustomXmlPart,
-    VbaProjectPart, VbaModule,
-    EmbeddedFontCollection, FontEmbedType,
-    SmartArtPart, SmartArtLayout,
-    Model3DPart, Model3DFormat, CameraPreset,
+    AppPropertiesPart, ContentTypesPart, HorizontalAlign, LayoutType, MediaFormat, MediaPart,
+    NotesSlidePart, Part, SlideLayoutPart, SlideMasterPart, TableCellPart, TablePart, TableRowPart,
+    ThemePart, VerticalAlign,
 };
-use ppt_rs::elements::{
-    Color, RgbColor, SchemeColor,
-    Position, Size, Transform,
-    EMU_PER_INCH,
+use ppt_rs::prelude::{
+    circle,
+    colors,
+    diamond,
+    ellipse,
+    font_sizes,
+    hex,
+    inches,
+    // New simplified API helpers
+    rect,
+    rounded_rect,
+    shapes,
+    themes,
+    triangle,
+    // Color utilities
+    ColorValue,
+    Dimension,
+    ShapeExt,
 };
 use ppt_rs::ToXml;
 use std::fs;
@@ -90,7 +97,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .layout(SlideLayout::CenteredTitle)
             .title_size(54)
             .title_bold(true)
-            .title_color("1F497D")
+            .title_color("1F497D"),
     );
 
     // =========================================================================
@@ -102,7 +109,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .layout(SlideLayout::TitleOnly)
             .title_size(48)
             .title_bold(true)
-            .title_color("C0504D")
+            .title_color("C0504D"),
     );
 
     // =========================================================================
@@ -127,7 +134,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .content_italic(true)
             .content_underline(true)
             .content_size(28)
-            .content_color("4F81BD")
+            .content_color("4F81BD"),
     );
 
     // =========================================================================
@@ -142,7 +149,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_bullet("Perfect for key messages")
             .add_bullet("Smaller title, bigger content")
             .content_bold(true)
-            .content_size(32)
+            .content_size(32),
     );
 
     // =========================================================================
@@ -159,17 +166,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_bullet("Right Column Item 1")
             .add_bullet("Right Column Item 2")
             .add_bullet("Right Column Item 3")
-            .content_size(24)
+            .content_size(24),
     );
 
     // =========================================================================
     // SLIDE 6: Blank Layout
     // =========================================================================
     println!("📐 Slide 6: Blank Layout");
-    slides.push(
-        SlideContent::new("")
-            .layout(SlideLayout::Blank)
-    );
+    slides.push(SlideContent::new("").layout(SlideLayout::Blank));
 
     // =========================================================================
     // SLIDE 7: Table with All Cell Styling Options
@@ -194,39 +198,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_row(TableRow::new(vec![
             TableCell::new("Row 3 Col 1"),
             TableCell::new("Row 3 Col 2"),
-            TableCell::new("Row 3 Col 3").bold().background_color("F79646"),
+            TableCell::new("Row 3 Col 3")
+                .bold()
+                .background_color("F79646"),
         ]))
         .position(500000, 1800000)
         .build();
-    
+
     slides.push(
         SlideContent::new("Table with Cell Styling")
             .table(styled_table)
-            .title_color("1F497D")
+            .title_color("1F497D"),
     );
 
     // =========================================================================
     // SLIDE 8: Charts (Bar, Line, Pie)
     // =========================================================================
     println!("📈 Slide 8: Chart Types");
-    
+
     // Create chart data structures (for demonstration)
     let _bar_chart = ChartBuilder::new("Sales by Region", ChartType::Bar)
         .categories(vec!["North", "South", "East", "West"])
         .add_series(ChartSeries::new("2023", vec![100.0, 80.0, 120.0, 90.0]))
         .add_series(ChartSeries::new("2024", vec![120.0, 95.0, 140.0, 110.0]))
         .build();
-    
+
     let _line_chart = ChartBuilder::new("Monthly Trend", ChartType::Line)
         .categories(vec!["Jan", "Feb", "Mar", "Apr", "May", "Jun"])
-        .add_series(ChartSeries::new("Revenue", vec![10.0, 12.0, 15.0, 14.0, 18.0, 22.0]))
+        .add_series(ChartSeries::new(
+            "Revenue",
+            vec![10.0, 12.0, 15.0, 14.0, 18.0, 22.0],
+        ))
         .build();
-    
+
     let _pie_chart = ChartBuilder::new("Market Share", ChartType::Pie)
         .categories(vec!["Product A", "Product B", "Product C", "Others"])
         .add_series(ChartSeries::new("Share", vec![40.0, 30.0, 20.0, 10.0]))
         .build();
-    
+
     slides.push(
         SlideContent::new("Chart Types: Bar, Line, Pie")
             .with_chart()
@@ -234,34 +243,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_bullet("Bar Chart: Compare categories")
             .add_bullet("Line Chart: Show trends over time")
             .add_bullet("Pie Chart: Show proportions")
-            .content_size(24)
+            .content_size(24),
     );
 
     // =========================================================================
     // SLIDE 9: Shapes with Different Fills
     // =========================================================================
     println!("🔷 Slide 9: Shapes with Fills");
-    
+
     let rect_shape = rect(0.5, 1.75, 2.2, 1.1)
         .fill(hex("4F81BD"))
         .text("Rectangle");
-    
+
     let ellipse_shape = ellipse(3.3, 1.75, 2.2, 1.1)
         .fill(hex("9BBB59"))
         .text("Ellipse");
-    
+
     let rounded = rounded_rect(6.0, 1.75, 2.2, 1.1)
         .fill(hex("C0504D"))
         .text("Rounded");
-    
+
     let triangle_shape = triangle(1.6, 3.3, 1.6, 1.3)
         .fill(hex("8064A2"))
         .text("Triangle");
-    
+
     let diamond_shape = diamond(4.4, 3.3, 1.6, 1.3)
         .fill(hex("F79646"))
         .text("Diamond");
-    
+
     slides.push(
         SlideContent::new("Shape Types with Color Fills")
             .add_shape(rect_shape)
@@ -269,39 +278,60 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(rounded)
             .add_shape(triangle_shape)
             .add_shape(diamond_shape)
-            .title_color("1F497D")
+            .title_color("1F497D"),
     );
 
     // =========================================================================
     // SLIDE 10: Gradient Fills (NEW)
     // =========================================================================
     println!("🌈 Slide 10: Gradient Fills");
-    
+
     // Horizontal gradient
     let gradient_h = rect(0.5, 1.75, 2.7, 1.3)
-        .with_gradient(GradientFill::linear("1565C0", "42A5F5", GradientDirection::Horizontal))
+        .with_gradient(GradientFill::linear(
+            "1565C0",
+            "42A5F5",
+            GradientDirection::Horizontal,
+        ))
         .text("Horizontal");
-    
+
     // Vertical gradient
     let gradient_v = rect(3.5, 1.75, 2.7, 1.3)
-        .with_gradient(GradientFill::linear("2E7D32", "81C784", GradientDirection::Vertical))
+        .with_gradient(GradientFill::linear(
+            "2E7D32",
+            "81C784",
+            GradientDirection::Vertical,
+        ))
         .text("Vertical");
-    
+
     // Diagonal gradient
     let gradient_d = rounded_rect(6.5, 1.75, 2.7, 1.3)
-        .with_gradient(GradientFill::linear("C62828", "EF9A9A", GradientDirection::DiagonalDown))
+        .with_gradient(GradientFill::linear(
+            "C62828",
+            "EF9A9A",
+            GradientDirection::DiagonalDown,
+        ))
         .text("Diagonal");
-    
+
     // Three-color gradient
     let gradient_3 = ellipse(2.0, 3.5, 2.7, 1.3)
-        .with_gradient(GradientFill::three_color("FF6F00", "FFC107", "FFEB3B", GradientDirection::Horizontal))
+        .with_gradient(GradientFill::three_color(
+            "FF6F00",
+            "FFC107",
+            "FFEB3B",
+            GradientDirection::Horizontal,
+        ))
         .text("3-Color");
-    
+
     // Custom angle gradient
     let gradient_angle = rounded_rect(5.2, 3.5, 2.7, 1.3)
-        .with_gradient(GradientFill::linear("7B1FA2", "E1BEE7", GradientDirection::Angle(135)))
+        .with_gradient(GradientFill::linear(
+            "7B1FA2",
+            "E1BEE7",
+            GradientDirection::Angle(135),
+        ))
         .text("135° Angle");
-    
+
     slides.push(
         SlideContent::new("Gradient Fills - Multiple Directions")
             .add_shape(gradient_h)
@@ -309,105 +339,105 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(gradient_d)
             .add_shape(gradient_3)
             .add_shape(gradient_angle)
-            .title_color("1F497D")
+            .title_color("1F497D"),
     );
 
     // =========================================================================
     // SLIDE 11: Transparency (NEW)
     // =========================================================================
     println!("👻 Slide 11: Transparency Effects");
-    
+
     // Base shape (fully opaque)
     let base = rect(1.1, 2.0, 3.3, 2.2)
         .fill(hex("1565C0"))
         .text("Base (100%)");
-    
+
     // 25% transparent overlay
     let trans_25 = rect(2.2, 2.4, 2.7, 1.6)
         .fill(ColorValue::from_hex("F44336").transparent(25).to_color())
         .stroke(hex("B71C1C"), 2.0)
         .text("25% Transparent");
-    
+
     // 50% transparent overlay
     let trans_50 = ellipse(4.9, 2.0, 2.7, 2.2)
         .fill(ColorValue::from_hex("4CAF50").transparent(50).to_color())
         .stroke(hex("1B5E20"), 2.0)
         .text("50% Transparent");
-    
+
     // 75% transparent overlay
     let trans_75 = rounded_rect(6.0, 2.7, 2.7, 1.6)
         .fill(ColorValue::from_hex("FF9800").transparent(75).to_color())
         .stroke(hex("E65100"), 2.0)
         .text("75% Transparent");
-    
+
     slides.push(
         SlideContent::new("Transparency Effects - Overlapping Shapes")
             .add_shape(base)
             .add_shape(trans_25)
             .add_shape(trans_50)
             .add_shape(trans_75)
-            .title_color("1F497D")
+            .title_color("1F497D"),
     );
 
     // =========================================================================
     // SLIDE 12: Styled Connectors (NEW)
     // =========================================================================
     println!("🔗 Slide 12: Styled Connectors");
-    
+
     // Create shapes to connect
     let box1 = rounded_rect(0.5, 2.0, 2.0, 0.9)
         .with_id(100)
         .fill(hex("1565C0"))
         .text("Start");
-    
+
     let box2 = rounded_rect(3.8, 2.0, 2.0, 0.9)
         .with_id(101)
         .fill(hex("2E7D32"))
         .text("Process");
-    
+
     let box3 = rounded_rect(7.1, 2.0, 2.0, 0.9)
         .with_id(102)
         .fill(hex("C62828"))
         .text("End");
-    
+
     // Straight connector with arrow
     let conn1 = Connector::straight(2300000, 2200000, 3500000, 2200000)
         .with_line(ConnectorLine::new("1565C0", 25400))
         .with_end_arrow(ArrowType::Triangle)
         .with_arrow_size(ArrowSize::Large);
-    
+
     // Elbow connector with stealth arrow
     let conn2 = Connector::elbow(5300000, 2200000, 6500000, 2200000)
         .with_line(ConnectorLine::new("2E7D32", 38100).with_dash(LineDash::Dash))
         .with_end_arrow(ArrowType::Stealth)
         .with_arrow_size(ArrowSize::Medium);
-    
+
     // Curved connector examples
     let box4 = ellipse(1.1, 3.5, 1.6, 0.9)
         .with_id(103)
         .fill(hex("7B1FA2"))
         .text("A");
-    
+
     let box5 = ellipse(4.4, 3.5, 1.6, 0.9)
         .with_id(104)
         .fill(hex("00838F"))
         .text("B");
-    
+
     let box6 = ellipse(7.7, 3.5, 1.6, 0.9)
         .with_id(105)
         .fill(hex("EF6C00"))
         .text("C");
-    
+
     // Curved connector with diamond arrow
     let conn3 = Connector::curved(2500000, 3600000, 4000000, 3600000)
         .with_line(ConnectorLine::new("7B1FA2", 19050).with_dash(LineDash::DashDot))
         .with_arrows(ArrowType::Oval, ArrowType::Diamond);
-    
+
     // Dotted connector
     let conn4 = Connector::straight(5500000, 3600000, 7000000, 3600000)
         .with_line(ConnectorLine::new("00838F", 12700).with_dash(LineDash::Dot))
         .with_end_arrow(ArrowType::Open);
-    
+
     slides.push(
         SlideContent::new("Styled Connectors - Types, Arrows, Dashes")
             .add_shape(box1)
@@ -420,30 +450,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_connector(conn2)
             .add_connector(conn3)
             .add_connector(conn4)
-            .title_color("1F497D")
+            .title_color("1F497D"),
     );
 
     // =========================================================================
     // SLIDE 13: Images with Shadow Effects
     // =========================================================================
     println!("🖼️  Slide 13: Images with Shadow Effects");
-    
+
     // Dynamically load optimized stock photos from assets folder
     let assets_dir = "examples/assets";
     let mut stock_photos: Vec<(Vec<u8>, String, String)> = Vec::new();
-    
+
     // Scan for optimized image files in assets folder
     if let Ok(entries) = std::fs::read_dir(assets_dir) {
         let mut files: Vec<_> = entries.flatten().collect();
         files.sort_by_key(|e| e.file_name());
-        
+
         for entry in files {
             if let Some(filename) = entry.file_name().to_str() {
                 // Skip text files
                 if filename.ends_with(".txt") {
                     continue;
                 }
-                
+
                 if let Ok(path) = entry.path().canonicalize() {
                     if let Some(ext) = path.extension() {
                         let ext_str = ext.to_string_lossy().to_lowercase();
@@ -451,7 +481,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             if let Ok(bytes) = std::fs::read(&path) {
                                 let format = if ext_str == "png" { "PNG" } else { "JPEG" };
                                 let size_kb = bytes.len() as f64 / 1024.0;
-                                stock_photos.push((bytes, format.to_string(), filename.to_string()));
+                                stock_photos.push((
+                                    bytes,
+                                    format.to_string(),
+                                    filename.to_string(),
+                                ));
                                 println!("   Loaded: {} ({:.1} KB)", filename, size_kb);
                             }
                         }
@@ -460,7 +494,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
-    
+
     // Use first 3 photos, or repeat if fewer available
     if stock_photos.is_empty() {
         panic!("No stock photos found in examples/assets/");
@@ -469,7 +503,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let photo1 = &stock_photos[0 % photo_count];
     let photo2 = &stock_photos[1 % photo_count];
     let photo3 = &stock_photos[2 % photo_count];
-    
+
     // SLIDE 13: Shadow Effects
     let img1_shadow = ImageBuilder::auto(photo1.0.clone())
         .size(inches(2.2), inches(2.2))
@@ -486,20 +520,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .at(inches(6.8), inches(1.6))
         .shadow()
         .build();
-    
+
     slides.push(
         SlideContent::new("Image Effects: Shadow (Outer Shadow)")
             .add_image(img1_shadow)
             .add_image(img2_shadow)
             .add_image(img3_shadow)
-            .title_color("1F497D")
+            .title_color("1F497D"),
     );
 
     // =========================================================================
     // SLIDE 14: Images with Reflection Effects
     // =========================================================================
     println!("🖼️  Slide 14: Images with Reflection Effects");
-    
+
     let img1_reflection = ImageBuilder::auto(photo1.0.clone())
         .size(inches(2.4), inches(2.4))
         .at(inches(0.9), inches(1.3))
@@ -515,20 +549,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .at(inches(7.1), inches(1.3))
         .reflection()
         .build();
-    
+
     slides.push(
         SlideContent::new("Image Effects: Reflection (Mirror Effect)")
             .add_image(img1_reflection)
             .add_image(img2_reflection)
             .add_image(img3_reflection)
-            .title_color("2E75B5")
+            .title_color("2E75B5"),
     );
 
     // =========================================================================
     // SLIDE 15: Images with Cropping
     // =========================================================================
     println!("🖼️  Slide 15: Images with Cropping");
-    
+
     let img1_crop = ImageBuilder::auto(photo1.0.clone())
         .size(inches(2.0), inches(2.0))
         .at(inches(1.3), inches(2.0))
@@ -544,20 +578,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .at(inches(7.9), inches(2.0))
         .crop(0.15, 0.0, 0.15, 0.0)
         .build();
-    
+
     slides.push(
         SlideContent::new("Image Cropping: All Sides, Top/Bottom, Left/Right")
             .add_image(img1_crop)
             .add_image(img2_crop)
             .add_image(img3_crop)
-            .title_color("70AD47")
+            .title_color("70AD47"),
     );
 
     // =========================================================================
     // SLIDE 16: Images with Glow Effects
     // =========================================================================
     println!("🖼️  Slide 16: Images with Glow Effects");
-    
+
     let img1_glow = ImageBuilder::auto(photo1.0.clone())
         .size(inches(2.4), inches(2.4))
         .at(inches(1.0), inches(1.5))
@@ -573,20 +607,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .at(inches(7.2), inches(1.5))
         .glow()
         .build();
-    
+
     slides.push(
         SlideContent::new("Image Effects: Glow (Golden Aura)")
             .add_image(img1_glow)
             .add_image(img2_glow)
             .add_image(img3_glow)
-            .title_color("C55A11")
+            .title_color("C55A11"),
     );
 
     // =========================================================================
     // SLIDE 17: Images with Soft Edges
     // =========================================================================
     println!("🖼️  Slide 17: Images with Soft Edges");
-    
+
     let img1_soft = ImageBuilder::auto(photo1.0.clone())
         .size(inches(2.4), inches(2.4))
         .at(inches(1.0), inches(1.5))
@@ -602,20 +636,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .at(inches(7.2), inches(1.5))
         .soft_edges()
         .build();
-    
+
     slides.push(
         SlideContent::new("Image Effects: Soft Edges (Feathered)")
             .add_image(img1_soft)
             .add_image(img2_soft)
             .add_image(img3_soft)
-            .title_color("9B59B6")
+            .title_color("9B59B6"),
     );
 
     // =========================================================================
     // SLIDE 18: Images with Inner Shadow
     // =========================================================================
     println!("🖼️  Slide 18: Images with Inner Shadow");
-    
+
     let img1_inner = ImageBuilder::auto(photo1.0.clone())
         .size(inches(2.4), inches(2.4))
         .at(inches(1.0), inches(1.5))
@@ -631,20 +665,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .at(inches(7.2), inches(1.5))
         .inner_shadow()
         .build();
-    
+
     slides.push(
         SlideContent::new("Image Effects: Inner Shadow (Depth)")
             .add_image(img1_inner)
             .add_image(img2_inner)
             .add_image(img3_inner)
-            .title_color("E74C3C")
+            .title_color("E74C3C"),
     );
 
     // =========================================================================
     // SLIDE 19: Images with Blur Effect
     // =========================================================================
     println!("🖼️  Slide 19: Images with Blur Effect");
-    
+
     let img1_blur = ImageBuilder::auto(photo1.0.clone())
         .size(inches(2.4), inches(2.4))
         .at(inches(1.0), inches(1.5))
@@ -660,20 +694,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .at(inches(7.2), inches(1.5))
         .blur()
         .build();
-    
+
     slides.push(
         SlideContent::new("Image Effects: Blur (Artistic)")
             .add_image(img1_blur)
             .add_image(img2_blur)
             .add_image(img3_blur)
-            .title_color("3498DB")
+            .title_color("3498DB"),
     );
 
     // =========================================================================
     // SLIDE 20: Images with Combined Effects
     // =========================================================================
     println!("🖼️  Slide 20: Images with Combined Effects");
-    
+
     let img1_combined = ImageBuilder::auto(photo1.0.clone())
         .size(inches(2.4), inches(2.4))
         .at(inches(1.0), inches(1.5))
@@ -692,73 +726,138 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .shadow()
         .reflection()
         .build();
-    
+
     slides.push(
         SlideContent::new("Combined Effects: Shadow + Reflection")
             .add_image(img1_combined)
             .add_image(img2_combined)
             .add_image(img3_combined)
-            .title_color("16A085")
+            .title_color("16A085"),
     );
 
     // =========================================================================
     // SLIDE 11: Advanced Table with Borders & Alignment (NEW)
     // =========================================================================
     println!("📊 Slide 11: Advanced Table (borders, alignment, merged cells)");
-    
+
     // Build advanced table using generator's TableBuilder with alignment
     let advanced_table = TableBuilder::new(vec![2000000, 2000000, 2000000, 2000000])
         .add_row(TableRow::new(vec![
-            TableCell::new("Q1 2024 Financial Report").bold().background_color("1F4E79").text_color("FFFFFF").align_center().font_size(14),
+            TableCell::new("Q1 2024 Financial Report")
+                .bold()
+                .background_color("1F4E79")
+                .text_color("FFFFFF")
+                .align_center()
+                .font_size(14),
             TableCell::new("").background_color("1F4E79"),
             TableCell::new("").background_color("1F4E79"),
             TableCell::new("").background_color("1F4E79"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Category").bold().background_color("2E75B6").text_color("FFFFFF").align_center(),
-            TableCell::new("Revenue").bold().background_color("2E75B6").text_color("FFFFFF").align_center(),
-            TableCell::new("Expenses").bold().background_color("2E75B6").text_color("FFFFFF").align_center(),
-            TableCell::new("Profit").bold().background_color("2E75B6").text_color("FFFFFF").align_center(),
+            TableCell::new("Category")
+                .bold()
+                .background_color("2E75B6")
+                .text_color("FFFFFF")
+                .align_center(),
+            TableCell::new("Revenue")
+                .bold()
+                .background_color("2E75B6")
+                .text_color("FFFFFF")
+                .align_center(),
+            TableCell::new("Expenses")
+                .bold()
+                .background_color("2E75B6")
+                .text_color("FFFFFF")
+                .align_center(),
+            TableCell::new("Profit")
+                .bold()
+                .background_color("2E75B6")
+                .text_color("FFFFFF")
+                .align_center(),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Product Sales").text_color("000000").align_left(),
-            TableCell::new("$1,250,000").text_color("2E7D32").align_right(),
-            TableCell::new("$450,000").text_color("C62828").align_right(),
-            TableCell::new("$800,000").bold().text_color("2E7D32").align_right(),
+            TableCell::new("Product Sales")
+                .text_color("000000")
+                .align_left(),
+            TableCell::new("$1,250,000")
+                .text_color("2E7D32")
+                .align_right(),
+            TableCell::new("$450,000")
+                .text_color("C62828")
+                .align_right(),
+            TableCell::new("$800,000")
+                .bold()
+                .text_color("2E7D32")
+                .align_right(),
         ]))
         .add_row(TableRow::new(vec![
             TableCell::new("Services").text_color("000000").align_left(),
-            TableCell::new("$890,000").text_color("2E7D32").align_right(),
-            TableCell::new("$320,000").text_color("C62828").align_right(),
-            TableCell::new("$570,000").bold().text_color("2E7D32").align_right(),
+            TableCell::new("$890,000")
+                .text_color("2E7D32")
+                .align_right(),
+            TableCell::new("$320,000")
+                .text_color("C62828")
+                .align_right(),
+            TableCell::new("$570,000")
+                .bold()
+                .text_color("2E7D32")
+                .align_right(),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Total").bold().background_color("E7E6E6").text_color("000000").align_left(),
-            TableCell::new("$2,140,000").bold().background_color("E7E6E6").text_color("000000").align_right(),
-            TableCell::new("$770,000").bold().background_color("E7E6E6").text_color("000000").align_right(),
-            TableCell::new("$1,370,000").bold().background_color("C6EFCE").text_color("006100").align_right(),
+            TableCell::new("Total")
+                .bold()
+                .background_color("E7E6E6")
+                .text_color("000000")
+                .align_left(),
+            TableCell::new("$2,140,000")
+                .bold()
+                .background_color("E7E6E6")
+                .text_color("000000")
+                .align_right(),
+            TableCell::new("$770,000")
+                .bold()
+                .background_color("E7E6E6")
+                .text_color("000000")
+                .align_right(),
+            TableCell::new("$1,370,000")
+                .bold()
+                .background_color("C6EFCE")
+                .text_color("006100")
+                .align_right(),
         ]))
         .position(300000, 1600000)
         .build();
-    
+
     slides.push(
         SlideContent::new("Financial Report - Advanced Table")
             .table(advanced_table)
             .title_color("1F4E79")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
     // SLIDE 12: Comparison Matrix Table (NEW)
     // =========================================================================
     println!("📊 Slide 12: Comparison Matrix Table");
-    
+
     let comparison_table = TableBuilder::new(vec![2000000, 1500000, 1500000, 1500000])
         .add_row(TableRow::new(vec![
-            TableCell::new("Feature").bold().background_color("4472C4").text_color("FFFFFF"),
-            TableCell::new("Basic").bold().background_color("4472C4").text_color("FFFFFF"),
-            TableCell::new("Pro").bold().background_color("4472C4").text_color("FFFFFF"),
-            TableCell::new("Enterprise").bold().background_color("4472C4").text_color("FFFFFF"),
+            TableCell::new("Feature")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
+            TableCell::new("Basic")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
+            TableCell::new("Pro")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
+            TableCell::new("Enterprise")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
         ]))
         .add_row(TableRow::new(vec![
             TableCell::new("Storage").text_color("000000"),
@@ -785,46 +884,55 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             TableCell::new("Yes + Priority").bold().text_color("2E7D32"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Price/month").bold().background_color("F2F2F2").text_color("000000"),
-            TableCell::new("$9").bold().background_color("F2F2F2").text_color("000000"),
-            TableCell::new("$29").bold().background_color("F2F2F2").text_color("000000"),
-            TableCell::new("$99").bold().background_color("F2F2F2").text_color("000000"),
+            TableCell::new("Price/month")
+                .bold()
+                .background_color("F2F2F2")
+                .text_color("000000"),
+            TableCell::new("$9")
+                .bold()
+                .background_color("F2F2F2")
+                .text_color("000000"),
+            TableCell::new("$29")
+                .bold()
+                .background_color("F2F2F2")
+                .text_color("000000"),
+            TableCell::new("$99")
+                .bold()
+                .background_color("F2F2F2")
+                .text_color("000000"),
         ]))
         .position(500000, 1600000)
         .build();
-    
+
     slides.push(
         SlideContent::new("Pricing Comparison Matrix")
             .table(comparison_table)
             .title_color("4472C4")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
     // SLIDE 13: Process Flow with Shapes (NEW - SmartArt-like)
     // =========================================================================
     println!("🔷 Slide 13: Process Flow (SmartArt-style)");
-    
+
     // Create process flow using shapes
     let step1 = rounded_rect(0.3, 2.2, 1.5, 0.9)
         .fill(hex("4472C4"))
         .text("1. Research");
-    let arrow1 = shapes::arrow_right(2.0, 2.4, 0.4, 0.4)
-        .fill(hex("A5A5A5"));
+    let arrow1 = shapes::arrow_right(2.0, 2.4, 0.4, 0.4).fill(hex("A5A5A5"));
     let step2 = rounded_rect(2.5, 2.2, 1.5, 0.9)
         .fill(hex("ED7D31"))
         .text("2. Design");
-    let arrow2 = shapes::arrow_right(4.2, 2.4, 0.4, 0.4)
-        .fill(hex("A5A5A5"));
+    let arrow2 = shapes::arrow_right(4.2, 2.4, 0.4, 0.4).fill(hex("A5A5A5"));
     let step3 = rounded_rect(4.7, 2.2, 1.5, 0.9)
         .fill(hex("70AD47"))
         .text("3. Develop");
-    let arrow3 = shapes::arrow_right(6.3, 2.4, 0.4, 0.4)
-        .fill(hex("A5A5A5"));
+    let arrow3 = shapes::arrow_right(6.3, 2.4, 0.4, 0.4).fill(hex("A5A5A5"));
     let step4 = rounded_rect(6.9, 2.2, 1.5, 0.9)
         .fill(hex("5B9BD5"))
         .text("4. Deploy");
-    
+
     slides.push(
         SlideContent::new("Development Process Flow")
             .add_shape(step1)
@@ -835,27 +943,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(arrow3)
             .add_shape(step4)
             .title_color("1F497D")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
     // SLIDE 14: Organization Chart with Shapes (NEW)
     // =========================================================================
     println!("🔷 Slide 14: Organization Chart");
-    
+
     // CEO at top
     let ceo = rounded_rect(3.8, 1.5, 2.2, 0.7)
         .fill(hex("1F4E79"))
         .text("CEO");
-    
+
     // Vertical line from CEO
-    let line1 = rect(4.9, 2.2, 0.1, 0.4)
-        .fill(hex("A5A5A5"));
-    
+    let line1 = rect(4.9, 2.2, 0.1, 0.4).fill(hex("A5A5A5"));
+
     // Horizontal connector
-    let hline = rect(2.1, 2.6, 5.6, 0.05)
-        .fill(hex("A5A5A5"));
-    
+    let hline = rect(2.1, 2.6, 5.6, 0.05).fill(hex("A5A5A5"));
+
     // CTO, CFO, COO
     let cto = rounded_rect(1.1, 2.8, 2.0, 0.5)
         .fill(hex("2E75B6"))
@@ -866,23 +972,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let coo = rounded_rect(6.8, 2.8, 2.0, 0.5)
         .fill(hex("2E75B6"))
         .text("COO");
-    
+
     // Vertical lines to departments
-    let vline1 = rect(2.0, 2.7, 0.05, 0.16)
-        .fill(hex("A5A5A5"));
-    let vline2 = rect(4.9, 2.7, 0.05, 0.16)
-        .fill(hex("A5A5A5"));
-    let vline3 = rect(7.7, 2.7, 0.05, 0.16)
-        .fill(hex("A5A5A5"));
-    
+    let vline1 = rect(2.0, 2.7, 0.05, 0.16).fill(hex("A5A5A5"));
+    let vline2 = rect(4.9, 2.7, 0.05, 0.16).fill(hex("A5A5A5"));
+    let vline3 = rect(7.7, 2.7, 0.05, 0.16).fill(hex("A5A5A5"));
+
     // Teams under CTO
     let eng = rect(0.5, 3.6, 1.3, 0.4)
         .fill(hex("BDD7EE"))
         .text("Engineering");
-    let product = rect(2.0, 3.6, 1.3, 0.4)
-        .fill(hex("BDD7EE"))
-        .text("Product");
-    
+    let product = rect(2.0, 3.6, 1.3, 0.4).fill(hex("BDD7EE")).text("Product");
+
     slides.push(
         SlideContent::new("Organization Structure")
             .add_shape(ceo)
@@ -897,14 +998,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(eng)
             .add_shape(product)
             .title_color("1F4E79")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
     // SLIDE 15: PDCA Cycle Diagram (NEW)
     // =========================================================================
     println!("🔷 Slide 15: PDCA Cycle Diagram");
-    
+
     // Four quadrants for PDCA
     let plan = rounded_rect(1.6, 1.75, 2.7, 1.6)
         .fill(hex("4472C4"))
@@ -918,17 +1019,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let act = rounded_rect(1.6, 3.6, 2.7, 1.6)
         .fill(hex("FFC000"))
         .text("ACT\n\nAdjust and\nimprove");
-    
+
     // Arrows between quadrants
-    let arr1 = shapes::arrow_right(4.5, 2.3, 0.3, 0.3)
-        .fill(hex("A5A5A5"));
-    let arr2 = shapes::arrow_down(6.1, 3.5, 0.3, 0.2)
-        .fill(hex("A5A5A5"));
-    let arr3 = shapes::arrow_left(4.5, 4.2, 0.3, 0.3)
-        .fill(hex("A5A5A5"));
-    let arr4 = shapes::arrow_up(2.8, 3.5, 0.3, 0.2)
-        .fill(hex("A5A5A5"));
-    
+    let arr1 = shapes::arrow_right(4.5, 2.3, 0.3, 0.3).fill(hex("A5A5A5"));
+    let arr2 = shapes::arrow_down(6.1, 3.5, 0.3, 0.2).fill(hex("A5A5A5"));
+    let arr3 = shapes::arrow_left(4.5, 4.2, 0.3, 0.3).fill(hex("A5A5A5"));
+    let arr4 = shapes::arrow_up(2.8, 3.5, 0.3, 0.2).fill(hex("A5A5A5"));
+
     slides.push(
         SlideContent::new("PDCA Continuous Improvement Cycle")
             .add_shape(plan)
@@ -940,31 +1037,55 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(arr3)
             .add_shape(arr4)
             .title_color("1F497D")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
     // SLIDE 16: Pyramid Diagram (Maslow's Hierarchy) (NEW)
     // =========================================================================
     println!("🔷 Slide 16: Pyramid Diagram");
-    
+
     // Build pyramid from bottom to top
-    let level5 = shapes::dim(ShapeType::Trapezoid, Dimension::Inches(0.5), Dimension::Inches(4.4), Dimension::Inches(8.7), Dimension::Inches(0.7))
-        .fill(hex("C00000"))
-        .text("Physiological Needs - Food, Water, Shelter");
-    let level4 = shapes::dim(ShapeType::Trapezoid, Dimension::Inches(1.1), Dimension::Inches(3.7), Dimension::Inches(7.7), Dimension::Inches(0.7))
-        .fill(hex("ED7D31"))
-        .text("Safety Needs - Security, Stability");
-    let level3 = shapes::dim(ShapeType::Trapezoid, Dimension::Inches(1.6), Dimension::Inches(3.1), Dimension::Inches(6.6), Dimension::Inches(0.7))
-        .fill(hex("FFC000"))
-        .text("Love & Belonging - Relationships");
-    let level2 = shapes::dim(ShapeType::Trapezoid, Dimension::Inches(2.2), Dimension::Inches(2.4), Dimension::Inches(5.5), Dimension::Inches(0.7))
-        .fill(hex("70AD47"))
-        .text("Esteem - Achievement, Respect");
+    let level5 = shapes::dim(
+        ShapeType::Trapezoid,
+        Dimension::Inches(0.5),
+        Dimension::Inches(4.4),
+        Dimension::Inches(8.7),
+        Dimension::Inches(0.7),
+    )
+    .fill(hex("C00000"))
+    .text("Physiological Needs - Food, Water, Shelter");
+    let level4 = shapes::dim(
+        ShapeType::Trapezoid,
+        Dimension::Inches(1.1),
+        Dimension::Inches(3.7),
+        Dimension::Inches(7.7),
+        Dimension::Inches(0.7),
+    )
+    .fill(hex("ED7D31"))
+    .text("Safety Needs - Security, Stability");
+    let level3 = shapes::dim(
+        ShapeType::Trapezoid,
+        Dimension::Inches(1.6),
+        Dimension::Inches(3.1),
+        Dimension::Inches(6.6),
+        Dimension::Inches(0.7),
+    )
+    .fill(hex("FFC000"))
+    .text("Love & Belonging - Relationships");
+    let level2 = shapes::dim(
+        ShapeType::Trapezoid,
+        Dimension::Inches(2.2),
+        Dimension::Inches(2.4),
+        Dimension::Inches(5.5),
+        Dimension::Inches(0.7),
+    )
+    .fill(hex("70AD47"))
+    .text("Esteem - Achievement, Respect");
     let level1 = triangle(2.7, 1.6, 4.4, 0.8)
         .fill(hex("4472C4"))
         .text("Self-Actualization");
-    
+
     slides.push(
         SlideContent::new("Maslow's Hierarchy of Needs")
             .add_shape(level5)
@@ -973,30 +1094,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(level2)
             .add_shape(level1)
             .title_color("1F497D")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
     // SLIDE 17: Venn Diagram (NEW)
     // =========================================================================
     println!("🔷 Slide 17: Venn Diagram");
-    
+
     // Three overlapping circles
-    let circle1 = circle(1.6, 2.0, 3.3)
-        .fill(hex("4472C4"))
-        .text("Skills");
-    let circle2 = circle(3.8, 2.0, 3.3)
-        .fill(hex("ED7D31"))
-        .text("Passion");
+    let circle1 = circle(1.6, 2.0, 3.3).fill(hex("4472C4")).text("Skills");
+    let circle2 = circle(3.8, 2.0, 3.3).fill(hex("ED7D31")).text("Passion");
     let circle3 = circle(2.7, 3.5, 3.3)
         .fill(hex("70AD47"))
         .text("Market Need");
-    
+
     // Center label
     let center = ellipse(3.5, 3.1, 1.75, 0.9)
         .fill(hex("FFFFFF"))
         .text("IKIGAI");
-    
+
     slides.push(
         SlideContent::new("Finding Your Ikigai - Venn Diagram")
             .add_shape(circle1)
@@ -1004,28 +1121,53 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(circle3)
             .add_shape(center)
             .title_color("1F497D")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
     // SLIDE 18: Timeline/Roadmap (NEW)
     // =========================================================================
     println!("📊 Slide 18: Project Timeline");
-    
+
     let timeline_table = TableBuilder::new(vec![1500000, 1500000, 1500000, 1500000, 1500000])
         .add_row(TableRow::new(vec![
-            TableCell::new("Q1 2024").bold().background_color("4472C4").text_color("FFFFFF"),
-            TableCell::new("Q2 2024").bold().background_color("4472C4").text_color("FFFFFF"),
-            TableCell::new("Q3 2024").bold().background_color("4472C4").text_color("FFFFFF"),
-            TableCell::new("Q4 2024").bold().background_color("4472C4").text_color("FFFFFF"),
-            TableCell::new("Q1 2025").bold().background_color("4472C4").text_color("FFFFFF"),
+            TableCell::new("Q1 2024")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
+            TableCell::new("Q2 2024")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
+            TableCell::new("Q3 2024")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
+            TableCell::new("Q4 2024")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
+            TableCell::new("Q1 2025")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Research\n& Planning").background_color("BDD7EE").text_color("1F497D"),
-            TableCell::new("Design\nPhase").background_color("BDD7EE").text_color("1F497D"),
-            TableCell::new("Development\nSprint 1-3").background_color("C6EFCE").text_color("006100"),
-            TableCell::new("Testing\n& QA").background_color("FCE4D6").text_color("C65911"),
-            TableCell::new("Launch\n& Support").background_color("E2EFDA").text_color("375623"),
+            TableCell::new("Research\n& Planning")
+                .background_color("BDD7EE")
+                .text_color("1F497D"),
+            TableCell::new("Design\nPhase")
+                .background_color("BDD7EE")
+                .text_color("1F497D"),
+            TableCell::new("Development\nSprint 1-3")
+                .background_color("C6EFCE")
+                .text_color("006100"),
+            TableCell::new("Testing\n& QA")
+                .background_color("FCE4D6")
+                .text_color("C65911"),
+            TableCell::new("Launch\n& Support")
+                .background_color("E2EFDA")
+                .text_color("375623"),
         ]))
         .add_row(TableRow::new(vec![
             TableCell::new("✓ Complete").bold().text_color("2E7D32"),
@@ -1036,54 +1178,94 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ]))
         .position(300000, 2000000)
         .build();
-    
+
     slides.push(
         SlideContent::new("Project Roadmap 2024-2025")
             .table(timeline_table)
             .title_color("1F497D")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
     // SLIDE 19: Dashboard Summary (NEW - using Dimension API)
     // =========================================================================
     println!("🔷 Slide 19: Dashboard with KPIs (Dimension API)");
-    
+
     // KPI boxes using ratio-based positioning — automatically adapts to any slide size
-    let kpi1 = shapes::dim(ShapeType::RoundedRectangle,
-        Dimension::percent(3.0), Dimension::percent(23.0),
-        Dimension::percent(22.0), Dimension::percent(18.0))
-        .fill(hex("4472C4"))
-        .text("Revenue\n\n$2.14M\n+15% YoY");
+    let kpi1 = shapes::dim(
+        ShapeType::RoundedRectangle,
+        Dimension::percent(3.0),
+        Dimension::percent(23.0),
+        Dimension::percent(22.0),
+        Dimension::percent(18.0),
+    )
+    .fill(hex("4472C4"))
+    .text("Revenue\n\n$2.14M\n+15% YoY");
 
-    let kpi2 = shapes::dim(ShapeType::RoundedRectangle,
-        Dimension::percent(27.0), Dimension::percent(23.0),
-        Dimension::percent(22.0), Dimension::percent(18.0))
-        .fill(hex("70AD47"))
-        .text("Customers\n\n12,450\n+22% YoY");
+    let kpi2 = shapes::dim(
+        ShapeType::RoundedRectangle,
+        Dimension::percent(27.0),
+        Dimension::percent(23.0),
+        Dimension::percent(22.0),
+        Dimension::percent(18.0),
+    )
+    .fill(hex("70AD47"))
+    .text("Customers\n\n12,450\n+22% YoY");
 
-    let kpi3 = shapes::dim(ShapeType::RoundedRectangle,
-        Dimension::percent(51.0), Dimension::percent(23.0),
-        Dimension::percent(22.0), Dimension::percent(18.0))
-        .fill(hex("ED7D31"))
-        .text("NPS Score\n\n72\n+8 pts");
+    let kpi3 = shapes::dim(
+        ShapeType::RoundedRectangle,
+        Dimension::percent(51.0),
+        Dimension::percent(23.0),
+        Dimension::percent(22.0),
+        Dimension::percent(18.0),
+    )
+    .fill(hex("ED7D31"))
+    .text("NPS Score\n\n72\n+8 pts");
 
-    let kpi4 = shapes::dim(ShapeType::RoundedRectangle,
-        Dimension::percent(75.0), Dimension::percent(23.0),
-        Dimension::percent(22.0), Dimension::percent(18.0))
-        .fill(hex("5B9BD5"))
-        .text("Retention\n\n94%\n+3% YoY");
-    
+    let kpi4 = shapes::dim(
+        ShapeType::RoundedRectangle,
+        Dimension::percent(75.0),
+        Dimension::percent(23.0),
+        Dimension::percent(22.0),
+        Dimension::percent(18.0),
+    )
+    .fill(hex("5B9BD5"))
+    .text("Retention\n\n94%\n+3% YoY");
+
     // Status indicators using mixed units: percent for X, inches for size
-    let status1 = shapes::dim(ShapeType::Ellipse, Dimension::percent(14.0), Dimension::percent(42.0), Dimension::Inches(0.3), Dimension::Inches(0.3))
-        .fill(hex("70AD47"));
-    let status2 = shapes::dim(ShapeType::Ellipse, Dimension::percent(38.0), Dimension::percent(42.0), Dimension::Inches(0.3), Dimension::Inches(0.3))
-        .fill(hex("70AD47"));
-    let status3 = shapes::dim(ShapeType::Ellipse, Dimension::percent(62.0), Dimension::percent(42.0), Dimension::Inches(0.3), Dimension::Inches(0.3))
-        .fill(hex("FFC000"));
-    let status4 = shapes::dim(ShapeType::Ellipse, Dimension::percent(86.0), Dimension::percent(42.0), Dimension::Inches(0.3), Dimension::Inches(0.3))
-        .fill(hex("70AD47"));
-    
+    let status1 = shapes::dim(
+        ShapeType::Ellipse,
+        Dimension::percent(14.0),
+        Dimension::percent(42.0),
+        Dimension::Inches(0.3),
+        Dimension::Inches(0.3),
+    )
+    .fill(hex("70AD47"));
+    let status2 = shapes::dim(
+        ShapeType::Ellipse,
+        Dimension::percent(38.0),
+        Dimension::percent(42.0),
+        Dimension::Inches(0.3),
+        Dimension::Inches(0.3),
+    )
+    .fill(hex("70AD47"));
+    let status3 = shapes::dim(
+        ShapeType::Ellipse,
+        Dimension::percent(62.0),
+        Dimension::percent(42.0),
+        Dimension::Inches(0.3),
+        Dimension::Inches(0.3),
+    )
+    .fill(hex("FFC000"));
+    let status4 = shapes::dim(
+        ShapeType::Ellipse,
+        Dimension::percent(86.0),
+        Dimension::percent(42.0),
+        Dimension::Inches(0.3),
+        Dimension::Inches(0.3),
+    )
+    .fill(hex("70AD47"));
+
     slides.push(
         SlideContent::new("Executive Dashboard - Q1 2024")
             .add_shape(kpi1)
@@ -1095,14 +1277,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(status3)
             .add_shape(status4)
             .title_color("1F497D")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
     // SLIDE 20: Summary Slide (NEW)
     // =========================================================================
     println!("📝 Slide 20: Summary with Speaker Notes");
-    
+
     slides.push(
         SlideContent::new("Summary & Next Steps")
             .layout(SlideLayout::TitleAndContent)
@@ -1121,7 +1303,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // SLIDE 21: Bullet Styles (NEW v0.2.1)
     // =========================================================================
     println!("🔢 Slide 21: Bullet Styles (NEW)");
-    
+
     // Numbered list
     slides.push(
         SlideContent::new("Bullet Styles - Numbered List")
@@ -1133,14 +1315,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_bullet("Second numbered item")
             .add_bullet("Third numbered item")
             .add_bullet("Fourth numbered item")
-            .content_size(28)
+            .content_size(28),
     );
 
     // =========================================================================
     // SLIDE 22: Lettered Lists (NEW v0.2.1)
     // =========================================================================
     println!("🔤 Slide 22: Lettered Lists (NEW)");
-    
+
     slides.push(
         SlideContent::new("Bullet Styles - Lettered Lists")
             .layout(SlideLayout::TitleAndContent)
@@ -1150,14 +1332,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_lettered("Option B - Second choice")
             .add_lettered("Option C - Third choice")
             .add_lettered("Option D - Fourth choice")
-            .content_size(28)
+            .content_size(28),
     );
 
     // =========================================================================
     // SLIDE 23: Roman Numerals (NEW v0.2.1)
     // =========================================================================
     println!("🏛️ Slide 23: Roman Numerals (NEW)");
-    
+
     slides.push(
         SlideContent::new("Bullet Styles - Roman Numerals")
             .layout(SlideLayout::TitleAndContent)
@@ -1169,14 +1351,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_bullet("Chapter III - Methodology")
             .add_bullet("Chapter IV - Results")
             .add_bullet("Chapter V - Conclusion")
-            .content_size(28)
+            .content_size(28),
     );
 
     // =========================================================================
     // SLIDE 24: Custom Bullets (NEW v0.2.1)
     // =========================================================================
     println!("⭐ Slide 24: Custom Bullets (NEW)");
-    
+
     slides.push(
         SlideContent::new("Bullet Styles - Custom Characters")
             .layout(SlideLayout::TitleAndContent)
@@ -1187,14 +1369,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_styled_bullet("Check bullet point", BulletStyle::Custom('✓'))
             .add_styled_bullet("Diamond bullet point", BulletStyle::Custom('◆'))
             .add_styled_bullet("Heart bullet point", BulletStyle::Custom('♥'))
-            .content_size(28)
+            .content_size(28),
     );
 
     // =========================================================================
     // SLIDE 25: Sub-bullets / Hierarchy (NEW v0.2.1)
     // =========================================================================
     println!("📊 Slide 25: Sub-bullets Hierarchy (NEW)");
-    
+
     slides.push(
         SlideContent::new("Bullet Styles - Hierarchical Lists")
             .layout(SlideLayout::TitleAndContent)
@@ -1207,21 +1389,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_sub_bullet("Supporting detail C")
             .add_sub_bullet("Supporting detail D")
             .add_bullet("Main Topic 3")
-            .content_size(24)
+            .content_size(24),
     );
 
     // =========================================================================
     // SLIDE 26: Text Enhancements (NEW v0.2.1)
     // =========================================================================
     println!("✏️ Slide 26: Text Enhancements (NEW)");
-    
+
     // Use BulletPoint with formatting
-    let strikethrough_bullet = BulletPoint::new("Strikethrough: This text is crossed out").strikethrough();
-    let highlight_bullet = BulletPoint::new("Highlight: Yellow background for emphasis").highlight("FFFF00");
+    let strikethrough_bullet =
+        BulletPoint::new("Strikethrough: This text is crossed out").strikethrough();
+    let highlight_bullet =
+        BulletPoint::new("Highlight: Yellow background for emphasis").highlight("FFFF00");
     let subscript_bullet = BulletPoint::new("Subscript: H₂O - for chemical formulas").subscript();
-    let superscript_bullet = BulletPoint::new("Superscript: x² - for math expressions").superscript();
-    let bold_colored = BulletPoint::new("Combined: Bold + Red color").bold().color("FF0000");
-    
+    let superscript_bullet =
+        BulletPoint::new("Superscript: x² - for math expressions").superscript();
+    let bold_colored = BulletPoint::new("Combined: Bold + Red color")
+        .bold()
+        .color("FF0000");
+
     let mut text_enhancements_slide = SlideContent::new("Text Enhancements - New Formatting")
         .layout(SlideLayout::TitleAndContent)
         .title_color("1F497D")
@@ -1232,21 +1419,35 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     text_enhancements_slide.bullets.push(subscript_bullet);
     text_enhancements_slide.bullets.push(superscript_bullet);
     text_enhancements_slide.bullets.push(bold_colored);
-    
+
     slides.push(text_enhancements_slide);
 
     // =========================================================================
     // SLIDE 27: Font Size Presets (NEW v0.2.1)
     // =========================================================================
     println!("🔤 Slide 27: Font Size Presets (NEW)");
-    
+
     // Demonstrate different font sizes per bullet
-    let large_bullet = BulletPoint::new(&format!("LARGE: {}pt - Extra large text", font_sizes::LARGE)).font_size(font_sizes::LARGE);
-    let heading_bullet = BulletPoint::new(&format!("HEADING: {}pt - Section headers", font_sizes::HEADING)).font_size(font_sizes::HEADING);
-    let body_bullet = BulletPoint::new(&format!("BODY: {}pt - Regular content", font_sizes::BODY)).font_size(font_sizes::BODY);
-    let small_bullet = BulletPoint::new(&format!("SMALL: {}pt - Smaller text", font_sizes::SMALL)).font_size(font_sizes::SMALL);
-    let caption_bullet = BulletPoint::new(&format!("CAPTION: {}pt - Captions and notes", font_sizes::CAPTION)).font_size(font_sizes::CAPTION);
-    
+    let large_bullet = BulletPoint::new(&format!(
+        "LARGE: {}pt - Extra large text",
+        font_sizes::LARGE
+    ))
+    .font_size(font_sizes::LARGE);
+    let heading_bullet = BulletPoint::new(&format!(
+        "HEADING: {}pt - Section headers",
+        font_sizes::HEADING
+    ))
+    .font_size(font_sizes::HEADING);
+    let body_bullet = BulletPoint::new(&format!("BODY: {}pt - Regular content", font_sizes::BODY))
+        .font_size(font_sizes::BODY);
+    let small_bullet = BulletPoint::new(&format!("SMALL: {}pt - Smaller text", font_sizes::SMALL))
+        .font_size(font_sizes::SMALL);
+    let caption_bullet = BulletPoint::new(&format!(
+        "CAPTION: {}pt - Captions and notes",
+        font_sizes::CAPTION
+    ))
+    .font_size(font_sizes::CAPTION);
+
     let mut font_size_slide = SlideContent::new("Font Size Presets - Each line different size")
         .layout(SlideLayout::TitleAndContent)
         .title_color("1F497D")
@@ -1257,43 +1458,43 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     font_size_slide.bullets.push(body_bullet);
     font_size_slide.bullets.push(small_bullet);
     font_size_slide.bullets.push(caption_bullet);
-    
+
     slides.push(font_size_slide);
 
     // =========================================================================
     // SLIDE 28: Theme Colors (NEW v0.2.1)
     // =========================================================================
     println!("🎨 Slide 28: Theme Colors (NEW)");
-    
+
     // Create shapes with theme colors
     let corporate_shape = rect(0.5, 1.75, 2.0, 0.9)
         .fill(hex(themes::CORPORATE.primary))
         .text("Corporate");
-    
+
     let modern_shape = rect(2.7, 1.75, 2.0, 0.9)
         .fill(hex(themes::MODERN.primary))
         .text("Modern");
-    
+
     let vibrant_shape = rect(4.9, 1.75, 2.0, 0.9)
         .fill(hex(themes::VIBRANT.primary))
         .text("Vibrant");
-    
+
     let dark_shape = rect(7.1, 1.75, 2.0, 0.9)
         .fill(hex(themes::DARK.primary))
         .text("Dark");
-    
+
     let nature_shape = rect(0.5, 3.0, 2.0, 0.9)
         .fill(hex(themes::NATURE.primary))
         .text("Nature");
-    
+
     let tech_shape = rect(2.7, 3.0, 2.0, 0.9)
         .fill(hex(themes::TECH.primary))
         .text("Tech");
-    
+
     let carbon_shape = rect(4.9, 3.0, 2.0, 0.9)
         .fill(hex(themes::CARBON.primary))
         .text("Carbon");
-    
+
     slides.push(
         SlideContent::new("Theme Color Palettes")
             .layout(SlideLayout::TitleAndContent)
@@ -1305,56 +1506,56 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(dark_shape)
             .add_shape(nature_shape)
             .add_shape(tech_shape)
-            .add_shape(carbon_shape)
+            .add_shape(carbon_shape),
     );
 
     // =========================================================================
     // SLIDE 29: Material & Carbon Design Colors (NEW v0.2.1)
     // =========================================================================
     println!("🌈 Slide 29: Material & Carbon Colors (NEW)");
-    
+
     // Material Design colors
     let material_red = rect(0.5, 1.75, 1.3, 0.7)
         .fill(hex(colors::MATERIAL_RED))
         .text("M-Red");
-    
+
     let material_blue = rect(2.1, 1.75, 1.3, 0.7)
         .fill(hex(colors::MATERIAL_BLUE))
         .text("M-Blue");
-    
+
     let material_green = rect(3.6, 1.75, 1.3, 0.7)
         .fill(hex(colors::MATERIAL_GREEN))
         .text("M-Green");
-    
+
     let material_orange = rect(5.1, 1.75, 1.3, 0.7)
         .fill(hex(colors::MATERIAL_ORANGE))
         .text("M-Orange");
-    
+
     let material_purple = rect(6.7, 1.75, 1.3, 0.7)
         .fill(hex(colors::MATERIAL_PURPLE))
         .text("M-Purple");
-    
+
     // Carbon Design colors
     let carbon_blue = rect(0.5, 2.7, 1.3, 0.7)
         .fill(hex(colors::CARBON_BLUE_60))
         .text("C-Blue");
-    
+
     let carbon_green = rect(2.1, 2.7, 1.3, 0.7)
         .fill(hex(colors::CARBON_GREEN_50))
         .text("C-Green");
-    
+
     let carbon_red = rect(3.6, 2.7, 1.3, 0.7)
         .fill(hex(colors::CARBON_RED_60))
         .text("C-Red");
-    
+
     let carbon_purple = rect(5.1, 2.7, 1.3, 0.7)
         .fill(hex(colors::CARBON_PURPLE_60))
         .text("C-Purple");
-    
+
     let carbon_gray = rect(6.7, 2.7, 1.3, 0.7)
         .fill(hex(colors::CARBON_GRAY_100))
         .text("C-Gray");
-    
+
     slides.push(
         SlideContent::new("Material & Carbon Design Colors")
             .layout(SlideLayout::TitleAndContent)
@@ -1369,22 +1570,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(carbon_green)
             .add_shape(carbon_red)
             .add_shape(carbon_purple)
-            .add_shape(carbon_gray)
+            .add_shape(carbon_gray),
     );
 
     // =========================================================================
     // SLIDE 30: Image from Base64 (NEW v0.2.1)
     // =========================================================================
     println!("🖼️ Slide 30: Image from Base64 (NEW)");
-    
+
     // 1x1 red PNG pixel in base64
     let _red_pixel_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==";
-    
+
     // Create image from base64 (demonstrating the API)
     let _base64_image = ImageBuilder::from_base64(_red_pixel_base64, 914400, 914400, "PNG")
         .position(4000000, 2500000)
         .build();
-    
+
     slides.push(
         SlideContent::new("Image Loading - New Methods")
             .layout(SlideLayout::TitleAndContent)
@@ -1395,14 +1596,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_bullet("Image::from_bytes(data) - Load from raw bytes")
             .add_bullet("ImageBuilder for fluent API configuration")
             .add_bullet("Built-in base64 decoder (no external deps)")
-            .content_size(24)
+            .content_size(24),
     );
 
     // =========================================================================
     // SLIDE 31: Feature Summary (NEW v0.2.1)
     // =========================================================================
     println!("📋 Slide 31: v0.2.1 Feature Summary (NEW)");
-    
+
     slides.push(
         SlideContent::new("New Features in v0.2.1")
             .layout(SlideLayout::TitleAndContent)
@@ -1415,7 +1616,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_numbered("Image::from_base64 and from_bytes")
             .add_numbered("Theme color palettes (7 themes)")
             .add_numbered("Material & Carbon Design colors")
-            .content_size(24)
+            .content_size(24),
     );
 
     // =========================================================================
@@ -1434,38 +1635,63 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let show_table = TableBuilder::new(vec![2000000, 2000000, 2000000, 2000000])
         .add_row(TableRow::new(vec![
-            TableCell::new("Setting").bold().background_color("1F4E79").text_color("FFFFFF"),
-            TableCell::new("Speaker").bold().background_color("4472C4").text_color("FFFFFF"),
-            TableCell::new("Kiosk").bold().background_color("ED7D31").text_color("FFFFFF"),
-            TableCell::new("Browsed").bold().background_color("70AD47").text_color("FFFFFF"),
+            TableCell::new("Setting")
+                .bold()
+                .background_color("1F4E79")
+                .text_color("FFFFFF"),
+            TableCell::new("Speaker")
+                .bold()
+                .background_color("4472C4")
+                .text_color("FFFFFF"),
+            TableCell::new("Kiosk")
+                .bold()
+                .background_color("ED7D31")
+                .text_color("FFFFFF"),
+            TableCell::new("Browsed")
+                .bold()
+                .background_color("70AD47")
+                .text_color("FFFFFF"),
         ]))
         .add_row(TableRow::new(vec![
             TableCell::new("Loop").bold().background_color("D6E4F0"),
-            TableCell::new("No"), TableCell::new("Yes").bold().text_color("2E7D32"),
+            TableCell::new("No"),
+            TableCell::new("Yes").bold().text_color("2E7D32"),
             TableCell::new("No"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Narration").bold().background_color("D6E4F0"),
-            TableCell::new("Yes"), TableCell::new("No").text_color("C62828"),
+            TableCell::new("Narration")
+                .bold()
+                .background_color("D6E4F0"),
+            TableCell::new("Yes"),
+            TableCell::new("No").text_color("C62828"),
             TableCell::new("Yes"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Animation").bold().background_color("D6E4F0"),
-            TableCell::new("Yes"), TableCell::new("Yes"),
+            TableCell::new("Animation")
+                .bold()
+                .background_color("D6E4F0"),
+            TableCell::new("Yes"),
+            TableCell::new("Yes"),
             TableCell::new("No").text_color("C62828"),
         ]))
         .add_row(TableRow::new(vec![
             TableCell::new("Timings").bold().background_color("D6E4F0"),
-            TableCell::new("Yes"), TableCell::new("Auto"),
+            TableCell::new("Yes"),
+            TableCell::new("Auto"),
             TableCell::new("Yes"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Slide Range").bold().background_color("D6E4F0"),
-            TableCell::new("All"), TableCell::new("All"),
+            TableCell::new("Slide Range")
+                .bold()
+                .background_color("D6E4F0"),
+            TableCell::new("All"),
+            TableCell::new("All"),
             TableCell::new("1-10"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Pen Color").bold().background_color("D6E4F0"),
+            TableCell::new("Pen Color")
+                .bold()
+                .background_color("D6E4F0"),
             TableCell::new("Red").text_color("FF0000"),
             TableCell::new("Red").text_color("FF0000"),
             TableCell::new("Red").text_color("FF0000"),
@@ -1491,7 +1717,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(icon_kiosk)
             .add_shape(icon_browsed)
             .title_color("1F497D")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
@@ -1543,15 +1769,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Settings summary table on the right
     let print_table = TableBuilder::new(vec![1800000, 2000000])
         .add_row(TableRow::new(vec![
-            TableCell::new("Print Settings").bold().background_color("1F4E79").text_color("FFFFFF"),
+            TableCell::new("Print Settings")
+                .bold()
+                .background_color("1F4E79")
+                .text_color("FFFFFF"),
             TableCell::new("").background_color("1F4E79"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Print What").bold().background_color("D6E4F0"),
+            TableCell::new("Print What")
+                .bold()
+                .background_color("D6E4F0"),
             TableCell::new("Handouts"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Color Mode").bold().background_color("D6E4F0"),
+            TableCell::new("Color Mode")
+                .bold()
+                .background_color("D6E4F0"),
             TableCell::new("Grayscale"),
         ]))
         .add_row(TableRow::new(vec![
@@ -1559,7 +1792,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             TableCell::new("6 slides/page"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Frame Slides").bold().background_color("D6E4F0"),
+            TableCell::new("Frame Slides")
+                .bold()
+                .background_color("D6E4F0"),
             TableCell::new("Yes"),
         ]))
         .add_row(TableRow::new(vec![
@@ -1567,7 +1802,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             TableCell::new("Yes"),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Page Numbers").bold().background_color("D6E4F0"),
+            TableCell::new("Page Numbers")
+                .bold()
+                .background_color("D6E4F0"),
             TableCell::new("Yes"),
         ]))
         .position(5000000, 1800000)
@@ -1577,12 +1814,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         SlideContent::new("Print Handout - 6 Slides Per Page")
             .table(print_table)
             .add_shape(hdr)
-            .add_shape(s1).add_shape(s2)
-            .add_shape(s3).add_shape(s4)
-            .add_shape(s5).add_shape(s6)
+            .add_shape(s1)
+            .add_shape(s2)
+            .add_shape(s3)
+            .add_shape(s4)
+            .add_shape(s5)
+            .add_shape(s6)
             .add_shape(ftr)
             .title_color("1F497D")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
@@ -1609,34 +1849,66 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Build the table with REAL merge attributes (gridSpan, rowSpan, hMerge, vMerge)
     let merge_table = TableBuilder::new(vec![1500000, 2000000, 2000000, 2000000])
         .add_row(TableRow::new(vec![
-            TableCell::new("Q1 2025 Revenue Report").bold().background_color("1F4E79").text_color("FFFFFF").grid_span(4),
+            TableCell::new("Q1 2025 Revenue Report")
+                .bold()
+                .background_color("1F4E79")
+                .text_color("FFFFFF")
+                .grid_span(4),
             TableCell::new("").background_color("1F4E79").h_merge(),
             TableCell::new("").background_color("1F4E79").h_merge(),
             TableCell::new("").background_color("1F4E79").h_merge(),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Products").bold().background_color("BDD7EE").text_color("1F497D").row_span(2),
+            TableCell::new("Products")
+                .bold()
+                .background_color("BDD7EE")
+                .text_color("1F497D")
+                .row_span(2),
             TableCell::new("Hardware").background_color("E2EFDA"),
-            TableCell::new("$450,000").text_color("2E7D32").align_right(),
-            TableCell::new("+12%").bold().text_color("2E7D32").align_right(),
+            TableCell::new("$450,000")
+                .text_color("2E7D32")
+                .align_right(),
+            TableCell::new("+12%")
+                .bold()
+                .text_color("2E7D32")
+                .align_right(),
         ]))
         .add_row(TableRow::new(vec![
             TableCell::new("").background_color("BDD7EE").v_merge(),
             TableCell::new("Software").background_color("E2EFDA"),
-            TableCell::new("$680,000").text_color("2E7D32").align_right(),
-            TableCell::new("+25%").bold().text_color("2E7D32").align_right(),
+            TableCell::new("$680,000")
+                .text_color("2E7D32")
+                .align_right(),
+            TableCell::new("+25%")
+                .bold()
+                .text_color("2E7D32")
+                .align_right(),
         ]))
         .add_row(TableRow::new(vec![
-            TableCell::new("Services").bold().background_color("FCE4D6").text_color("C65911").row_span(2),
+            TableCell::new("Services")
+                .bold()
+                .background_color("FCE4D6")
+                .text_color("C65911")
+                .row_span(2),
             TableCell::new("Consulting").background_color("FFF2CC"),
-            TableCell::new("$320,000").text_color("2E7D32").align_right(),
-            TableCell::new("+8%").bold().text_color("2E7D32").align_right(),
+            TableCell::new("$320,000")
+                .text_color("2E7D32")
+                .align_right(),
+            TableCell::new("+8%")
+                .bold()
+                .text_color("2E7D32")
+                .align_right(),
         ]))
         .add_row(TableRow::new(vec![
             TableCell::new("").background_color("FCE4D6").v_merge(),
             TableCell::new("Support").background_color("FFF2CC"),
-            TableCell::new("$190,000").text_color("2E7D32").align_right(),
-            TableCell::new("+5%").bold().text_color("2E7D32").align_right(),
+            TableCell::new("$190,000")
+                .text_color("2E7D32")
+                .align_right(),
+            TableCell::new("+5%")
+                .bold()
+                .text_color("2E7D32")
+                .align_right(),
         ]))
         .position(300000, 1600000)
         .build();
@@ -1663,7 +1935,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_shape(legend_vmerge)
             .add_shape(legend_normal)
             .title_color("1F497D")
-            .title_bold(true)
+            .title_bold(true),
     );
 
     // =========================================================================
@@ -1690,7 +1962,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .print_date(true)
         .print_page_numbers(true);
     println!("   └── Print: Handouts, 6/page, grayscale, framed");
-    println!("       └── XML: {} bytes", print_settings.to_prnpr_xml().len());
+    println!(
+        "       └── XML: {} bytes",
+        print_settings.to_prnpr_xml().len()
+    );
 
     let pres_settings = PresentationSettings::new()
         .slide_show(show_settings)
@@ -1707,21 +1982,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(pres_settings),
     )?;
     fs::write("comprehensive_demo.pptx", &pptx_data)?;
-    println!("   ✓ Created comprehensive_demo.pptx ({} slides, {} bytes)", 
-             slides.len(), pptx_data.len());
+    println!(
+        "   ✓ Created comprehensive_demo.pptx ({} slides, {} bytes)",
+        slides.len(),
+        pptx_data.len()
+    );
 
     // =========================================================================
     // Package Analysis - Demonstrate Reading
     // =========================================================================
     println!("\n📖 Package Analysis (Read Capability):");
-    
+
     let package = Package::open("comprehensive_demo.pptx")?;
     let paths = package.part_paths();
-    
-    let slide_count = paths.iter()
+
+    let slide_count = paths
+        .iter()
         .filter(|p| p.starts_with("ppt/slides/slide") && p.ends_with(".xml"))
         .count();
-    
+
     println!("   ├── Total parts: {}", package.part_count());
     println!("   ├── Slides: {}", slide_count);
     println!("   └── Package opened and analyzed successfully");
@@ -1730,7 +2009,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // NEW: Parts API Demonstration
     // =========================================================================
     println!("\n🧩 Parts API Demonstration:");
-    
+
     // SlideLayoutPart - 11 layout types
     println!("   ┌── SlideLayoutPart (11 layout types):");
     let layouts = [
@@ -1749,11 +2028,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     for (i, layout_type) in layouts.iter().enumerate() {
         let layout = SlideLayoutPart::new(i + 1, *layout_type);
         if i < 3 {
-            println!("   │   ├── {}: {} ({})", i + 1, layout_type.name(), layout.path());
+            println!(
+                "   │   ├── {}: {} ({})",
+                i + 1,
+                layout_type.name(),
+                layout.path()
+            );
         }
     }
     println!("   │   └── ... and {} more layout types", layouts.len() - 3);
-    
+
     // SlideMasterPart
     println!("   ├── SlideMasterPart:");
     let mut master = SlideMasterPart::new(1);
@@ -1762,8 +2046,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     master.add_layout_rel_id("rId3");
     println!("   │   ├── Name: {}", master.name());
     println!("   │   ├── Path: {}", master.path());
-    println!("   │   └── Layouts: {} linked", master.layout_rel_ids().len());
-    
+    println!(
+        "   │   └── Layouts: {} linked",
+        master.layout_rel_ids().len()
+    );
+
     // ThemePart - Colors and Fonts
     println!("   ├── ThemePart (colors & fonts):");
     let mut theme = ThemePart::new(1);
@@ -1777,15 +2064,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   │   ├── Major Font: Arial");
     println!("   │   ├── Minor Font: Calibri");
     println!("   │   └── XML size: {} bytes", theme_xml.len());
-    
+
     // NotesSlidePart - Speaker notes
     println!("   ├── NotesSlidePart (speaker notes):");
-    let notes = NotesSlidePart::with_text(1, "Remember to:\n- Introduce yourself\n- Explain the agenda\n- Ask for questions");
+    let notes = NotesSlidePart::with_text(
+        1,
+        "Remember to:\n- Introduce yourself\n- Explain the agenda\n- Ask for questions",
+    );
     let notes_xml = notes.to_xml()?;
     println!("   │   ├── Path: {}", notes.path());
-    println!("   │   ├── Text: \"{}...\"", &notes.notes_text()[..20.min(notes.notes_text().len())]);
+    println!(
+        "   │   ├── Text: \"{}...\"",
+        &notes.notes_text()[..20.min(notes.notes_text().len())]
+    );
     println!("   │   └── XML size: {} bytes", notes_xml.len());
-    
+
     // AppPropertiesPart - Application metadata
     println!("   ├── AppPropertiesPart (metadata):");
     let mut app_props = AppPropertiesPart::new();
@@ -1795,14 +2088,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   │   ├── Company: Acme Corporation");
     println!("   │   ├── Slides: {}", slides.len());
     println!("   │   └── XML size: {} bytes", app_xml.len());
-    
+
     // MediaPart - Video/Audio formats
     println!("   ├── MediaPart (10 media formats):");
     println!("   │   ├── Video: mp4, webm, avi, wmv, mov");
     println!("   │   ├── Audio: mp3, wav, wma, m4a, ogg");
     let sample_media = MediaPart::new(1, MediaFormat::Mp4, vec![0; 100]);
-    println!("   │   └── Sample: {} ({})", sample_media.path(), sample_media.format().mime_type());
-    
+    println!(
+        "   │   └── Sample: {} ({})",
+        sample_media.path(),
+        sample_media.format().mime_type()
+    );
+
     // TablePart - Table with formatting
     println!("   ├── TablePart (cell formatting):");
     let table_part = TablePart::new()
@@ -1820,7 +2117,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   │   ├── Rows: {}", table_part.rows.len());
     println!("   │   ├── Features: bold, italic, colors, backgrounds");
     println!("   │   └── XML size: {} bytes", table_xml.len());
-    
+
     // ContentTypesPart
     println!("   └── ContentTypesPart:");
     let mut content_types = ContentTypesPart::new();
@@ -1839,7 +2136,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // NEW: Elements API Demonstration
     // =========================================================================
     println!("\n🎨 Elements API Demonstration:");
-    
+
     // Color types
     println!("   ┌── Color Types:");
     let rgb = RgbColor::new(255, 87, 51);
@@ -1847,25 +2144,40 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let scheme = SchemeColor::Accent1;
     let color = Color::rgb(100, 149, 237);
     println!("   │   ├── RgbColor::new(255, 87, 51) → {}", rgb.to_hex());
-    println!("   │   ├── RgbColor::from_hex(\"#4472C4\") → {}", rgb_hex.to_hex());
+    println!(
+        "   │   ├── RgbColor::from_hex(\"#4472C4\") → {}",
+        rgb_hex.to_hex()
+    );
     println!("   │   ├── SchemeColor::Accent1 → {}", scheme.as_str());
-    println!("   │   └── Color::rgb(100, 149, 237) → XML: {}", color.to_xml().chars().take(30).collect::<String>());
-    
+    println!(
+        "   │   └── Color::rgb(100, 149, 237) → XML: {}",
+        color.to_xml().chars().take(30).collect::<String>()
+    );
+
     // Position and Size
     println!("   ├── Position & Size (EMU units):");
     let pos = Position::from_inches(1.0, 2.0);
     let size = Size::from_inches(4.0, 3.0);
-    println!("   │   ├── Position::from_inches(1.0, 2.0) → x={}, y={}", pos.x, pos.y);
-    println!("   │   ├── Size::from_inches(4.0, 3.0) → w={}, h={}", size.width, size.height);
+    println!(
+        "   │   ├── Position::from_inches(1.0, 2.0) → x={}, y={}",
+        pos.x, pos.y
+    );
+    println!(
+        "   │   ├── Size::from_inches(4.0, 3.0) → w={}, h={}",
+        size.width, size.height
+    );
     println!("   │   └── EMU_PER_INCH = {}", EMU_PER_INCH);
-    
+
     // Transform
     println!("   └── Transform (position + size + rotation):");
     let transform = Transform::from_inches(1.0, 1.5, 3.0, 2.0).with_rotation(45.0);
     let transform_xml = transform.to_xml();
     println!("       ├── Transform::from_inches(1.0, 1.5, 3.0, 2.0)");
     println!("       ├── .with_rotation(45.0)");
-    println!("       └── XML: {}...", &transform_xml[..50.min(transform_xml.len())]);
+    println!(
+        "       └── XML: {}...",
+        &transform_xml[..50.min(transform_xml.len())]
+    );
 
     // =========================================================================
     // NEW: Advanced Features Demonstration
@@ -1876,43 +2188,83 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Complex Table Examples
     // -------------------------------------------------------------------------
     println!("   ┌── Complex Table Examples:");
-    
+
     // Example 1: Financial Report Table
     println!("   │   ┌── Financial Report Table (5x4 with formatting):");
     let financial_table = TablePart::new()
+        .add_row(TableRowPart::new(vec![TableCellPart::new(
+            "Q1 2024 Financial Summary",
+        )
+        .col_span(4)
+        .bold()
+        .center()
+        .background("1F4E79")
+        .color("FFFFFF")
+        .font_size(14)
+        .font("Arial Black")]))
         .add_row(TableRowPart::new(vec![
-            TableCellPart::new("Q1 2024 Financial Summary")
-                .col_span(4)
+            TableCellPart::new("Category")
                 .bold()
                 .center()
-                .background("1F4E79")
-                .color("FFFFFF")
-                .font_size(14)
-                .font("Arial Black"),
-        ]))
-        .add_row(TableRowPart::new(vec![
-            TableCellPart::new("Category").bold().center().background("2E75B6").color("FFFFFF"),
-            TableCellPart::new("Revenue").bold().center().background("2E75B6").color("FFFFFF"),
-            TableCellPart::new("Expenses").bold().center().background("2E75B6").color("FFFFFF"),
-            TableCellPart::new("Profit").bold().center().background("2E75B6").color("FFFFFF"),
+                .background("2E75B6")
+                .color("FFFFFF"),
+            TableCellPart::new("Revenue")
+                .bold()
+                .center()
+                .background("2E75B6")
+                .color("FFFFFF"),
+            TableCellPart::new("Expenses")
+                .bold()
+                .center()
+                .background("2E75B6")
+                .color("FFFFFF"),
+            TableCellPart::new("Profit")
+                .bold()
+                .center()
+                .background("2E75B6")
+                .color("FFFFFF"),
         ]))
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("Product Sales").align(HorizontalAlign::Left),
-            TableCellPart::new("$1,250,000").align(HorizontalAlign::Right).color("2E7D32"),
-            TableCellPart::new("$450,000").align(HorizontalAlign::Right).color("C62828"),
-            TableCellPart::new("$800,000").align(HorizontalAlign::Right).bold().color("2E7D32"),
+            TableCellPart::new("$1,250,000")
+                .align(HorizontalAlign::Right)
+                .color("2E7D32"),
+            TableCellPart::new("$450,000")
+                .align(HorizontalAlign::Right)
+                .color("C62828"),
+            TableCellPart::new("$800,000")
+                .align(HorizontalAlign::Right)
+                .bold()
+                .color("2E7D32"),
         ]))
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("Services").align(HorizontalAlign::Left),
-            TableCellPart::new("$890,000").align(HorizontalAlign::Right).color("2E7D32"),
-            TableCellPart::new("$320,000").align(HorizontalAlign::Right).color("C62828"),
-            TableCellPart::new("$570,000").align(HorizontalAlign::Right).bold().color("2E7D32"),
+            TableCellPart::new("$890,000")
+                .align(HorizontalAlign::Right)
+                .color("2E7D32"),
+            TableCellPart::new("$320,000")
+                .align(HorizontalAlign::Right)
+                .color("C62828"),
+            TableCellPart::new("$570,000")
+                .align(HorizontalAlign::Right)
+                .bold()
+                .color("2E7D32"),
         ]))
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("Total").bold().background("E7E6E6"),
-            TableCellPart::new("$2,140,000").bold().align(HorizontalAlign::Right).background("E7E6E6"),
-            TableCellPart::new("$770,000").bold().align(HorizontalAlign::Right).background("E7E6E6"),
-            TableCellPart::new("$1,370,000").bold().align(HorizontalAlign::Right).background("C6EFCE").color("006100"),
+            TableCellPart::new("$2,140,000")
+                .bold()
+                .align(HorizontalAlign::Right)
+                .background("E7E6E6"),
+            TableCellPart::new("$770,000")
+                .bold()
+                .align(HorizontalAlign::Right)
+                .background("E7E6E6"),
+            TableCellPart::new("$1,370,000")
+                .bold()
+                .align(HorizontalAlign::Right)
+                .background("C6EFCE")
+                .color("006100"),
         ]))
         .position(EMU_PER_INCH / 2, EMU_PER_INCH * 2)
         .size(EMU_PER_INCH * 8, EMU_PER_INCH * 3);
@@ -1926,34 +2278,68 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   │   ├── Comparison Matrix (features vs products):");
     let _matrix_table = TablePart::new()
         .add_row(TableRowPart::new(vec![
-            TableCellPart::new("Feature").bold().center().background("4472C4").color("FFFFFF"),
-            TableCellPart::new("Basic").bold().center().background("4472C4").color("FFFFFF"),
-            TableCellPart::new("Pro").bold().center().background("4472C4").color("FFFFFF"),
-            TableCellPart::new("Enterprise").bold().center().background("4472C4").color("FFFFFF"),
+            TableCellPart::new("Feature")
+                .bold()
+                .center()
+                .background("4472C4")
+                .color("FFFFFF"),
+            TableCellPart::new("Basic")
+                .bold()
+                .center()
+                .background("4472C4")
+                .color("FFFFFF"),
+            TableCellPart::new("Pro")
+                .bold()
+                .center()
+                .background("4472C4")
+                .color("FFFFFF"),
+            TableCellPart::new("Enterprise")
+                .bold()
+                .center()
+                .background("4472C4")
+                .color("FFFFFF"),
         ]))
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("Storage").align(HorizontalAlign::Left),
             TableCellPart::new("5 GB").center(),
             TableCellPart::new("50 GB").center(),
-            TableCellPart::new("Unlimited").center().bold().color("2E7D32"),
+            TableCellPart::new("Unlimited")
+                .center()
+                .bold()
+                .color("2E7D32"),
         ]))
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("Users").align(HorizontalAlign::Left),
             TableCellPart::new("1").center(),
             TableCellPart::new("10").center(),
-            TableCellPart::new("Unlimited").center().bold().color("2E7D32"),
+            TableCellPart::new("Unlimited")
+                .center()
+                .bold()
+                .color("2E7D32"),
         ]))
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("Support").align(HorizontalAlign::Left),
             TableCellPart::new("Email").center(),
             TableCellPart::new("24/7 Chat").center(),
-            TableCellPart::new("Dedicated").center().bold().color("2E7D32"),
+            TableCellPart::new("Dedicated")
+                .center()
+                .bold()
+                .color("2E7D32"),
         ]))
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("Price/mo").bold().background("F2F2F2"),
-            TableCellPart::new("$9").center().bold().background("F2F2F2"),
-            TableCellPart::new("$29").center().bold().background("F2F2F2"),
-            TableCellPart::new("$99").center().bold().background("F2F2F2"),
+            TableCellPart::new("$9")
+                .center()
+                .bold()
+                .background("F2F2F2"),
+            TableCellPart::new("$29")
+                .center()
+                .bold()
+                .background("F2F2F2"),
+            TableCellPart::new("$99")
+                .center()
+                .bold()
+                .background("F2F2F2"),
         ]));
     println!("   │   │   └── 5x4 matrix with alternating styles");
 
@@ -1961,156 +2347,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   │   └── Schedule Table (with row spans):");
     let _schedule_table = TablePart::new()
         .add_row(TableRowPart::new(vec![
-            TableCellPart::new("Time").bold().center().background("70AD47").color("FFFFFF"),
-            TableCellPart::new("Monday").bold().center().background("70AD47").color("FFFFFF"),
-            TableCellPart::new("Tuesday").bold().center().background("70AD47").color("FFFFFF"),
+            TableCellPart::new("Time")
+                .bold()
+                .center()
+                .background("70AD47")
+                .color("FFFFFF"),
+            TableCellPart::new("Monday")
+                .bold()
+                .center()
+                .background("70AD47")
+                .color("FFFFFF"),
+            TableCellPart::new("Tuesday")
+                .bold()
+                .center()
+                .background("70AD47")
+                .color("FFFFFF"),
         ]))
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("9:00 AM").center().background("E2EFDA"),
-            TableCellPart::new("Team Standup").center().row_span(2).valign(VerticalAlign::Middle).background("BDD7EE"),
+            TableCellPart::new("Team Standup")
+                .center()
+                .row_span(2)
+                .valign(VerticalAlign::Middle)
+                .background("BDD7EE"),
             TableCellPart::new("Code Review").center(),
         ]))
         .add_row(TableRowPart::new(vec![
             TableCellPart::new("10:00 AM").center().background("E2EFDA"),
             TableCellPart::merged(),
-            TableCellPart::new("Sprint Planning").center().background("FCE4D6"),
+            TableCellPart::new("Sprint Planning")
+                .center()
+                .background("FCE4D6"),
         ]));
     println!("   │       └── Row spans for multi-hour events");
 
-    // -------------------------------------------------------------------------
-    // Complex Animation Sequences
-    // -------------------------------------------------------------------------
-    println!("   ├── Complex Animation Sequences:");
-    
-    // Sequence 1: Title entrance with staggered content
-    println!("   │   ┌── Staggered Entrance Sequence:");
-    let title_anim = Animation::new(2, AnimationEffect::Fade)
-        .trigger(AnimationTrigger::OnClick)
-        .duration(500);
-    let content1 = Animation::new(3, AnimationEffect::FlyIn)
-        .trigger(AnimationTrigger::AfterPrevious)
-        .direction(AnimationDirection::Left)
-        .duration(400)
-        .delay(200);
-    let content2 = Animation::new(4, AnimationEffect::FlyIn)
-        .trigger(AnimationTrigger::AfterPrevious)
-        .direction(AnimationDirection::Left)
-        .duration(400)
-        .delay(100);
-    let content3 = Animation::new(5, AnimationEffect::FlyIn)
-        .trigger(AnimationTrigger::AfterPrevious)
-        .direction(AnimationDirection::Left)
-        .duration(400)
-        .delay(100);
-    let staggered = SlideAnimations::new()
-        .add(title_anim)
-        .add(content1)
-        .add(content2)
-        .add(content3)
-        .transition(SlideTransition::new(TransitionEffect::Push).direction(AnimationDirection::Left).duration(750));
-    let staggered_xml = staggered.to_timing_xml()?;
-    println!("   │   │   ├── Title: Fade on click");
-    println!("   │   │   ├── Content 1-3: FlyIn with 100ms stagger");
-    println!("   │   │   ├── Transition: Push from left (750ms)");
-    println!("   │   │   └── XML: {} bytes", staggered_xml.len());
-
-    // Sequence 2: Emphasis and exit
-    println!("   │   ├── Emphasis + Exit Sequence:");
-    let emphasis = Animation::new(6, AnimationEffect::Pulse)
-        .trigger(AnimationTrigger::OnClick)
-        .duration(1000)
-        .repeat(3);
-    let exit = Animation::new(6, AnimationEffect::FadeOut)
-        .trigger(AnimationTrigger::AfterPrevious)
-        .duration(500);
-    let _emphasis_seq = SlideAnimations::new()
-        .add(emphasis)
-        .add(exit);
-    println!("   │   │   ├── Pulse 3x on click, then fade out");
-    println!("   │   │   └── Same shape, sequential effects");
-
-    // Sequence 3: Motion path
-    println!("   │   └── Motion Path Animation:");
-    let _motion = Animation::new(7, AnimationEffect::Lines)
-        .trigger(AnimationTrigger::OnClick)
-        .duration(2000);
-    println!("   │       └── Custom path: Lines, Arcs, Turns, Loops");
-
-    // -------------------------------------------------------------------------
-    // SmartArt Combinations
-    // -------------------------------------------------------------------------
-    println!("   ├── SmartArt Layout Examples:");
-    
-    // Process flow
-    println!("   │   ┌── Process Flow (5 steps):");
-    let process = SmartArtPart::new(1, SmartArtLayout::BasicProcess)
-        .add_items(vec!["Research", "Design", "Develop", "Test", "Deploy"])
-        .position(EMU_PER_INCH / 2, EMU_PER_INCH * 2)
-        .size(EMU_PER_INCH * 8, EMU_PER_INCH * 2);
-    println!("   │   │   └── {} nodes in horizontal flow", process.nodes().len());
-
-    // Organization chart
-    println!("   │   ├── Organization Chart:");
-    let org = SmartArtPart::new(2, SmartArtLayout::OrgChart)
-        .add_items(vec!["CEO", "CTO", "CFO", "VP Engineering", "VP Sales"]);
-    println!("   │   │   └── Hierarchical structure with {} positions", org.nodes().len());
-
-    // Cycle diagram
-    println!("   │   ├── Cycle Diagram:");
-    let cycle = SmartArtPart::new(3, SmartArtLayout::BasicCycle)
-        .add_items(vec!["Plan", "Do", "Check", "Act"]);
-    println!("   │   │   └── PDCA cycle with {} phases", cycle.nodes().len());
-
-    // Venn diagram
-    println!("   │   ├── Venn Diagram:");
-    let _venn = SmartArtPart::new(4, SmartArtLayout::BasicVenn)
-        .add_items(vec!["Skills", "Passion", "Market Need"]);
-    println!("   │   │   └── 3-circle Venn for Ikigai concept");
-
-    // Pyramid
-    println!("   │   └── Pyramid:");
-    let pyramid = SmartArtPart::new(5, SmartArtLayout::BasicPyramid)
-        .add_items(vec!["Self-Actualization", "Esteem", "Love/Belonging", "Safety", "Physiological"]);
-    println!("   │       └── Maslow's hierarchy with {} levels", pyramid.nodes().len());
-
-    // -------------------------------------------------------------------------
-    // 3D Model Configurations
-    // -------------------------------------------------------------------------
-    println!("   ├── 3D Model Configurations:");
-    
-    // Product showcase
-    println!("   │   ┌── Product Showcase:");
-    let _product_3d = Model3DPart::new(1, Model3DFormat::Glb, vec![0; 100])
-        .camera(CameraPreset::IsometricTopUp)
-        .rotation(0.0, 45.0, 0.0)
-        .zoom(1.2)
-        .position(EMU_PER_INCH * 2, EMU_PER_INCH * 2)
-        .size(EMU_PER_INCH * 4, EMU_PER_INCH * 4);
-    println!("   │   │   ├── Camera: Isometric top-up view");
-    println!("   │   │   ├── Rotation: 45° Y-axis for best angle");
-    println!("   │   │   └── Zoom: 1.2x for detail");
-
-    // Architectural model
-    println!("   │   ├── Architectural Model:");
-    let _arch_3d = Model3DPart::new(2, Model3DFormat::Gltf, vec![0; 100])
-        .camera(CameraPreset::Front)
-        .rotation(15.0, -30.0, 0.0)
-        .ambient_light("FFFFCC");
-    println!("   │   │   ├── Camera: Front view with tilt");
-    println!("   │   │   └── Ambient: Warm lighting (FFFFCC)");
-
-    // Technical diagram
-    println!("   │   └── Technical Diagram:");
-    let _tech_3d = Model3DPart::new(3, Model3DFormat::Obj, vec![0; 100])
-        .camera(CameraPreset::IsometricOffAxis1Top)
-        .rotation(0.0, 0.0, 0.0);
-    println!("   │       └── Camera: Off-axis isometric for exploded view");
+    println!("   ├── (Animation/SmartArt/3D/VBA/CustomXml/EmbeddedFont/Handout removed in lean refactor)");
 
     // -------------------------------------------------------------------------
     // Theme + Master + Layout Combination
     // -------------------------------------------------------------------------
     println!("   ├── Theme + Master + Layout Integration:");
-    
+
     // Corporate theme
     let mut corp_theme = ThemePart::new(1);
     corp_theme.set_name("Corporate Blue");
@@ -2142,90 +2419,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     corp_master.add_layout_rel_id("rId6"); // Comparison
     corp_master.add_layout_rel_id("rId7"); // Title Only
     corp_master.add_layout_rel_id("rId8"); // Blank
-    println!("   │   └── Master: {} with {} layouts linked", corp_master.name(), corp_master.layout_rel_ids().len());
+    println!(
+        "   │   └── Master: {} with {} layouts linked",
+        corp_master.name(),
+        corp_master.layout_rel_ids().len()
+    );
 
-    // -------------------------------------------------------------------------
-    // VBA + Custom XML Integration
-    // -------------------------------------------------------------------------
-    println!("   ├── VBA + Custom XML Integration:");
-    
-    // VBA with multiple modules
-    let _vba_project = VbaProjectPart::new()
-        .add_module(VbaModule::new("AutoRun", r#"
-Sub Auto_Open()
-    MsgBox "Welcome to the presentation!"
-End Sub
-
-Sub NavigateToSlide(slideNum As Integer)
-    SlideShowWindows(1).View.GotoSlide slideNum
-End Sub
-"#))
-        .add_module(VbaModule::new("DataHelpers", r#"
-Function GetCustomData(key As String) As String
-    ' Read from Custom XML part
-    GetCustomData = ActivePresentation.CustomXMLParts(1).SelectSingleNode("//" & key).Text
-End Function
-"#))
-        .add_module(VbaModule::class("SlideController", r#"
-Private currentSlide As Integer
-
-Public Sub NextSlide()
-    currentSlide = currentSlide + 1
-    NavigateToSlide currentSlide
-End Sub
-"#));
-    println!("   │   ├── VBA Project:");
-    println!("   │   │   ├── AutoRun: Auto_Open, NavigateToSlide");
-    println!("   │   │   ├── DataHelpers: GetCustomData (reads Custom XML)");
-    println!("   │   │   └── SlideController: Class for navigation");
-
-    // Custom XML with structured data
-    let app_config = CustomXmlPart::new(1, "presentationConfig")
-        .namespace("http://company.com/pptx/config")
-        .property("version", "2.1.0")
-        .property("author", "Demo User")
-        .property("department", "Engineering")
-        .property("confidentiality", "Internal")
-        .property("lastModified", "2024-01-15T10:30:00Z");
-    let config_xml = app_config.to_xml()?;
-    println!("   │   └── Custom XML:");
-    println!("   │       ├── Namespace: http://company.com/pptx/config");
-    println!("   │       ├── Properties: version, author, department, etc.");
-    println!("   │       └── XML: {} bytes", config_xml.len());
-
-    // -------------------------------------------------------------------------
-    // Embedded Fonts with Variants
-    // -------------------------------------------------------------------------
-    println!("   ├── Embedded Font Collection:");
-    let mut font_collection = EmbeddedFontCollection::new();
-    font_collection.add("Corporate Sans", vec![0; 1000]);
-    font_collection.add_with_type("Corporate Sans", vec![0; 1000], FontEmbedType::Bold);
-    font_collection.add_with_type("Corporate Sans", vec![0; 1000], FontEmbedType::Italic);
-    font_collection.add_with_type("Corporate Sans", vec![0; 1000], FontEmbedType::BoldItalic);
-    font_collection.add("Code Mono", vec![0; 800]);
-    let fonts_xml = font_collection.to_xml();
-    println!("   │   ├── Corporate Sans: Regular, Bold, Italic, BoldItalic");
-    println!("   │   ├── Code Mono: Regular");
-    println!("   │   ├── Total: {} font files", font_collection.len());
-    println!("   │   └── XML: {} bytes", fonts_xml.len());
-
-    // -------------------------------------------------------------------------
-    // Handout with Full Configuration
-    // -------------------------------------------------------------------------
-    println!("   └── Handout Master Configuration:");
-    let handout = HandoutMasterPart::new()
-        .layout(HandoutLayout::SlidesPerPage6)
-        .header("Q1 2024 Strategy Review")
-        .footer("Confidential - Internal Use Only");
-    let handout_xml = handout.to_xml()?;
-    println!("       ├── Layout: 6 slides per page");
-    println!("       ├── Header: Q1 2024 Strategy Review");
-    println!("       ├── Footer: Confidential - Internal Use Only");
-    println!("       └── XML: {} bytes", handout_xml.len());
-
-    // =========================================================================
-    // Summary
-    // =========================================================================
+    println!("   ├── Theme + Master + Layout Integration:");
     println!("\n╔══════════════════════════════════════════════════════════════╗");
     println!("║                    Element Coverage Summary                   ║");
     println!("╠══════════════════════════════════════════════════════════════╣");
@@ -2271,11 +2471,7 @@ End Sub
     println!("║    ✓ Position        ✓ Size           ✓ Transform            ║");
     println!("║    ✓ EMU conversions (inches, cm, mm, pt)                    ║");
     println!("╠══════════════════════════════════════════════════════════════╣");
-    println!("║  ADVANCED FEATURES (NEW):                                    ║");
-    println!("║    ✓ Animation (50+ effects)  ✓ Transitions (27 types)       ║");
-    println!("║    ✓ SmartArt (25 layouts)    ✓ 3D Models (GLB/GLTF/OBJ)     ║");
-    println!("║    ✓ VBA Macros (.pptm)       ✓ Embedded Fonts               ║");
-    println!("║    ✓ Custom XML               ✓ Handout Master               ║");
+    println!("║  ADVANCED FEATURES:                                          ║");
     println!("║    ✓ Table borders/alignment  ✓ Merged cells                 ║");
     println!("╠══════════════════════════════════════════════════════════════╣");
     println!("║  DIMENSION API (NEW):                                        ║");
@@ -2284,8 +2480,11 @@ End Sub
     println!("║    ✓ Fluent .at() and .with_dimensions() chaining            ║");
     println!("║    ✓ Mixed-unit positioning (e.g. inches + percent)          ║");
     println!("╠══════════════════════════════════════════════════════════════╣");
-    println!("║  Output: comprehensive_demo.pptx ({} slides, {} KB)         ║", 
-             slides.len(), pptx_data.len() / 1024);
+    println!(
+        "║  Output: comprehensive_demo.pptx ({} slides, {} KB)         ║",
+        slides.len(),
+        pptx_data.len() / 1024
+    );
     println!("╚══════════════════════════════════════════════════════════════╝");
 
     Ok(())

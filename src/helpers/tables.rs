@@ -2,7 +2,7 @@
 //!
 //! This module provides easy-to-use helpers for creating tables with minimal boilerplate.
 
-use crate::generator::{TableBuilder, TableRow, TableCell};
+use crate::generator::{TableBuilder, TableCell, TableRow};
 
 /// Create a simple table with the specified number of rows and columns
 ///
@@ -16,13 +16,13 @@ pub fn simple_table(rows: usize, cols: usize) -> TableBuilder {
     let col_width = 9144000 / cols as u32; // Divide slide width equally
     let column_widths = vec![col_width; cols];
     let mut builder = TableBuilder::new(column_widths);
-    
+
     // Add empty rows
     for _ in 0..rows {
         let cells = (0..cols).map(|_| TableCell::new("")).collect();
         builder = builder.add_row(TableRow::new(cells));
     }
-    
+
     builder
 }
 
@@ -59,7 +59,7 @@ pub fn table_from_data(data: &[Vec<&str>], column_widths: Option<Vec<f64>>) -> T
     if data.is_empty() {
         return simple_table(0, 0);
     }
-    
+
     let cols = data[0].len();
     let widths = if let Some(widths) = column_widths {
         widths.iter().map(|w| (w * 914400.0) as u32).collect()
@@ -67,14 +67,14 @@ pub fn table_from_data(data: &[Vec<&str>], column_widths: Option<Vec<f64>>) -> T
         let col_width = 9144000 / cols as u32;
         vec![col_width; cols]
     };
-    
+
     let mut builder = TableBuilder::new(widths);
-    
+
     for row_data in data {
         let cells: Vec<TableCell> = row_data.iter().map(|&text| TableCell::new(text)).collect();
         builder = builder.add_row(TableRow::new(cells));
     }
-    
+
     builder
 }
 
@@ -91,9 +91,9 @@ pub fn table_with_header(headers: &[&str], data_rows: usize) -> TableBuilder {
     let cols = headers.len();
     let col_width = 9144000 / cols as u32;
     let column_widths = vec![col_width; cols];
-    
+
     let mut builder = TableBuilder::new(column_widths);
-    
+
     // Add header row with styling
     let header_cells: Vec<TableCell> = headers
         .iter()
@@ -106,19 +106,20 @@ pub fn table_with_header(headers: &[&str], data_rows: usize) -> TableBuilder {
         })
         .collect();
     builder = builder.add_row(TableRow::new(header_cells));
-    
+
     // Add empty data rows
     for _ in 0..data_rows {
         let cells = (0..cols).map(|_| TableCell::new("")).collect();
         builder = builder.add_row(TableRow::new(cells));
     }
-    
+
     builder
 }
 
 /// Quick table builder for common patterns
 pub struct QuickTable {
     builder: TableBuilder,
+    #[allow(dead_code)]
     cols: usize,
 }
 
@@ -185,7 +186,9 @@ impl QuickTable {
 
     /// Set the table position (in inches)
     pub fn at(mut self, x: f64, y: f64) -> Self {
-        self.builder = self.builder.position((x * 914400.0) as u32, (y * 914400.0) as u32);
+        self.builder = self
+            .builder
+            .position((x * 914400.0) as u32, (y * 914400.0) as u32);
         self
     }
 
@@ -211,9 +214,7 @@ pub fn header_cell(text: &str) -> TableCell {
 
 /// Helper to create a highlighted cell
 pub fn highlight_cell(text: &str, color: &str) -> TableCell {
-    TableCell::new(text)
-        .background_color(color)
-        .bold()
+    TableCell::new(text).background_color(color).bold()
 }
 
 #[cfg(test)]

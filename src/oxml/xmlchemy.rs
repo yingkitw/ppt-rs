@@ -2,10 +2,10 @@
 //!
 //! Provides XML parsing using xml-rs and a DOM-like structure for OXML elements.
 
+use crate::exc::PptxError;
 use std::collections::HashMap;
 use std::io::Read;
 use xml::reader::{EventReader, XmlEvent};
-use crate::exc::PptxError;
 
 /// Represents an XML element with attributes and children
 #[derive(Debug, Clone)]
@@ -73,7 +73,10 @@ impl XmlElement {
 
     /// Find all children by local name
     pub fn find_all(&self, local_name: &str) -> Vec<&XmlElement> {
-        self.children.iter().filter(|c| c.local_name == local_name).collect()
+        self.children
+            .iter()
+            .filter(|c| c.local_name == local_name)
+            .collect()
     }
 
     /// Find first descendant by local name (recursive)
@@ -137,7 +140,11 @@ impl XmlParser {
 
         for event in parser {
             match event {
-                Ok(XmlEvent::StartElement { name, attributes, namespace }) => {
+                Ok(XmlEvent::StartElement {
+                    name,
+                    attributes,
+                    namespace,
+                }) => {
                     let tag = if let Some(ref prefix) = name.prefix {
                         format!("{}:{}", prefix, name.local_name)
                     } else {
@@ -145,7 +152,8 @@ impl XmlParser {
                     };
 
                     let mut element = XmlElement::new(&tag);
-                    element.namespace = namespace.get(&name.prefix.clone().unwrap_or_default())
+                    element.namespace = namespace
+                        .get(&name.prefix.clone().unwrap_or_default())
                         .map(|s| s.to_string());
 
                     // Add attributes
@@ -190,34 +198,6 @@ impl XmlParser {
     }
 }
 
-/// Legacy base class for Office XML elements (kept for compatibility)
-#[allow(dead_code)]
-pub struct BaseOxmlElement {
-    element: XmlElement,
-}
-
-impl BaseOxmlElement {
-    pub fn new() -> Self {
-        BaseOxmlElement {
-            element: XmlElement::new("element"),
-        }
-    }
-
-    pub fn from_element(element: XmlElement) -> Self {
-        BaseOxmlElement { element }
-    }
-
-    pub fn element(&self) -> &XmlElement {
-        &self.element
-    }
-}
-
-impl Default for BaseOxmlElement {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -227,11 +207,11 @@ mod tests {
         let xml = r#"<?xml version="1.0"?><root><child attr="value">text</child></root>"#;
         let result = XmlParser::parse_str(xml);
         assert!(result.is_ok());
-        
+
         let root = result.unwrap();
         assert_eq!(root.local_name, "root");
         assert_eq!(root.children.len(), 1);
-        
+
         let child = &root.children[0];
         assert_eq!(child.local_name, "child");
         assert_eq!(child.attr("attr"), Some("value"));
@@ -246,10 +226,10 @@ mod tests {
                 <p:spTree/>
             </p:cSld>
         </p:sld>"#;
-        
+
         let result = XmlParser::parse_str(xml);
         assert!(result.is_ok());
-        
+
         let root = result.unwrap();
         assert_eq!(root.local_name, "sld");
         assert!(root.find("cSld").is_some());
@@ -268,7 +248,7 @@ mod tests {
                 </level2>
             </level1>
         </root>"#;
-        
+
         let root = XmlParser::parse_str(xml).unwrap();
         let targets = root.find_all_descendants("target");
         assert_eq!(targets.len(), 2);

@@ -47,20 +47,20 @@ Examples:
         /// Output file path (.pptx)
         #[arg(value_name = "FILE", help = "Path to the output PPTX file")]
         output: String,
-        
+
         /// Presentation title
         #[arg(long, help = "Title of the presentation (stored in metadata)")]
         title: Option<String>,
-        
+
         /// Number of slides to create
         #[arg(long, default_value_t = 1, help = "Number of blank slides to create")]
         slides: usize,
-        
+
         /// Template file to use
         #[arg(long, help = "Template PPTX file to use as base (not yet implemented)")]
         template: Option<String>,
     },
-    
+
     /// Generate PPTX from Markdown file
     #[command(
         name = "md2ppt",
@@ -103,86 +103,81 @@ Examples:
         /// Input markdown file
         #[arg(value_name = "INPUT", help = "Path to the input Markdown file")]
         input: String,
-        
+
         /// Output PPTX file (optional: auto-generated from input if not provided)
-        #[arg(value_name = "OUTPUT", help = "Path to the output PPTX file (default: INPUT.pptx)")]
+        #[arg(
+            value_name = "OUTPUT",
+            help = "Path to the output PPTX file (default: INPUT.pptx)"
+        )]
         output: Option<String>,
-        
+
         /// Presentation title
         #[arg(long, help = "Title of the presentation (overrides Markdown content)")]
         title: Option<String>,
     },
-    
+
     /// Show presentation information
-    #[command(
-        long_about = "Display information about a PPTX file.
+    #[command(long_about = "Display information about a PPTX file.
 
 Shows file size, modification date, and basic metadata.
 
 Example:
-  pptcli info presentation.pptx"
-    )]
+  pptcli info presentation.pptx")]
     Info {
         /// PPTX file to inspect
         #[arg(value_name = "FILE", help = "Path to the PPTX file to inspect")]
         file: String,
     },
-    
+
     /// Validate a PPTX file
-    #[command(
-        long_about = "Validate a PPTX file structure and content.
+    #[command(long_about = "Validate a PPTX file structure and content.
         
 Checks for:
 - Valid ZIP structure
 - Required parts (presentation.xml, slide masters, etc.)
 - Content types
-- Relationships"
-    )]
+- Relationships")]
     Validate {
         /// PPTX file to validate
         #[arg(value_name = "FILE")]
         file: String,
     },
-    
+
     /// Export presentation to other formats
-    #[command(
-        long_about = "Export PPTX to PDF, HTML, or images.
+    #[command(long_about = "Export PPTX to PDF, HTML, or images.
 
 Formats:
 - pdf:  Requires LibreOffice installed
 - html: Self-contained HTML slideshow
-- png:  Requires LibreOffice and pdftoppm"
-    )]
+- png:  Requires LibreOffice and pdftoppm")]
     Export {
         /// Input PPTX file
         #[arg(value_name = "INPUT")]
         input: String,
-        
+
         /// Output file path
         #[arg(value_name = "OUTPUT")]
         output: String,
-        
+
         /// Output format (overrides extension)
         #[arg(long, value_enum)]
         format: Option<ExportFormat>,
     },
-    
+
     /// Merge multiple presentations
-    #[command(
-        long_about = "Merge multiple PPTX files into one.
+    #[command(long_about = "Merge multiple PPTX files into one.
         
-Slides from all input files will be appended in order."
-    )]
+Slides from all input files will be appended in order.")]
     Merge {
         /// Output PPTX file
         #[arg(short, long)]
         output: String,
-        
+
         /// Input PPTX files
         #[arg(value_name = "INPUTS", required = true, num_args = 1..)]
         inputs: Vec<String>,
     },
-    
+
     /// Convert PDF to PowerPoint
     #[command(
         name = "pdf2ppt",
@@ -195,7 +190,7 @@ Each page becomes a slide with the page image."
         /// Input PDF file
         #[arg(value_name = "INPUT")]
         input: String,
-        
+
         /// Output PPTX file
         #[arg(value_name = "OUTPUT")]
         output: Option<String>,
@@ -218,43 +213,43 @@ Extracts:
         /// URL to convert
         #[arg(value_name = "URL")]
         url: String,
-        
+
         /// Output file path (.pptx)
         #[arg(short, long, default_value = "output.pptx")]
         output: String,
-        
+
         /// Presentation title (overrides page title)
         #[arg(long)]
         title: Option<String>,
-        
+
         /// Maximum number of slides to generate
         #[arg(long, default_value_t = 20)]
         max_slides: usize,
-        
+
         /// Maximum bullet points per slide
         #[arg(long, default_value_t = 7)]
         max_bullets: usize,
-        
+
         /// Disable image extraction
         #[arg(long)]
         no_images: bool,
-        
+
         /// Disable table extraction
         #[arg(long)]
         no_tables: bool,
-        
+
         /// Disable code block extraction
         #[arg(long)]
         no_code: bool,
-        
+
         /// Don't add source URL to last slide
         #[arg(long)]
         no_source_url: bool,
-        
+
         /// Request timeout in seconds
         #[arg(long, default_value_t = 30)]
         timeout: u64,
-        
+
         /// Enable verbose logging
         #[arg(short, long)]
         verbose: bool,
@@ -267,180 +262,6 @@ pub enum ExportFormat {
     Html,
     Png,
 }
-
-// Legacy types for backward compatibility with existing command execution code
-#[derive(Debug, Clone)]
-pub struct CreateArgs {
-    pub output: String,
-    pub title: Option<String>,
-    pub slides: usize,
-    pub template: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct FromMarkdownArgs {
-    pub input: String,
-    pub output: String,
-    pub title: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Md2PptArgs {
-    pub input: String,
-    pub output: Option<String>,
-    pub title: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct InfoArgs {
-    pub file: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct ValidateArgs {
-    pub file: String,
-}
-
-#[derive(Debug, Clone)]
-pub struct Web2PptArgs {
-    pub url: String,
-    pub output: String,
-    pub title: Option<String>,
-    pub max_slides: usize,
-    pub max_bullets: usize,
-    pub no_images: bool,
-    pub no_tables: bool,
-    pub no_code: bool,
-    pub no_source_url: bool,
-    pub timeout: u64,
-    pub verbose: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct ExportArgs {
-    pub input: String,
-    pub output: String,
-    pub format: Option<ExportFormat>,
-}
-
-#[derive(Debug, Clone)]
-pub struct MergeArgs {
-    pub output: String,
-    pub inputs: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Pdf2PptArgs {
-    pub input: String,
-    pub output: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub enum Command {
-    Create(CreateArgs),
-    FromMarkdown(FromMarkdownArgs),
-    Md2Ppt(Md2PptArgs),
-    Info(InfoArgs),
-    Validate(ValidateArgs),
-    Web2Ppt(Web2PptArgs),
-    Export(ExportArgs),
-    Merge(MergeArgs),
-    Pdf2Ppt(Pdf2PptArgs),
-}
-
-impl From<Commands> for Command {
-    fn from(cmd: Commands) -> Self {
-        match cmd {
-            Commands::Create { output, title, slides, template } => {
-                Command::Create(CreateArgs {
-                    output,
-                    title,
-                    slides,
-                    template,
-                })
-            }
-            Commands::Md2Ppt { input, output, title } => {
-                // If output is not provided, auto-generate it
-                let output = output.unwrap_or_else(|| {
-                    use std::path::Path;
-                    let input_path = Path::new(&input);
-                    if let Some(stem) = input_path.file_stem() {
-                        if let Some(parent) = input_path.parent() {
-                            if parent.as_os_str().is_empty() {
-                                format!("{}.pptx", stem.to_string_lossy())
-                            } else {
-                                format!("{}/{}.pptx", parent.display(), stem.to_string_lossy())
-                            }
-                        } else {
-                            format!("{}.pptx", stem.to_string_lossy())
-                        }
-                    } else {
-                        format!("{}.pptx", input)
-                    }
-                });
-                
-                Command::FromMarkdown(FromMarkdownArgs {
-                    input,
-                    output,
-                    title,
-                })
-            }
-            Commands::Info { file } => {
-                Command::Info(InfoArgs { file })
-            }
-            Commands::Validate { file } => {
-                Command::Validate(ValidateArgs { file })
-            }
-            Commands::Web2Ppt { url, output, title, max_slides, max_bullets, no_images, no_tables, no_code, no_source_url, timeout, verbose } => {
-                Command::Web2Ppt(Web2PptArgs {
-                    url,
-                    output,
-                    title,
-                    max_slides,
-                    max_bullets,
-                    no_images,
-                    no_tables,
-                    no_code,
-                    no_source_url,
-                    timeout,
-                    verbose,
-                })
-            }
-            Commands::Export { input, output, format } => {
-                Command::Export(ExportArgs {
-                    input,
-                    output,
-                    format,
-                })
-            }
-            Commands::Merge { output, inputs } => {
-                Command::Merge(MergeArgs {
-                    output,
-                    inputs,
-                })
-            }
-            Commands::Pdf2Ppt { input, output } => {
-                Command::Pdf2Ppt(Pdf2PptArgs {
-                    input,
-                    output,
-                })
-            }
-        }
-    }
-}
-
-// Legacy Parser for backward compatibility
-pub struct LegacyParser;
-
-impl LegacyParser {
-    pub fn parse(args: &[String]) -> Result<Command, String> {
-        let cli = Cli::parse_from(std::iter::once(&"pptcli".to_string()).chain(args.iter()));
-        Ok(cli.command.into())
-    }
-}
-
-// Alias for backward compatibility
-pub use LegacyParser as Parser;
 
 #[cfg(test)]
 mod tests {
@@ -477,7 +298,11 @@ mod tests {
         ];
         let cli = Cli::parse_from(args.iter());
         match cli.command {
-            Commands::Md2Ppt { input, output, title } => {
+            Commands::Md2Ppt {
+                input,
+                output,
+                title,
+            } => {
                 assert_eq!(input, "input.md");
                 assert_eq!(output, Some("output.pptx".to_string()));
                 assert_eq!(title, Some("From Markdown".to_string()));
@@ -497,7 +322,11 @@ mod tests {
         ];
         let cli = Cli::parse_from(args.iter());
         match cli.command {
-            Commands::Md2Ppt { input, output, title } => {
+            Commands::Md2Ppt {
+                input,
+                output,
+                title,
+            } => {
                 assert_eq!(input, "input.md");
                 assert_eq!(output, None);
                 assert_eq!(title, Some("From Markdown".to_string()));

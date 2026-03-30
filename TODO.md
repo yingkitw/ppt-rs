@@ -6,7 +6,7 @@
 
 - [x] API Simplification - Color & Table helpers (v0.2.11)
 - [ ] Update all examples to use new simplified API
-- [ ] Update documentation with new API examples
+- [x] Update documentation with new API examples
 
 ## Backlog
 

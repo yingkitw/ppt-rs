@@ -2,7 +2,7 @@
 //!
 //! Represents a slide master template (ppt/slideMasters/slideMasterN.xml).
 
-use super::base::{Part, PartType, ContentType};
+use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
 
 /// Slide master part (ppt/slideMasters/slideMasterN.xml)
@@ -65,8 +65,16 @@ impl SlideMasterPart {
     }
 
     fn generate_xml(&self) -> String {
-        let layout_ids: String = self.layout_rel_ids.iter()
-            .map(|id| format!(r#"<p:sldLayoutId id="{}" r:id="{}"/>"#, 2147483649 + self.layout_rel_ids.iter().position(|x| x == id).unwrap() as u64, id))
+        let layout_ids: String = self
+            .layout_rel_ids
+            .iter()
+            .map(|id| {
+                format!(
+                    r#"<p:sldLayoutId id="{}" r:id="{}"/>"#,
+                    2147483649 + self.layout_rel_ids.iter().position(|x| x == id).unwrap() as u64,
+                    id
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n      ");
 
@@ -104,7 +112,11 @@ impl SlideMasterPart {
     <p:otherStyle/>
   </p:txStyles>
 </p:sldMaster>"#,
-            if layout_ids.is_empty() { "".to_string() } else { format!("\n      {}\n  ", layout_ids) }
+            if layout_ids.is_empty() {
+                "".to_string()
+            } else {
+                format!("\n      {}\n  ", layout_ids)
+            }
         )
     }
 }
