@@ -36,5 +36,4 @@ pub use slide_show_settings::{SlideShowSettings, ShowType, PenColor, SlideRange}
 pub use print_settings::{PrintSettings, HandoutLayout, PrintColorMode, PrintWhat, Orientation};
 pub use table_merge::{TableMergeMap, MergeRegion, CellMergeState};
 pub use embedded_fonts::{EmbeddedFontList, EmbeddedFont, FontStyle, FontCharset};
-pub use presentation_settings::PresentationSettings;
-
+pub use presentation_settings::{PresentationSettings, SlideSize};

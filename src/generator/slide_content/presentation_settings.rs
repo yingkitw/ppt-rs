@@ -3,14 +3,60 @@
 //! Aggregates slide show settings, print settings, embedded fonts,
 //! and digital signatures into a single struct passed to the builder.
 
-use super::slide_show_settings::SlideShowSettings;
-use super::print_settings::PrintSettings;
-use super::embedded_fonts::EmbeddedFontList;
 use super::digital_signature::DigitalSignature;
+use super::embedded_fonts::EmbeddedFontList;
+use super::print_settings::PrintSettings;
+use super::slide_show_settings::SlideShowSettings;
+use crate::generator::constants::{SLIDE_HEIGHT, SLIDE_WIDTH};
+
+/// PowerPoint slide size settings.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SlideSize {
+    /// Standard 10" x 7.5" slides.
+    Standard4x3,
+    /// Standard widescreen 13.333" x 7.5" slides.
+    Widescreen16x9,
+    /// Custom dimensions in EMU.
+    Custom { width: u32, height: u32 },
+}
+
+impl SlideSize {
+    pub fn dimensions(self) -> (u32, u32) {
+        match self {
+            SlideSize::Standard4x3 => (SLIDE_WIDTH, SLIDE_HEIGHT),
+            SlideSize::Widescreen16x9 => (12_192_000, 6_858_000),
+            SlideSize::Custom { width, height } => (width, height),
+        }
+    }
+
+    pub(crate) fn presentation_type(self) -> Option<&'static str> {
+        match self {
+            SlideSize::Standard4x3 => Some("screen4x3"),
+            SlideSize::Widescreen16x9 => Some("screen16x9"),
+            SlideSize::Custom { .. } => None,
+        }
+    }
+
+    pub(crate) fn app_presentation_format(self) -> &'static str {
+        match self {
+            SlideSize::Standard4x3 => "On-screen Show (4:3)",
+            SlideSize::Widescreen16x9 => "Widescreen",
+            SlideSize::Custom { .. } => "Custom",
+        }
+    }
+}
+
+impl Default for SlideSize {
+    fn default() -> Self {
+        Self::Standard4x3
+    }
+}
 
 /// Presentation-level settings for the PPTX package
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct PresentationSettings {
+    /// Presentation slide size (`<p:sldSz>` in presentation.xml)
+    pub slide_size: SlideSize,
     /// Slide show settings (generates `<p:showPr>` in presentation.xml)
     pub slide_show: Option<SlideShowSettings>,
     /// Print settings (generates `<p:prnPr>` in presentation.xml)
@@ -21,9 +67,26 @@ pub struct PresentationSettings {
     pub digital_signature: Option<DigitalSignature>,
 }
 
+impl Default for PresentationSettings {
+    fn default() -> Self {
+        Self {
+            slide_size: SlideSize::default(),
+            slide_show: None,
+            print: None,
+            embedded_fonts: None,
+            digital_signature: None,
+        }
+    }
+}
+
 impl PresentationSettings {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn slide_size(mut self, slide_size: SlideSize) -> Self {
+        self.slide_size = slide_size;
+        self
     }
 
     pub fn slide_show(mut self, settings: SlideShowSettings) -> Self {
@@ -48,7 +111,8 @@ impl PresentationSettings {
 
     /// Check if any presentation-level settings are configured
     pub fn has_settings(&self) -> bool {
-        self.slide_show.is_some()
+        self.slide_size != SlideSize::default()
+            || self.slide_show.is_some()
             || self.print.is_some()
             || self.embedded_fonts.is_some()
             || self.digital_signature.is_some()
@@ -63,29 +127,35 @@ mod tests {
     fn test_default_has_no_settings() {
         let settings = PresentationSettings::new();
         assert!(!settings.has_settings());
+        assert_eq!(settings.slide_size, SlideSize::Standard4x3);
     }
 
     #[test]
     fn test_with_slide_show() {
-        let settings = PresentationSettings::new()
-            .slide_show(SlideShowSettings::new());
+        let settings = PresentationSettings::new().slide_show(SlideShowSettings::new());
         assert!(settings.has_settings());
         assert!(settings.slide_show.is_some());
     }
 
     #[test]
     fn test_with_print() {
-        let settings = PresentationSettings::new()
-            .print(PrintSettings::new());
+        let settings = PresentationSettings::new().print(PrintSettings::new());
         assert!(settings.has_settings());
         assert!(settings.print.is_some());
     }
 
     #[test]
     fn test_with_embedded_fonts() {
-        let settings = PresentationSettings::new()
-            .embedded_fonts(EmbeddedFontList::new());
+        let settings = PresentationSettings::new().embedded_fonts(EmbeddedFontList::new());
         assert!(settings.has_settings());
         assert!(settings.embedded_fonts.is_some());
+    }
+
+    #[test]
+    fn test_with_slide_size() {
+        let settings = PresentationSettings::new().slide_size(SlideSize::Widescreen16x9);
+        assert!(settings.has_settings());
+        assert_eq!(settings.slide_size, SlideSize::Widescreen16x9);
+        assert_eq!(settings.slide_size.dimensions(), (12_192_000, 6_858_000));
     }
 }

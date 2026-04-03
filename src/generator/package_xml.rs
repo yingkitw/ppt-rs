@@ -55,7 +55,13 @@ pub fn create_presentation_rels_xml(slides: usize) -> String {
 }
 
 /// Create ppt/presentation.xml
-pub fn create_presentation_xml(_title: &str, slides: usize) -> String {
+pub fn create_presentation_xml(
+    _title: &str,
+    slides: usize,
+    slide_width: u32,
+    slide_height: u32,
+    slide_type: Option<&str>,
+) -> String {
     let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" saveSubsetFonts="1">
 <p:sldMasterIdLst>
@@ -69,19 +75,24 @@ pub fn create_presentation_xml(_title: &str, slides: usize) -> String {
         xml.push_str(&format!("\n<p:sldId id=\"{id}\" r:id=\"rId{rid}\"/>"));
     }
 
-    xml.push_str(r#"
-</p:sldIdLst>
-<p:sldSz cx="9144000" cy="6858000" type="screen4x3"/>
-<p:notesSz cx="6858000" cy="9144000"/>
-</p:presentation>"#);
+    xml.push_str("\n</p:sldIdLst>\n");
+    match slide_type {
+        Some(slide_type) => xml.push_str(&format!(
+            "<p:sldSz cx=\"{slide_width}\" cy=\"{slide_height}\" type=\"{slide_type}\"/>\n"
+        )),
+        None => xml.push_str(&format!(
+            "<p:sldSz cx=\"{slide_width}\" cy=\"{slide_height}\"/>\n"
+        )),
+    }
+    xml.push_str("<p:notesSz cx=\"6858000\" cy=\"9144000\"/>\n</p:presentation>");
     xml
 }
 
 /// Create [Content_Types].xml with notes and charts support
 pub fn create_content_types_xml_with_notes_and_charts(
-    slides: usize, 
+    slides: usize,
     custom_slides: Option<&Vec<super::slide_content::SlideContent>>,
-    chart_count: usize
+    chart_count: usize,
 ) -> String {
     let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
@@ -157,7 +168,11 @@ pub fn create_presentation_rels_xml_with_notes(slides: usize) -> String {
 }
 
 /// Create slide relationship XML with notes and charts
-pub fn create_slide_rels_xml_extended(slide_num: usize, has_notes: bool, chart_rels: &[(String, String)]) -> String {
+pub fn create_slide_rels_xml_extended(
+    slide_num: usize,
+    has_notes: bool,
+    chart_rels: &[(String, String)],
+) -> String {
     let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>"#.to_string();
@@ -181,7 +196,14 @@ pub fn create_slide_rels_xml_extended(slide_num: usize, has_notes: bool, chart_r
 }
 
 /// Create slide relationship XML with notes, charts, and images
-pub fn create_slide_rels_xml_with_images(slide_num: usize, has_notes: bool, chart_rels: &[(String, String)], image_count: usize, image_start_num: usize, image_extensions: &[String]) -> String {
+pub fn create_slide_rels_xml_with_images(
+    slide_num: usize,
+    has_notes: bool,
+    chart_rels: &[(String, String)],
+    image_count: usize,
+    image_start_num: usize,
+    image_extensions: &[String],
+) -> String {
     let mut xml = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
 <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>"#.to_string();
