@@ -219,7 +219,9 @@ pub struct CompatibilityTestSuite {
 impl CompatibilityTestSuite {
     /// Create a new test suite
     pub fn new() -> Self {
-        let output_dir = PathBuf::from(TEST_OUTPUT_DIR);
+        // Use a unique per-suite directory to avoid test parallelism races where one
+        // test is validating a file while another test is still writing it.
+        let output_dir = PathBuf::from(TEST_OUTPUT_DIR).join(uuid::Uuid::new_v4().to_string());
         fs::create_dir_all(&output_dir).ok();
         Self { output_dir }
     }
