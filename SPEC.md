@@ -4,6 +4,64 @@
 
 `ppt-rs` is a Rust library for generating, reading, and modifying Microsoft PowerPoint 2007+ (.pptx) files following the ECMA-376 Office Open XML standard.
 
+## Design Philosophy
+
+### 1. Progressive Disclosure
+The library provides multiple API layers:
+- **Prelude** (`ppt_rs::prelude::*`) — Simple, discoverable API for common tasks
+- **Helpers** (`helpers::colors`, `helpers::tables`) — Convenient utilities for frequent operations
+- **Core** (`Shape`, `Table`, `Chart`) — Full control when needed
+
+### 2. Type Safety Over Convenience
+- All operations use `Result<T, PptxError>` for explicit error handling
+- Compile-time validation where possible (dimension units, color formats)
+- No panics in public API — all errors are recoverable
+
+### 3. Zero-Cost Abstractions
+- Helper functions and extension methods add no runtime overhead
+- Fluent APIs compile to the same code as direct construction
+- Lazy loading for large presentations without memory bloat
+
+### 4. OOXML Compliance
+- Generated files follow ECMA-376 standard exactly
+- Tested against Microsoft PowerPoint, LibreOffice, Google Slides
+- Preserves unknown elements when reading existing files (round-trip safe)
+
+## Testing Strategy
+
+The library employs a layered testing approach:
+
+| Test Type | Count | Purpose |
+|-----------|-------|---------|
+| Unit tests | 850+ | Individual module correctness |
+| Integration tests | 60+ | End-to-end workflows |
+| Compatibility tests | 6 | PowerPoint/LibreOffice/Google Slides validation |
+| Doc tests | 50+ | API examples in documentation |
+
+### Quality Gates
+- All tests must pass (100% required)
+- Zero compiler warnings
+- Clippy clean
+- Generated PPTX files validate against `PptxValidator`
+
+## API Stability
+
+### Semantic Versioning
+- **MAJOR**: Breaking changes to core API (rare)
+- **MINOR**: New features, backward compatible
+- **PATCH**: Bug fixes, documentation improvements
+
+### Current Stability
+- Core API (`Presentation`, `SlideContent`, `Shape`): Stable
+- Prelude API: Stable
+- Helper modules: Evolving (may add new convenience functions)
+- Internal traits (`ToXml`, `Positioned`): Subject to change
+
+### Deprecation Policy
+- Deprecated items marked with `#[deprecated(since = "x.y.z", note = "...")]`
+- Minimum 2 minor versions before removal
+- Migration guides in release notes
+
 ## File Format Specification
 
 ### PPTX Structure
@@ -365,6 +423,130 @@ editor.remove_slide(1)?;
 editor.save("modified.pptx")?;
 ```
 
+### Export to HTML
+
+```rust
+use ppt_rs::api::Presentation;
+
+let pres = Presentation::with_title("My Presentation")
+    .add_slide(SlideContent::new("Slide 1").add_bullet("Point"));
+
+pres.save_as_html("output.html")?;
+```
+
+### Export to Markdown (v0.2.12)
+
+```rust
+use ppt_rs::api::Presentation;
+use ppt_rs::export::md::MarkdownOptions;
+
+let pres = Presentation::with_title("My Presentation")
+    .add_slide(SlideContent::new("Slide 1").add_bullet("Point"));
+
+// Simple export
+pres.save_as_markdown("output.md")?;
+
+// With options
+let options = MarkdownOptions::new()
+    .with_slide_numbers(true)
+    .with_frontmatter(true)
+    .with_gfm_tables(true)
+    .with_notes(true);
+pres.save_as_markdown_with_options("output.md", &options)?;
+```
+
+**Markdown Export Features:**
+- YAML frontmatter with presentation metadata
+- GFM tables for slide tables
+- Code blocks with syntax highlighting
+- Speaker notes as blockquotes
+- Configurable slide separators
+- Image references
+
+### Export to Images (v0.2.12)
+
+```rust
+use ppt_rs::api::Presentation;
+use ppt_rs::export::image_export::{ImageExportOptions, ImageFormat};
+
+let pres = Presentation::with_title("My Presentation")
+    .add_slide(SlideContent::new("Slide 1"))
+    .add_slide(SlideContent::new("Slide 2"));
+
+// Export all slides
+let options = ImageExportOptions::new()
+    .with_format(ImageFormat::Png)
+    .with_dpi(150);
+let paths = pres.save_as_images("output_dir/", &options)?;
+
+// Export single slide
+let options = ImageExportOptions::new()
+    .with_format(ImageFormat::Png)
+    .with_slide(1);
+pres.save_slide_as_image(1, "slide1.png", &options)?;
+
+// Generate thumbnail
+pres.save_thumbnail("thumbnail.png", 300)?;
+```
+
+**Image Export Options:**
+| Option | Default | Description |
+|--------|---------|-------------|
+| `format` | PNG | PNG or JPEG |
+| `dpi` | 150 | Resolution (96-300+) |
+| `jpeg_quality` | 90 | JPEG quality (0-100) |
+| `width/height` | 0 | Dimensions in pixels (0 = auto) |
+| `slide_number` | 0 | 0 = all, 1+ = specific |
+
+**Presets:**
+- `ImageExportOptions::high_quality()` — 300 DPI PNG
+- `ImageExportOptions::web_optimized()` — 96 DPI JPEG
+
+### Compression (v0.2.12)
+
+```rust
+use ppt_rs::api::Presentation;
+use ppt_rs::opc::compress::CompressionOptions;
+
+let pres = Presentation::with_title("Large Presentation")
+    .add_slide(SlideContent::new("Slide 1"));
+
+// Analyze file size
+let analysis = pres.analyze_size()?;
+println!("{}", analysis.summary());
+
+// Compress with default options
+let options = CompressionOptions::new();
+let result = pres.compress("compressed.pptx", &options)?;
+println!("Reduced by {:.1}%", result.reduction_percent);
+
+// Use web optimization preset
+let options = CompressionOptions::web();
+let result = pres.compress("web_optimized.pptx", &options)?;
+```
+
+**Compression Features:**
+| Feature | Description |
+|---------|-------------|
+| Remove unused media | Deletes unreferenced images/audio |
+| Remove properties | Strips document metadata |
+| Remove notes | Deletes speaker notes slides |
+| Remove comments | Deletes presentation comments |
+| XML optimization | Minimizes whitespace |
+| Target size | Optimize until size reached |
+
+**Compression Levels:**
+| Level | Image Quality | Max Dimension | Use Case |
+|-------|--------------|---------------|----------|
+| Light | 95% | 2048px | Minimal change |
+| Medium | 85% | 1600px | Balanced |
+| Aggressive | 70% | 1280px | Maximum reduction |
+| Custom(n) | n% | 1600px | User defined |
+
+**Presets:**
+- `CompressionOptions::maximum()` — All aggressive optimizations
+- `CompressionOptions::web()` — 5MB target, web-ready
+
 ## CLI Commands
 
 ```bash
@@ -411,9 +593,10 @@ match create_pptx("title", 5) {
 
 ## Version History
 
-| Version | Features |
-|---------|----------|
-| 0.2.11 | Color aliases (40+), table helpers, extension methods, API guide |
+| Version | Features | Significance |
+|---------|----------|--------------|
+| 0.2.12 | Markdown export, image export (PNG/JPEG), PPTX compression | **Export & optimization milestone** — full round-trip capabilities |
+| 0.2.11 | Color aliases (40+), table helpers, extension methods, API guide | **API simplification milestone** — introduced helper pattern for 60% less boilerplate |
 | 0.2.10 | Image effects system (8 effects), ImageBuilder chainable API, JPEG fix |
 | 0.2.9 | Compatibility test sorting fix |
 | 0.2.8 | Compatibility testing infrastructure (PptxValidator, CompatibilityTestSuite) |
