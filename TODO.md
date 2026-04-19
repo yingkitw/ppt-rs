@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 845 passing | **Warnings**: 0 | **Clippy**: clean
+**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean
 
 ## Active
 
@@ -51,6 +51,34 @@
 - [ ] Consider builder pattern consolidation for Shape/Table/Chart builders
 
 ## Completed
+
+<details>
+<summary>v0.2.12 — Export & Compression: Round-trip Capabilities</summary>
+
+- **Markdown Export** (`src/export/md.rs`):
+  - `export_to_markdown()` - Convert presentation to Markdown
+  - `MarkdownOptions` - Configure output with slide numbers, frontmatter, GFM tables
+  - Speaker notes, code blocks, and image references
+  - API: `.save_as_markdown()`, `.save_as_markdown_with_options()`
+
+- **Image Export** (`src/export/image_export.rs`):
+  - `export_to_images()` - Export slides to PNG/JPEG via LibreOffice
+  - `ImageExportOptions` - Configure format, DPI, quality, dimensions
+  - Single slide export and thumbnail generation
+  - API: `.save_as_images()`, `.save_slide_as_image()`, `.save_thumbnail()`
+  - Presets: `high_quality()` (300 DPI PNG), `web_optimized()` (96 DPI JPEG)
+
+- **PPTX Compression** (`src/opc/compress.rs`):
+  - `compress_pptx()` - Optimize file size with configurable levels
+  - `CompressionOptions` - Remove unused media, properties, notes, optimize XML
+  - `analyze_pptx()` - File size breakdown analysis
+  - API: `.compress()`, `.analyze_size()`
+  - Presets: `maximum()`, `web()` (5MB target)
+
+- **Tests**: 31 new unit tests, 31 new integration tests for new capabilities
+- Full documentation in SPEC.md, ARCHITECTURE.md
+
+</details>
 
 <details>
 <summary>v0.2.11 — API Simplification: Color & Table Helpers</summary>
