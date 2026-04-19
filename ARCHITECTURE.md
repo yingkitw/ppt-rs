@@ -141,7 +141,10 @@ shape.fill(red()).stroke(black(), 12700).text("Hello");
   - `Presentation` - Create, build, save, import, and export presentations
   - `Presentation::new()` / `Presentation::with_title()` - Create new presentations
   - `Presentation::from_path()` - Import existing PPTX files
-  - `.save()`, `.build()`, `.save_as_html()`, `.save_as_pdf()`, `.save_as_png()` - Output
+  - `.save()`, `.build()` - PPTX output
+  - `.save_as_html()`, `.save_as_markdown()` - Document export
+  - `.save_as_images()`, `.save_thumbnail()` - Image export
+  - `.compress()`, `.analyze_size()` - Optimization
 
 ### Package Layer (`opc/`)
 - **Purpose**: Handle .pptx files as ZIP containers
@@ -174,9 +177,31 @@ shape.fill(red()).stroke(black(), 12700).text("Hello");
   - `PptxRepair` / `RepairIssue` / `RepairResult` - Validate and repair PPTX files
   - `XmlElement` / `XmlParser` / `Namespace` - XML parsing utilities
 
+### Export Layer (`export/`)
+- **Purpose**: Export presentations to external formats
+- **Modules**:
+  - `html` - HTML export with CSS styling
+  - `md` - Markdown export with GFM tables and frontmatter
+  - `image_export` - Image export via LibreOffice (PNG, JPEG)
+- **Key Types**:
+  - `MarkdownOptions` - Configure markdown output
+  - `ImageExportOptions` / `ImageFormat` - Configure image export
+  - `export_to_markdown()`, `export_to_images()` - Direct export functions
+
+### Import Layer (`import/`)
+- **Purpose**: Import from external formats
+- **Modules**:
+  - `mod` - PPTX import functionality
+- **Key Types**:
+  - `import_pptx()` - Import PPTX to Presentation
+
 ### OPC Layer (`opc/`)
 - **Purpose**: Handle Open Packaging Convention (ZIP) specifics
 - **Key Types**: `Package` for ZIP file operations
+- **Compression** (`opc/compress.rs`):
+  - `compress_pptx()` - Optimize PPTX file size
+  - `CompressionOptions` / `CompressionLevel` - Configure optimization
+  - `analyze_pptx()` - File size analysis
 
 ### Utility Layers
 
