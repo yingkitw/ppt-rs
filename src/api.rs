@@ -317,6 +317,139 @@ impl Presentation {
         let _ = std::fs::remove_dir_all(&temp_dir);
         Ok(pres)
     }
+
+    /// Export the presentation to Markdown format
+    ///
+    /// # Arguments
+    /// * `path` - Output file path
+    ///
+    /// # Example
+    /// ```
+    /// # use ppt_rs::api::Presentation;
+    /// # use ppt_rs::generator::SlideContent;
+    /// # let pres = Presentation::with_title("My Presentation")
+    /// #     .add_slide(SlideContent::new("Slide 1").add_bullet("Point 1"));
+    /// # // pres.save_as_markdown("output.md").unwrap();
+    /// ```
+    pub fn save_as_markdown<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        use crate::export::md::export_to_markdown;
+        let md = export_to_markdown(self)?;
+        std::fs::write(path, md)?;
+        Ok(())
+    }
+
+    /// Export the presentation to Markdown with custom options
+    pub fn save_as_markdown_with_options<P: AsRef<Path>>(
+        &self,
+        path: P,
+        options: &crate::export::md::MarkdownOptions,
+    ) -> Result<()> {
+        use crate::export::md::export_to_markdown_with_options;
+        let md = export_to_markdown_with_options(self, options)?;
+        std::fs::write(path, md)?;
+        Ok(())
+    }
+
+    /// Export slides to image files (PNG/JPEG)
+    ///
+    /// Uses LibreOffice for rendering. Requires LibreOffice to be installed.
+    ///
+    /// # Arguments
+    /// * `output_dir` - Directory to save images
+    /// * `options` - Image export options (format, DPI, quality)
+    ///
+    /// # Returns
+    /// Vector of paths to generated image files
+    pub fn save_as_images<P: AsRef<Path>>(
+        &self,
+        output_dir: P,
+        options: &crate::export::image_export::ImageExportOptions,
+    ) -> Result<Vec<std::path::PathBuf>> {
+        use crate::export::image_export::export_to_images;
+        export_to_images(self, output_dir, options)
+    }
+
+    /// Export a specific slide to an image file
+    ///
+    /// # Arguments
+    /// * `slide_number` - 1-based slide number
+    /// * `output_path` - Output file path
+    /// * `options` - Image export options
+    pub fn save_slide_as_image<P: AsRef<Path>>(
+        &self,
+        slide_number: usize,
+        output_path: P,
+        options: &crate::export::image_export::ImageExportOptions,
+    ) -> Result<std::path::PathBuf> {
+        use crate::export::image_export::export_slide_to_image;
+        export_slide_to_image(self, slide_number, output_path, options)
+    }
+
+    /// Render a thumbnail of the first slide
+    ///
+    /// # Arguments
+    /// * `output_path` - Output file path
+    /// * `width` - Desired width in pixels
+    pub fn save_thumbnail<P: AsRef<Path>>(&self, output_path: P, width: u32) -> Result<std::path::PathBuf> {
+        use crate::export::image_export::render_thumbnail;
+        render_thumbnail(self, output_path, width)
+    }
+
+    /// Compress and optimize the presentation
+    ///
+    /// Saves a compressed version with reduced file size.
+    ///
+    /// # Arguments
+    /// * `output_path` - Path for compressed PPTX file
+    /// * `options` - Compression options (level, features to remove)
+    ///
+    /// # Returns
+    /// Compression result with statistics
+    ///
+    /// # Example
+    /// ```
+    /// # use ppt_rs::api::Presentation;
+    /// # use ppt_rs::opc::compress::CompressionOptions;
+    /// # let pres = Presentation::with_title("Large Presentation");
+    /// # let options = CompressionOptions::web();
+    /// # // let result = pres.compress("optimized.pptx", &options).unwrap();
+    /// # // println!("Reduced by {:.1}%", result.reduction_percent);
+    /// ```
+    pub fn compress<P: AsRef<Path>>(
+        &self,
+        output_path: P,
+        options: &crate::opc::compress::CompressionOptions,
+    ) -> Result<crate::opc::compress::CompressionResult> {
+        // First save to temp file
+        let temp_dir = std::env::temp_dir();
+        let temp_path = temp_dir.join(format!("compress_{}.pptx", uuid::Uuid::new_v4()));
+        self.save(&temp_path)?;
+
+        // Compress
+        let result = crate::opc::compress::compress_pptx(&temp_path, output_path, options);
+
+        // Cleanup
+        let _ = std::fs::remove_file(&temp_path);
+
+        result
+    }
+
+    /// Get file size analysis
+    ///
+    /// Returns analysis of what contributes to file size.
+    pub fn analyze_size(&self) -> Result<crate::opc::compress::PptxAnalysis> {
+        // Save to temp file for analysis
+        let temp_dir = std::env::temp_dir();
+        let temp_path = temp_dir.join(format!("analyze_{}.pptx", uuid::Uuid::new_v4()));
+        self.save(&temp_path)?;
+
+        let analysis = crate::opc::compress::analyze_pptx(&temp_path);
+
+        // Cleanup
+        let _ = std::fs::remove_file(&temp_path);
+
+        analysis
+    }
 }
 
 #[cfg(test)]

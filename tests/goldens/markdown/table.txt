@@ -1,0 +1,9 @@
+slide: 1
+title: Table Slide
+bullets:
+
+table:
+| Name | Role | Status |
+| Alice | Engineer | Active |
+| Bob | Designer | Active |
+

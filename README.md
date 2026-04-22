@@ -4,11 +4,15 @@
 
 While other Rust crates for PPTX generation are incomplete, broken, or abandoned, `ppt-rs` generates **valid, production-ready PowerPoint files** that open correctly in PowerPoint, LibreOffice, Google Slides, and other Office applications.
 
-**🎯 Convert Markdown to PowerPoint in seconds** - Write your slides in Markdown, get a professional PPTX file. No PowerPoint needed.
+**Web version:** [bulletpoint.dev](https://bulletpoint.dev)
+
+**Related:** For Excel, see [`xls-rs`](https://crates.io/crates/xls-rs).
+
 
 ## Why ppt-rs?
 
 - 🚀 **Markdown to PPTX** - Write slides in Markdown, get PowerPoint files. Perfect for developers.
+- 🔄 **Round-trip capable** - Export to Markdown, HTML, images (PNG/JPEG), compress PPTX files
 - ✅ **Actually works** - Generates valid PPTX files that open in all major presentation software
 - ✅ **Complete implementation** - Full ECMA-376 Office Open XML compliance
 - ✅ **Type-safe API** - Rust's type system ensures correctness
@@ -241,6 +245,54 @@ if result.is_valid {
 - Missing slide references
 - Orphan slides
 - Invalid content types
+
+### Export & Compression (v0.2.12)
+
+**Export to Markdown:**
+```rust
+use ppt_rs::api::Presentation;
+use ppt_rs::export::md::MarkdownOptions;
+
+let pres = Presentation::with_title("My Presentation")
+    .add_slide(SlideContent::new("Slide 1").add_bullet("Point"));
+
+// Simple export
+pres.save_as_markdown("output.md")?;
+
+// With options
+let options = MarkdownOptions::new()
+    .with_slide_numbers(true)
+    .with_gfm_tables(true);
+pres.save_as_markdown_with_options("output.md", &options)?;
+```
+
+**Export to Images:**
+```rust
+use ppt_rs::export::image_export::{ImageExportOptions, ImageFormat};
+
+// Export all slides as PNG
+let options = ImageExportOptions::new()
+    .with_format(ImageFormat::Png)
+    .with_dpi(150);
+let paths = pres.save_as_images("output_dir/", &options)?;
+
+// Generate thumbnail
+pres.save_thumbnail("thumb.png", 300)?;
+```
+
+**Compress PPTX:**
+```rust
+use ppt_rs::opc::compress::CompressionOptions;
+
+// Analyze file size
+let analysis = pres.analyze_size()?;
+println!("{}", analysis.summary());
+
+// Compress with web optimization preset
+let options = CompressionOptions::web();
+let result = pres.compress("optimized.pptx", &options)?;
+println!("Reduced by {:.1}%", result.reduction_percent);
+```
 
 ## Installation
 

@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 845 passing | **Warnings**: 0 | **Clippy**: clean
+**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean
 
 ## Active
 
@@ -8,31 +8,77 @@
 - [ ] Update all examples to use new simplified API
 - [x] Update documentation with new API examples
 
-## Backlog
+## Backlog (Prioritized)
 
-### Code Quality
-- [ ] Profile memory usage with large presentations
-
-### Features
-
-### Features
+### P1 — High Value
 - [ ] Digital signatures (XML generation done; needs Content_Types + _rels wiring)
-- [ ] Ink annotations (XML generation done; needs ink part + relationship)
 - [ ] Embedded fonts in output (XML generation done; needs font data parts + rId wiring)
-- [ ] Advanced theme customization
-
-### Testing
-- [ ] Fuzzing tests for PPTX parsing
-- [ ] Property-based testing
-- [ ] Benchmark suite
-- [ ] Cross-platform testing (Windows, macOS, Linux)
-
-### Documentation
 - [ ] Complete API documentation with examples
+
+### P2 — Medium Value
+- [ ] Advanced theme customization
+- [ ] Ink annotations (XML generation done; needs ink part + relationship)
+- [ ] Benchmark suite
 - [ ] Tutorial: Building your first presentation
 - [ ] Tutorial: Markdown to PPTX workflow
 
+### P3 — Future Work
+- [ ] Fuzzing tests for PPTX parsing
+- [ ] Property-based testing
+- [ ] Cross-platform testing (Windows, macOS, Linux)
+
+## Performance Targets
+
+| Metric | Current | Target |
+|--------|---------|--------|
+| Generation speed | ~1000 slides/sec | Maintain |
+| Memory (100 slides) | ~2-5 MB | < 10 MB |
+| Memory (1000 slides, lazy) | ~10 MB | < 50 MB |
+| Binary size | ~500 KB | < 1 MB |
+| Test suite | < 1 sec | Maintain |
+
+## Technical Debt
+
+### Code Quality
+- [ ] Profile memory usage with large presentations (100+ slides)
+- [ ] Review XML generation patterns — some modules use string concat instead of structured builders
+- [ ] Consolidate table cell formatting logic (potential DRY opportunity)
+- [ ] Modularize image effects XML generation
+
+### Refactoring Opportunities
+- [ ] Extract common validation patterns into `core::validation` module
+- [ ] Unify error message formatting across modules
+- [ ] Consider builder pattern consolidation for Shape/Table/Chart builders
+
 ## Completed
+
+<details>
+<summary>v0.2.12 — Export & Compression: Round-trip Capabilities</summary>
+
+- **Markdown Export** (`src/export/md.rs`):
+  - `export_to_markdown()` - Convert presentation to Markdown
+  - `MarkdownOptions` - Configure output with slide numbers, frontmatter, GFM tables
+  - Speaker notes, code blocks, and image references
+  - API: `.save_as_markdown()`, `.save_as_markdown_with_options()`
+
+- **Image Export** (`src/export/image_export.rs`):
+  - `export_to_images()` - Export slides to PNG/JPEG via LibreOffice
+  - `ImageExportOptions` - Configure format, DPI, quality, dimensions
+  - Single slide export and thumbnail generation
+  - API: `.save_as_images()`, `.save_slide_as_image()`, `.save_thumbnail()`
+  - Presets: `high_quality()` (300 DPI PNG), `web_optimized()` (96 DPI JPEG)
+
+- **PPTX Compression** (`src/opc/compress.rs`):
+  - `compress_pptx()` - Optimize file size with configurable levels
+  - `CompressionOptions` - Remove unused media, properties, notes, optimize XML
+  - `analyze_pptx()` - File size breakdown analysis
+  - API: `.compress()`, `.analyze_size()`
+  - Presets: `maximum()`, `web()` (5MB target)
+
+- **Tests**: 31 new unit tests, 31 new integration tests for new capabilities
+- Full documentation in SPEC.md, ARCHITECTURE.md
+
+</details>
 
 <details>
 <summary>v0.2.11 — API Simplification: Color & Table Helpers</summary>

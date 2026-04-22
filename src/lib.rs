@@ -77,6 +77,17 @@ pub use generator::{
 };
 pub use oxml::repair::{PptxRepair, RepairIssue, RepairResult};
 
+// Export convenience types for new capabilities
+pub use export::md::{MarkdownOptions, export_to_markdown, export_to_markdown_with_options};
+pub use export::image_export::{
+    ImageExportOptions, ImageFormat,
+    export_to_images, export_slide_to_image, render_thumbnail
+};
+pub use opc::compress::{
+    CompressionOptions, CompressionLevel, CompressionResult,
+    compress_pptx, compress_pptx_in_memory, analyze_pptx
+};
+
 pub use parts::{
     Part, PartType, ContentType,
     PresentationPart, SlidePart, SlideLayoutPart, LayoutType,
