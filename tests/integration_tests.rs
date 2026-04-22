@@ -7,7 +7,8 @@
 //! - Alignment with standards
 
 use ppt_rs::generator::{
-    SlideContent, create_pptx_with_content, create_pptx,
+    SlideContent, create_pptx_with_content, create_pptx, create_pptx_with_settings,
+    PresentationSettings, SlideSize,
 };
 use ppt_rs::generator::constants::{
     SLIDE_WIDTH, SLIDE_HEIGHT, TITLE_X, TITLE_Y, TITLE_WIDTH, TITLE_HEIGHT,
@@ -112,6 +113,35 @@ fn test_constants_are_used_in_generated_xml() {
             "Slide width constant should be used"
         );
     }
+}
+
+#[test]
+fn test_widescreen_slide_size_is_written_to_package_xml() {
+    let slides = vec![
+        SlideContent::new("Widescreen"),
+    ];
+
+    let settings = PresentationSettings::new()
+        .slide_size(SlideSize::Widescreen16x9);
+
+    let pptx_data = create_pptx_with_settings("Test", slides, Some(settings)).unwrap();
+
+    let cursor = Cursor::new(&pptx_data);
+    let mut archive = ZipArchive::new(cursor).unwrap();
+
+    let mut presentation_xml = String::new();
+    archive.by_name("ppt/presentation.xml").unwrap()
+        .read_to_string(&mut presentation_xml).unwrap();
+
+    assert!(presentation_xml.contains("cx=\"12192000\""));
+    assert!(presentation_xml.contains("cy=\"6858000\""));
+    assert!(presentation_xml.contains("type=\"screen16x9\""));
+
+    let mut app_xml = String::new();
+    archive.by_name("docProps/app.xml").unwrap()
+        .read_to_string(&mut app_xml).unwrap();
+
+    assert!(app_xml.contains("<PresentationFormat>Widescreen</PresentationFormat>"));
 }
 
 #[test]
@@ -318,4 +348,3 @@ fn validate_pptx_structure(data: &[u8]) -> Result<(), String> {
     
     Ok(())
 }
-

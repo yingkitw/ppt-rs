@@ -21,7 +21,7 @@ use super::theme_xml::{
 use super::props_xml::{create_core_props_xml, create_app_props_xml};
 use super::notes_xml::*;
 use crate::generator::charts::generate_chart_part_xml;
-use crate::generator::slide_content::presentation_settings::PresentationSettings;
+use crate::generator::slide_content::presentation_settings::{PresentationSettings, SlideSize};
 
 /// Create a minimal but valid PPTX file
 pub fn create_pptx(title: &str, slides: usize) -> Result<Vec<u8>> {
@@ -396,6 +396,7 @@ fn write_document_properties<W: Write + Seek>(
     options: &FileOptions,
     title: &str,
     slide_count: usize,
+    slide_size: SlideSize,
 ) -> Result<()> {
     // Core properties
     let core_props = create_core_props_xml(title);
@@ -403,7 +404,7 @@ fn write_document_properties<W: Write + Seek>(
     zip.write_all(core_props.as_bytes())?;
 
     // App properties
-    let app_props = create_app_props_xml(slide_count);
+    let app_props = create_app_props_xml(slide_count, slide_size);
     zip.start_file("docProps/app.xml", *options)?;
     zip.write_all(app_props.as_bytes())?;
 
@@ -419,6 +420,8 @@ fn write_package_files<W: Write + Seek>(
     custom_slides: Option<&Vec<SlideContent>>,
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
+    let slide_size = settings.map(|s| s.slide_size).unwrap_or_default();
+    let (slide_width, slide_height) = slide_size.dimensions();
     let has_notes = custom_slides
         .map(|slides| slides.iter().any(|s| s.notes.is_some()))
         .unwrap_or(false);
@@ -438,7 +441,13 @@ fn write_package_files<W: Write + Seek>(
     write_presentation_relationships(zip, options, slide_count, has_notes, has_pres_props)?;
 
     // 4. Presentation document
-    let presentation = create_presentation_xml(title, slide_count);
+    let presentation = create_presentation_xml(
+        title,
+        slide_count,
+        slide_width,
+        slide_height,
+        slide_size.presentation_type(),
+    );
     zip.start_file("ppt/presentation.xml", *options)?;
     zip.write_all(presentation.as_bytes())?;
 
@@ -461,7 +470,7 @@ fn write_package_files<W: Write + Seek>(
     write_theme_and_layouts(zip, options)?;
 
     // 10. Document properties
-    write_document_properties(zip, options, title, slide_count)?;
+    write_document_properties(zip, options, title, slide_count, slide_size)?;
 
     // 11. Charts
     if chart_info.total_charts > 0 {
@@ -483,6 +492,8 @@ fn write_package_files_lazy<W: Write + Seek>(
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
     let slide_count = slides.slide_count();
+    let slide_size = settings.map(|s| s.slide_size).unwrap_or_default();
+    let (slide_width, slide_height) = slide_size.dimensions();
     let has_notes = (0..slide_count).any(|i| slides.slide_has_notes(i));
 
     let chart_info = collect_chart_info_lazy(slides);
@@ -500,7 +511,13 @@ fn write_package_files_lazy<W: Write + Seek>(
     write_presentation_relationships(zip, options, slide_count, has_notes, has_pres_props)?;
 
     // 4. Presentation document
-    let presentation = create_presentation_xml(title, slide_count);
+    let presentation = create_presentation_xml(
+        title,
+        slide_count,
+        slide_width,
+        slide_height,
+        slide_size.presentation_type(),
+    );
     zip.start_file("ppt/presentation.xml", *options)?;
     zip.write_all(presentation.as_bytes())?;
 
@@ -523,7 +540,7 @@ fn write_package_files_lazy<W: Write + Seek>(
     write_theme_and_layouts(zip, options)?;
 
     // 10. Document properties
-    write_document_properties(zip, options, title, slide_count)?;
+    write_document_properties(zip, options, title, slide_count, slide_size)?;
 
     // 11. Charts (lazy version)
     if chart_info.total_charts > 0 {
