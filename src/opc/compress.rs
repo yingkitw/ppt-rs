@@ -7,7 +7,7 @@
 //! - Optimize XML (remove unnecessary whitespace)
 
 use super::Package;
-use crate::exc::{PptxError, Result};
+use crate::exc::Result;
 use std::collections::HashSet;
 use std::path::Path;
 
@@ -213,7 +213,7 @@ pub fn compress_pptx<P: AsRef<Path>, Q: AsRef<Path>>(
     let original_size = std::fs::metadata(input_path.as_ref())?.len() as usize;
 
     let mut unused_media_removed = 0;
-    let mut images_compressed = 0;
+    let images_compressed = 0;
 
     // Remove unused media files
     if options.remove_unused_media {
@@ -262,8 +262,6 @@ pub fn compress_pptx_in_memory(
     data: &[u8],
     options: &CompressionOptions,
 ) -> Result<(Vec<u8>, CompressionResult)> {
-    use std::io::Write;
-
     // Write to temp file
     let temp_dir = std::env::temp_dir();
     let temp_input = temp_dir.join("compress_input.pptx");

@@ -190,11 +190,6 @@ pub fn export_slide_to_image<P: AsRef<Path>>(
         .as_ref()
         .parent()
         .unwrap_or(std::path::Path::new("."));
-    let file_stem = output_path
-        .as_ref()
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("slide");
 
     let paths = export_to_images(presentation, output_dir, &slide_options)?;
 

@@ -8,9 +8,11 @@ While other Rust crates for PPTX generation are incomplete, broken, or abandoned
 
 **Related:** For Excel, see [`xls-rs`](https://crates.io/crates/xls-rs).
 
+**MCP:** Build with `--features mcp` and run **`ppt_mcp`** — a [Model Context Protocol](https://modelcontextprotocol.io) server ([rmcp](https://crates.io/crates/rmcp)) so Cursor, Claude Desktop, and other MCP clients can create, read, export, and validate `.pptx` via stdio. See [MCP server](#mcp-server-model-context-protocol).
 
 ## Why ppt-rs?
 
+- 🤖 **MCP server** - Optional `ppt_mcp` binary exposes presentation workflows as MCP tools for AI assistants and IDE integrations (`--features mcp`).
 - 🚀 **Markdown to PPTX** - Write slides in Markdown, get PowerPoint files. Perfect for developers.
 - 🔄 **Round-trip capable** - Export to Markdown, HTML, images (PNG/JPEG), compress PPTX files
 - ✅ **Actually works** - Generates valid PPTX files that open in all major presentation software
@@ -137,6 +139,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 - **Media** - Video (mp4, webm) and audio (mp3, wav) embedding
 - **Reading** - Parse and modify existing PPTX files
 - **Repair** - Validate and fix damaged PPTX files
+- **MCP** - Optional **ppt_mcp** stdio server ([Model Context Protocol](https://modelcontextprotocol.io); Cargo feature `mcp`) exposes creation, Markdown conversion, export, merge, validation, tables, and charts to MCP clients
 - **Export** - Export presentations to HTML and PDF
 
 ### Markdown Format
@@ -294,6 +297,55 @@ let result = pres.compress("optimized.pptx", &options)?;
 println!("Reduced by {:.1}%", result.reduction_percent);
 ```
 
+## MCP server (Model Context Protocol)
+
+Use **`ppt_mcp`** to drive ppt-rs from MCP-compatible clients over **stdio** (newline-delimited JSON-RPC). The implementation tracks the MCP handshake (`initialize` with `protocolVersion`, `clientInfo`, then `notifications/initialized`).
+
+### Build & run
+
+```bash
+cargo build --release --features mcp --bin ppt_mcp
+./target/release/ppt_mcp   # stdio MCP transport
+```
+
+Integration tests (serial stdio harness):
+
+```bash
+cargo test --features mcp --test mcp_integration_test
+```
+
+### Client configuration
+
+Point your MCP client at the `ppt_mcp` binary (use an absolute path if the client does not inherit your `PATH`), for example:
+
+```json
+{
+  "mcpServers": {
+    "ppt-rs": {
+      "command": "/absolute/path/to/ppt_mcp",
+      "args": []
+    }
+  }
+}
+```
+
+Works with editors and assistants that support MCP (e.g. **Cursor**, **Claude Desktop**, others).
+
+### Exposed tools
+
+| Tool | Purpose |
+|------|---------|
+| `create_presentation` | Build a deck from structured slide titles/bullets |
+| `markdown_to_pptx` | Convert Markdown to `.pptx` |
+| `get_pptx_info` | Metadata: title, slide count, summaries |
+| `export_pptx` | Export to `html`, `pdf`, `markdown`, or `png` |
+| `merge_pptx` | Merge multiple presentations |
+| `validate_pptx` | Structural / ECMA-376 validation |
+| `create_presentation_with_tables` | Deck with table slides |
+| `create_presentation_with_charts` | Deck with bar/line/pie/area charts |
+
+Enable the library integration with `features = ["mcp"]` when depending on `ppt-rs` from another crate.
+
 ## Installation
 
 Add to `Cargo.toml`:
@@ -301,6 +353,9 @@ Add to `Cargo.toml`:
 ```toml
 [dependencies]
 ppt-rs = "0.2"
+
+# Optional: MCP server types / embedding (library module `ppt_rs::mcp`)
+# ppt-rs = { version = "0.2", features = ["mcp"] }
 ```
 
 ## Examples
@@ -632,7 +687,7 @@ Unlike other Rust PPTX crates that:
 
 ## Technical Details
 
-- **Version**: 0.2.11
+- **Version**: 0.2.12
 - **Format**: Microsoft PowerPoint 2007+ (.pptx)
 - **Standard**: ECMA-376 Office Open XML
 - **Compatibility**: PowerPoint, LibreOffice, Google Slides, Keynote

@@ -42,6 +42,9 @@ pub mod templates;
 pub mod export;
 pub mod import;
 
+#[cfg(feature = "mcp")]
+pub mod mcp;
+
 #[cfg(feature = "web2ppt")]
 pub mod web2ppt;
 
