@@ -5,11 +5,12 @@ Complete guide to the simplified ppt-rs API for creating PowerPoint presentation
 ## Table of Contents
 
 1. [Quick Start](#quick-start)
-2. [Shape Helpers](#shape-helpers)
-3. [Color API](#color-api)
-4. [Table API](#table-api)
-5. [Extension Methods](#extension-methods)
-6. [Complete Examples](#complete-examples)
+2. [HTML to PowerPoint](#html-to-powerpoint)
+3. [Shape Helpers](#shape-helpers)
+4. [Color API](#color-api)
+5. [Table API](#table-api)
+6. [Extension Methods](#extension-methods)
+7. [Complete Examples](#complete-examples)
 
 ---
 
@@ -32,6 +33,93 @@ fn main() -> Result<()> {
     std::fs::write("output.pptx", pptx)?;
     Ok(())
 }
+```
+
+---
+
+## HTML to PowerPoint
+
+Convert HTML content directly into PowerPoint slides using the `html2ppt` API. No external dependencies required.
+
+### Quick Parse
+
+The simplest way: pass an HTML string to `parse_html()`:
+
+```rust
+use ppt_rs::generator::create_pptx_with_content;
+use ppt_rs::import::parse_html;
+
+let html = r#"
+    <h1>My Presentation</h1>
+    <p>This is the first slide.</p>
+    <ul>
+        <li>Bullet 1</li>
+        <li>Bullet 2</li>
+    </ul>
+    <h1>Data Slide</h1>
+    <table>
+        <tr><th>Name</th><th>Value</th></tr>
+        <tr><td>Alpha</td><td>100</td></tr>
+        <tr><td>Beta</td><td>200</td></tr>
+    </table>
+    <blockquote>Speaker notes for this slide</blockquote>
+"#;
+
+let slides = parse_html(html)?;
+let pptx = create_pptx_with_content("From HTML", slides)?;
+std::fs::write("output.pptx", pptx)?;
+```
+
+### Parse with Options
+
+Control parsing behavior with `HtmlParseOptions`:
+
+```rust
+use ppt_rs::import::{Html2Ppt, HtmlParseOptions};
+
+let options = HtmlParseOptions::new()
+    .max_slides(20)         // limit to 20 slides
+    .max_bullets(8)         // max 8 bullets per slide
+    .include_code(true)     // include code blocks
+    .include_tables(true)   // include tables
+    .include_images(false); // skip image placeholders
+
+let slides = Html2Ppt::with_options(options).parse(html)?;
+```
+
+### Parse from File
+
+```rust
+use ppt_rs::import::Html2Ppt;
+
+let slides = Html2Ppt::new().parse_file("presentation.html")?;
+```
+
+### HTML Element Reference
+
+| HTML Element | Creates |
+|--------------|---------|
+| `<h1>` | New slide with title |
+| `<h2>`–`<h6>` | Bold section headers |
+| `<p>` | Bullet points |
+| `<ul>` / `<ol>` | List items |
+| `<table>` | Table with styled header |
+| `<pre>` / `<code>` | Code blocks |
+| `<img>` | Image placeholder |
+| `<blockquote>` | Speaker notes |
+| `<hr>` | Slide break |
+
+### CLI Usage
+
+```bash
+# Convert HTML file to PPTX
+pptcli html2ppt slides.html presentation.pptx
+
+# With custom title
+pptcli html2ppt slides.html --title "My Talk"
+
+# Control content extraction
+pptcli html2ppt slides.html --no-tables --no-code --max-slides 30
 ```
 
 ---
@@ -556,6 +644,6 @@ let shape = rect(1.0, 2.0, 3.0, 1.5)
 
 ## See Also
 
-- [Examples](examples/) - Working code examples
+- [Examples](examples/) - Working code examples (including `html2ppt_demo.rs`, `html2ppt_comprehensive.rs`)
 - [API Reference](https://docs.rs/ppt-rs) - Complete API documentation
 - [SPEC.md](SPEC.md) - Technical specifications

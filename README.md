@@ -14,6 +14,7 @@ While other Rust crates for PPTX generation are incomplete, broken, or abandoned
 
 - 🤖 **MCP server** - Optional `ppt_mcp` binary exposes presentation workflows as MCP tools for AI assistants and IDE integrations (`--features mcp`).
 - 🚀 **Markdown to PPTX** - Write slides in Markdown, get PowerPoint files. Perfect for developers.
+- 🌐 **HTML to PPTX** - Convert HTML pages/snippets to PowerPoint with the `html2ppt` command or `Html2Ppt` API
 - 🔄 **Round-trip capable** - Export to Markdown, HTML, images (PNG/JPEG), compress PPTX files
 - ✅ **Actually works** - Generates valid PPTX files that open in all major presentation software
 - ✅ **Complete implementation** - Full ECMA-376 Office Open XML compliance
@@ -57,6 +58,70 @@ pptcli md2ppt slides.md --title "My Presentation"
 ```
 
 That's it! You now have a valid PowerPoint file that opens in PowerPoint, Google Slides, LibreOffice, and more.
+
+### HTML to PowerPoint
+
+Convert HTML directly to PowerPoint presentations — perfect for web content, documentation, and reports.
+
+**1. CLI — Convert an HTML file:**
+```bash
+# Auto-generates slides.pptx from slides.html
+pptcli html2ppt slides.html
+
+# Specify output file
+pptcli html2ppt slides.html presentation.pptx
+
+# With custom title
+pptcli html2ppt slides.html --title "My Presentation"
+```
+
+**2. Programmatic API — Parse HTML strings or files:**
+```rust
+use ppt_rs::generator::create_pptx_with_content;
+use ppt_rs::import::parse_html;
+
+let html = r#"
+    <h1>Introduction</h1>
+    <p>Welcome to the presentation</p>
+    <ul>
+        <li>Point one</li>
+        <li>Point two</li>
+    </ul>
+    <h1>Data</h1>
+    <table>
+        <tr><th>Item</th><th>Value</th></tr>
+        <tr><td>A</td><td>100</td></tr>
+    </table>
+"#;
+
+let slides = parse_html(html)?;
+let pptx = create_pptx_with_content("My Presentation", slides)?;
+std::fs::write("output.pptx", pptx)?;
+```
+
+**3. Html2Ppt struct with options:**
+```rust
+use ppt_rs::import::{Html2Ppt, HtmlParseOptions};
+
+let options = HtmlParseOptions::new()
+    .max_slides(20)
+    .max_bullets(8)
+    .include_code(true);
+
+let slides = Html2Ppt::with_options(options).parse_file("page.html")?;
+```
+
+**HTML element mapping:**
+| HTML | PPTX Result |
+|------|-------------|
+| `<h1>` | New slide with title |
+| `<h2>`–`<h6>` | Bold section headers |
+| `<p>` | Bullet points |
+| `<ul>`/`<ol>` | List items |
+| `<table>` | Table with styled header |
+| `<pre>`/`<code>` | Code blocks |
+| `<blockquote>` | Speaker notes |
+| `<hr>` | Slide break |
 
 ### Library (Simplified API)
 
@@ -138,6 +203,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 - **Images** - Embed from files, bytes, base64, URL, auto-detect format, 8 visual effects
 - **Media** - Video (mp4, webm) and audio (mp3, wav) embedding
 - **Reading** - Parse and modify existing PPTX files
+- **Import from HTML** - `parse_html()` and `Html2Ppt` converter with full HTML element support
 - **Repair** - Validate and fix damaged PPTX files
 - **MCP** - Optional **ppt_mcp** stdio server ([Model Context Protocol](https://modelcontextprotocol.io); Cargo feature `mcp`) exposes creation, Markdown conversion, export, merge, validation, tables, and charts to MCP clients
 - **Export** - Export presentations to HTML and PDF
@@ -196,6 +262,16 @@ print("Hello!")
 Convert with: `pptcli md2ppt presentation.md` → `presentation.pptx`
 
 ## CLI Commands
+
+### Convert HTML to PowerPoint
+
+Convert HTML files or snippets to PowerPoint presentations:
+
+```bash
+pptcli html2ppt input.html [output.pptx] [--title "Title"] [--max-slides N] [--max-bullets N]
+```
+
+Options: `--no-images`, `--no-tables`, `--no-code` to disable specific content types.
 
 ### Validate PPTX Files
 

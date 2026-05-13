@@ -191,8 +191,12 @@ shape.fill(red()).stroke(black(), 12700).text("Hello");
 - **Purpose**: Import from external formats
 - **Modules**:
   - `mod` - PPTX import functionality
+  - `html` - HTML-to-PPTX converter (`html2ppt`)
 - **Key Types**:
   - `import_pptx()` - Import PPTX to Presentation
+  - `parse_html()` - Quick HTML string to slides conversion
+  - `Html2Ppt` / `HtmlParseOptions` - Struct-based HTML converter with options
+  - See [SPEC.md](SPEC.md) for full HTML element mapping
 
 ### OPC Layer (`opc/`)
 - **Purpose**: Handle Open Packaging Convention (ZIP) specifics

@@ -329,6 +329,75 @@ ImageBuilder::from_base64(data, 2000000, 2000000, "PNG")
 - PNG - Full support with all effects
 - GIF - Basic support
 
+### HTML to PPTX
+
+The CLI and library convert HTML to PowerPoint:
+
+```bash
+pptcli html2ppt input.html [output.pptx] [--title "Title"] [options]
+```
+
+#### Supported HTML Elements
+
+| HTML | PPTX Result |
+|------|-------------|
+| `<h1>` | New slide with title |
+| `<h2>`–`<h6>` | Bold section headers |
+| `<p>` | Bullet points / paragraphs |
+| `<ul>`/`<ol>` with `<li>` | List items |
+| `<table>` with `<tr>`/`<th>`/`<td>` | Table with styled header row |
+| `<pre>`/`<code>` | Code blocks |
+| `<img>` | Image placeholders (with alt text) |
+| `<blockquote>` | Speaker notes |
+| `<strong>`/`<b>` | Bold text |
+| `<em>`/`<i>` | Italic text |
+| `<a href="...">` | Hyperlink text |
+| `<hr>` | Slide break |
+| `<br>` | Line break |
+| `<title>` | Presentation title (falls back to first `<h1>`) |
+
+#### Inline CSS Support
+
+- `color` — Text color (named, hex `#RRGGBB`, `rgb()`, `rgba()`)
+- `font-size` — Font size in px/pt
+- `font-weight` — Bold (700+)
+- `font-style` — Italic
+- `text-align` — left, center, right
+- `background-color` — Text highlight / background
+
+#### API
+
+```rust
+use ppt_rs::import::{parse_html, parse_html_with_options, Html2Ppt, HtmlParseOptions};
+
+// Quick parse
+let slides = parse_html(html)?;
+
+// With options
+let options = HtmlParseOptions::new()
+    .max_slides(20)
+    .max_bullets(8)
+    .include_code(true)
+    .include_tables(true)
+    .include_images(false);
+
+let slides = Html2Ppt::with_options(options).parse(html)?;
+
+// Parse from file
+let slides = Html2Ppt::new().parse_file("page.html")?;
+```
+
+#### CLI Options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--title` | HTML `<title>` | Presentation title override |
+| `--max-slides` | 50 | Maximum slides to generate |
+| `--max-bullets` | 10 | Maximum bullet points per slide |
+| `--no-images` | false | Disable image placeholders |
+| `--no-tables` | false | Disable table extraction |
+| `--no-code` | false | Disable code block extraction |
+
 ### Markdown to PPTX
 
 The CLI converts Markdown to PPTX:
@@ -550,11 +619,13 @@ let result = pres.compress("web_optimized.pptx", &options)?;
 ## CLI Commands
 
 ```bash
-pptcli create <title> [output] [--slides N]      # Create presentation
-pptcli md2ppt <input.md> [output.pptx] [--title] # Convert markdown
-pptcli validate <file.pptx>                       # Validate PPTX
-pptcli info <file.pptx>                           # Show info
-pptcli repair <input.pptx> <output.pptx>         # Repair PPTX
+pptcli create <title> [output] [--slides N]         # Create presentation
+pptcli md2ppt <input.md> [output.pptx] [--title]    # Convert markdown
+pptcli html2ppt <input.html> [output.pptx] [--title] # Convert HTML (also `from-html`, `from-html-file`)
+pptcli pdf2ppt <input.pdf> [output.pptx]             # Convert PDF
+pptcli validate <file.pptx>                          # Validate PPTX
+pptcli info <file.pptx>                              # Show info
+pptcli repair <input.pptx> <output.pptx>            # Repair PPTX
 ```
 
 ## Compatibility
