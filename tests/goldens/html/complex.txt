@@ -1,0 +1,31 @@
+slide: 1
+title: Welcome
+bullets:
+- Introduction paragraph with **bold** and *italic* text.
+- Another paragraph here.
+
+slide: 2
+title: Data & Code
+bullets:
+table:
+| Item | Count | Status |
+| Widget | 42 | Active |
+| Gadget | 17 | Inactive |
+
+slide: 3
+title: List Slide
+bullets:
+- Third item
+            Nested item
+
+slide: 4
+title: Image Placeholder
+bullets:
+- Slide demonstrating image support.
+- [Image: Demo Photo]
+
+slide: 5
+title: Welcome
+bullets:
+- Content after horizontal rule.
+

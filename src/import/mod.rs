@@ -1,7 +1,11 @@
+pub mod html;
+
 use crate::api::Presentation;
 use crate::oxml::presentation::PresentationReader;
 use crate::generator::{SlideContent, Shape, ShapeType, TableBuilder, TableRow, TableCell};
 use crate::exc::Result;
+
+pub use html::{parse_html, parse_html_with_options, HtmlParseOptions, Html2Ppt};
 
 /// Import a presentation from a file path
 pub fn import_pptx(path: &str) -> Result<Presentation> {

@@ -196,6 +196,66 @@ Each page becomes a slide with the page image."
         output: Option<String>,
     },
 
+    /// Generate PPTX from HTML file
+    #[command(
+        name = "html2ppt",
+        alias = "from-html",
+        alias = "from-html-file",
+        long_about = "Convert an HTML file to a PowerPoint presentation.
+
+Converts HTML content into PowerPoint slides:
+  <h1>           → New slide with title
+  <h2>-<h6>      → Bold section headers
+  <p>            → Bullet points
+  <ul>/<ol>      → List items
+  <table>        → Tables with styled headers
+  <pre>/<code>   → Code blocks
+  <img>          → Image placeholders
+  <blockquote>   → Speaker notes
+  <hr>           → Slide break
+
+Examples:
+  pptcli html2ppt slides.html presentation.pptx
+  pptcli html2ppt slides.html --title \"My Presentation\"
+  pptcli html2ppt slides.html  # Auto-generates slides.pptx"
+    )]
+    Html2Ppt {
+        /// Input HTML file
+        #[arg(value_name = "INPUT", help = "Path to the input HTML file")]
+        input: String,
+
+        /// Output PPTX file (optional: auto-generated from input if not provided)
+        #[arg(
+            value_name = "OUTPUT",
+            help = "Path to the output PPTX file (default: INPUT.pptx)"
+        )]
+        output: Option<String>,
+
+        /// Presentation title
+        #[arg(long, help = "Title of the presentation (overrides HTML <title>)")]
+        title: Option<String>,
+
+        /// Maximum number of slides
+        #[arg(long, default_value_t = 50, help = "Maximum number of slides to generate")]
+        max_slides: usize,
+
+        /// Maximum bullets per slide
+        #[arg(long, default_value_t = 10, help = "Maximum bullet points per slide")]
+        max_bullets: usize,
+
+        /// Disable image placeholders
+        #[arg(long, help = "Disable image placeholder extraction")]
+        no_images: bool,
+
+        /// Disable table extraction
+        #[arg(long, help = "Disable table extraction")]
+        no_tables: bool,
+
+        /// Disable code block extraction
+        #[arg(long, help = "Disable code block extraction")]
+        no_code: bool,
+    },
+
     /// Generate PPTX from webpage (requires web2ppt feature)
     #[cfg(feature = "web2ppt")]
     #[command(

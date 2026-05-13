@@ -3,7 +3,8 @@
 use clap::Parser;
 use ppt_rs::api::Presentation;
 use ppt_rs::cli::{
-    Cli, Commands, CreateCommand, ExportFormat, FromMarkdownCommand, InfoCommand, ValidateCommand,
+    Cli, Commands, CreateCommand, ExportFormat, FromHtmlCommand, FromMarkdownCommand, InfoCommand,
+    ValidateCommand,
 };
 
 fn main() {
@@ -149,6 +150,57 @@ fn main() {
                 Ok(_) => println!("✓ Merge completed: {}", output),
                 Err(e) => {
                     eprintln!("✗ Error saving merged file: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        Commands::Html2Ppt {
+            input,
+            output,
+            title,
+            max_slides,
+            max_bullets,
+            no_images,
+            no_tables,
+            no_code,
+        } => {
+            // Auto-generate output if not provided
+            let output_path = output.unwrap_or_else(|| {
+                use std::path::Path;
+                let input_path = Path::new(&input);
+                if let Some(stem) = input_path.file_stem() {
+                    if let Some(parent) = input_path.parent() {
+                        if parent.as_os_str().is_empty() {
+                            format!("{}.pptx", stem.to_string_lossy())
+                        } else {
+                            format!("{}/{}.pptx", parent.display(), stem.to_string_lossy())
+                        }
+                    } else {
+                        format!("{}.pptx", stem.to_string_lossy())
+                    }
+                } else {
+                    format!("{}.pptx", input)
+                }
+            });
+
+            match FromHtmlCommand::execute(
+                &input,
+                &output_path,
+                title.as_deref(),
+                max_slides,
+                max_bullets,
+                no_images,
+                no_tables,
+                no_code,
+            ) {
+                Ok(_) => {
+                    println!("✓ Created presentation: {output_path}");
+                    println!("  Input: {input}");
+                    let title = title.as_deref().unwrap_or("Presentation from HTML");
+                    println!("  Title: {title}");
+                }
+                Err(e) => {
+                    eprintln!("✗ Error: {e}");
                     std::process::exit(1);
                 }
             }

@@ -1,0 +1,10 @@
+slide: 1
+title: Code Example
+bullets:
+- This slide has a code block.
+
+slide: 2
+title: Plain Slide
+bullets:
+- Second slide without code.
+

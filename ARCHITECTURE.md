@@ -6,22 +6,21 @@ The PPTX library is organized into several layers that handle different aspects 
 
 ## Current Focus (v0.2.x)
 
-The project is currently in an **API simplification phase**:
+The project has completed several major phases:
 
-1. **Helper Pattern** (v0.2.11) — Adding convenient utilities without sacrificing power
+1. **API Simplification** (v0.2.11) — Helper pattern for common operations
    - Color helpers: `red()`, `material_blue()`, `corporate_blue()`
    - Table helpers: `simple_table()`, `table_from_data()`, `QuickTable`
    - Extension traits: `.fill()`, `.stroke()`, `.text()` on `Shape`
 
-2. **Fluent APIs** — Builder patterns for complex objects
-   - `ImageBuilder` with chainable effects (shadow, reflection, glow)
-   - `TableBuilder` with cell formatting methods
-   - `ChartBuilder` for data visualization
+2. **Export & Compression** (v0.2.12) — Full round-trip capabilities
+   - Markdown export with `MarkdownOptions`
+   - Image export (PNG/JPEG via LibreOffice)
+   - PPTX compression with `CompressionOptions`
 
-3. **Compatibility** — Ensuring generated files work everywhere
-   - `PptxValidator` for automated validation
-   - Cross-application testing (PowerPoint, LibreOffice, Google Slides)
-   - Streaming support for large presentations
+3. **MCP Server** (v0.2.13) — AI assistant integration
+   - `ppt_mcp` binary with 8 tools via Model Context Protocol
+   - Create, read, export, validate, and merge presentations
 
 Future work will focus on completing partially-implemented features (digital signatures, embedded fonts) and performance optimization.
 
@@ -236,19 +235,19 @@ shape.fill(red()).stroke(black(), 12700).text("Hello");
 
 ## Testing Architecture
 
-The project employs a layered testing strategy with 845+ tests:
+The project employs a layered testing strategy with 850+ tests:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Integration Tests                        │
 │         (tests/ directory — full workflows)                 │
-│              42+ tests, end-to-end validation               │
+│              50+ tests, end-to-end validation               │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                    Unit Tests                               │
 │         (inline in src/ modules — per-component)            │
-│              750+ tests, fast feedback                        │
+│              800+ tests, fast feedback                        │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -389,6 +388,7 @@ src/
 ├── core/                  # Core traits and types
 │   ├── mod.rs
 │   ├── dimension.rs       # Dimension enum (EMU, Inches, Cm, Pt, Ratio)
+│   ├── traits.rs          # ToXml, Positioned, ElementSized traits
 │   └── xml_utils.rs       # Shared XML utilities (escape_xml)
 ├── elements/              # Unified element types
 │   ├── mod.rs
@@ -423,9 +423,10 @@ src/
 │   ├── tables.rs          # QuickTable, table helpers
 │   ├── shapes.rs          # rect(), circle(), etc.
 │   └── ext.rs             # ShapeExt extension methods
-├── export/                # HTML export
-├── import/                # PPTX import
+├── export/                # Export to HTML, Markdown, images
+├── import/                # PPTX import, HTML-to-PPTX
 ├── cli/                   # CLI commands + Markdown parser + Mermaid renderers
+├── mcp/                   # (Optional) MCP server (feature-gated)
 ├── web2ppt/               # (Optional) Web-to-PPTX conversion
 └── bin/
     └── pptcli.rs          # CLI binary entry point
@@ -745,6 +746,9 @@ Effects are rendered in `<a:effectLst>` within `<p:spPr>`:
 
 ## Future Enhancements
 
+- [x] API Simplification — Color & Table helpers (v0.2.11)
+- [x] Export & Compression — Full round-trip capabilities (v0.2.12)
+- [x] MCP Server — AI assistant integration (v0.2.13)
 - [ ] Advanced theme customization
 - [ ] Complete digital signature wiring (XML done, needs Content_Types + _rels)
 - [ ] Ink annotations wiring (XML done, needs ink part + relationship)

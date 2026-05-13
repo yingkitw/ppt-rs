@@ -1,0 +1,99 @@
+slide: 1
+title: Welcome to html2ppt
+bullets:
+- **Bold** and *italic* and **also bold** and *also italic* text.
+- Visit Example website for details.
+- Line one
+Line two
+Line three
+
+slide: 2
+title: Inline CSS Styles
+bullets:
+- This text is red from inline style.
+- This text is blue and larger.
+- This paragraph has a yellow highlight.
+- Bold, italic, and purple.
+- This text is underlined.
+- This text is struck through.
+- This uses Courier New font.
+
+slide: 3
+title: Lists & Sections
+bullets:
+- **Fruits**
+- Apples
+- Bananas
+- Cherries
+- **Steps**
+- First step
+- Second step
+- Third step
+- Content inside a div.
+- Article content.
+
+slide: 4
+title: Heading Levels
+bullets:
+- Sub-headings render as bold bullet points:
+- **Level 2 Heading**
+- Content under level 2.
+- **Level 3 Heading**
+- Content under level 3.
+- **Level 4 Heading**
+- Content under level 4.
+- **Level 5 Heading**
+- Content under level 5.
+- **Level 6 Heading**
+
+slide: 5
+title: Data Tables
+bullets:
+table:
+| Quarter | Revenue | Costs | Profit |
+| Q1 | $100K | $60K | $40K |
+| Q2 | $120K | $70K | $50K |
+| Q3 | $150K | $90K | $60K |
+
+slide: 6
+title: Code & Notes
+bullets:
+- Rust factorial example:
+
+slide: 7
+title: Formatting Combinations
+bullets:
+- Text with **bold**, *italic*, and ***bold italic*** combined.
+- Inline code snippets in paragraphs.
+- A link with bold text in context.
+- Green text with **bigger bold** inside.
+
+slide: 8
+title: Images & Entities
+bullets:
+- [Image: Q4 Projections]
+- Chart:
+- [Image: image]
+- Image without alt:
+- Entities: AT&T <html> "quote" 'apos' value here
+- Numeric: & # $ €
+- Entity demo with inline style.
+
+slide: 9
+title: Welcome to html2ppt
+bullets:
+- Content that appears after a horizontal rule break.
+
+slide: 10
+title: Unicode & Symbols
+bullets:
+- Languages: 你好, 日本語, 한국어, Español, Français, Русский
+- Symbols: © 2026 ® Registered ™ Trademark € £ ¥ ₹
+
+slide: 11
+title: Style Inheritance
+bullets:
+- This paragraph inherits teal color from the parent div.
+- This one is bold and still teal from inheritance.
+- This overrides the parent color to dark orange.
+

@@ -58,7 +58,7 @@ pptcli md2ppt slides.md --title "My Presentation"
 
 That's it! You now have a valid PowerPoint file that opens in PowerPoint, Google Slides, LibreOffice, and more.
 
-### Library (Simplified API - NEW!)
+### Library (Simplified API)
 
 ```rust
 use ppt_rs::prelude::*;
@@ -96,7 +96,7 @@ fn main() -> Result<()> {
 }
 ```
 
-**New Features:**
+**Simplified API Features:**
 - 🎨 **Color Aliases**: `red()`, `blue()`, `green()`, `orange()`, `material_blue()`, etc.
 - 🌈 **Color Adjustments**: `.lighter()`, `.darker()`, `.opacity()`, `.mix()`
 - 📊 **Quick Tables**: `QuickTable::new(cols).header().row().build()`
@@ -249,7 +249,7 @@ if result.is_valid {
 - Orphan slides
 - Invalid content types
 
-### Export & Compression (v0.2.12)
+### Export & Compression
 
 **Export to Markdown:**
 ```rust
@@ -409,7 +409,7 @@ let chart = ChartBuilder::new("Sales", ChartType::Bar)
 let slide = SlideContent::new("Sales Data").add_chart(chart);
 ```
 
-### Slide Transitions (NEW in v0.2.3)
+### Slide Transitions
 
 ```rust
 use ppt_rs::generator::{SlideContent, TransitionType};
@@ -419,7 +419,7 @@ let slide = SlideContent::new("Moving On")
     .with_transition(TransitionType::Push); // Push, Fade, Cut, Cover, etc.
 ```
 
-### Table Merging (NEW in v0.2.3)
+### Table Merging
 
 ```rust
 use ppt_rs::generator::{TableBuilder, TableRow, TableCell};
@@ -481,7 +481,7 @@ let elbow = Connector::elbow(1000000, 2000000, 3000000, 3000000)
     .with_arrows(ArrowType::Oval, ArrowType::Stealth);
 ```
 
-### Bullet Styles (NEW in v0.2.1)
+### Bullet Styles
 
 ```rust
 use ppt_rs::generator::{SlideContent, BulletStyle, BulletPoint};
@@ -516,7 +516,7 @@ let slide = SlideContent::new("Hierarchy")
     .add_sub_bullet("Supporting detail 2");
 ```
 
-### Text Enhancements (NEW in v0.2.1)
+### Text Enhancements
 
 ```rust
 use ppt_rs::generator::BulletPoint;
@@ -540,7 +540,7 @@ slide.bullets.push(highlighted);
 slide.bullets.push(large_text);
 ```
 
-### Font Size Presets (NEW in v0.2.1)
+### Font Size Presets
 
 ```rust
 use ppt_rs::prelude::font_sizes;
@@ -560,7 +560,7 @@ let slide = SlideContent::new("Title")
     .content_size(font_sizes::BODY);
 ```
 
-### Images from Base64 (NEW in v0.2.1)
+### Images from Base64
 
 ```rust
 use ppt_rs::generator::{Image, ImageBuilder};
@@ -581,7 +581,7 @@ let img = ImageBuilder::from_base64(base64_png, inches(2.0), inches(2.0), "PNG")
     .build();
 ```
 
-### Image Effects (NEW in v0.2.10)
+### Image Effects
 
 Apply professional visual effects to images with a simple, chainable API:
 
@@ -667,7 +667,7 @@ Unlike other Rust PPTX crates that:
 
 `ppt-rs`:
 - ✅ Generates **valid PPTX files** from day one
-- ✅ **Actively maintained** with comprehensive test coverage (750+ tests)
+- ✅ **Actively maintained** with comprehensive test coverage (850+ tests)
 - ✅ **Complete XML structure** following ECMA-376 standard
 - ✅ **Validation tools** - Built-in validation command for quality assurance
 - ✅ **Alignment testing** - Framework for ensuring compatibility with python-pptx
@@ -677,7 +677,7 @@ Unlike other Rust PPTX crates that:
 
 ### Validation
 - Built-in validation command for ECMA-376 compliance checking
-- Comprehensive test suite (750+ tests)
+- Comprehensive test suite (850+ tests)
 - Integration tests for end-to-end validation
 
 ### Alignment Testing
@@ -687,12 +687,12 @@ Unlike other Rust PPTX crates that:
 
 ## Technical Details
 
-- **Version**: 0.2.12
+- **Version**: 0.2.13
 - **Format**: Microsoft PowerPoint 2007+ (.pptx)
 - **Standard**: ECMA-376 Office Open XML
 - **Compatibility**: PowerPoint, LibreOffice, Google Slides, Keynote
 - **Architecture**: Modular design with clear separation of concerns
-- **Test Coverage**: 750+ tests covering all major features
+- **Test Coverage**: 850+ tests covering all major features
 
 ## Templates
 
@@ -760,7 +760,7 @@ println!("Primary: {}", theme.primary);     // "1565C0"
 println!("Background: {}", theme.background); // "FFFFFF"
 ```
 
-### Extended Color Palettes (NEW in v0.2.1)
+### Extended Color Palettes
 
 ```rust
 use ppt_rs::prelude::colors;

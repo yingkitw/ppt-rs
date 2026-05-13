@@ -34,7 +34,7 @@ The library employs a layered testing approach:
 | Test Type | Count | Purpose |
 |-----------|-------|---------|
 | Unit tests | 850+ | Individual module correctness |
-| Integration tests | 60+ | End-to-end workflows |
+| Integration tests | 70+ | End-to-end workflows |
 | Compatibility tests | 6 | PowerPoint/LibreOffice/Google Slides validation |
 | Doc tests | 50+ | API examples in documentation |
 
@@ -574,7 +574,7 @@ pptcli repair <input.pptx> <output.pptx>         # Repair PPTX
 | File size overhead | ~10-15 KB base |
 | Generation speed | ~1000 slides/sec |
 | Memory usage | ~2 MB + content |
-| Test coverage | 750+ tests |
+| Test coverage | 850+ tests |
 
 ## Error Handling
 
@@ -595,6 +595,7 @@ match create_pptx("title", 5) {
 
 | Version | Features | Significance |
 |---------|----------|--------------|
+| 0.2.13 | MCP server (8 tools), codebase cleanup, documentation refresh | **MCP integration milestone** — AI assistant integration via Model Context Protocol |
 | 0.2.12 | Markdown export, image export (PNG/JPEG), PPTX compression | **Export & optimization milestone** — full round-trip capabilities |
 | 0.2.11 | Color aliases (40+), table helpers, extension methods, API guide | **API simplification milestone** — introduced helper pattern for 60% less boilerplate |
 | 0.2.10 | Image effects system (8 effects), ImageBuilder chainable API, JPEG fix |

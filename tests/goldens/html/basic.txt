@@ -1,0 +1,11 @@
+slide: 1
+title: Slide One
+bullets:
+- Bullet A
+- Bullet B
+
+slide: 2
+title: Slide Two
+bullets:
+- This is a paragraph that should become a bullet.
+

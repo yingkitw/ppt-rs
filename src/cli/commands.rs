@@ -6,6 +6,7 @@ use std::path::PathBuf;
 
 pub struct CreateCommand;
 pub struct FromMarkdownCommand;
+pub struct FromHtmlCommand;
 pub struct InfoCommand;
 pub struct ValidateCommand;
 
@@ -59,6 +60,57 @@ impl FromMarkdownCommand {
         }
 
         let title = title.unwrap_or("Presentation from Markdown");
+
+        // Generate PPTX with content
+        let pptx_data = generator::create_pptx_with_content(title, slides)
+            .map_err(|e| format!("Failed to generate PPTX: {e}"))?;
+
+        // Write to file
+        fs::write(output, pptx_data).map_err(|e| format!("Failed to write file: {e}"))?;
+
+        Ok(())
+    }
+}
+
+impl FromHtmlCommand {
+    pub fn execute(
+        input: &str,
+        output: &str,
+        title: Option<&str>,
+        max_slides: usize,
+        max_bullets: usize,
+        no_images: bool,
+        no_tables: bool,
+        no_code: bool,
+    ) -> Result<(), String> {
+        // Read HTML file
+        let html_content =
+            std::fs::read_to_string(input).map_err(|e| format!("Failed to read HTML file: {e}"))?;
+
+        // Build options
+        let options = crate::import::HtmlParseOptions::new()
+            .max_slides(max_slides)
+            .max_bullets(max_bullets)
+            .include_images(!no_images)
+            .include_tables(!no_tables)
+            .include_code(!no_code);
+
+        // Parse HTML into slides
+        let slides = crate::import::parse_html_with_options(&html_content, options)?;
+
+        if slides.is_empty() {
+            return Err("No slides found in HTML file".to_string());
+        }
+
+        // Create output directory if needed
+        if let Some(parent) = PathBuf::from(output).parent() {
+            if !parent.as_os_str().is_empty() {
+                fs::create_dir_all(parent)
+                    .map_err(|e| format!("Failed to create directory: {e}"))?;
+            }
+        }
+
+        let title = title.unwrap_or("Presentation from HTML");
 
         // Generate PPTX with content
         let pptx_data = generator::create_pptx_with_content(title, slides)

@@ -81,6 +81,7 @@ pub use generator::{
 pub use oxml::repair::{PptxRepair, RepairIssue, RepairResult};
 
 // Export convenience types for new capabilities
+pub use import::html::{parse_html, parse_html_with_options, HtmlParseOptions, Html2Ppt};
 pub use export::md::{MarkdownOptions, export_to_markdown, export_to_markdown_with_options};
 pub use export::image_export::{
     ImageExportOptions, ImageFormat,
@@ -109,4 +110,4 @@ pub use web2ppt::{
     html_to_pptx, html_to_pptx_with_options, url_to_pptx, url_to_pptx_with_options,
 };
 
-pub const VERSION: &str = "0.2.7";
+pub const VERSION: &str = "0.2.13";

@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean
+**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.13
 
 ## Active
 
@@ -77,6 +77,28 @@
 
 - **Tests**: 31 new unit tests, 31 new integration tests for new capabilities
 - Full documentation in SPEC.md, ARCHITECTURE.md
+
+</details>
+
+<details>
+<summary>v0.2.13 — MCP Server & Documentation Refresh</summary>
+
+- **MCP Server** (`src/mcp/mod.rs`):
+  - New `ppt_mcp` binary: Model Context Protocol stdio server via `rmcp`
+  - 8 MCP tools: `create_presentation`, `markdown_to_pptx`, `get_pptx_info`, `export_pptx`, `merge_pptx`, `validate_pptx`, `create_presentation_with_tables`, `create_presentation_with_charts`
+  - Feature-gated behind `mcp` feature flag
+  - Integration test suite (`tests/mcp_integration_test.rs`, 700+ lines)
+
+- **Documentation Refresh**:
+  - Updated README version to 0.2.13, test counts to 850+
+  - Removed stale "(NEW in v0.2.x)" labels throughout README
+  - Added v0.2.13 to SPEC version history
+  - Updated ARCHITECTURE with MCP module, core traits
+  - Fixed `VERSION` constant in lib.rs (0.2.7 → 0.2.13)
+
+- **Codebase Cleanup**:
+  - Removed old `src/enums/`, `src/integration/`, unused parts modules
+  - Consolidated to modular architecture with clear separation
 
 </details>
 

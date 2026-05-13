@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Comprehensive html2ppt Demo</title>
+    <meta charset="utf-8">
+</head>
+<body>
+
+    <h1 style="color:navy; font-size:48px">Welcome to html2ppt</h1>
+    <p><strong>Bold</strong> and <em>italic</em> and <b>also bold</b> and <i>also italic</i> text.</p>
+    <p>Visit <a href="https://example.com">Example</a> website for details.</p>
+    <p>Line one<br>Line two<br>Line three</p>
+
+    <h1>Inline CSS Styles</h1>
+    <p style="color:red">This text is red from inline style.</p>
+    <p style="color:blue; font-size:22px">This text is blue and larger.</p>
+    <p style="background-color:yellow">This paragraph has a yellow highlight.</p>
+    <p style="font-weight:bold; font-style:italic; color:purple">Bold, italic, and purple.</p>
+    <p style="text-decoration:underline">This text is underlined.</p>
+    <p style="text-decoration:line-through">This text is struck through.</p>
+    <p style="font-family:Courier New">This uses Courier New font.</p>
+
+    <h1>Lists &amp; Sections</h1>
+    <h2>Fruits</h2>
+    <ul>
+        <li>Apples</li>
+        <li>Bananas</li>
+        <li>Cherries</li>
+    </ul>
+    <h2>Steps</h2>
+    <ol>
+        <li>First step</li>
+        <li>Second step</li>
+        <li>Third step</li>
+    </ol>
+    <div><p>Content inside a div.</p></div>
+    <article><p>Article content.</p></article>
+    <section><p>Section content.</p></section>
+
+    <h1>Heading Levels</h1>
+    <p>Sub-headings render as bold bullet points:</p>
+    <h2>Level 2 Heading</h2>
+    <p>Content under level 2.</p>
+    <h3>Level 3 Heading</h3>
+    <p>Content under level 3.</p>
+    <h4>Level 4 Heading</h4>
+    <p>Content under level 4.</p>
+    <h5>Level 5 Heading</h5>
+    <p>Content under level 5.</p>
+    <h6>Level 6 Heading</h6>
+    <p>Content under level 6.</p>
+
+    <h1>Data Tables</h1>
+    <p>Financial results for Q1 through Q3.</p>
+    <table>
+        <tr><th>Quarter</th><th>Revenue</th><th>Costs</th><th>Profit</th></tr>
+        <tr><td>Q1</td><td>$100K</td><td>$60K</td><td>$40K</td></tr>
+        <tr><td>Q2</td><td>$120K</td><td>$70K</td><td>$50K</td></tr>
+        <tr><td>Q3</td><td>$150K</td><td>$90K</td><td>$60K</td></tr>
+    </table>
+
+    <h1>Code &amp; Notes</h1>
+    <p>Rust factorial example:</p>
+    <pre><code>fn factorial(n: u64) -> u64 {
+    match n {
+        0 | 1 => 1,
+        _ => n * factorial(n - 1),
+    }
+}</code></pre>
+    <blockquote>Recursion is elegant but watch the call stack depth!</blockquote>
+
+    <h1>Formatting Combinations</h1>
+    <p>Text with <strong>bold</strong>, <em>italic</em>, and <strong><em>bold italic</em></strong> combined.</p>
+    <p>Inline <code>code snippets</code> in paragraphs.</p>
+    <p>A <a href="https://example.com">link with bold text</a> in context.</p>
+    <p style="color:green">Green text with <strong style="font-size:20px">bigger bold</strong> inside.</p>
+
+    <h1>Images &amp; Entities</h1>
+    <p>Chart: <img src="chart.png" alt="Q4 Projections"></p>
+    <p>Image without alt: <img src="photo.jpg"></p>
+    <p>Entities: AT&amp;T &lt;html&gt; &quot;quote&quot; &apos;apos&apos; value&nbsp;here</p>
+    <p>Numeric: &#x26; &#x23; &#x24; &#x20AC;</p>
+    <p style="font-size:20px; color:darkblue">Entity demo with inline style.</p>
+    <hr>
+    <p>Content that appears after a horizontal rule break.</p>
+
+    <h1>Unicode &amp; Symbols</h1>
+    <p>Languages: 你好, 日本語, 한국어, Español, Français, Русский</p>
+    <p>Symbols: © 2026 ® Registered ™ Trademark € £ ¥ ₹</p>
+
+    <h1>Style Inheritance</h1>
+    <div style="color:teal">
+        <p>This paragraph inherits teal color from the parent div.</p>
+        <p style="font-weight:bold">This one is bold and still teal from inheritance.</p>
+        <p style="color:darkorange">This overrides the parent color to dark orange.</p>
+    </div>
+
+</body>
+</html>
