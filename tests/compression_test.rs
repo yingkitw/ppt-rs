@@ -1,7 +1,7 @@
 //! Integration tests for PPTX compression functionality
 
 use ppt_rs::api::Presentation;
-use ppt_rs::opc::compress::{CompressionOptions, CompressionLevel, compress_pptx, analyze_pptx};
+use ppt_rs::opc::compress::{CompressionOptions, CompressionLevel, compress_pptx};
 use ppt_rs::generator::SlideContent;
 use std::fs;
 use std::path::Path;

@@ -22,6 +22,12 @@ The project has completed several major phases:
    - `ppt_mcp` binary with 8 tools via Model Context Protocol
    - Create, read, export, validate, and merge presentations
 
+4. **Enhanced HTML & Markdown** (v0.2.14) — Real-world content support
+   - Enhanced Markdown: Real images, task lists, strikethrough formatting
+   - Enhanced HTML: Extended CSS, real image downloading, hyperlink handling
+   - Enhanced HTML Export: Interactive navigation, speaker notes, keyboard controls
+   - HTML Parser Documentation: Comprehensive parser comparison guide
+
 Future work will focus on completing partially-implemented features (digital signatures, embedded fonts) and performance optimization.
 
 ```

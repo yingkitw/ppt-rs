@@ -1,0 +1,44 @@
+/* Speaker Notes Styles */
+.speaker-notes {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: #fff8dc;
+    border-left: 4px solid #daa520;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #666;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.speaker-notes strong {
+    color: #8b4513;
+    font-weight: bold;
+}
+
+/* Notes toggle button */
+.notes-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.notes-toggle:hover {
+    background: #e0e0e0;
+}
+
+/* Hide speaker notes by default in presentation mode */
+body.presentation-mode .speaker-notes {
+    display: none;
+}
+
+body.notes-mode .speaker-notes {
+    display: block;
+}

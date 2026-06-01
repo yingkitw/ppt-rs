@@ -1,0 +1,65 @@
+/* Navigation Controls Styles */
+.navigation-controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    padding: 10px 20px;
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.navigation-controls button {
+    background: #fff;
+    color: #333;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.navigation-controls button:hover {
+    background: #f0f0f0;
+    transform: scale(1.05);
+}
+
+.navigation-controls button:active {
+    transform: scale(0.95);
+}
+
+#slideCounter {
+    color: white;
+    font-weight: bold;
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Slide visibility for navigation */
+.slide {
+    display: none;
+}
+
+.slide.active {
+    display: flex;
+}
+
+/* Keyboard hint */
+.keyboard-hint {
+    position: fixed;
+    bottom: 70px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    opacity: 0.7;
+    pointer-events: none;
+}

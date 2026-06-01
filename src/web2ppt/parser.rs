@@ -1,4 +1,22 @@
 //! HTML parser for Web2PPT
+//!
+//! Advanced web content parser for intelligent extraction from web pages.
+//! This is the **Web Scraper Parser** designed for processing live web content.
+//!
+//! # When to use this parser:
+//! - Converting live web pages to presentations
+//! - Processing complex websites with navigation/ads
+//! - When you need intelligent content extraction
+//! - For automatic content cleaning and detection
+//! - When you need meta data extraction
+//!
+//! # When to use import::html instead:
+//! - Converting simple HTML strings
+//! - For fast conversion with zero dependencies
+//! - Processing well-structured HTML from trusted sources
+//! - For embedded applications
+//!
+//! See HTML_PARSERS.md for detailed comparison and migration guide.
 
 use super::{Web2PptError, Result, Web2PptConfig};
 use scraper::{Html, Selector, ElementRef};

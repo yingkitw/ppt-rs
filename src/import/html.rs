@@ -3,6 +3,24 @@
 //! Parses HTML content and converts it into PowerPoint slide structures.
 //! No external dependencies required - uses a lightweight state-machine parser.
 //!
+//! # This is the Basic HTML Parser
+//!
+//! This parser is designed for simple, fast HTML-to-PowerPoint conversion
+//! with minimal dependencies. For advanced web scraping and content extraction,
+//! see the `web2ppt::parser` module (requires scraper crate).
+//!
+//! ## When to use this parser:
+//! - Converting simple HTML strings
+//! - Processing well-structured HTML files
+//! - When you want zero external dependencies
+//! - For embedded applications
+//!
+//! ## When to use web2ppt::parser instead:
+//! - Processing live web pages with navigation/ads
+//! - When you need intelligent content extraction
+//! - For automatic content cleaning and detection
+//! - When you need to handle complex web page structures
+//!
 //! # Supported HTML elements
 //!
 //! - `<h1>` → New slide title
@@ -269,6 +287,14 @@ struct InlineStyle {
     text_decoration: Option<String>,
     font_family: Option<String>,
     text_align: Option<String>,
+    margin_top: Option<String>,
+    margin_bottom: Option<String>,
+    margin_left: Option<String>,
+    margin_right: Option<String>,
+    padding: Option<String>,
+    border: Option<String>,
+    line_height: Option<String>,
+    letter_spacing: Option<String>,
 }
 
 impl InlineStyle {
@@ -293,6 +319,14 @@ impl InlineStyle {
                         style.font_family = Some(value.trim_matches('"').trim_matches('\'').to_string());
                     }
                     "text-align" => style.text_align = Some(value.to_string()),
+                    "margin-top" => style.margin_top = Some(value.to_string()),
+                    "margin-bottom" => style.margin_bottom = Some(value.to_string()),
+                    "margin-left" => style.margin_left = Some(value.to_string()),
+                    "margin-right" => style.margin_right = Some(value.to_string()),
+                    "padding" => style.padding = Some(value.to_string()),
+                    "border" => style.border = Some(value.to_string()),
+                    "line-height" => style.line_height = Some(value.to_string()),
+                    "letter-spacing" => style.letter_spacing = Some(value.to_string()),
                     _ => {}
                 }
             }
@@ -311,6 +345,14 @@ impl InlineStyle {
             text_decoration: other.text_decoration.clone().or_else(|| self.text_decoration.clone()),
             font_family: other.font_family.clone().or_else(|| self.font_family.clone()),
             text_align: other.text_align.clone().or_else(|| self.text_align.clone()),
+            margin_top: other.margin_top.clone().or_else(|| self.margin_top.clone()),
+            margin_bottom: other.margin_bottom.clone().or_else(|| self.margin_bottom.clone()),
+            margin_left: other.margin_left.clone().or_else(|| self.margin_left.clone()),
+            margin_right: other.margin_right.clone().or_else(|| self.margin_right.clone()),
+            padding: other.padding.clone().or_else(|| self.padding.clone()),
+            border: other.border.clone().or_else(|| self.border.clone()),
+            line_height: other.line_height.clone().or_else(|| self.line_height.clone()),
+            letter_spacing: other.letter_spacing.clone().or_else(|| self.letter_spacing.clone()),
         }
     }
 
@@ -324,6 +366,14 @@ impl InlineStyle {
             && self.text_decoration.is_none()
             && self.font_family.is_none()
             && self.text_align.is_none()
+            && self.margin_top.is_none()
+            && self.margin_bottom.is_none()
+            && self.margin_left.is_none()
+            && self.margin_right.is_none()
+            && self.padding.is_none()
+            && self.border.is_none()
+            && self.line_height.is_none()
+            && self.letter_spacing.is_none()
     }
 
     /// Convert to a BulletTextFormat for PPTX output. Returns None if no relevant properties set.
@@ -563,6 +613,7 @@ struct HtmlSlideParser {
     code_content: String,
     blockquote_text: String,
     presentation_title: Option<String>,
+    current_href: Option<String>,
 }
 
 impl HtmlSlideParser {
@@ -586,6 +637,7 @@ impl HtmlSlideParser {
             code_content: String::new(),
             blockquote_text: String::new(),
             presentation_title: None,
+            current_href: None,
         }
     }
 
@@ -693,9 +745,32 @@ impl HtmlSlideParser {
             "img" => {
                 if self.options.include_images {
                     let alt = attrs.iter().find(|(k, _)| k == "alt").map(|(_, v)| v.as_str()).unwrap_or("");
-                    let _src = attrs.iter().find(|(k, _)| k == "src").map(|(_, v)| v.as_str()).unwrap_or("");
-                    let label = if alt.is_empty() { "image" } else { alt };
-                    self.add_paragraph(&format!("[Image: {}]", label));
+                    let src = attrs.iter().find(|(k, _)| k == "src").map(|(_, v)| v.as_str()).unwrap_or("");
+
+                    if !src.is_empty() {
+                        // Try to download and embed the actual image
+                        if let Some(image) = self.load_image(src, alt) {
+                            if let Some(ref mut slide) = self.current_slide {
+                                slide.images.push(image);
+                            } else {
+                                let mut slide = SlideContent::new("Image");
+                                slide.images.push(image);
+                                self.current_slide = Some(slide);
+                            }
+                        } else {
+                            // Fallback to placeholder if image loading fails
+                            let label = if alt.is_empty() { src } else { alt };
+                            self.add_paragraph(&format!("[Image: {}]", label));
+                        }
+                    }
+                }
+            }
+            "a" => {
+                // Handle hyperlinks - just mark that we're inside a link
+                // The actual link text will be handled in text processing
+                if let Some(href) = attrs.iter().find(|(k, _)| k == "href").map(|(_, v)| v.as_str()) {
+                    // Store the current href for later use
+                    self.current_href = Some(href.to_string());
                 }
             }
             "br" => {
@@ -789,6 +864,12 @@ impl HtmlSlideParser {
             "em" | "i" => {
                 self.text_buffer.push('*');
                 self.italic = false;
+            }
+            "a" => {
+                // When closing an anchor tag, we have the link text in the buffer
+                // and the href in current_href. For now, we'll just clear the href
+                // since PowerPoint hyperlink support requires more complex XML handling
+                self.current_href = None;
             }
             _ => {}
         }
@@ -982,6 +1063,60 @@ impl HtmlSlideParser {
         self.flush_list_items();
         if let Some(slide) = self.current_slide.take() {
             self.slides.push(slide);
+        }
+    }
+
+    /// Load an image from URL or local file path
+    fn load_image(&self, src: &str, _alt: &str) -> Option<crate::generator::Image> {
+        use crate::generator::ImageBuilder;
+        use std::path::Path;
+
+        // Check if it's a URL
+        if src.starts_with("http://") || src.starts_with("https://") {
+            // Try to download the image
+            #[cfg(feature = "web2ppt")]
+            {
+                if let Ok(bytes) = self.download_image(src) {
+                    let img = ImageBuilder::auto(bytes)
+                        .at(2000000, 2000000)
+                        .size(5000000, 3000000)
+                        .build();
+                    return Some(img);
+                }
+            }
+            None
+        } else {
+            // Try to load from local file path
+            let path = Path::new(src);
+            if path.exists() {
+                if let Ok(bytes) = std::fs::read(path) {
+                    let img = ImageBuilder::auto(bytes)
+                        .at(2000000, 2000000)
+                        .size(5000000, 3000000)
+                        .build();
+                    return Some(img);
+                }
+            }
+            None
+        }
+    }
+
+    /// Download an image from a URL (requires web2ppt feature)
+    #[cfg(feature = "web2ppt")]
+    fn download_image(&self, url: &str) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+        use reqwest::blocking::Client;
+        use std::time::Duration;
+
+        let client = Client::builder()
+            .timeout(Duration::from_secs(30))
+            .user_agent("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
+            .build()?;
+
+        let response = client.get(url).send()?;
+        if response.status().is_success() {
+            Ok(response.bytes()?.to_vec())
+        } else {
+            Err(format!("Failed to download image: {}", response.status()).into())
         }
     }
 }

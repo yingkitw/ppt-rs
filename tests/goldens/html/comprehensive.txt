@@ -73,7 +73,7 @@ title: Images & Entities
 bullets:
 - [Image: Q4 Projections]
 - Chart:
-- [Image: image]
+- [Image: photo.jpg]
 - Image without alt:
 - Entities: AT&T <html> "quote" 'apos' value here
 - Numeric: & # $ €

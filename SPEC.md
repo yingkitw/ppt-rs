@@ -347,23 +347,41 @@ pptcli html2ppt input.html [output.pptx] [--title "Title"] [options]
 | `<ul>`/`<ol>` with `<li>` | List items |
 | `<table>` with `<tr>`/`<th>`/`<td>` | Table with styled header row |
 | `<pre>`/`<code>` | Code blocks |
-| `<img>` | Image placeholders (with alt text) |
+| `<img>` | Real image embedding (local files & web URLs) |
 | `<blockquote>` | Speaker notes |
 | `<strong>`/`<b>` | Bold text |
 | `<em>`/`<i>` | Italic text |
-| `<a href="...">` | Hyperlink text |
+| `<a href="...">` | Hyperlink preservation and handling |
 | `<hr>` | Slide break |
 | `<br>` | Line break |
 | `<title>` | Presentation title (falls back to first `<h1>`) |
 
-#### Inline CSS Support
+#### Inline CSS Support (Enhanced v0.2.14)
 
+**Text Styling:**
 - `color` — Text color (named, hex `#RRGGBB`, `rgb()`, `rgba()`)
 - `font-size` — Font size in px/pt
 - `font-weight` — Bold (700+)
 - `font-style` — Italic
 - `text-align` — left, center, right
 - `background-color` — Text highlight / background
+
+**Layout & Spacing (NEW):**
+- `margin` — Outer spacing (top, right, bottom, left)
+- `padding` — Inner spacing (top, right, bottom, left)
+- `line-height` — Line spacing multiplier
+- `letter-spacing` — Character spacing
+
+**Borders & Effects (NEW):**
+- `border` — Border width, style, and color
+- `border-radius` — Rounded corners
+- `opacity` — Transparency level
+
+**Advanced (NEW):**
+- Font family and fallback support
+- Enhanced color parsing with named colors
+- Style inheritance and cascade
+- Complex selector combinations
 
 #### API
 
@@ -413,14 +431,20 @@ pptcli md2ppt input.md [output.pptx] [--title "Title"]
 | `# Heading` | New slide with title |
 | `## Subheading` | Bold bullet point |
 | `- Bullet` | Bullet point |
+| `- [x] Task` | Task list with completed checkbox |
+| `- [ ] Todo` | Task list with uncompleted checkbox |
 | `1. Item` | Numbered list |
 | `**bold**` | Bold text |
 | `*italic*` | Italic text |
+| `~~strikethrough~~` | Strikethrough text |
 | `` `code` `` | Inline code |
 | `> Quote` | Speaker notes |
 | `\| Table \|` | GFM table |
 | ` ```code``` ` | Syntax-highlighted code |
 | ` ```mermaid ` | Mermaid diagram |
+| `
+![Image](url)
+` | Real image embedding (local & web URLs) |
 | `---` | Slide break |
 
 #### Syntax Highlighting
@@ -492,16 +516,36 @@ editor.remove_slide(1)?;
 editor.save("modified.pptx")?;
 ```
 
-### Export to HTML
+### Export to HTML (Enhanced v0.2.14)
 
 ```rust
 use ppt_rs::api::Presentation;
+use ppt_rs::export::html::{export_to_html_with_options, HtmlExportOptions};
 
 let pres = Presentation::with_title("My Presentation")
     .add_slide(SlideContent::new("Slide 1").add_bullet("Point"));
 
+// Simple export
 pres.save_as_html("output.html")?;
+
+// Enhanced export with interactive features
+let options = HtmlExportOptions::new()
+    .with_navigation(true)      // Previous/Next buttons
+    .with_notes(true)           // Include speaker notes
+    .with_syntax_highlight(true) // Code highlighting
+    .with_fullscreen(true);     // Fullscreen support
+
+let html = export_to_html_with_options(&pres, &options)?;
+std::fs::write("enhanced.html", html)?;
 ```
+
+**Enhanced HTML Export Features (v0.2.14):**
+- **Interactive Navigation**: Previous/Next buttons with keyboard shortcuts
+- **Keyboard Controls**: Arrow keys, Space, Home, End, F for fullscreen
+- **Touch Support**: Swipe gestures for mobile devices
+- **Speaker Notes**: Toggleable notes panel with slide content
+- **Syntax Highlighting**: Code blocks with proper formatting
+- **Responsive Design**: Mobile-friendly layout and controls
 
 ### Export to Markdown (v0.2.12)
 
@@ -666,6 +710,7 @@ match create_pptx("title", 5) {
 
 | Version | Features | Significance |
 |---------|----------|--------------|
+| 0.2.14 | Enhanced HTML/Markdown: real images, task lists, strikethrough, extended CSS, interactive HTML export | **Content enhancement milestone** — real-world content support with images and advanced styling |
 | 0.2.13 | MCP server (8 tools), codebase cleanup, documentation refresh | **MCP integration milestone** — AI assistant integration via Model Context Protocol |
 | 0.2.12 | Markdown export, image export (PNG/JPEG), PPTX compression | **Export & optimization milestone** — full round-trip capabilities |
 | 0.2.11 | Color aliases (40+), table helpers, extension methods, API guide | **API simplification milestone** — introduced helper pattern for 60% less boilerplate |

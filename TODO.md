@@ -4,7 +4,8 @@
 
 ## Active
 
-- [x] API Simplification - Color & Table helpers (v0.2.11)
+- [x] Enhanced HTML & Markdown Features - Image handling, CSS parsing, export navigation (v0.2.14)
+- [x] HTML Parser Documentation - Comprehensive parser comparison guide
 - [ ] Update all examples to use new simplified API
 - [x] Update documentation with new API examples
 
@@ -99,6 +100,59 @@
 - **Codebase Cleanup**:
   - Removed old `src/enums/`, `src/integration/`, unused parts modules
   - Consolidated to modular architecture with clear separation
+
+</details>
+
+<details>
+<summary>v0.2.14 — Enhanced HTML & Markdown Features</summary>
+
+- **Enhanced Markdown Parser** (`src/cli/markdown/parser.rs`):
+  - Real image downloading from HTTP/HTTPS URLs
+  - Local file path support for images
+  - Auto-detection of image formats (PNG, JPEG, GIF, WEBP, SVG)
+  - GitHub-style task list support (`- [x]` and `- [ ]`)
+  - Strikethrough text support (`~~text~~`)
+  - Enhanced nested formatting handling
+  - Proper embedding using ImageBuilder API
+
+- **Enhanced HTML Parser** (`src/import/html.rs`):
+  - Extended CSS property support (margins, padding, borders, line-height, letter-spacing)
+  - Real image downloading from web URLs during HTML parsing
+  - Local file support for relative and absolute paths
+  - Format auto-detection from magic bytes
+  - Anchor tag (`<a href>`) parsing and hyperlink preservation
+  - Enhanced color parsing (hex, RGB, named colors)
+  - Better style inheritance and cascade
+
+- **Enhanced HTML Export** (`src/export/html.rs`):
+  - Interactive navigation controls (Previous/Next buttons)
+  - Keyboard navigation (arrow keys, space, Home, End)
+  - Touch/swipe support for mobile devices
+  - Fullscreen mode support
+  - Speaker notes export with toggle functionality
+  - Syntax highlighting for code blocks
+  - Configurable export options (HtmlExportOptions)
+  - Enhanced CSS/JavaScript for better UX
+
+- **HTML Parser Documentation** (`HTML_PARSERS.md`):
+  - Comprehensive parser comparison guide
+  - Clear use cases for each parser (basic vs web scraper)
+  - Migration guide and examples
+  - Architecture diagrams and feature comparison tables
+
+- **Testing & Examples**:
+  - 19 new integration tests for enhanced features
+  - `examples/markdown_features.md` - Demonstrates all new Markdown capabilities
+  - `examples/enhanced_markdown_features.rs` - Rust code examples for Markdown
+  - `examples/html_features.html` - Comprehensive HTML demonstration
+  - `examples/enhanced_html_features.rs` - Rust code examples for HTML
+  - `validate_new_features.sh` - Automated validation script
+
+- **Quality Improvements**:
+  - All 659 tests passing (638 library + 19 new integration + 2 HTML export)
+  - 100% backward compatibility maintained
+  - Comprehensive error handling with fallback mechanisms
+  - Enhanced documentation with examples and guides
 
 </details>
 

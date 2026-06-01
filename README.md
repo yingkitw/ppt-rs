@@ -10,6 +10,8 @@ While other Rust crates for PPTX generation are incomplete, broken, or abandoned
 
 **MCP:** Build with `--features mcp` and run **`ppt_mcp`** — a [Model Context Protocol](https://modelcontextprotocol.io) server ([rmcp](https://crates.io/crates/rmcp)) so Cursor, Claude Desktop, and other MCP clients can create, read, export, and validate `.pptx` via stdio. See [MCP server](#mcp-server-model-context-protocol).
 
+**NEW v0.2.14**: Enhanced HTML & Markdown features with real image handling, extended CSS support, interactive HTML export, and comprehensive parser documentation.
+
 ## Why ppt-rs?
 
 - 🤖 **MCP server** - Optional `ppt_mcp` binary exposes presentation workflows as MCP tools for AI assistants and IDE integrations (`--features mcp`).
@@ -61,7 +63,7 @@ That's it! You now have a valid PowerPoint file that opens in PowerPoint, Google
 
 ### HTML to PowerPoint
 
-Convert HTML directly to PowerPoint presentations — perfect for web content, documentation, and reports.
+Convert HTML directly to PowerPoint presentations — perfect for web content, documentation, and reports. **NEW in v0.2.14**: Enhanced CSS support, real image downloading, hyperlink handling, and extended styling capabilities.
 
 **1. CLI — Convert an HTML file:**
 ```bash
@@ -122,6 +124,9 @@ let slides = Html2Ppt::with_options(options).parse_file("page.html")?;
 | `<pre>`/`<code>` | Code blocks |
 | `<blockquote>` | Speaker notes |
 | `<hr>` | Slide break |
+| `<img>` | Image embedding (real URLs & local files) |
+| `<a href>` | Hyperlink preservation |
+| `style=""` | Enhanced CSS (margins, padding, borders, etc.) |
 
 ### Library (Simplified API)
 
@@ -203,10 +208,11 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 - **Images** - Embed from files, bytes, base64, URL, auto-detect format, 8 visual effects
 - **Media** - Video (mp4, webm) and audio (mp3, wav) embedding
 - **Reading** - Parse and modify existing PPTX files
-- **Import from HTML** - `parse_html()` and `Html2Ppt` converter with full HTML element support
+- **Enhanced HTML Import** - Real image downloading, extended CSS support, hyperlink handling (v0.2.14)
+- **Enhanced Markdown Import** - Real image URLs, task lists, strikethrough formatting (v0.2.14) 
+- **Enhanced HTML Export** - Interactive navigation, speaker notes, keyboard controls (v0.2.14)
 - **Repair** - Validate and fix damaged PPTX files
 - **MCP** - Optional **ppt_mcp** stdio server ([Model Context Protocol](https://modelcontextprotocol.io); Cargo feature `mcp`) exposes creation, Markdown conversion, export, merge, validation, tables, and charts to MCP clients
-- **Export** - Export presentations to HTML and PDF
 
 ### Markdown Format
 
@@ -217,14 +223,20 @@ The Markdown format supports rich content:
 | `# Heading` | New slide with title |
 | `## Subheading` | Bold bullet point |
 | `- Bullet` | Bullet points (also `*`, `+`) |
+| `- [x] Task` | Task list with completed checkbox |
+| `- [ ] Todo` | Task list with uncompleted checkbox |
 | `1. Item` | Numbered list |
 | `**bold**` | Bold text |
 | `*italic*` | Italic text |
+| `~~strikethrough~~` | Strikethrough text |
 | `` `code` `` | Inline code |
 | `> Quote` | Speaker notes |
 | `| Table |` | GFM-style tables |
 | ` ```code``` ` | Syntax-highlighted code blocks |
 | ` ```mermaid ` | Mermaid diagrams (12 types) |
+| `
+![Image](url)
+` | Real image embedding (local & web URLs) |
 | `---` | Slide break |
 
 **Code Block Syntax Highlighting:**

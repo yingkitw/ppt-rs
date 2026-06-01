@@ -135,7 +135,7 @@ fn test_image_placeholder() {
 fn test_image_without_alt() {
     let html = r#"<h1>Gallery</h1><img src="photo.png">"#;
     let slides = parse_html(html).unwrap();
-    assert!(slides[0].content.iter().any(|c| c.contains("[Image: image]")));
+    assert!(slides[0].content.iter().any(|c| c.contains("[Image: photo.png]")));
 }
 
 // ============================================================================
@@ -994,7 +994,7 @@ fn test_content_with_code_entities() {
         assert_eq!(s7.content.len(), 7);
         assert_eq!(s7.content[0], "[Image: Q4 Projections]");   // img with alt
         assert_eq!(s7.content[1], "Chart:");
-        assert_eq!(s7.content[2], "[Image: image]");             // img without alt
+        assert_eq!(s7.content[2], "[Image: photo.jpg]");        // img without alt (uses src)
         assert_eq!(s7.content[3], "Image without alt:");
         assert_eq!(s7.content[4], "Entities: AT&T <html> \"quote\" 'apos' value\u{00a0}here");
         assert_eq!(s7.content[5], "Numeric: & # $ €");

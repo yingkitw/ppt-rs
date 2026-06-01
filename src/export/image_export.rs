@@ -322,7 +322,6 @@ pub fn render_thumbnail<P: AsRef<Path>>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::generator::SlideContent;
 
     #[test]
     fn test_image_format_extension() {
