@@ -30,6 +30,7 @@
 pub mod core;
 pub mod elements;
 pub mod generator;
+#[cfg(feature = "cli")]
 pub mod cli;
 pub mod exc;
 pub mod opc;

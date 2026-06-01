@@ -1,3 +1,5 @@
+#![cfg(feature = "cli")]
+
 use ppt_rs::api::Presentation;
 use ppt_rs::cli::parse_markdown;
 use ppt_rs::generator::create_pptx_with_content;

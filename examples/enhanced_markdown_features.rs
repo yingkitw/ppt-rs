@@ -6,6 +6,8 @@
 //! - Enhanced inline formatting (strikethrough, subscript, superscript)
 //! - Code blocks and syntax highlighting
 
+#![cfg(feature = "cli")]
+
 use ppt_rs::generator::create_pptx_with_content;
 use ppt_rs::cli::markdown::parse;
 use std::fs;

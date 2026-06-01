@@ -2,9 +2,14 @@
 //!
 //! Uses syntect to provide syntax highlighting for code blocks in presentations.
 
+#[cfg(feature = "syntect")]
 use syntect::easy::HighlightLines;
+#[cfg(feature = "syntect")]
 use syntect::highlighting::{Style, ThemeSet};
+#[cfg(feature = "syntect")]
 use syntect::parsing::SyntaxSet;
+
+#[cfg(feature = "syntect")]
 
 /// A highlighted text segment with color
 #[derive(Debug, Clone)]
@@ -197,4 +202,18 @@ mod tests {
             xml
         );
     }
+}
+
+#[cfg(not(feature = "syntect"))]
+/// Fallback implementation when syntect feature is not enabled
+pub fn highlight_code(_language: &str, _code: &str) -> String {
+    // Return plain text when syntax highlighting is not available
+    _code.to_string()
+}
+
+#[cfg(not(feature = "syntect"))]
+/// Fallback implementation when syntect feature is not enabled
+pub fn generate_highlighted_code_xml(_language: &str, _code: &str, _style_name: &str) -> String {
+    // Return basic XML when syntax highlighting is not available
+    format!("<a:t>{}</a:t>", _code.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;"))
 }

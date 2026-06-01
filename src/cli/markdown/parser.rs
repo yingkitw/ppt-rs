@@ -2,11 +2,13 @@
 //!
 //! Handles parsing of markdown content into slide structures.
 
+#[cfg(feature = "pulldown-cmark")]
+use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
+
 use super::mermaid;
 use crate::generator::{
     CodeBlock, Shape, ShapeFill, ShapeType, SlideContent, TableBuilder, TableCell, TableRow,
 };
-use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 
 /// Parse markdown content into slides
 pub fn parse(content: &str) -> Result<Vec<SlideContent>, String> {

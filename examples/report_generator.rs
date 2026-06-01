@@ -3,13 +3,40 @@
 //! Run with: cargo run --example report_generator
 
 use std::fs;
-use chrono::Local;
+
+/// Get current timestamp in simplified format
+fn current_timestamp() -> String {
+    let duration = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_else(|_| std::time::Duration::from_secs(0));
+
+    let secs = duration.as_secs();
+
+    // Days since Unix epoch
+    let days = secs / 86400;
+    let seconds = secs % 86400;
+
+    // Approximate date from Unix epoch (1970-01-01)
+    let year = 1970 + days / 365;
+    let remaining_days = days % 365;
+    let month = 1 + remaining_days / 30; // Approximate
+    let day = 1 + remaining_days % 30;
+
+    let hours = seconds / 3600;
+    let minutes = (seconds % 3600) / 60;
+    let secs = seconds % 60;
+
+    format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+        year, month, day, hours, minutes, secs
+    )
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Generating quarterly business report...\n");
 
     let output_file = "examples/output/quarterly_report.pptx";
-    
+
     // Create output directory
     fs::create_dir_all("examples/output")?;
 
@@ -23,13 +50,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let presentation = report.generate_presentation();
-    
+
     // Write to file
     fs::write(output_file, presentation)?;
 
     println!("✓ Report generated: {}", output_file);
     println!("  Title: {} {} Business Report", report.quarter, report.year);
-    println!("  Generated: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
+    println!("  Generated: {}", current_timestamp());
     println!("  Size: {} bytes", fs::metadata(output_file)?.len());
 
     Ok(())

@@ -8,6 +8,8 @@
 //! - HTML hyperlink support
 //! - Enhanced HTML export functionality
 
+#![cfg(feature = "cli")]
+
 use ppt_rs::api::Presentation;
 use ppt_rs::generator::SlideContent;
 use ppt_rs::cli::markdown::parse;

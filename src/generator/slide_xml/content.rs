@@ -107,8 +107,21 @@ fn generate_code_block(
     id: usize,
     code_block: &crate::generator::slide_content::CodeBlock,
 ) -> String {
+    // Use syntax highlighting when available, otherwise use plain text
+    #[cfg(feature = "syntect")]
     let highlighted_xml =
         crate::cli::syntax::generate_highlighted_code_xml(&code_block.code, &code_block.language);
+
+    #[cfg(not(feature = "syntect"))]
+    let highlighted_xml = {
+        // Fallback to basic XML without syntax highlighting
+        let escaped_code = code_block.code
+            .replace('&', "&amp;")
+            .replace('<', "&lt;")
+            .replace('>', "&gt;");
+        format!("<a:t>{}</a:t>", escaped_code)
+    };
+
     let x = code_block.x;
     let y = code_block.y;
     let width = code_block.width;

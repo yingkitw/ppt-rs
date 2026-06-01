@@ -722,19 +722,45 @@ impl PptxRepair {
     }
 
     fn find_max_rel_id(&self, xml: &str) -> u32 {
-        let re = regex::Regex::new(r#"Id="rId(\d+)""#).unwrap();
-        re.captures_iter(xml)
-            .filter_map(|cap| cap.get(1).and_then(|m| m.as_str().parse::<u32>().ok()))
-            .max()
-            .unwrap_or(0)
+        // Simple string parsing instead of regex for: Id="rId(\d+)"
+        let mut max_id = 0u32;
+        let mut search_start = 0;
+
+        while let Some(pos) = xml[search_start..].find("Id=\"rId") {
+            let absolute_pos = search_start + pos;
+            let start = absolute_pos + 7; // Skip "Id=\"rId"
+            if let Some(end_pos) = xml[start..].find('"') {
+                let num_str = &xml[start..start + end_pos];
+                if let Ok(id) = num_str.parse::<u32>() {
+                    max_id = max_id.max(id);
+                }
+                search_start = start + end_pos + 1;
+            } else {
+                break;
+            }
+        }
+        max_id
     }
 
     fn find_max_slide_id(&self, xml: &str) -> u32 {
-        let re = regex::Regex::new(r#"<p:sldId id="(\d+)""#).unwrap();
-        re.captures_iter(xml)
-            .filter_map(|cap| cap.get(1).and_then(|m| m.as_str().parse::<u32>().ok()))
-            .max()
-            .unwrap_or(255)
+        // Simple string parsing instead of regex for: <p:sldId id="(\d+)"
+        let mut max_id = 0u32;
+        let mut search_start = 0;
+
+        while let Some(pos) = xml[search_start..].find("<p:sldId id=\"") {
+            let absolute_pos = search_start + pos;
+            let start = absolute_pos + 13; // Skip "<p:sldId id=\""
+            if let Some(end_pos) = xml[start..].find('"') {
+                let num_str = &xml[start..start + end_pos];
+                if let Ok(id) = num_str.parse::<u32>() {
+                    max_id = max_id.max(id);
+                }
+                search_start = start + end_pos + 1;
+            } else {
+                break;
+            }
+        }
+        max_id
     }
 
     fn repair_orphan_slide(&mut self, slide_path: &str) -> Result<()> {

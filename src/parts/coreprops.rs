@@ -5,7 +5,37 @@
 use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
 use crate::oxml::XmlParser;
-use chrono::Utc;
+
+/// Get current timestamp in ISO 8601 format (UTC)
+/// Simple alternative to chrono::Utc::now()
+fn current_timestamp() -> String {
+    // Use std::time for current timestamp
+    let duration = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_else(|_| std::time::Duration::from_secs(0));
+
+    let secs = duration.as_secs();
+
+    // Convert to UTC datetime (simplified calculation)
+    // Days since Unix epoch
+    let days = secs / 86400;
+    let seconds = secs % 86400;
+
+    // Approximate date from Unix epoch (1970-01-01)
+    let year = 1970 + days / 365;
+    let remaining_days = days % 365;
+    let month = 1 + remaining_days / 30; // Approximate
+    let day = 1 + remaining_days % 30;
+
+    let hours = seconds / 3600;
+    let minutes = (seconds % 3600) / 60;
+    let secs = seconds % 60;
+
+    format!(
+        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+        year, month, day, hours, minutes, secs
+    )
+}
 
 /// Core properties part (docProps/core.xml)
 #[derive(Debug, Clone)]
@@ -25,7 +55,7 @@ pub struct CorePropertiesPart {
 impl CorePropertiesPart {
     /// Create a new core properties part
     pub fn new() -> Self {
-        let now = Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+        let now = current_timestamp();
 
         CorePropertiesPart {
             path: "docProps/core.xml".to_string(),
@@ -73,7 +103,7 @@ impl CorePropertiesPart {
 
     /// Update modified timestamp
     pub fn touch(&mut self) {
-        self.modified = Some(Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string());
+        self.modified = Some(current_timestamp());
         if let Some(ref mut rev) = self.revision {
             *rev += 1;
         }

@@ -1,8 +1,33 @@
 //! Document properties XML generation
 
+/// Get current timestamp in ISO 8601 format (UTC)
+fn current_timestamp() -> String {
+    let duration = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_else(|_| std::time::Duration::from_secs(0));
+
+    let secs = duration.as_secs();
+    let days = secs / 86400;
+    let seconds = secs % 86400;
+
+    let year = 1970 + days / 365;
+    let remaining_days = days % 365;
+    let month = 1 + remaining_days / 30;
+    let day = 1 + remaining_days % 30;
+
+    let hours = seconds / 3600;
+    let minutes = (seconds % 3600) / 60;
+    let secs = seconds % 60;
+
+    format!(
+        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
+        year, month, day, hours, minutes, secs
+    )
+}
+
 /// Create core properties XML (docProps/core.xml)
 pub fn create_core_props_xml(title: &str) -> String {
-    let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
+    let now = current_timestamp();
     format!(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
