@@ -681,6 +681,10 @@ src/cli/
 - [x] Table merging (rowspan/colspan)
 - [x] HTML/PDF export
 - [x] Image effects (shadow, reflection, glow, soft edges, inner shadow, blur, crop)
+- [x] Enhanced Markdown: Real images, task lists, strikethrough formatting (v0.2.14)
+- [x] Enhanced HTML: Extended CSS, real image downloading, hyperlink handling (v0.2.14)
+- [x] Enhanced HTML Export: Interactive navigation, speaker notes, keyboard controls (v0.2.14)
+- [x] HTML Parser Documentation: Comprehensive parser comparison guide (v0.2.14)
 
 ## Image Effects System (v0.2.10)
 
