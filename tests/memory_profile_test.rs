@@ -67,3 +67,14 @@ fn test_slide_payload_estimate_scales_linearly() {
     assert!(large.slide_payload_bytes > small.slide_payload_bytes * 5);
     assert!(large.output_bytes > small.output_bytes);
 }
+
+#[test]
+fn test_generation_speed_100_slides() {
+    let slides = sample_slides(100);
+    let metrics = profile_eager_generation("Speed Test", slides);
+    assert!(
+        metrics.duration < Duration::from_millis(500),
+        "100 slides took {:?}, expected < 500ms",
+        metrics.duration
+    );
+}

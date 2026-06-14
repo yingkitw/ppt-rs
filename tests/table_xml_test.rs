@@ -2,8 +2,9 @@
 //!
 //! Tests the table XML generation module
 
-use ppt_rs::generator::{Table, TableRow, TableCell, TableBuilder};
+use ppt_rs::generator::{Table, TableRow, TableCell, TableBuilder, SlideContent};
 use ppt_rs::generator::table::generate_table_xml;
+use ppt_rs::api::Presentation;
 
 // ============================================================================
 // TABLE XML GENERATION TESTS
@@ -145,6 +146,31 @@ fn test_generate_table_with_builder() {
     assert!(xml.contains("Header 2"));
     assert!(xml.contains("Data 1"));
     assert!(xml.contains("Data 2"));
+}
+
+#[test]
+fn test_generate_table_cell_alignment_and_wrap() {
+    let cells = vec![
+        TableCell::new("Left").align_left().valign_top().wrap(false),
+        TableCell::new("Right").align_right().valign_bottom(),
+    ];
+    let row = TableRow::new(cells);
+    let table = Table::new(vec![row], vec![1000000, 1000000], 0, 0);
+    let xml = generate_table_xml(&table, 1);
+
+    assert!(xml.contains(r#"algn="l""#));
+    assert!(xml.contains(r#"wrap="none""#));
+    assert!(xml.contains(r#"anchor="b""#));
+}
+
+#[test]
+fn test_presentation_into_bytes_api() {
+    let pres = Presentation::with_title("API")
+        .add_slide(SlideContent::new("Slide").add_bullet("Item"));
+
+    let bytes = pres.into_bytes().unwrap();
+    assert!(!bytes.is_empty());
+    assert!(bytes.starts_with(b"PK"));
 }
 
 #[test]

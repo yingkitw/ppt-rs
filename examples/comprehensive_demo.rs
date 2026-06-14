@@ -1978,7 +1978,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n📦 Generating PPTX with integrated features...");
     let pptx_data = create_pptx_with_settings(
         "PPTX-RS Element Showcase",
-        slides.clone(),
+        &slides,
         Some(pres_settings),
     )?;
     fs::write("comprehensive_demo.pptx", &pptx_data)?;

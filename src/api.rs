@@ -88,7 +88,16 @@ impl Presentation {
         if self.slides.is_empty() {
             return Err(PptxError::InvalidState("Presentation has no slides".into()));
         }
-        create_pptx_with_settings(&self.title, self.slides.clone(), self.settings.clone())
+        create_pptx_with_settings(&self.title, &self.slides, self.settings.clone())
+            .map_err(|e| PptxError::Generic(e.to_string()))
+    }
+
+    /// Consume the presentation and build PPTX bytes without cloning slide data.
+    pub fn into_bytes(self) -> Result<Vec<u8>> {
+        if self.slides.is_empty() {
+            return Err(PptxError::InvalidState("Presentation has no slides".into()));
+        }
+        create_pptx_with_settings(&self.title, &self.slides, self.settings)
             .map_err(|e| PptxError::Generic(e.to_string()))
     }
 

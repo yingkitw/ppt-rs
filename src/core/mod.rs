@@ -9,4 +9,4 @@ mod xml_utils;
 
 pub use dimension::{Dimension, FlexPosition, FlexSize, SLIDE_HEIGHT_EMU, SLIDE_WIDTH_EMU};
 pub use traits::{Positioned, Sized as ElementSized, ToXml};
-pub use xml_utils::{escape_xml, XmlWriter};
+pub use xml_utils::{append_i32, append_usize, escape_xml, XmlWriter};

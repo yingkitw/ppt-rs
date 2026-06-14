@@ -18,7 +18,7 @@ fn theme_xml_from_pptx(data: &[u8]) -> String {
 fn test_corporate_theme_embedded_in_pptx() {
     let slides = vec![SlideContent::new("Themed").add_bullet("Point")];
     let settings = PresentationSettings::new().theme(PresentationTheme::corporate());
-    let pptx = create_pptx_with_settings("Themed Deck", slides, Some(settings)).unwrap();
+    let pptx = create_pptx_with_settings("Themed Deck", &slides, Some(settings)).unwrap();
     let xml = theme_xml_from_pptx(&pptx);
 
     assert!(xml.contains("1565C0"), "corporate primary accent");
@@ -39,13 +39,30 @@ fn test_presentation_api_with_theme() {
 }
 
 #[test]
+fn test_presentation_with_settings_theme() {
+    let pres = Presentation::with_title("Settings Theme")
+        .add_slide(SlideContent::new("Slide"))
+        .with_settings(
+            PresentationSettings::new().theme(
+                PresentationTheme::vibrant().major_font("Arial").minor_font("Arial"),
+            ),
+        );
+
+    let pptx = pres.build().unwrap();
+    let xml = theme_xml_from_pptx(&pptx);
+
+    assert!(xml.contains("E91E63"));
+    assert!(xml.contains(r#"typeface="Arial""#));
+}
+
+#[test]
 fn test_custom_fonts_in_theme() {
     let theme = PresentationTheme::modern()
         .major_font("Georgia")
         .minor_font("Verdana");
     let slides = vec![SlideContent::new("Fonts")];
     let settings = PresentationSettings::new().theme(theme);
-    let pptx = create_pptx_with_settings("Font Theme", slides, Some(settings)).unwrap();
+    let pptx = create_pptx_with_settings("Font Theme", &slides, Some(settings)).unwrap();
     let xml = theme_xml_from_pptx(&pptx);
 
     assert!(xml.contains(r#"typeface="Georgia""#));

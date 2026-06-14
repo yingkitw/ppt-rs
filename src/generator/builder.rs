@@ -4,6 +4,7 @@ use std::io::{Write, Seek, Cursor};
 use zip::ZipWriter;
 use zip::write::FileOptions;
 use crate::exc::Result;
+use crate::core::append_usize;
 use super::slide_content::SlideContent;
 use super::package_xml::{
     create_rels_xml, create_presentation_rels_xml, create_presentation_xml,
@@ -41,21 +42,22 @@ pub fn create_pptx_with_content(
     title: &str,
     slides: Vec<SlideContent>,
 ) -> Result<Vec<u8>> {
-    create_pptx_with_settings(title, slides, None)
+    create_pptx_with_settings(title, &slides, None)
 }
 
 /// Create a PPTX file with custom slide content and presentation-level settings
 pub fn create_pptx_with_settings(
     title: &str,
-    slides: Vec<SlideContent>,
+    slides: &[SlideContent],
     settings: Option<PresentationSettings>,
 ) -> Result<Vec<u8>> {
-    let buffer = Vec::new();
+    let estimated_zip_bytes = slides.len().saturating_mul(6000).max(8192);
+    let buffer = Vec::with_capacity(estimated_zip_bytes);
     let cursor = Cursor::new(buffer);
     let mut zip = ZipWriter::new(cursor);
     let options = FileOptions::default();
 
-    write_package_files(&mut zip, &options, title, slides.len(), Some(&slides), settings.as_ref())?;
+    write_package_files(&mut zip, &options, title, slides.len(), Some(slides), settings.as_ref())?;
 
     let cursor = zip.finish()?;
     Ok(cursor.into_inner())
@@ -100,19 +102,19 @@ pub fn create_pptx_to_writer<W: Write + Seek>(
 ///     SlideContent::new("Title").add_bullet("Point 1"),
 ///     SlideContent::new("Slide 2").add_bullet("Point 2"),
 /// ];
-/// create_pptx_with_content_to_writer(file, "My Presentation", slides, None)?;
+/// create_pptx_with_content_to_writer(file, "My Presentation", &slides, None)?;
 /// # Ok::<(), ppt_rs::PptxError>(())
 /// ```
 pub fn create_pptx_with_content_to_writer<W: Write + Seek>(
     writer: W,
     title: &str,
-    slides: Vec<SlideContent>,
+    slides: &[SlideContent],
     settings: Option<PresentationSettings>,
 ) -> Result<W> {
     let mut zip = ZipWriter::new(writer);
     let options = FileOptions::default();
 
-    write_package_files(&mut zip, &options, title, slides.len(), Some(&slides), settings.as_ref())?;
+    write_package_files(&mut zip, &options, title, slides.len(), Some(slides), settings.as_ref())?;
 
     Ok(zip.finish()?)
 }
@@ -225,12 +227,41 @@ struct ChartInfo {
     slide_start_indices: Vec<usize>,
 }
 
+fn set_slide_xml_path(path: &mut String, slide_num: usize) {
+    path.clear();
+    path.push_str("ppt/slides/slide");
+    append_usize(path, slide_num);
+    path.push_str(".xml");
+}
+
+fn set_slide_rels_path(path: &mut String, slide_num: usize) {
+    path.clear();
+    path.push_str("ppt/slides/_rels/slide");
+    append_usize(path, slide_num);
+    path.push_str(".xml.rels");
+}
+
+fn set_notes_slide_path(path: &mut String, slide_num: usize) {
+    path.clear();
+    path.push_str("ppt/notesSlides/notesSlide");
+    append_usize(path, slide_num);
+    path.push_str(".xml");
+}
+
+fn push_chart_rid(rids: &mut Vec<String>, rel_num: usize) {
+    let mut rid = String::with_capacity(8);
+    rid.push_str("rId");
+    append_usize(&mut rid, rel_num);
+    rids.push(rid);
+}
+
 /// Collect chart metadata from slides (eager version)
-fn collect_chart_info(slides: Option<&Vec<SlideContent>>) -> ChartInfo {
+fn collect_chart_info(slides: Option<&[SlideContent]>) -> ChartInfo {
     let mut total_charts = 0;
     let mut slide_start_indices = Vec::new();
 
     if let Some(slides) = slides {
+        slide_start_indices.reserve(slides.len());
         for slide in slides {
             slide_start_indices.push(total_charts + 1);
             total_charts += slide.charts.len();
@@ -264,7 +295,7 @@ fn write_content_types<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
     slide_count: usize,
-    custom_slides: Option<&Vec<SlideContent>>,
+    custom_slides: Option<&[SlideContent]>,
     chart_info: &ChartInfo,
     has_pres_props: bool,
 ) -> Result<()> {
@@ -417,7 +448,7 @@ fn write_package_files<W: Write + Seek>(
     options: &FileOptions,
     title: &str,
     slide_count: usize,
-    custom_slides: Option<&Vec<SlideContent>>,
+    custom_slides: Option<&[SlideContent]>,
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
     let has_notes = custom_slides
@@ -702,28 +733,30 @@ fn write_slides<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
     slide_count: usize,
-    custom_slides: Option<&Vec<SlideContent>>,
+    custom_slides: Option<&[SlideContent]>,
 ) -> Result<()> {
+    let mut zip_path = String::with_capacity(48);
+
     match custom_slides {
         Some(slides) => {
             for (i, slide) in slides.iter().enumerate() {
                 let slide_num = i + 1;
 
-                // Calculate chart rIds
-                let mut chart_rids = Vec::new();
+                let mut chart_rids = Vec::with_capacity(slide.charts.len());
                 let start_rid = if slide.notes.is_some() { 3 } else { 2 };
                 for j in 0..slide.charts.len() {
-                    chart_rids.push(format!("rId{}", start_rid + j));
+                    push_chart_rid(&mut chart_rids, start_rid + j);
                 }
 
                 let slide_xml = create_slide_xml_with_content(slide_num, slide, &chart_rids);
-                zip.start_file(format!("ppt/slides/slide{slide_num}.xml"), *options)?;
+                set_slide_xml_path(&mut zip_path, slide_num);
+                zip.start_file(&zip_path, *options)?;
                 zip.write_all(slide_xml.as_bytes())?;
 
-                // Write notes if present
                 if let Some(notes) = &slide.notes {
                     let notes_xml = create_notes_xml(slide_num, notes);
-                    zip.start_file(format!("ppt/notesSlides/notesSlide{slide_num}.xml"), *options)?;
+                    set_notes_slide_path(&mut zip_path, slide_num);
+                    zip.start_file(&zip_path, *options)?;
                     zip.write_all(notes_xml.as_bytes())?;
                 }
             }
@@ -731,7 +764,8 @@ fn write_slides<W: Write + Seek>(
         None => {
             for i in 1..=slide_count {
                 let slide_xml = create_slide_xml(i, "Presentation");
-                zip.start_file(format!("ppt/slides/slide{i}.xml"), *options)?;
+                set_slide_xml_path(&mut zip_path, i);
+                zip.start_file(&zip_path, *options)?;
                 zip.write_all(slide_xml.as_bytes())?;
             }
         }
@@ -743,7 +777,7 @@ fn write_slides<W: Write + Seek>(
 fn write_slide_relationships_extended<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
-    custom_slides: Option<&Vec<SlideContent>>,
+    custom_slides: Option<&[SlideContent]>,
     slide_chart_start_indices: &[usize],
     slide_count: usize,
 ) -> Result<()> {
@@ -751,46 +785,52 @@ fn write_slide_relationships_extended<W: Write + Seek>(
     
     match custom_slides {
         Some(slides) => {
+            let mut zip_path = String::with_capacity(56);
             for (i, slide) in slides.iter().enumerate() {
                 let slide_num = i + 1;
                 let image_count = slide.images.len();
                 let image_start_num = total_images + 1;
 
-                // Collect image extensions for this slide
                 let image_extensions: Vec<String> = slide.images.iter()
                     .map(|img| img.extension())
                     .collect();
 
-                let mut chart_rels = Vec::new();
+                let mut chart_rels = Vec::with_capacity(slide.charts.len());
                 let start_chart_idx = slide_chart_start_indices[i];
-                // Chart rIds come after images and notes
                 let start_rid = 2 + image_count + if slide.notes.is_some() { 1 } else { 0 };
 
                 for j in 0..slide.charts.len() {
-                    let rid = format!("rId{}", start_rid + j);
-                    let target = format!("../charts/chart{}.xml", start_chart_idx + j);
+                    let mut rid = String::with_capacity(8);
+                    rid.push_str("rId");
+                    append_usize(&mut rid, start_rid + j);
+                    let mut target = String::with_capacity(24);
+                    target.push_str("../charts/chart");
+                    append_usize(&mut target, start_chart_idx + j);
+                    target.push_str(".xml");
                     chart_rels.push((rid, target));
                 }
 
                 let slide_rels = super::package_xml::create_slide_rels_xml_with_images(
-                    slide_num, 
-                    slide.notes.is_some(), 
+                    slide_num,
+                    slide.notes.is_some(),
                     &chart_rels,
                     image_count,
                     image_start_num,
                     &image_extensions
                 );
-                zip.start_file(format!("ppt/slides/_rels/slide{slide_num}.xml.rels"), *options)?;
+                set_slide_rels_path(&mut zip_path, slide_num);
+                zip.start_file(&zip_path, *options)?;
                 zip.write_all(slide_rels.as_bytes())?;
-                
+
                 total_images += image_count;
             }
         }
         None => {
-            // No custom slides, use default relationships
+            let mut zip_path = String::with_capacity(56);
             for i in 1..=slide_count {
                 let slide_rels = create_slide_rels_xml();
-                zip.start_file(format!("ppt/slides/_rels/slide{i}.xml.rels"), *options)?;
+                set_slide_rels_path(&mut zip_path, i);
+                zip.start_file(&zip_path, *options)?;
                 zip.write_all(slide_rels.as_bytes())?;
             }
         }
@@ -802,7 +842,7 @@ fn write_slide_relationships_extended<W: Write + Seek>(
 fn write_charts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
-    custom_slides: Option<&Vec<SlideContent>>,
+    custom_slides: Option<&[SlideContent]>,
     slide_chart_start_indices: &[usize],
 ) -> Result<()> {
     if let Some(slides) = custom_slides {
@@ -823,7 +863,7 @@ fn write_charts<W: Write + Seek>(
 fn write_notes_relationships<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
-    custom_slides: Option<&Vec<SlideContent>>,
+    custom_slides: Option<&[SlideContent]>,
 ) -> Result<()> {
     if let Some(slides) = custom_slides {
         for (i, slide) in slides.iter().enumerate() {
@@ -842,7 +882,7 @@ fn write_notes_relationships<W: Write + Seek>(
 fn write_images<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
-    custom_slides: Option<&Vec<SlideContent>>,
+    custom_slides: Option<&[SlideContent]>,
 ) -> Result<()> {
     if let Some(slides) = custom_slides {
         let mut image_counter = 1;
@@ -919,7 +959,7 @@ mod tests {
 
         let buffer = Vec::new();
         let cursor = Cursor::new(buffer);
-        let result = create_pptx_with_content_to_writer(cursor, "Test", slides, None);
+        let result = create_pptx_with_content_to_writer(cursor, "Test", &slides, None);
         assert!(result.is_ok());
     }
 
@@ -972,7 +1012,7 @@ mod tests {
         // Streaming version
         let buffer = Vec::new();
         let cursor = Cursor::new(buffer);
-        let streaming = create_pptx_with_content_to_writer(cursor, "Test", slides, None).unwrap().into_inner();
+        let streaming = create_pptx_with_content_to_writer(cursor, "Test", &slides, None).unwrap().into_inner();
 
         // Both should produce valid ZIP files (non-empty)
         assert!(!in_memory.is_empty());

@@ -41,13 +41,35 @@ fn test_image_effect_reflection_xml() {
 }
 
 #[test]
+fn test_image_effect_inner_shadow_and_blur_in_pptx_path() {
+    let img = Image::new("fx.png", 1000, 1000, "PNG")
+        .with_effect(ImageEffect::InnerShadow)
+        .with_effect(ImageEffect::Blur);
+    let xml = generate_image_xml(&img, 1, 1);
+
+    assert!(xml.contains("innerShdw"));
+    assert!(xml.contains("blur"));
+}
+
+#[test]
 fn test_image_multiple_effects() {
     let mut img = Image::new("test.png", 1000, 1000, "PNG");
     img = img.with_effect(ImageEffect::Shadow)
              .with_effect(ImageEffect::Reflection);
-             
+
     let xml = generate_image_xml(&img, 1, 1);
-    
+
     assert!(xml.contains("<a:outerShdw"));
     assert!(xml.contains("<a:ref"));
+}
+
+#[test]
+fn test_image_effect_glow_and_soft_edges() {
+    let img = Image::new("fx.png", 1000, 1000, "PNG")
+        .with_effect(ImageEffect::Glow)
+        .with_effect(ImageEffect::SoftEdges);
+    let xml = generate_image_xml(&img, 1, 1);
+
+    assert!(xml.contains("glow"));
+    assert!(xml.contains("softEdge"));
 }

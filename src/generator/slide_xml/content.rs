@@ -5,6 +5,15 @@ use crate::generator::slide_content::SlideContent;
 
 /// Render additional content elements (shapes, images, code blocks, connectors, charts)
 pub fn render_additional_content(xml: &mut String, content: &SlideContent, chart_rids: &[String]) {
+    let extra_elements = content.shapes.len()
+        + content.images.len()
+        + content.code_blocks.len()
+        + content.connectors.len()
+        + content.charts.len().min(chart_rids.len());
+    if extra_elements > 0 {
+        xml.reserve(extra_elements * 512);
+    }
+
     // Render shapes - use shape's fixed ID if set, otherwise auto-assign
     for (i, shape) in content.shapes.iter().enumerate() {
         xml.push('\n');

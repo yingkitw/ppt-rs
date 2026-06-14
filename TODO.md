@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.16
+**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.17
 
 ## Active
 
@@ -45,6 +45,26 @@
 - [ ] Consider builder pattern consolidation for Shape/Table/Chart builders
 
 ## Completed
+
+<details>
+<summary>v0.2.17 — Performance Optimizations</summary>
+
+- **Hot-path allocation reductions**:
+  - `create_pptx_with_settings()` accepts `&[SlideContent]` — eliminates slide clone in `Presentation::build()`
+  - `Presentation::into_bytes()` — consuming build API
+  - ZIP output buffer pre-sized from slide count
+  - Reusable ZIP path buffers in `write_slides` / `write_slide_relationships`
+
+- **Package XML generation** (`package_xml.rs`):
+  - Pre-allocated `String` capacities for content types, relationships, presentation XML
+  - `append_usize()` helper replaces per-iteration `format!` in loops
+
+- **Slide content rendering**:
+  - `render_additional_content()` pre-reserves XML capacity from element counts
+
+- **Tests**: generation speed assertion for 100 slides (`tests/memory_profile_test.rs`)
+
+</details>
 
 <details>
 <summary>v0.2.17 — Technical Debt: Memory Profiling & XML Refactors</summary>

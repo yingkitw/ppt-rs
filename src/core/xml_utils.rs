@@ -2,6 +2,8 @@
 //!
 //! Centralized XML utilities to avoid duplication across modules.
 
+use std::fmt::Write;
+
 /// Escape special XML characters
 pub fn escape_xml(s: &str) -> String {
     s.replace('&', "&amp;")
@@ -9,6 +11,16 @@ pub fn escape_xml(s: &str) -> String {
         .replace('>', "&gt;")
         .replace('"', "&quot;")
         .replace('\'', "&apos;")
+}
+
+/// Append a decimal integer without allocating a temporary `format!` string.
+pub fn append_usize(buf: &mut String, value: usize) {
+    let _ = write!(buf, "{value}");
+}
+
+/// Append a signed integer without allocating a temporary `format!` string.
+pub fn append_i32(buf: &mut String, value: i32) {
+    let _ = write!(buf, "{value}");
 }
 
 /// XML writer helper for building XML strings efficiently
@@ -138,5 +150,12 @@ mod tests {
         let mut writer = XmlWriter::new();
         writer.empty_element("br", &[]);
         assert_eq!(writer.finish(), "<br/>");
+    }
+
+    #[test]
+    fn test_append_usize() {
+        let mut buf = String::new();
+        append_usize(&mut buf, 42);
+        assert_eq!(buf, "42");
     }
 }

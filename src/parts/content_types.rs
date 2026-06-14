@@ -1,6 +1,6 @@
 //! Content types part
 //!
-//! Represents [Content_Types].xml which defines MIME types for all parts.
+//! Represents `[Content_Types].xml` which defines MIME types for all parts.
 
 use super::base::{ContentType, Part, PartType};
 use crate::exc::PptxError;
@@ -37,7 +37,7 @@ impl OverrideType {
     }
 }
 
-/// Content types part ([Content_Types].xml)
+/// Content types part (`[Content_Types].xml`)
 #[derive(Debug, Clone)]
 pub struct ContentTypesPart {
     defaults: Vec<DefaultType>,
