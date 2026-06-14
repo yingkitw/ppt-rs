@@ -7,7 +7,7 @@ use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 
 use super::mermaid;
 use crate::generator::{
-    CodeBlock, Shape, ShapeFill, ShapeType, SlideContent, TableBuilder, TableCell, TableRow,
+    CodeBlock, Shape, ShapeFill, ShapeType, SlideContent,
 };
 
 /// Parse markdown content into slides
@@ -394,33 +394,7 @@ impl MarkdownParser {
         }
 
         let rows = std::mem::take(&mut self.table_rows);
-        let col_count = rows.iter().map(|r| r.len()).max().unwrap_or(1);
-        let col_width = 8000000u32 / col_count as u32;
-        let col_widths: Vec<u32> = vec![col_width; col_count];
-
-        let mut builder = TableBuilder::new(col_widths);
-
-        for (i, row_data) in rows.iter().enumerate() {
-            let cells: Vec<TableCell> = row_data
-                .iter()
-                .map(|cell_text| {
-                    let mut cell = TableCell::new(cell_text);
-                    if i == 0 {
-                        cell = cell.bold().background_color("4472C4").text_color("FFFFFF");
-                    }
-                    cell
-                })
-                .collect();
-
-            let mut cells = cells;
-            while cells.len() < col_count {
-                cells.push(TableCell::new(""));
-            }
-
-            builder = builder.add_row(TableRow::new(cells));
-        }
-
-        let table = builder.position(500000, 1800000).build();
+        let table = crate::generator::table::table_from_string_rows(rows, true);
 
         if let Some(ref mut slide) = self.current_slide {
             slide.table = Some(table);

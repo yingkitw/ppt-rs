@@ -828,12 +828,13 @@ Available templates: `business_proposal`, `training_material`, `status_report`, 
 
 ## Themes
 
-Pre-defined color themes for consistent styling:
+Pre-defined color palettes for shape styling, plus **embedded PPTX themes** that PowerPoint applies to new content:
 
 ```rust
 use ppt_rs::prelude::{themes, colors};
+use ppt_rs::{Presentation, PresentationTheme, PresentationSettings};
 
-// Available themes
+// Prelude presets (for shape colors)
 themes::CORPORATE  // Professional blue/gray
 themes::MODERN     // Clean minimalist
 themes::VIBRANT    // Bold and colorful
@@ -842,11 +843,24 @@ themes::NATURE     // Fresh green
 themes::TECH       // Technology blue
 themes::CARBON     // IBM Carbon Design
 
-// Theme properties
-let theme = themes::CORPORATE;
-println!("Primary: {}", theme.primary);     // "1565C0"
-println!("Background: {}", theme.background); // "FFFFFF"
+// Embed a theme in the generated PPTX (theme1.xml)
+let pptx = Presentation::with_title("Branded Deck")
+    .add_slide(slide)
+    .with_theme(PresentationTheme::corporate());
+
+// Or from a prelude preset
+let pptx = Presentation::with_title("Carbon Deck")
+    .add_slide(slide)
+    .with_theme(themes::CARBON.to_presentation_theme());
+
+// Custom colors and fonts
+let theme = PresentationTheme::modern()
+    .major_font("Georgia")
+    .minor_font("Verdana");
+let settings = PresentationSettings::new().theme(theme);
 ```
+
+Built-in `PresentationTheme` presets: `office()`, `corporate()`, `modern()`, `vibrant()`, `dark()`, `nature()`, `tech()`, `carbon()`. Build fully custom schemes with `ThemeColorScheme::from_palette()` or `PresentationTheme::new("Brand").colors(...)`.
 
 ### Extended Color Palettes
 

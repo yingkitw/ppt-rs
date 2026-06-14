@@ -74,6 +74,7 @@ pub use generator::{
     TableMergeMap, MergeRegion, CellMergeState,
     EmbeddedFontList, EmbeddedFont, FontStyle, FontCharset,
     PresentationSettings,
+    PresentationTheme, ThemeColorScheme, ThemeFonts,
     Connector, ConnectorType, ConnectorLine, ArrowType, ArrowSize, ConnectionSite, LineDash,
     Hyperlink, HyperlinkAction,
     GradientFill, GradientType, GradientDirection, GradientStop, PresetGradients,

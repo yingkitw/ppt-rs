@@ -361,6 +361,7 @@ fn write_notes_master<W: Write + Seek>(
 fn write_theme_and_layouts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
+    settings: Option<&PresentationSettings>,
 ) -> Result<()> {
     // Slide layouts
     let slide_layout = create_slide_layout_xml();
@@ -383,7 +384,7 @@ fn write_theme_and_layouts<W: Write + Seek>(
     zip.write_all(master_rels.as_bytes())?;
 
     // Theme
-    let theme = create_theme_xml();
+    let theme = create_theme_xml(settings.and_then(|s| s.theme.as_ref()));
     zip.start_file("ppt/theme/theme1.xml", *options)?;
     zip.write_all(theme.as_bytes())?;
 
@@ -458,7 +459,7 @@ fn write_package_files<W: Write + Seek>(
     }
 
     // 9. Theme and layouts
-    write_theme_and_layouts(zip, options)?;
+    write_theme_and_layouts(zip, options, settings)?;
 
     // 10. Document properties
     write_document_properties(zip, options, title, slide_count)?;
@@ -520,7 +521,7 @@ fn write_package_files_lazy<W: Write + Seek>(
     }
 
     // 9. Theme and layouts
-    write_theme_and_layouts(zip, options)?;
+    write_theme_and_layouts(zip, options, settings)?;
 
     // 10. Document properties
     write_document_properties(zip, options, title, slide_count)?;

@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.14
+**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.16
 
 ## Active
 
@@ -17,16 +17,9 @@
 - [ ] Complete API documentation with examples
 
 ### P2 — Medium Value
-- [ ] Advanced theme customization
 - [ ] Ink annotations (XML generation done; needs ink part + relationship)
 - [ ] Benchmark suite
-- [ ] Tutorial: Building your first presentation
-- [ ] Tutorial: Markdown to PPTX workflow
 
-### P3 — Future Work
-- [ ] Fuzzing tests for PPTX parsing
-- [ ] Property-based testing
-- [ ] Cross-platform testing (Windows, macOS, Linux)
 
 ## Performance Targets
 
@@ -41,10 +34,10 @@
 ## Technical Debt
 
 ### Code Quality
-- [ ] Profile memory usage with large presentations (100+ slides)
-- [ ] Review XML generation patterns — some modules use string concat instead of structured builders
-- [ ] Consolidate table cell formatting logic (potential DRY opportunity)
-- [ ] Modularize image effects XML generation
+- [x] Profile memory usage with large presentations (100+ slides)
+- [x] Review XML generation patterns — some modules use string concat instead of structured builders
+- [x] Consolidate table cell formatting logic (potential DRY opportunity)
+- [x] Modularize image effects XML generation
 
 ### Refactoring Opportunities
 - [ ] Extract common validation patterns into `core::validation` module
@@ -52,6 +45,49 @@
 - [ ] Consider builder pattern consolidation for Shape/Table/Chart builders
 
 ## Completed
+
+<details>
+<summary>v0.2.17 — Technical Debt: Memory Profiling & XML Refactors</summary>
+
+- **Memory profiling** (`src/generator/memory_profile.rs`):
+  - `GenerationMetrics`, `profile_eager_generation()`, `profile_lazy_generation()`
+  - `sample_slides()` helper for benchmarking
+  - Integration tests for 100–500 slide decks (`tests/memory_profile_test.rs`)
+
+- **Table cell formatting consolidation** (`src/generator/table/format.rs`, `style.rs`):
+  - Single `generate_cell_xml()` reusing `TextFormat`, `color_to_xml`, `CellMergeState`
+  - Alignment, vertical anchor, and wrap now emitted in generator XML
+  - `table_from_string_rows()` shared by HTML and Markdown import pipelines
+
+- **Image effects modularization** (`src/generator/image_effects.rs`):
+  - `generate_effect_xml()`, `generate_effect_list_xml()`, `generate_blip_fill_xml()`
+  - `images_xml.rs` delegates to effects module
+
+- **XML generation review** (`docs/XML_GENERATION.md`):
+  - Documents patterns, completed refactors, and migration priorities
+  - `table/xml.rs` migrated to `XmlWriter` for grid/row shell generation
+
+</details>
+
+<details>
+<summary>v0.2.16 — Advanced Theme Customization</summary>
+
+- **PresentationTheme** (`src/generator/presentation_theme.rs`):
+  - `ThemeColorScheme` — ECMA-376 12-slot color scheme with `office()` preset and `from_palette()`
+  - `ThemeFonts` — major/minor typeface pair (headings and body)
+  - Built-in presets: `corporate()`, `modern()`, `vibrant()`, `dark()`, `nature()`, `tech()`, `carbon()`
+  - Fluent builders: `.colors()`, `.fonts()`, `.major_font()`, `.minor_font()`
+  - `to_theme_xml()` — generates `ppt/theme/theme1.xml` embedded in output PPTX
+
+- **API integration**:
+  - `Presentation::with_theme()` — apply theme via high-level API
+  - `PresentationSettings::theme()` — apply theme via generator settings
+  - `prelude::themes::Theme::to_presentation_theme()` — bridge prelude presets to embedded themes
+  - `create_theme_xml()` delegates to custom theme when settings provide one
+
+- **Tests**: 4 unit tests + 3 integration tests (`tests/theme_customization_test.rs`)
+
+</details>
 
 <details>
 <summary>v0.2.12 — Export & Compression: Round-trip Capabilities</summary>

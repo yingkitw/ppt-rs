@@ -7,10 +7,13 @@ use super::slide_show_settings::SlideShowSettings;
 use super::print_settings::PrintSettings;
 use super::embedded_fonts::EmbeddedFontList;
 use super::digital_signature::DigitalSignature;
+use crate::generator::PresentationTheme;
 
 /// Presentation-level settings for the PPTX package
 #[derive(Clone, Debug, Default)]
 pub struct PresentationSettings {
+    /// Color and font theme (`ppt/theme/theme1.xml`)
+    pub theme: Option<PresentationTheme>,
     /// Slide show settings (generates `<p:showPr>` in presentation.xml)
     pub slide_show: Option<SlideShowSettings>,
     /// Print settings (generates `<p:prnPr>` in presentation.xml)
@@ -24,6 +27,11 @@ pub struct PresentationSettings {
 impl PresentationSettings {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn theme(mut self, theme: PresentationTheme) -> Self {
+        self.theme = Some(theme);
+        self
     }
 
     pub fn slide_show(mut self, settings: SlideShowSettings) -> Self {
@@ -48,7 +56,8 @@ impl PresentationSettings {
 
     /// Check if any presentation-level settings are configured
     pub fn has_settings(&self) -> bool {
-        self.slide_show.is_some()
+        self.theme.is_some()
+            || self.slide_show.is_some()
             || self.print.is_some()
             || self.embedded_fonts.is_some()
             || self.digital_signature.is_some()
@@ -63,6 +72,13 @@ mod tests {
     fn test_default_has_no_settings() {
         let settings = PresentationSettings::new();
         assert!(!settings.has_settings());
+    }
+
+    #[test]
+    fn test_with_theme() {
+        let settings = PresentationSettings::new().theme(PresentationTheme::corporate());
+        assert!(settings.has_settings());
+        assert!(settings.theme.is_some());
     }
 
     #[test]

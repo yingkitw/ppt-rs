@@ -12,7 +12,6 @@ pub fn escape_xml(s: &str) -> String {
 }
 
 /// XML writer helper for building XML strings efficiently
-#[allow(dead_code)]
 pub struct XmlWriter {
     buffer: String,
     indent_level: usize,

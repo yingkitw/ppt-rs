@@ -8,6 +8,7 @@ pub mod slide_content;
 pub mod package_xml;
 pub mod slide_xml;
 pub mod theme_xml;
+pub mod presentation_theme;
 pub mod props_xml;
 
 // Modular layout system
@@ -15,6 +16,7 @@ pub mod layouts;
 
 // Builder and content modules
 pub mod builder;
+pub mod memory_profile;
 
 // Text module (modularized)
 pub mod text;
@@ -26,6 +28,7 @@ pub mod shapes_xml;
 pub mod table;
 
 pub mod images;
+pub mod image_effects;
 pub mod images_xml;
 
 // Charts module (modularized)
@@ -51,6 +54,7 @@ pub use builder::{
 };
 pub use notes_xml::{create_notes_xml, create_notes_rels_xml, create_notes_master_xml, create_notes_master_rels_xml};
 pub use slide_content::{SlideContent, SlideLayout};
+pub use presentation_theme::{PresentationTheme, ThemeColorScheme, ThemeFonts};
 pub use slide_content::{CodeBlock, BulletStyle, BulletPoint, BulletTextFormat, TransitionType, Comment, CommentAuthor, CommentAuthorList, SlideComments, SlideSection, SectionManager, DigitalSignature, SignerInfo, HashAlgorithm, SignatureCommitment, InkAnnotations, InkStroke, InkPen, InkPoint, PenTip, SlideShowSettings, ShowType, PenColor, SlideRange, PrintSettings, HandoutLayout, PrintColorMode, PrintWhat, Orientation, TableMergeMap, MergeRegion, CellMergeState, EmbeddedFontList, EmbeddedFont, FontStyle, FontCharset, PresentationSettings};
 pub use text::{TextFormat, FormattedText, TextFrame, Paragraph, Run, TextAlign, TextAnchor, TextDirection, RtlLanguage, RtlTextProps};
 pub use shapes::{Shape, ShapeType, ShapeFill, ShapeLine, GradientFill as ShapeGradientFill, GradientStop as ShapeGradientStop, GradientDirection as ShapeGradientDirection, FillType, emu_to_inches, inches_to_emu, cm_to_emu};

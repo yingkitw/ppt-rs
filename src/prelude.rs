@@ -669,6 +669,22 @@ pub mod themes {
         dark: "161616",
     };
 
+    impl Theme {
+        /// Convert this palette preset into a PPTX-embedded theme
+        pub fn to_presentation_theme(&self) -> crate::generator::PresentationTheme {
+            crate::generator::PresentationTheme::from_palette(
+                self.name,
+                self.primary,
+                self.secondary,
+                self.accent,
+                self.background,
+                self.text,
+                self.light,
+                self.dark,
+            )
+        }
+    }
+
     /// Get all available themes
     pub fn all() -> Vec<Theme> {
         vec![CORPORATE, MODERN, VIBRANT, DARK, NATURE, TECH, CARBON]

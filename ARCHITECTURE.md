@@ -421,7 +421,8 @@ src/
 │   ├── gradients.rs       # Gradient fills
 │   ├── media.rs           # Video/audio embedding
 │   ├── package_xml.rs     # Package-level XML
-│   ├── theme_xml.rs       # Theme XML
+│   ├── presentation_theme.rs # Customizable theme colors/fonts
+│   ├── theme_xml.rs       # Theme XML generation
 │   ├── props_xml.rs       # Properties XML
 │   └── notes_xml.rs       # Notes XML
 ├── parts/                 # Package parts (SlidePart, ImagePart, etc.)
@@ -610,7 +611,8 @@ Tables in PPTX follow a specific XML structure. The critical ordering is:
 │   ├── gradients.rs    # Gradient fills
 │   ├── media.rs        # Video/audio
 │   ├── package_xml.rs  # Package-level XML
-│   ├── theme_xml.rs    # Theme XML
+│   ├── presentation_theme.rs # Customizable theme colors/fonts
+│   ├── theme_xml.rs    # Theme XML generation
 │   ├── props_xml.rs    # Properties XML
 │   └── notes_xml.rs    # Notes XML
 ├── export/             # Export module (v0.2.2)
@@ -661,7 +663,8 @@ src/cli/
 - [x] Part factory implementation
 - [x] Chart data handling (18+ chart types)
 - [x] Media embedding (video, audio)
-- [x] Theme support
+- [x] Theme support (default Office theme)
+- [x] Advanced theme customization — `PresentationTheme`, custom colors/fonts embedded in `theme1.xml` (v0.2.16)
 - [x] Master slide support
 - [x] Animation support (50+ effects)
 - [x] Transition support (27 effects)
@@ -763,7 +766,7 @@ Effects are rendered in `<a:effectLst>` within `<p:spPr>`:
 - [x] API Simplification — Color & Table helpers (v0.2.11)
 - [x] Export & Compression — Full round-trip capabilities (v0.2.12)
 - [x] MCP Server — AI assistant integration (v0.2.13)
-- [ ] Advanced theme customization
+- [x] Advanced theme customization (v0.2.16)
 - [ ] Complete digital signature wiring (XML done, needs Content_Types + _rels)
 - [ ] Ink annotations wiring (XML done, needs ink part + relationship)
 - [ ] Embedded fonts in output (XML done, needs font data parts + rId wiring)

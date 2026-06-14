@@ -4,7 +4,7 @@
 
 use crate::exc::{PptxError, Result};
 use crate::export::html::export_to_html;
-use crate::generator::{create_pptx_with_content, Image, SlideContent};
+use crate::generator::{create_pptx_with_settings, Image, PresentationSettings, PresentationTheme, SlideContent};
 use crate::import::import_pptx;
 use std::path::Path;
 use std::process::Command;
@@ -14,6 +14,7 @@ use std::process::Command;
 pub struct Presentation {
     title: String,
     slides: Vec<SlideContent>,
+    settings: Option<PresentationSettings>,
 }
 
 impl Presentation {
@@ -22,6 +23,7 @@ impl Presentation {
         Presentation {
             title: String::new(),
             slides: Vec::new(),
+            settings: None,
         }
     }
 
@@ -30,6 +32,7 @@ impl Presentation {
         Presentation {
             title: title.to_string(),
             slides: Vec::new(),
+            settings: None,
         }
     }
 
@@ -66,12 +69,26 @@ impl Presentation {
         &self.title
     }
 
+    /// Apply a custom color/font theme to the generated PPTX
+    pub fn with_theme(mut self, theme: PresentationTheme) -> Self {
+        let mut settings = self.settings.take().unwrap_or_default();
+        settings.theme = Some(theme);
+        self.settings = Some(settings);
+        self
+    }
+
+    /// Set presentation-level settings (theme, slide show, print, etc.)
+    pub fn with_settings(mut self, settings: PresentationSettings) -> Self {
+        self.settings = Some(settings);
+        self
+    }
+
     /// Build the presentation as PPTX bytes
     pub fn build(&self) -> Result<Vec<u8>> {
         if self.slides.is_empty() {
             return Err(PptxError::InvalidState("Presentation has no slides".into()));
         }
-        create_pptx_with_content(&self.title, self.slides.clone())
+        create_pptx_with_settings(&self.title, self.slides.clone(), self.settings.clone())
             .map_err(|e| PptxError::Generic(e.to_string()))
     }
 

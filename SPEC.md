@@ -710,6 +710,7 @@ match create_pptx("title", 5) {
 
 | Version | Features | Significance |
 |---------|----------|--------------|
+| 0.2.16 | Advanced theme customization: `PresentationTheme`, custom colors/fonts embedded in `theme1.xml` | **Theme milestone** — branded PPTX output with ECMA-376 color schemes and typefaces |
 | 0.2.14 | Enhanced HTML/Markdown: real images, task lists, strikethrough, extended CSS, interactive HTML export | **Content enhancement milestone** — real-world content support with images and advanced styling |
 | 0.2.13 | MCP server (8 tools), codebase cleanup, documentation refresh | **MCP integration milestone** — AI assistant integration via Model Context Protocol |
 | 0.2.12 | Markdown export, image export (PNG/JPEG), PPTX compression | **Export & optimization milestone** — full round-trip capabilities |

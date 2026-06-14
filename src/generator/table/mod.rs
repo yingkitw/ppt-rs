@@ -11,9 +11,13 @@
 mod cell;
 mod row;
 mod builder;
+mod format;
+mod style;
 mod xml;
 
 pub use cell::{TableCell, CellAlign, CellVAlign};
 pub use row::TableRow;
 pub use builder::{Table, TableBuilder};
+pub use format::generate_cell_xml;
+pub use style::{header_cell, table_from_string_rows, IMPORT_HEADER_BG, HELPER_HEADER_BG, HEADER_TEXT};
 pub use xml::generate_table_xml;
