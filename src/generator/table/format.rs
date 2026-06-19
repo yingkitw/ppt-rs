@@ -69,22 +69,19 @@ pub fn run_properties_xml(cell: &TableCell) -> String {
     }
 }
 
-/// Paragraph alignment attributes for `<a:p>`.
+/// Paragraph properties element for `<a:p>`.
 pub fn paragraph_props_xml(cell: &TableCell) -> String {
     if cell.align == CellAlign::Center {
         String::new()
     } else {
-        format!(r#" algn="{}""#, cell.align.as_str())
+        format!(r#"<a:pPr algn="{}"/>"#, cell.align.as_str())
     }
 }
 
 /// Body properties for `<a:bodyPr>` inside table cells.
-pub fn body_props_xml(cell: &TableCell) -> String {
-    if cell.wrap_text {
-        r#"<a:bodyPr wrap="square"/>"#.to_string()
-    } else {
-        r#"<a:bodyPr wrap="none"/>"#.to_string()
-    }
+pub fn body_props_xml(_cell: &TableCell) -> String {
+    // PowerPoint strips wrap attributes from table-cell bodyPr on repair.
+    r#"<a:bodyPr/>"#.to_string()
 }
 
 /// Cell properties (`<a:tcPr>`) including background and vertical alignment.
@@ -114,7 +111,7 @@ pub fn generate_cell_xml(cell: &TableCell) -> String {
 
     if cell.h_merge || cell.v_merge {
         return format!(
-            r#"<a:tc{merge_attrs}><a:txBody><a:bodyPr/><a:lstStyle/><a:p/></a:txBody><a:tcPr/></a:tc>"#
+            r#"<a:tc{merge_attrs}><a:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr/></a:p></a:txBody><a:tcPr/></a:tc>"#
         );
     }
 
@@ -123,9 +120,16 @@ pub fn generate_cell_xml(cell: &TableCell) -> String {
     let run_props = run_properties_xml(cell);
     let text = escape_xml(&cell.text);
     let tc_pr = tc_properties_xml(cell);
+    let paragraph = if cell.text.is_empty() {
+        r#"<a:p><a:endParaRPr lang="en-US"/></a:p>"#.to_string()
+    } else {
+        format!(
+            r#"<a:p>{paragraph_props}<a:r>{run_props}<a:t>{text}</a:t></a:r></a:p>"#
+        )
+    };
 
     format!(
-        r#"<a:tc{merge_attrs}><a:txBody>{body_pr}<a:lstStyle/><a:p{paragraph_props}><a:r>{run_props}<a:t>{text}</a:t></a:r></a:p></a:txBody>{tc_pr}</a:tc>"#
+        r#"<a:tc{merge_attrs}><a:txBody>{body_pr}<a:lstStyle/>{paragraph}</a:txBody>{tc_pr}</a:tc>"#
     )
 }
 
@@ -160,14 +164,23 @@ mod tests {
     fn test_generate_cell_alignment() {
         let cell = TableCell::new("Left").align_left();
         let xml = generate_cell_xml(&cell);
-        assert!(xml.contains(r#"algn="l""#));
+        assert!(xml.contains(r#"<a:pPr algn="l"/>"#));
     }
 
     #[test]
     fn test_generate_cell_wrap_disabled() {
         let cell = TableCell::new("No wrap").wrap(false);
         let xml = generate_cell_xml(&cell);
-        assert!(xml.contains(r#"wrap="none""#));
+        assert!(xml.contains("<a:bodyPr/>"));
+        assert!(!xml.contains(r#"wrap=""#));
+    }
+
+    #[test]
+    fn test_generate_empty_cell_uses_end_para_rpr() {
+        let cell = TableCell::new("");
+        let xml = generate_cell_xml(&cell);
+        assert!(xml.contains("<a:endParaRPr"));
+        assert!(!xml.contains("<a:t></a:t>"));
     }
 
     #[test]

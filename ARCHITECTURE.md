@@ -28,6 +28,13 @@ The project has completed several major phases:
    - Enhanced HTML Export: Interactive navigation, speaker notes, keyboard controls
    - HTML Parser Documentation: Comprehensive parser comparison guide
 
+5. **PowerPoint Zero-Repair Compatibility Gate** (v0.2.19) — Generated decks open without repair
+   - `core::package_validation` — structured `validate_package_bytes()` → `PackageValidationReport` with `ValidationCategory` / `ValidationSeverity`; debug builds self-check every generated deck
+   - Multiple slide layouts — 7 layouts on slide master 1 (`layout_parts.rs`), per-slide `SlideContent::with_layout()`
+   - Template-based generation — `PptxTemplate` / `create_pptx_with_template` / `PresentationSettings::template` / CLI `--template`
+   - Chart Excel workbook embedding — `ppt/embeddings/Microsoft_Excel_SheetN.xlsx` so charts are editable
+   - Handout master packaging, slide master `p:txStyles`, notes master theme parity, presentation rel ordering
+
 Future work will focus on completing partially-implemented features (digital signatures, embedded fonts) and performance optimization.
 
 ```
@@ -224,6 +231,14 @@ shape.fill(red()).stroke(black(), 12700).text("Hello");
 
 #### Core Types (`core/`)
 - **Purpose**: Foundational traits and types
+- **Sub-modules**:
+  - `traits.rs` — `ToXml`, `Positioned`, `ElementSized`
+  - `dimension.rs` — `Dimension` enum (EMU, Inches, Cm, Pt, Ratio, Percent), `FlexPosition`, `FlexSize`
+  - `xml_utils.rs` — shared XML utilities (`escape_xml`, `XmlWriter`, `append_usize`, `append_i32`)
+  - `validation.rs` — shared validators, `ValidationIssue`, `REQUIRED_PARTS_*` constants
+  - `placement.rs` — `ElementPlacement` (consolidated builder placement)
+  - `package_validation/` — structural PPTX validation: `validate_package`, `validate_package_bytes`, `PackageValidationReport`, `PackageValidationIssue`, `ValidationCategory`, `ValidationSeverity`, `REQUIRED_PACKAGE_PARTS` (sub-modules: `rules`, `rels`, `context`, `report`)
+  - `powerpoint_compat.rs` — legacy `validate_powerpoint_structure` / `CompatReport` wrapper over package validation
 - **Key Types**:
   - `ToXml` trait - XML serialization
   - `Positioned` trait - Position interface (`.x()`, `.y()`, `.set_position()`)
@@ -245,31 +260,31 @@ shape.fill(red()).stroke(black(), 12700).text("Hello");
 
 ## Testing Architecture
 
-The project employs a layered testing strategy with 850+ tests:
+The project employs a layered testing strategy with 1100+ tests:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Integration Tests                        │
 │         (tests/ directory — full workflows)                 │
-│              50+ tests, end-to-end validation               │
+│              420+ tests, end-to-end validation              │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                    Unit Tests                               │
 │         (inline in src/ modules — per-component)            │
-│              800+ tests, fast feedback                        │
+│              690+ tests, fast feedback                      │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    Compatibility Tests                        │
-│         (tests/compatibility_test.rs)                        │
+│                    Compatibility Tests                      │
+│         (tests/compatibility_test.rs)                       │
 │              6 tests, PowerPoint/LibreOffice/Google         │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    Documentation Tests                        │
+│                    Documentation Tests                      │
 │         (doctest — examples in doc comments)                │
-│              50+ tests, API examples validated               │
+│              50+ tests, API examples validated              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -283,7 +298,8 @@ The project employs a layered testing strategy with 850+ tests:
 ### Running Tests
 
 ```bash
-cargo test              # All testscargo test --lib        # Unit tests only
+cargo test              # All tests
+cargo test --lib        # Unit tests only
 cargo test integration  # Integration tests
 cargo test --doc        # Doc tests
 cargo clippy            # Lint check
@@ -399,7 +415,16 @@ src/
 │   ├── mod.rs
 │   ├── dimension.rs       # Dimension enum (EMU, Inches, Cm, Pt, Ratio)
 │   ├── traits.rs          # ToXml, Positioned, ElementSized traits
-│   └── xml_utils.rs       # Shared XML utilities (escape_xml)
+│   ├── xml_utils.rs       # Shared XML utilities (escape_xml, XmlWriter)
+│   ├── validation.rs      # Shared validators, ValidationIssue, REQUIRED_PARTS_*
+│   ├── placement.rs       # ElementPlacement (consolidated builder placement)
+│   ├── powerpoint_compat.rs # Legacy CompatReport / validate_powerpoint_structure
+│   └── package_validation/  # Structural PPTX validation engine
+│       ├── mod.rs
+│       ├── rules.rs       # validate_package / validate_package_bytes
+│       ├── rels.rs        # Relationship checks
+│       ├── context.rs     # Validation context
+│       └── report.rs      # PackageValidationReport / Issue / Severity / Category
 ├── elements/              # Unified element types
 │   ├── mod.rs
 │   ├── color.rs           # Color, RgbColor, SchemeColor
@@ -407,20 +432,26 @@ src/
 │   └── ...
 ├── generator/             # PPTX generation (ZIP + XML)
 │   ├── mod.rs
-│   ├── builder.rs         # create_pptx(), create_pptx_with_content()
+│   ├── builder.rs         # create_pptx(), create_pptx_with_content(), create_pptx_with_template()
 │   ├── slide_xml/         # Modular slide XML generation
-│   ├── slide_content/     # SlideContent, bullets, transitions
-│   ├── charts/            # Chart types and XML
+│   ├── slide_content/     # SlideContent, bullets, transitions, layouts, settings
+│   ├── layout_parts.rs    # slideLayoutN.xml + master footer placeholders (v0.2.19)
+│   ├── template.rs        # PptxTemplate — load masters/theme/layouts from a deck (v0.2.19)
+│   ├── package_cache.rs   # Cached package bytes / diff helpers (v0.2.19)
+│   ├── media_registry.rs  # De-duplicate media parts across slides (v0.2.19)
+│   ├── charts/            # Chart types, XML, Excel workbook embedding (v0.2.19)
 │   ├── table/             # Table builder and XML
 │   ├── shapes.rs          # Shape types
 │   ├── shapes_xml.rs      # Shape XML generation
 │   ├── images.rs          # Image types, effects, ImageBuilder
 │   ├── images_xml.rs      # Image XML generation
+│   ├── image_effects.rs   # Modular image effects XML
 │   ├── connectors.rs      # Connector types
 │   ├── hyperlinks.rs      # Hyperlink support
 │   ├── gradients.rs       # Gradient fills
 │   ├── media.rs           # Video/audio embedding
-│   ├── package_xml.rs     # Package-level XML
+│   ├── memory_profile.rs  # Generation metrics + output-capacity estimation
+│   ├── package_xml.rs     # Package-level XML (content types, rels, presProps, viewProps, tableStyles, handout master)
 │   ├── presentation_theme.rs # Customizable theme colors/fonts
 │   ├── theme_xml.rs       # Theme XML generation
 │   ├── props_xml.rs       # Properties XML
@@ -590,27 +621,34 @@ Tables in PPTX follow a specific XML structure. The critical ordering is:
 │   │   ├── layout.rs
 │   │   ├── transition.rs
 │   │   └── code_block.rs
-│   ├── charts/         # Chart module (v0.2.3)
+│   ├── charts/         # Chart module (v0.2.3; Excel embedding v0.2.19)
 │   │   ├── mod.rs
 │   │   ├── builder.rs
 │   │   ├── data.rs
 │   │   ├── types.rs
-│   │   └── xml.rs
+│   │   ├── xml.rs
+│   │   └── embedding.rs  # Embedded workbook + chart rels (v0.2.19)
 │   ├── table/          # Modular table module
 │   │   ├── mod.rs
 │   │   ├── cell.rs
 │   │   ├── row.rs
 │   │   ├── builder.rs
 │   │   └── xml.rs
+│   ├── layout_parts.rs # slideLayoutN.xml + master footers (v0.2.19)
+│   ├── template.rs     # PptxTemplate — load masters/theme/layouts (v0.2.19)
+│   ├── package_cache.rs # Package byte cache / diff helpers (v0.2.19)
+│   ├── media_registry.rs # Media de-duplication registry (v0.2.19)
+│   ├── memory_profile.rs # Generation metrics + capacity estimation
 │   ├── shapes.rs       # Shape types
 │   ├── shapes_xml.rs   # Shape XML generation
 │   ├── images.rs       # Image types
+│   ├── image_effects.rs # Modular image effects XML
 │   ├── images_xml.rs   # Image XML generation
 │   ├── connectors.rs   # Connector shapes
 │   ├── hyperlinks.rs   # Hyperlink support
 │   ├── gradients.rs    # Gradient fills
 │   ├── media.rs        # Video/audio
-│   ├── package_xml.rs  # Package-level XML
+│   ├── package_xml.rs  # Package-level XML (rels/presProps/viewProps/tableStyles/handout master)
 │   ├── presentation_theme.rs # Customizable theme colors/fonts
 │   ├── theme_xml.rs    # Theme XML generation
 │   ├── props_xml.rs    # Properties XML
@@ -688,6 +726,11 @@ src/cli/
 - [x] Enhanced HTML: Extended CSS, real image downloading, hyperlink handling (v0.2.14)
 - [x] Enhanced HTML Export: Interactive navigation, speaker notes, keyboard controls (v0.2.14)
 - [x] HTML Parser Documentation: Comprehensive parser comparison guide (v0.2.14)
+- [x] Structured package validation (`core::package_validation`) + debug-build self-check (v0.2.19)
+- [x] Multiple slide layouts + per-slide layout selection (v0.2.19)
+- [x] Template-based generation (`PptxTemplate`, `--template`) (v0.2.19)
+- [x] Chart Excel workbook embedding for editable charts (v0.2.19)
+- [x] Handout master packaging + slide master completeness + rel ordering (v0.2.19)
 
 ## Image Effects System (v0.2.10)
 
@@ -767,6 +810,11 @@ Effects are rendered in `<a:effectLst>` within `<p:spPr>`:
 - [x] Export & Compression — Full round-trip capabilities (v0.2.12)
 - [x] MCP Server — AI assistant integration (v0.2.13)
 - [x] Advanced theme customization (v0.2.16)
+- [x] PowerPoint compatibility gate — structured `core::package_validation` (v0.2.19)
+- [x] Multiple slide layouts + per-slide selection (v0.2.19)
+- [x] Template-based generation (v0.2.19)
+- [x] Chart Excel workbook embedding (v0.2.19)
+- [x] Handout master packaging + slide master completeness + rel ordering (v0.2.19)
 - [ ] Complete digital signature wiring (XML done, needs Content_Types + _rels)
 - [ ] Ink annotations wiring (XML done, needs ink part + relationship)
 - [ ] Embedded fonts in output (XML done, needs font data parts + rId wiring)

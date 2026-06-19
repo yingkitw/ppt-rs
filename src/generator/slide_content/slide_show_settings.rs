@@ -71,7 +71,7 @@ pub struct SlideShowSettings {
 impl SlideShowSettings {
     pub fn new() -> Self {
         Self {
-            use_timings: true,
+            use_timings: false,
             show_media_controls: true,
             ..Default::default()
         }
@@ -174,6 +174,17 @@ impl SlideShowSettings {
             self.pen_color.color
         ));
 
+        xml.push_str(&format!(
+            r#"<p:extLst><p:ext uri="{{EC167BDD-8182-4AB7-AECC-EB403E3ABB37}}"><p14:laserClr xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main"><a:srgbClr val="{}"/></p14:laserClr></p:ext>"#,
+            self.pen_color.color
+        ));
+        if self.show_media_controls {
+            xml.push_str(
+                r#"<p:ext uri="{2FDB2607-1784-4EEB-B798-7EB5836EED8A}"><p14:showMediaCtrls xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" val="1"/></p:ext>"#,
+            );
+        }
+        xml.push_str("</p:extLst>");
+
         xml.push_str("</p:showPr>");
         xml
     }
@@ -218,7 +229,7 @@ mod tests {
         let s = SlideShowSettings::new();
         assert_eq!(s.show_type, ShowType::Speaker);
         assert!(!s.loop_continuously);
-        assert!(s.use_timings);
+        assert!(!s.use_timings);
         assert!(s.show_media_controls);
     }
 

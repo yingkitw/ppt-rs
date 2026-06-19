@@ -14,6 +14,7 @@ use ppt_rs::generator::memory_profile::estimate_slide_payload;
 use ppt_rs::generator::package_xml::{
     create_content_types_xml, create_content_types_xml_with_notes_and_charts,
     create_presentation_rels_xml, create_presentation_xml,
+    first_slide_rel_id, slide_id_value, slide_rel_id,
 };
 use ppt_rs::generator::table::{
     generate_cell_xml, header_cell, table_from_string_rows, CellAlign, CellVAlign, IMPORT_HEADER_BG,
@@ -149,7 +150,8 @@ fn test_cell_vertical_alignment_in_xml() {
 fn test_cell_wrap_disabled_in_xml() {
     let cell = TableCell::new("No wrap").wrap(false);
     let xml = generate_cell_xml(&cell);
-    assert!(xml.contains(r#"wrap="none""#));
+    assert!(xml.contains("<a:bodyPr/>"));
+    assert!(!xml.contains(r#"wrap=""#));
 }
 
 #[test]
@@ -162,7 +164,7 @@ fn test_cell_merge_attributes_in_xml() {
 
     assert!(anchor_xml.contains(r#"gridSpan="2""#));
     assert!(covered_xml.contains(r#"hMerge="1""#));
-    assert!(covered_xml.contains("<a:p/>"));
+    assert!(covered_xml.contains("<a:endParaRPr"));
 }
 
 #[test]
@@ -278,17 +280,20 @@ fn test_presentation_rels_xml_slide_relationships() {
     let xml = create_presentation_rels_xml(2);
     assert!(xml.contains(r#"Target="slides/slide1.xml""#));
     assert!(xml.contains(r#"Target="slides/slide2.xml""#));
-    assert!(xml.contains(r#"Id="rId3""#));
-    assert!(xml.contains(r#"Id="rId4""#));
+    assert!(xml.contains(r#"Id="rId6""#));
+    assert!(xml.contains(r#"Id="rId7""#));
+    assert!(xml.contains(r#"Id="rId2""#));
+    assert!(xml.contains("presProps"));
+    assert!(xml.contains("tableStyles"));
 }
 
 #[test]
 fn test_presentation_xml_slide_id_list() {
-    let xml = create_presentation_xml("Title", 2);
+    let xml = create_presentation_xml("Title", 2, false, false);
+    assert!(xml.contains(r#"id="256""#));
     assert!(xml.contains(r#"id="257""#));
-    assert!(xml.contains(r#"id="258""#));
+    assert!(xml.contains(r#"r:id="rId2""#));
     assert!(xml.contains(r#"r:id="rId3""#));
-    assert!(xml.contains(r#"r:id="rId4""#));
 }
 
 #[test]
@@ -297,12 +302,24 @@ fn test_content_types_with_notes_and_charts() {
     slide_with_notes.notes = Some("Speaker note".into());
 
     let slides = vec![SlideContent::new("Plain"), slide_with_notes];
-    let xml = create_content_types_xml_with_notes_and_charts(2, Some(&slides), 1);
+    let xml = create_content_types_xml_with_notes_and_charts(2, Some(&slides), 1, false, &[]);
 
-    assert!(xml.contains("/ppt/notesSlides/notesSlide2.xml"));
-    assert!(!xml.contains("/ppt/notesSlides/notesSlide1.xml"));
+    assert!(xml.contains("/ppt/notesSlides/notesSlide1.xml"));
+    assert!(!xml.contains("/ppt/notesSlides/notesSlide2.xml"));
     assert!(xml.contains("/ppt/charts/chart1.xml"));
+    assert!(xml.contains("Microsoft_Excel_Sheet1.xlsx"));
+    assert!(xml.contains(r#"Extension="xlsx""#));
     assert!(xml.contains("notesMaster1.xml"));
+    assert!(xml.contains("/ppt/presProps.xml"));
+    assert!(xml.contains("/ppt/viewProps.xml"));
+    assert!(xml.contains("/ppt/tableStyles.xml"));
+}
+
+#[test]
+fn test_slide_rel_id_helpers() {
+    assert_eq!(first_slide_rel_id(false, false), 2);
+    assert_eq!(slide_rel_id(1, false, false), 2);
+    assert_eq!(slide_id_value(1), 256);
 }
 
 // ---------------------------------------------------------------------------

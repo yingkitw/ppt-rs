@@ -1,40 +1,137 @@
 //! PPTX builder - orchestrates ZIP creation and file writing
 
 use std::io::{Write, Seek, Cursor};
-use zip::ZipWriter;
 use zip::write::FileOptions;
+use zip::ZipWriter;
 use crate::exc::Result;
 use crate::core::append_usize;
 use super::slide_content::SlideContent;
+use super::memory_profile::estimate_output_capacity;
+use super::package_cache::{self, print_affects_theme_parts};
 use super::package_xml::{
-    create_rels_xml, create_presentation_rels_xml, create_presentation_xml,
+    create_rels_xml, create_presentation_rels_xml_full, create_presentation_xml,
     create_content_types_xml_with_notes_and_charts,
-    create_presentation_rels_xml_with_notes,
-    create_slide_rels_xml_extended,
+    content_types_opening,
+    create_pres_props_xml, create_view_props_xml, create_table_styles_xml,
+    create_handout_master_rels_xml,
 };
 use super::slide_xml::{
     create_slide_xml, create_slide_xml_with_content, create_slide_rels_xml,
 };
 use super::theme_xml::{
-    create_slide_layout_xml, create_layout_rels_xml,
-    create_slide_master_xml, create_master_rels_xml, create_theme_xml,
+    create_slide_master_xml, create_master_rels_xml, create_theme_xml, create_layout_rels_xml,
 };
+use super::layout_parts::{create_slide_layout_xml, STANDARD_LAYOUT_COUNT};
+use super::template::PptxTemplate;
 use super::props_xml::{create_core_props_xml, create_app_props_xml};
 use super::notes_xml::*;
-use crate::generator::charts::generate_chart_part_xml;
+use crate::generator::presentation_theme::office_theme_xml;
+use crate::generator::charts::{
+    chart_embedding_filename, create_chart_rels_xml, generate_chart_part_xml,
+    reference_workbook_bytes,
+};
+use crate::generator::slide_content::print_settings::PrintWhat;
 use crate::generator::slide_content::presentation_settings::PresentationSettings;
+use super::media_registry::MediaRegistry;
+
+fn zip_options() -> FileOptions {
+    FileOptions::default()
+}
+
+/// First relationship id after layout (rId1) and optional notes slide.
+fn slide_content_rel_start(has_notes: bool, image_count: usize) -> usize {
+    2 + usize::from(has_notes) + image_count
+}
+
+fn build_media_registry(slides: &[SlideContent]) -> MediaRegistry {
+    let mut registry = MediaRegistry::default();
+    for slide in slides {
+        for image in &slide.images {
+            if let Some(bytes) = image.get_bytes() {
+                registry.image_number(&bytes, &image.extension());
+            }
+        }
+    }
+    registry
+}
+
+fn build_media_registry_lazy(slides: &dyn LazySlideSource) -> MediaRegistry {
+    let mut registry = MediaRegistry::default();
+    for i in 0..slides.slide_count() {
+        if let Some(slide) = slides.generate_slide(i) {
+            for image in &slide.images {
+                if let Some(bytes) = image.get_bytes() {
+                    registry.image_number(&bytes, &image.extension());
+                }
+            }
+        }
+    }
+    registry
+}
+
+fn slide_image_rel_targets(slide: &SlideContent, registry: &MediaRegistry) -> Vec<(usize, String)> {
+    let mut images = Vec::with_capacity(slide.images.len());
+    for image in &slide.images {
+        if let Some(bytes) = image.get_bytes() {
+            if let Some(num) = registry.lookup_number(&bytes, &image.extension()) {
+                images.push((num, image.extension()));
+            }
+        }
+    }
+    images
+}
+
+/// Collect hyperlink relationship XML (`<Relationship .../>`) for every shape on
+/// the slide whose hyperlink has an assigned relationship id. The slide XML
+/// references these ids via `<a:hlinkClick r:id="..."/>`, so the matching
+/// relationship must be present in the slide's `.rels` part.
+fn slide_hyperlink_relationships(slide: &SlideContent) -> Vec<String> {
+    slide
+        .shapes
+        .iter()
+        .filter_map(|s| s.hyperlink.as_ref())
+        .filter_map(|h| {
+            h.r_id
+                .as_ref()
+                .map(|rid| crate::generator::generate_hyperlink_relationship_xml(h, rid))
+        })
+        .collect()
+}
+
+fn set_notes_part_path(path: &mut String, notes_part_num: usize) {
+    path.clear();
+    path.push_str("ppt/notesSlides/notesSlide");
+    append_usize(path, notes_part_num);
+    path.push_str(".xml");
+}
+
+#[cfg(debug_assertions)]
+fn debug_assert_package_valid(bytes: &[u8]) {
+    use crate::core::validate_package_bytes;
+    let report = validate_package_bytes(bytes);
+    debug_assert!(
+        report.is_valid(),
+        "generated PPTX failed package validation: {:?}",
+        report.error_messages()
+    );
+}
+
+#[cfg(not(debug_assertions))]
+fn debug_assert_package_valid(_bytes: &[u8]) {}
 
 /// Create a minimal but valid PPTX file
 pub fn create_pptx(title: &str, slides: usize) -> Result<Vec<u8>> {
-    let buffer = Vec::new();
+    let buffer = Vec::with_capacity(slides.saturating_mul(6_000).max(8_192));
     let cursor = Cursor::new(buffer);
     let mut zip = ZipWriter::new(cursor);
-    let options = FileOptions::default();
+    let options = zip_options();
 
     write_package_files(&mut zip, &options, title, slides, None, None)?;
 
     let cursor = zip.finish()?;
-    Ok(cursor.into_inner())
+    let bytes = cursor.into_inner();
+    debug_assert_package_valid(&bytes);
+    Ok(bytes)
 }
 
 /// Create a PPTX file with custom slide content
@@ -45,22 +142,51 @@ pub fn create_pptx_with_content(
     create_pptx_with_settings(title, &slides, None)
 }
 
+/// Create a PPTX file with custom slide content, settings, and optional template deck.
+pub fn create_pptx_with_template(
+    title: &str,
+    slides: &[SlideContent],
+    template_path: &str,
+    settings: Option<PresentationSettings>,
+) -> Result<Vec<u8>> {
+    let mut merged = settings.unwrap_or_default();
+    merged.template_path = Some(template_path.to_string());
+    create_pptx_with_settings(title, slides, Some(merged))
+}
+
+/// Resolve layout part index for a slide (respects template layout count).
+fn resolve_layout_number(slide: &SlideContent, template: Option<&PptxTemplate>) -> usize {
+    let requested = slide.layout.layout_number();
+    template
+        .map(|t| t.resolve_layout_number(requested))
+        .unwrap_or(requested)
+}
+
+fn load_template(settings: Option<&PresentationSettings>) -> Result<Option<PptxTemplate>> {
+    if let Some(path) = settings.and_then(|s| s.template_path.as_deref()) {
+        Ok(Some(PptxTemplate::load(path)?))
+    } else {
+        Ok(None)
+    }
+}
+
 /// Create a PPTX file with custom slide content and presentation-level settings
 pub fn create_pptx_with_settings(
     title: &str,
     slides: &[SlideContent],
     settings: Option<PresentationSettings>,
 ) -> Result<Vec<u8>> {
-    let estimated_zip_bytes = slides.len().saturating_mul(6000).max(8192);
-    let buffer = Vec::with_capacity(estimated_zip_bytes);
+    let buffer = Vec::with_capacity(estimate_output_capacity(slides.len(), Some(slides)));
     let cursor = Cursor::new(buffer);
     let mut zip = ZipWriter::new(cursor);
-    let options = FileOptions::default();
+    let options = zip_options();
 
     write_package_files(&mut zip, &options, title, slides.len(), Some(slides), settings.as_ref())?;
 
     let cursor = zip.finish()?;
-    Ok(cursor.into_inner())
+    let bytes = cursor.into_inner();
+    debug_assert_package_valid(&bytes);
+    Ok(bytes)
 }
 
 /// Create a PPTX file and write it directly to a writer (streaming API).
@@ -160,17 +286,23 @@ pub trait LazySlideSource {
     /// Generate a slide by index (0-based). Return None if index is out of bounds.
     fn generate_slide(&self, index: usize) -> Option<SlideContent>;
 
+    /// Notes and chart count from a single slide generation when both are needed.
+    fn slide_features(&self, index: usize) -> Option<(bool, usize)> {
+        self.generate_slide(index)
+            .map(|s| (s.notes.is_some(), s.charts.len()))
+    }
+
     /// Check if a slide has notes (default implementation checks the generated slide)
     fn slide_has_notes(&self, index: usize) -> bool {
-        self.generate_slide(index)
-            .map(|s| s.notes.is_some())
+        self.slide_features(index)
+            .map(|(notes, _)| notes)
             .unwrap_or(false)
     }
 
     /// Get the number of charts in a slide (default implementation checks the generated slide)
     fn slide_chart_count(&self, index: usize) -> usize {
-        self.generate_slide(index)
-            .map(|s| s.charts.len())
+        self.slide_features(index)
+            .map(|(_, charts)| charts)
             .unwrap_or(0)
     }
 }
@@ -241,13 +373,6 @@ fn set_slide_rels_path(path: &mut String, slide_num: usize) {
     path.push_str(".xml.rels");
 }
 
-fn set_notes_slide_path(path: &mut String, slide_num: usize) {
-    path.clear();
-    path.push_str("ppt/notesSlides/notesSlide");
-    append_usize(path, slide_num);
-    path.push_str(".xml");
-}
-
 fn push_chart_rid(rids: &mut Vec<String>, rel_num: usize) {
     let mut rid = String::with_capacity(8);
     rid.push_str("rId");
@@ -277,11 +402,14 @@ fn collect_chart_info(slides: Option<&[SlideContent]>) -> ChartInfo {
 /// Collect chart metadata from lazy slide source
 fn collect_chart_info_lazy(slides: &dyn LazySlideSource) -> ChartInfo {
     let mut total_charts = 0;
-    let mut slide_start_indices = Vec::new();
+    let mut slide_start_indices = Vec::with_capacity(slides.slide_count());
 
     for i in 0..slides.slide_count() {
         slide_start_indices.push(total_charts + 1);
-        total_charts += slides.slide_chart_count(i);
+        total_charts += slides
+            .slide_features(i)
+            .map(|(_, chart_count)| chart_count)
+            .unwrap_or(0);
     }
 
     ChartInfo {
@@ -290,86 +418,139 @@ fn collect_chart_info_lazy(slides: &dyn LazySlideSource) -> ChartInfo {
     }
 }
 
-/// Write content types XML with optional presProps
+/// Whether print settings request handout master packaging.
+fn uses_handouts(settings: Option<&PresentationSettings>) -> bool {
+    settings
+        .and_then(|s| s.print.as_ref())
+        .map(|p| p.print_what == PrintWhat::Handouts)
+        .unwrap_or(false)
+}
+
+/// Collect slide titles for `docProps/app.xml` (eager version).
+///
+/// Returns one title per slide, falling back to "Slide N" placeholders when no
+/// custom slide content is available or a slide has an empty title.
+fn collect_slide_titles(custom_slides: Option<&[SlideContent]>, slide_count: usize) -> Vec<String> {
+    match custom_slides {
+        Some(slides) => slides
+            .iter()
+            .enumerate()
+            .map(|(i, s)| {
+                if s.title.trim().is_empty() {
+                    format!("Slide {}", i + 1)
+                } else {
+                    s.title.clone()
+                }
+            })
+            .collect(),
+        None => (0..slide_count)
+            .map(|i| format!("Slide {}", i + 1))
+            .collect(),
+    }
+}
+
+/// Collect slide titles for `docProps/app.xml` (lazy version).
+fn collect_slide_titles_lazy(slides: &dyn LazySlideSource, slide_count: usize) -> Vec<String> {
+    let mut titles = Vec::with_capacity(slide_count);
+    for i in 0..slide_count {
+        let title = slides
+            .generate_slide(i)
+            .map(|s| {
+                if s.title.trim().is_empty() {
+                    format!("Slide {}", i + 1)
+                } else {
+                    s.title
+                }
+            })
+            .unwrap_or_else(|| format!("Slide {}", i + 1));
+        titles.push(title);
+    }
+    titles
+}
+
+/// Write content types XML
 fn write_content_types<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
     slide_count: usize,
     custom_slides: Option<&[SlideContent]>,
     chart_info: &ChartInfo,
-    has_pres_props: bool,
+    has_handout: bool,
 ) -> Result<()> {
-    let mut content_types = create_content_types_xml_with_notes_and_charts(
+    let media_exts = custom_slides
+        .map(build_media_registry)
+        .map(|registry| registry.extensions())
+        .unwrap_or_default();
+    let content_types = create_content_types_xml_with_notes_and_charts(
         slide_count,
         custom_slides,
         chart_info.total_charts,
+        has_handout,
+        &media_exts,
     );
-
-    if has_pres_props {
-        let ct_entry = "\n<Override PartName=\"/ppt/presProps.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.presProps+xml\"/>";
-        if let Some(pos) = content_types.rfind("</Types>") {
-            content_types.insert_str(pos, ct_entry);
-        }
-    }
 
     zip.start_file("[Content_Types].xml", *options)?;
     zip.write_all(content_types.as_bytes())?;
     Ok(())
 }
 
-/// Write presentation relationships with optional presProps relationship
+/// Write presentation relationships in PowerPoint order.
 fn write_presentation_relationships<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
     slide_count: usize,
     has_notes: bool,
-    has_pres_props: bool,
+    has_handout: bool,
 ) -> Result<()> {
-    let mut pres_rels = if has_notes {
-        create_presentation_rels_xml_with_notes(slide_count)
-    } else {
-        create_presentation_rels_xml(slide_count)
-    };
-
-    if has_pres_props {
-        let props_rid = slide_count + 3 + if has_notes { 1 } else { 0 } + 1;
-        let rel_entry = format!(
-            "\n    <Relationship Id=\"rId{props_rid}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/presProps\" Target=\"presProps.xml\"/>"
-        );
-        if let Some(pos) = pres_rels.rfind("</Relationships>") {
-            pres_rels.insert_str(pos, &rel_entry);
-        }
-    }
+    let pres_rels = create_presentation_rels_xml_full(slide_count, has_notes, has_handout);
 
     zip.start_file("ppt/_rels/presentation.xml.rels", *options)?;
     zip.write_all(pres_rels.as_bytes())?;
     Ok(())
 }
 
-/// Write presentation properties XML if needed
-fn write_presentation_properties<W: Write + Seek>(
+/// Write presProps, viewProps, and tableStyles (always emitted).
+fn write_standard_package_parts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
-    let has_pres_props = settings.map(|s| s.slide_show.is_some() || s.print.is_some()).unwrap_or(false);
+    let pres_props = create_pres_props_xml(settings);
+    zip.start_file("ppt/presProps.xml", *options)?;
+    zip.write_all(pres_props.as_bytes())?;
 
-    if has_pres_props {
-        let mut props_xml = String::from(
-            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentationPr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">"#
-        );
-        if let Some(s) = settings {
-            if let Some(ref show) = s.slide_show {
-                props_xml.push_str(&show.to_xml());
-            }
-            if let Some(ref print) = s.print {
-                props_xml.push_str(&print.to_prnpr_xml());
-            }
-        }
-        props_xml.push_str("</p:presentationPr>");
-        zip.start_file("ppt/presProps.xml", *options)?;
-        zip.write_all(props_xml.as_bytes())?;
-    }
+    let view_props = create_view_props_xml();
+    zip.start_file("ppt/viewProps.xml", *options)?;
+    zip.write_all(view_props.as_bytes())?;
+
+    let table_styles = create_table_styles_xml();
+    zip.start_file("ppt/tableStyles.xml", *options)?;
+    zip.write_all(table_styles.as_bytes())?;
+    Ok(())
+}
+
+/// Write handout master when print settings use handouts.
+fn write_handout_master<W: Write + Seek>(
+    zip: &mut ZipWriter<W>,
+    options: &FileOptions,
+    settings: Option<&PresentationSettings>,
+) -> Result<()> {
+    use crate::generator::slide_content::print_settings::PrintSettings;
+
+    let handout_xml = settings
+        .and_then(|s| s.print.as_ref())
+        .map(|p| p.to_handout_master_xml())
+        .unwrap_or_else(|| PrintSettings::default().to_handout_master_xml());
+
+    zip.start_file("ppt/handoutMasters/handoutMaster1.xml", *options)?;
+    zip.write_all(handout_xml.as_bytes())?;
+
+    zip.start_file("ppt/theme/theme3.xml", *options)?;
+    zip.write_all(office_theme_xml().as_bytes())?;
+
+    let rels = create_handout_master_rels_xml();
+    zip.start_file("ppt/handoutMasters/_rels/handoutMaster1.xml.rels", *options)?;
+    zip.write_all(rels.as_bytes())?;
     Ok(())
 }
 
@@ -382,6 +563,9 @@ fn write_notes_master<W: Write + Seek>(
     zip.start_file("ppt/notesMasters/notesMaster1.xml", *options)?;
     zip.write_all(notes_master.as_bytes())?;
 
+    zip.start_file("ppt/theme/theme2.xml", *options)?;
+    zip.write_all(office_theme_xml().as_bytes())?;
+
     let notes_master_rels = create_notes_master_rels_xml();
     zip.start_file("ppt/notesMasters/_rels/notesMaster1.xml.rels", *options)?;
     zip.write_all(notes_master_rels.as_bytes())?;
@@ -393,31 +577,62 @@ fn write_theme_and_layouts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
     settings: Option<&PresentationSettings>,
+    template: Option<&PptxTemplate>,
 ) -> Result<()> {
-    // Slide layouts
-    let slide_layout = create_slide_layout_xml();
-    zip.start_file("ppt/slideLayouts/slideLayout1.xml", *options)?;
-    zip.write_all(slide_layout.as_bytes())?;
+    let print = settings.and_then(|s| s.print.as_ref());
 
-    // Layout relationships
-    let layout_rels = create_layout_rels_xml();
-    zip.start_file("ppt/slideLayouts/_rels/slideLayout1.xml.rels", *options)?;
-    zip.write_all(layout_rels.as_bytes())?;
+    if let Some(tmpl) = template {
+        for (path, data) in tmpl.parts() {
+            zip.start_file(path, *options)?;
+            zip.write_all(data)?;
+        }
+        if let Some(theme) = settings.and_then(|s| s.theme.as_ref()) {
+            let theme_xml = create_theme_xml(Some(theme));
+            zip.start_file("ppt/theme/theme1.xml", *options)?;
+            zip.write_all(theme_xml.as_bytes())?;
+        }
+        return Ok(());
+    }
 
-    // Slide master
-    let slide_master = create_slide_master_xml();
+    let use_cached_layouts = !print_affects_theme_parts(print);
+
+    for n in 1..=STANDARD_LAYOUT_COUNT {
+        zip.start_file(format!("ppt/slideLayouts/slideLayout{n}.xml"), *options)?;
+        if use_cached_layouts {
+            zip.write_all(package_cache::default_layout_xml(n).as_bytes())?;
+        } else {
+            let layout_xml = create_slide_layout_xml(n, print);
+            zip.write_all(layout_xml.as_bytes())?;
+        }
+
+        zip.start_file(format!("ppt/slideLayouts/_rels/slideLayout{n}.xml.rels"), *options)?;
+        zip.write_all(create_layout_rels_xml().as_bytes())?;
+    }
+
     zip.start_file("ppt/slideMasters/slideMaster1.xml", *options)?;
-    zip.write_all(slide_master.as_bytes())?;
+    if use_cached_layouts {
+        zip.write_all(package_cache::default_slide_master_xml().as_bytes())?;
+    } else {
+        let slide_master = create_slide_master_xml(print);
+        zip.write_all(slide_master.as_bytes())?;
+    }
 
-    // Master relationships
-    let master_rels = create_master_rels_xml();
     zip.start_file("ppt/slideMasters/_rels/slideMaster1.xml.rels", *options)?;
-    zip.write_all(master_rels.as_bytes())?;
+    if use_cached_layouts {
+        zip.write_all(package_cache::master_rels_xml().as_bytes())?;
+    } else {
+        let master_rels = create_master_rels_xml();
+        zip.write_all(master_rels.as_bytes())?;
+    }
 
-    // Theme
-    let theme = create_theme_xml(settings.and_then(|s| s.theme.as_ref()));
-    zip.start_file("ppt/theme/theme1.xml", *options)?;
-    zip.write_all(theme.as_bytes())?;
+    if let Some(theme) = settings.and_then(|s| s.theme.as_ref()) {
+        let theme_xml = create_theme_xml(Some(theme));
+        zip.start_file("ppt/theme/theme1.xml", *options)?;
+        zip.write_all(theme_xml.as_bytes())?;
+    } else {
+        zip.start_file("ppt/theme/theme1.xml", *options)?;
+        zip.write_all(office_theme_xml().as_bytes())?;
+    }
 
     Ok(())
 }
@@ -428,6 +643,8 @@ fn write_document_properties<W: Write + Seek>(
     options: &FileOptions,
     title: &str,
     slide_count: usize,
+    notes_count: usize,
+    slide_titles: &[String],
 ) -> Result<()> {
     // Core properties
     let core_props = create_core_props_xml(title);
@@ -435,7 +652,7 @@ fn write_document_properties<W: Write + Seek>(
     zip.write_all(core_props.as_bytes())?;
 
     // App properties
-    let app_props = create_app_props_xml(slide_count);
+    let app_props = create_app_props_xml(slide_count, notes_count, slide_titles);
     zip.start_file("docProps/app.xml", *options)?;
     zip.write_all(app_props.as_bytes())?;
 
@@ -454,12 +671,13 @@ fn write_package_files<W: Write + Seek>(
     let has_notes = custom_slides
         .map(|slides| slides.iter().any(|s| s.notes.is_some()))
         .unwrap_or(false);
+    let has_handout = uses_handouts(settings);
+    let template = load_template(settings)?;
 
     let chart_info = collect_chart_info(custom_slides);
-    let has_pres_props = settings.map(|s| s.slide_show.is_some() || s.print.is_some()).unwrap_or(false);
 
     // 1. Content types
-    write_content_types(zip, options, slide_count, custom_slides, &chart_info, has_pres_props)?;
+    write_content_types(zip, options, slide_count, custom_slides, &chart_info, has_handout)?;
 
     // 2. Package relationships
     let rels = create_rels_xml();
@@ -467,40 +685,56 @@ fn write_package_files<W: Write + Seek>(
     zip.write_all(rels.as_bytes())?;
 
     // 3. Presentation relationships
-    write_presentation_relationships(zip, options, slide_count, has_notes, has_pres_props)?;
+    write_presentation_relationships(zip, options, slide_count, has_notes, has_handout)?;
 
     // 4. Presentation document
-    let presentation = create_presentation_xml(title, slide_count);
+    let presentation = create_presentation_xml(title, slide_count, has_notes, has_handout);
     zip.start_file("ppt/presentation.xml", *options)?;
     zip.write_all(presentation.as_bytes())?;
 
-    // 5. Presentation properties
-    write_presentation_properties(zip, options, settings)?;
+    // 5. Standard package parts (presProps, viewProps, tableStyles)
+    write_standard_package_parts(zip, options, settings)?;
 
-    // 6. Slides
+    // 6. Handout master (when printing handouts)
+    if has_handout {
+        write_handout_master(zip, options, settings)?;
+    }
+
+    // 7. Slides
     write_slides(zip, options, slide_count, custom_slides)?;
 
-    // 7. Slide relationships
-    write_slide_relationships_extended(zip, options, custom_slides, &chart_info.slide_start_indices, slide_count)?;
+    // 8. Slide relationships
+    write_slide_relationships_extended(
+        zip,
+        options,
+        custom_slides,
+        &chart_info.slide_start_indices,
+        slide_count,
+        template.as_ref(),
+    )?;
 
-    // 8. Notes relationships and master
+    // 9. Notes relationships and master
     if has_notes {
         write_notes_relationships(zip, options, custom_slides)?;
         write_notes_master(zip, options)?;
     }
 
-    // 9. Theme and layouts
-    write_theme_and_layouts(zip, options, settings)?;
+    // 10. Theme and layouts
+    write_theme_and_layouts(zip, options, settings, template.as_ref())?;
 
-    // 10. Document properties
-    write_document_properties(zip, options, title, slide_count)?;
+    // 11. Document properties
+    let notes_count = custom_slides
+        .map(|slides| slides.iter().filter(|s| s.notes.is_some()).count())
+        .unwrap_or(0);
+    let slide_titles = collect_slide_titles(custom_slides, slide_count);
+    write_document_properties(zip, options, title, slide_count, notes_count, &slide_titles)?;
 
-    // 11. Charts
+    // 12. Charts (with embedded workbooks)
     if chart_info.total_charts > 0 {
         write_charts(zip, options, custom_slides, &chart_info.slide_start_indices)?;
     }
 
-    // 12. Images
+    // 13. Images
     write_images(zip, options, custom_slides)?;
 
     Ok(())
@@ -515,13 +749,19 @@ fn write_package_files_lazy<W: Write + Seek>(
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
     let slide_count = slides.slide_count();
-    let has_notes = (0..slide_count).any(|i| slides.slide_has_notes(i));
+    let has_notes = (0..slide_count).any(|i| {
+        slides
+            .slide_features(i)
+            .map(|(notes, _)| notes)
+            .unwrap_or(false)
+    });
+    let has_handout = uses_handouts(settings);
+    let template = load_template(settings)?;
 
     let chart_info = collect_chart_info_lazy(slides);
-    let has_pres_props = settings.map(|s| s.slide_show.is_some() || s.print.is_some()).unwrap_or(false);
 
-    // 1. Content types (lazy version - doesn't have SlideContent references)
-    write_content_types_lazy(zip, options, slide_count, slides, &chart_info, has_pres_props)?;
+    // 1. Content types (lazy version)
+    write_content_types_lazy(zip, options, slide_count, slides, &chart_info, has_handout)?;
 
     // 2. Package relationships
     let rels = create_rels_xml();
@@ -529,99 +769,130 @@ fn write_package_files_lazy<W: Write + Seek>(
     zip.write_all(rels.as_bytes())?;
 
     // 3. Presentation relationships
-    write_presentation_relationships(zip, options, slide_count, has_notes, has_pres_props)?;
+    write_presentation_relationships(zip, options, slide_count, has_notes, has_handout)?;
 
     // 4. Presentation document
-    let presentation = create_presentation_xml(title, slide_count);
+    let presentation = create_presentation_xml(title, slide_count, has_notes, has_handout);
     zip.start_file("ppt/presentation.xml", *options)?;
     zip.write_all(presentation.as_bytes())?;
 
-    // 5. Presentation properties
-    write_presentation_properties(zip, options, settings)?;
+    // 5. Standard package parts
+    write_standard_package_parts(zip, options, settings)?;
 
-    // 6. Slides (lazy version)
-    write_slides_lazy(zip, options, slides)?;
+    // 6. Handout master
+    if has_handout {
+        write_handout_master(zip, options, settings)?;
+    }
 
-    // 7. Slide relationships (lazy version)
-    write_slide_relationships_lazy(zip, options, slides, &chart_info.slide_start_indices)?;
+    // 7–8–12. Slides, relationships, and charts (single pass per slide)
+    write_slide_packages_lazy(
+        zip,
+        options,
+        slides,
+        &chart_info.slide_start_indices,
+        template.as_ref(),
+    )?;
 
-    // 8. Notes relationships and master (lazy version)
+    // 9. Notes relationships and master (lazy version)
     if has_notes {
         write_notes_relationships_lazy(zip, options, slides)?;
         write_notes_master(zip, options)?;
     }
 
-    // 9. Theme and layouts
-    write_theme_and_layouts(zip, options, settings)?;
+    // 10. Theme and layouts
+    write_theme_and_layouts(zip, options, settings, template.as_ref())?;
 
-    // 10. Document properties
-    write_document_properties(zip, options, title, slide_count)?;
+    // 11. Document properties
+    let notes_count = (0..slide_count)
+        .filter(|i| {
+            slides
+                .slide_features(*i)
+                .map(|(notes, _)| notes)
+                .unwrap_or(false)
+        })
+        .count();
+    let slide_titles = collect_slide_titles_lazy(slides, slide_count);
+    write_document_properties(zip, options, title, slide_count, notes_count, &slide_titles)?;
 
-    // 11. Charts (lazy version)
-    if chart_info.total_charts > 0 {
-        write_charts_lazy(zip, options, slides, &chart_info.slide_start_indices)?;
-    }
+    // 12. Images
+    write_images_lazy(zip, options, slides)?;
 
     Ok(())
 }
 
-/// Write content types for lazy slides (simplified version without SlideContent references)
+/// Write content types for lazy slides
 fn write_content_types_lazy<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
     slide_count: usize,
     slides: &dyn LazySlideSource,
     chart_info: &ChartInfo,
-    has_pres_props: bool,
+    has_handout: bool,
 ) -> Result<()> {
-    // Build basic content types without detailed content info from slides
-    let mut content_types = String::from(
-        r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
-<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-<Default Extension="xml" ContentType="application/xml"/>
-<Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/>
-<Override PartName="/ppt/presProps.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presProps+xml"/>
-<Override PartName="/ppt/viewProps.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.viewProps+xml"/>
-<Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
-<Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>
-<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>"#
-    );
+    let notes_count = (0..slide_count)
+        .filter(|i| {
+            slides
+                .slide_features(*i)
+                .map(|(notes, _)| notes)
+                .unwrap_or(false)
+        })
+        .count();
 
-    // Add slide overrides
+    let media_registry = build_media_registry_lazy(slides);
+    let media_exts = media_registry.extensions();
+
+    let mut content_types = content_types_opening(&media_exts, chart_info.total_charts);
+
     for i in 1..=slide_count {
         content_types.push_str(&format!(
-            "\n<Override PartName=\"/ppt/slides/slide{}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.slide+xml\"/>",
-            i
+            "\n<Override PartName=\"/ppt/slides/slide{i}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.slide+xml\"/>"
         ));
     }
 
-    // Add chart overrides
+    if notes_count > 0 {
+        let mut notes_index = 0usize;
+        for i in 0..slide_count {
+            if slides
+                .slide_features(i)
+                .map(|(notes, _)| notes)
+                .unwrap_or(false)
+            {
+                notes_index += 1;
+                content_types.push_str(&format!(
+                    "\n<Override PartName=\"/ppt/notesSlides/notesSlide{notes_index}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml\"/>"
+                ));
+            }
+        }
+        content_types.push_str("\n<Override PartName=\"/ppt/notesMasters/notesMaster1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.notesMaster+xml\"/>");
+        content_types.push_str("\n<Override PartName=\"/ppt/theme/theme2.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.theme+xml\"/>");
+    }
+
+    if has_handout {
+        content_types.push_str("\n<Override PartName=\"/ppt/handoutMasters/handoutMaster1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.handoutMaster+xml\"/>");
+        content_types.push_str("\n<Override PartName=\"/ppt/theme/theme3.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.theme+xml\"/>");
+    }
+
     for i in 1..=chart_info.total_charts {
         content_types.push_str(&format!(
-            "\n<Override PartName=\"/ppt/charts/chart{}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.drawingml.chart+xml\"/>",
-            i
+            "\n<Override PartName=\"/ppt/charts/chart{i}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.drawingml.chart+xml\"/>"
+        ));
+        content_types.push_str(&format!(
+            "\n<Override PartName=\"/ppt/embeddings/{}\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\"/>",
+            chart_embedding_filename(i)
         ));
     }
 
-    // Check for notes
-    for i in 1..slide_count {
-        if slides.slide_has_notes(i - 1) {
-            content_types.push_str(&format!(
-                "\n<Override PartName=\"/ppt/notesSlides/notesSlide{}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml\"/>",
-                i
-            ));
-        }
-    }
-
-    // Add presProps if needed
-    if has_pres_props {
-        let ct_entry = "\n<Override PartName=\"/ppt/presProps.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.presProps+xml\"/>";
-        if let Some(pos) = content_types.rfind("</Types>") {
-            content_types.insert_str(pos, ct_entry);
-        }
-    }
-
+    content_types.push_str(
+        r#"
+<Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>
+<Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
+<Override PartName="/ppt/tableStyles.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.tableStyles+xml"/>
+<Override PartName="/ppt/viewProps.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.viewProps+xml"/>
+<Override PartName="/ppt/presProps.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presProps+xml"/>
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>"#,
+    );
+    super::layout_parts::append_layout_content_type_overrides(&mut content_types, STANDARD_LAYOUT_COUNT);
     content_types.push_str("\n</Types>");
 
     zip.start_file("[Content_Types].xml", *options)?;
@@ -629,85 +900,105 @@ fn write_content_types_lazy<W: Write + Seek>(
     Ok(())
 }
 
-/// Write slide XML files (lazy version)
-fn write_slides_lazy<W: Write + Seek>(
+/// Write a chart part with rels and embedded Excel workbook.
+fn write_chart_package<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
-    slides: &dyn LazySlideSource,
+    chart_idx: usize,
+    chart: &crate::generator::charts::Chart,
 ) -> Result<()> {
-    for i in 0..slides.slide_count() {
-        if let Some(slide) = slides.generate_slide(i) {
-            let slide_num = i + 1;
+    let chart_xml = generate_chart_part_xml(chart);
+    zip.start_file(format!("ppt/charts/chart{chart_idx}.xml"), *options)?;
+    zip.write_all(chart_xml.as_bytes())?;
 
-            // Calculate chart rIds
-            let mut chart_rids = Vec::new();
-            let start_rid = if slide.notes.is_some() { 3 } else { 2 };
-            for j in 0..slide.charts.len() {
-                chart_rids.push(format!("rId{}", start_rid + j));
-            }
+    let embedding_name = chart_embedding_filename(chart_idx);
+    let rels_xml = create_chart_rels_xml(&embedding_name);
+    zip.start_file(format!("ppt/charts/_rels/chart{chart_idx}.xml.rels"), *options)?;
+    zip.write_all(rels_xml.as_bytes())?;
 
-            let slide_xml = create_slide_xml_with_content(slide_num, &slide, &chart_rids);
-            zip.start_file(format!("ppt/slides/slide{slide_num}.xml"), *options)?;
-            zip.write_all(slide_xml.as_bytes())?;
-
-            // Write notes if present
-            if let Some(ref notes) = slide.notes {
-                let notes_xml = create_notes_xml(slide_num, notes);
-                zip.start_file(format!("ppt/notesSlides/notesSlide{slide_num}.xml"), *options)?;
-                zip.write_all(notes_xml.as_bytes())?;
-            }
-        }
-    }
+    zip.start_file(format!("ppt/embeddings/{embedding_name}"), *options)?;
+    zip.write_all(reference_workbook_bytes())?;
     Ok(())
 }
 
-/// Write slide relationship files (lazy version)
-fn write_slide_relationships_lazy<W: Write + Seek>(
+/// Write slide XML, relationships, and chart parts in one pass (lazy version).
+fn write_slide_packages_lazy<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
     options: &FileOptions,
     slides: &dyn LazySlideSource,
     slide_chart_start_indices: &[usize],
+    template: Option<&PptxTemplate>,
 ) -> Result<()> {
+    let media_registry = build_media_registry_lazy(slides);
+    let mut slide_path = String::with_capacity(48);
+    let mut rels_path = String::with_capacity(56);
+    let mut notes_part_num = 0usize;
+
     for i in 0..slides.slide_count() {
-        if let Some(slide) = slides.generate_slide(i) {
-            let slide_num = i + 1;
+        let Some(slide) = slides.generate_slide(i) else {
+            continue;
+        };
+        let slide_num = i + 1;
+        let layout_number = resolve_layout_number(&slide, template);
+        let images = slide_image_rel_targets(&slide, &media_registry);
+        let image_count = images.len();
 
-            let mut chart_rels = Vec::new();
-            let start_chart_idx = slide_chart_start_indices[i];
-            let start_rid = if slide.notes.is_some() { 3 } else { 2 };
+        let start_rid = slide_content_rel_start(slide.notes.is_some(), image_count);
+        let mut chart_rids = Vec::with_capacity(slide.charts.len());
+        for j in 0..slide.charts.len() {
+            push_chart_rid(&mut chart_rids, start_rid + j);
+        }
 
-            for j in 0..slide.charts.len() {
-                let rid = format!("rId{}", start_rid + j);
-                let target = format!("../charts/chart{}.xml", start_chart_idx + j);
-                chart_rels.push((rid, target));
-            }
+        let slide_xml = create_slide_xml_with_content(slide_num, &slide, &chart_rids);
+        set_slide_xml_path(&mut slide_path, slide_num);
+        zip.start_file(&slide_path, *options)?;
+        zip.write_all(slide_xml.as_bytes())?;
 
-            let slide_rels = create_slide_rels_xml_extended(slide_num, slide.notes.is_some(), &chart_rels);
-            zip.start_file(format!("ppt/slides/_rels/slide{slide_num}.xml.rels"), *options)?;
-            zip.write_all(slide_rels.as_bytes())?;
+        let notes_part = if slide.notes.is_some() {
+            notes_part_num += 1;
+            Some(notes_part_num)
+        } else {
+            None
+        };
+
+        if let Some(ref notes) = slide.notes {
+            let notes_xml = create_notes_xml(slide_num, notes);
+            set_notes_part_path(&mut slide_path, notes_part_num);
+            zip.start_file(&slide_path, *options)?;
+            zip.write_all(notes_xml.as_bytes())?;
+        }
+
+        let mut chart_rels = Vec::with_capacity(slide.charts.len());
+        let start_chart_idx = slide_chart_start_indices[i];
+        for j in 0..slide.charts.len() {
+            let mut rid = String::with_capacity(8);
+            rid.push_str("rId");
+            append_usize(&mut rid, start_rid + j);
+            let mut target = String::with_capacity(24);
+            target.push_str("../charts/chart");
+            append_usize(&mut target, start_chart_idx + j);
+            target.push_str(".xml");
+            chart_rels.push((rid, target));
+        }
+
+        let slide_rels = super::package_xml::create_slide_rels_xml_with_images(
+            layout_number,
+            slide.notes.is_some(),
+            notes_part.unwrap_or(1),
+            &chart_rels,
+            &images,
+            &slide_hyperlink_relationships(&slide),
+        );
+        set_slide_rels_path(&mut rels_path, slide_num);
+        zip.start_file(&rels_path, *options)?;
+        zip.write_all(slide_rels.as_bytes())?;
+
+        for (j, chart) in slide.charts.iter().enumerate() {
+            let chart_idx = start_chart_idx + j;
+            write_chart_package(zip, options, chart_idx, chart)?;
         }
     }
-    Ok(())
-}
 
-/// Write chart files (lazy version)
-fn write_charts_lazy<W: Write + Seek>(
-    zip: &mut ZipWriter<W>,
-    options: &FileOptions,
-    slides: &dyn LazySlideSource,
-    slide_chart_start_indices: &[usize],
-) -> Result<()> {
-    for i in 0..slides.slide_count() {
-        if let Some(slide) = slides.generate_slide(i) {
-            let start_chart_idx = slide_chart_start_indices[i];
-            for (j, chart) in slide.charts.iter().enumerate() {
-                let chart_idx = start_chart_idx + j;
-                let chart_xml = generate_chart_part_xml(chart);
-                zip.start_file(format!("ppt/charts/chart{}.xml", chart_idx), *options)?;
-                zip.write_all(chart_xml.as_bytes())?;
-            }
-        }
-    }
     Ok(())
 }
 
@@ -717,11 +1008,17 @@ fn write_notes_relationships_lazy<W: Write + Seek>(
     options: &FileOptions,
     slides: &dyn LazySlideSource,
 ) -> Result<()> {
+    let mut notes_part_num = 0usize;
     for i in 0..slides.slide_count() {
-        if slides.slide_has_notes(i) {
+        if slides
+            .slide_features(i)
+            .map(|(notes, _)| notes)
+            .unwrap_or(false)
+        {
+            notes_part_num += 1;
             let slide_num = i + 1;
             let notes_rels = create_notes_rels_xml(slide_num);
-            zip.start_file(format!("ppt/notesSlides/_rels/notesSlide{slide_num}.xml.rels"), *options)?;
+            zip.start_file(format!("ppt/notesSlides/_rels/notesSlide{notes_part_num}.xml.rels"), *options)?;
             zip.write_all(notes_rels.as_bytes())?;
         }
     }
@@ -739,11 +1036,12 @@ fn write_slides<W: Write + Seek>(
 
     match custom_slides {
         Some(slides) => {
+            let mut notes_part_num = 0usize;
             for (i, slide) in slides.iter().enumerate() {
                 let slide_num = i + 1;
 
                 let mut chart_rids = Vec::with_capacity(slide.charts.len());
-                let start_rid = if slide.notes.is_some() { 3 } else { 2 };
+                let start_rid = slide_content_rel_start(slide.notes.is_some(), slide.images.len());
                 for j in 0..slide.charts.len() {
                     push_chart_rid(&mut chart_rids, start_rid + j);
                 }
@@ -754,8 +1052,9 @@ fn write_slides<W: Write + Seek>(
                 zip.write_all(slide_xml.as_bytes())?;
 
                 if let Some(notes) = &slide.notes {
+                    notes_part_num += 1;
                     let notes_xml = create_notes_xml(slide_num, notes);
-                    set_notes_slide_path(&mut zip_path, slide_num);
+                    set_notes_part_path(&mut zip_path, notes_part_num);
                     zip.start_file(&zip_path, *options)?;
                     zip.write_all(notes_xml.as_bytes())?;
                 }
@@ -780,24 +1079,31 @@ fn write_slide_relationships_extended<W: Write + Seek>(
     custom_slides: Option<&[SlideContent]>,
     slide_chart_start_indices: &[usize],
     slide_count: usize,
+    template: Option<&PptxTemplate>,
 ) -> Result<()> {
-    let mut total_images = 0;
-    
+    let media_registry = custom_slides
+        .map(build_media_registry)
+        .unwrap_or_default();
+    let mut notes_part_num = 0usize;
+
     match custom_slides {
         Some(slides) => {
             let mut zip_path = String::with_capacity(56);
             for (i, slide) in slides.iter().enumerate() {
                 let slide_num = i + 1;
-                let image_count = slide.images.len();
-                let image_start_num = total_images + 1;
-
-                let image_extensions: Vec<String> = slide.images.iter()
-                    .map(|img| img.extension())
-                    .collect();
+                let layout_number = resolve_layout_number(slide, template);
+                let images = slide_image_rel_targets(slide, &media_registry);
+                let image_count = images.len();
+                let notes_part = if slide.notes.is_some() {
+                    notes_part_num += 1;
+                    Some(notes_part_num)
+                } else {
+                    None
+                };
 
                 let mut chart_rels = Vec::with_capacity(slide.charts.len());
                 let start_chart_idx = slide_chart_start_indices[i];
-                let start_rid = 2 + image_count + if slide.notes.is_some() { 1 } else { 0 };
+                let start_rid = slide_content_rel_start(slide.notes.is_some(), image_count);
 
                 for j in 0..slide.charts.len() {
                     let mut rid = String::with_capacity(8);
@@ -811,18 +1117,16 @@ fn write_slide_relationships_extended<W: Write + Seek>(
                 }
 
                 let slide_rels = super::package_xml::create_slide_rels_xml_with_images(
-                    slide_num,
+                    layout_number,
                     slide.notes.is_some(),
+                    notes_part.unwrap_or(1),
                     &chart_rels,
-                    image_count,
-                    image_start_num,
-                    &image_extensions
+                    &images,
+                    &slide_hyperlink_relationships(slide),
                 );
                 set_slide_rels_path(&mut zip_path, slide_num);
                 zip.start_file(&zip_path, *options)?;
                 zip.write_all(slide_rels.as_bytes())?;
-
-                total_images += image_count;
             }
         }
         None => {
@@ -850,9 +1154,7 @@ fn write_charts<W: Write + Seek>(
             let start_chart_idx = slide_chart_start_indices[i];
             for (j, chart) in slide.charts.iter().enumerate() {
                 let chart_idx = start_chart_idx + j;
-                let chart_xml = generate_chart_part_xml(chart);
-                zip.start_file(format!("ppt/charts/chart{}.xml", chart_idx), *options)?;
-                zip.write_all(chart_xml.as_bytes())?;
+                write_chart_package(zip, options, chart_idx, chart)?;
             }
         }
     }
@@ -866,11 +1168,13 @@ fn write_notes_relationships<W: Write + Seek>(
     custom_slides: Option<&[SlideContent]>,
 ) -> Result<()> {
     if let Some(slides) = custom_slides {
+        let mut notes_part_num = 0usize;
         for (i, slide) in slides.iter().enumerate() {
             if slide.notes.is_some() {
+                notes_part_num += 1;
                 let slide_num = i + 1;
                 let notes_rels = create_notes_rels_xml(slide_num);
-                zip.start_file(format!("ppt/notesSlides/_rels/notesSlide{slide_num}.xml.rels"), *options)?;
+                zip.start_file(format!("ppt/notesSlides/_rels/notesSlide{notes_part_num}.xml.rels"), *options)?;
                 zip.write_all(notes_rels.as_bytes())?;
             }
         }
@@ -885,19 +1189,27 @@ fn write_images<W: Write + Seek>(
     custom_slides: Option<&[SlideContent]>,
 ) -> Result<()> {
     if let Some(slides) = custom_slides {
-        let mut image_counter = 1;
-        
-        for slide in slides {
-            for image in &slide.images {
-                if let Some(bytes) = image.get_bytes() {
-                    let ext = image.extension();
-                    let filename = format!("ppt/media/image{}.{}", image_counter, ext);
-                    zip.start_file(filename, *options)?;
-                    zip.write_all(&bytes)?;
-                    image_counter += 1;
-                }
-            }
+        let registry = build_media_registry(slides);
+        for (i, (bytes, ext)) in registry.files().iter().enumerate() {
+            let filename = format!("ppt/media/image{}.{}", i + 1, ext);
+            zip.start_file(filename, *options)?;
+            zip.write_all(bytes)?;
         }
+    }
+    Ok(())
+}
+
+/// Write image files from a lazy slide source.
+fn write_images_lazy<W: Write + Seek>(
+    zip: &mut ZipWriter<W>,
+    options: &FileOptions,
+    slides: &dyn LazySlideSource,
+) -> Result<()> {
+    let registry = build_media_registry_lazy(slides);
+    for (i, (bytes, ext)) in registry.files().iter().enumerate() {
+        let filename = format!("ppt/media/image{}.{}", i + 1, ext);
+        zip.start_file(filename, *options)?;
+        zip.write_all(bytes)?;
     }
     Ok(())
 }

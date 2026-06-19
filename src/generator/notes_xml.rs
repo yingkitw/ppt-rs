@@ -110,6 +110,7 @@ pub fn create_notes_master_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:notesMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
 <p:cSld>
+<p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg>
 <p:spTree>
 <p:nvGrpSpPr>
 <p:cNvPr id="1" name=""/>
@@ -241,7 +242,7 @@ pub fn create_notes_master_xml() -> String {
 pub fn create_notes_master_rels_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme1.xml"/>
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme2.xml"/>
 </Relationships>"#.to_string()
 }
 
@@ -276,12 +277,13 @@ mod tests {
     fn test_create_notes_master_xml() {
         let xml = create_notes_master_xml();
         assert!(xml.contains("p:notesMaster"));
+        assert!(xml.contains("<p:bg>"));
         assert!(xml.contains("Notes Placeholder"));
     }
 
     #[test]
     fn test_create_notes_master_rels_xml() {
         let xml = create_notes_master_rels_xml();
-        assert!(xml.contains("theme1.xml"));
+        assert!(xml.contains("theme2.xml"));
     }
 }

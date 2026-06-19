@@ -358,7 +358,7 @@ impl TableCellPart {
     pub fn to_xml(&self) -> String {
         // Handle merged cells (placeholders)
         if self.is_merged {
-            return r#"<a:tc hMerge="1"><a:txBody><a:bodyPr/><a:lstStyle/><a:p/></a:txBody><a:tcPr/></a:tc>"#.to_string();
+            return r#"<a:tc hMerge="1"><a:txBody><a:bodyPr/><a:lstStyle/><a:p><a:endParaRPr/></a:p></a:txBody><a:tcPr/></a:tc>"#.to_string();
         }
 
         let mut attrs = String::new();
@@ -419,7 +419,11 @@ impl TableCellPart {
             .unwrap_or_default();
 
         // Paragraph alignment
-        let p_align = format!(r#" algn="{}""#, self.h_align.as_str());
+        let p_pr = if self.h_align == HorizontalAlign::Center {
+            String::new()
+        } else {
+            format!(r#"<a:pPr algn="{}"/>"#, self.h_align.as_str())
+        };
 
         // Cell properties
         let mut tcpr_attrs = format!(r#" anchor="{}""#, self.v_align.as_str());
@@ -442,7 +446,8 @@ impl TableCellPart {
           <a:txBody>
             <a:bodyPr/>
             <a:lstStyle/>
-            <a:p{}>
+            <a:p>
+              {}
               <a:r>
                 <a:rPr lang="en-US"{}>{}{}</a:rPr>
                 <a:t>{}</a:t>
@@ -452,7 +457,7 @@ impl TableCellPart {
           <a:tcPr{}>{}{}</a:tcPr>
         </a:tc>"#,
             attrs,
-            p_align,
+            p_pr,
             rpr_attrs,
             color_xml,
             font_xml,

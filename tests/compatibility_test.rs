@@ -50,6 +50,9 @@ impl PptxValidator {
         let required_ppt = [
             "ppt/presentation.xml",
             "ppt/_rels/presentation.xml.rels",
+            "ppt/presProps.xml",
+            "ppt/viewProps.xml",
+            "ppt/tableStyles.xml",
             "ppt/theme/theme1.xml",
             "ppt/slideLayouts/slideLayout1.xml",
             "ppt/slideLayouts/_rels/slideLayout1.xml.rels",

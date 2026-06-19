@@ -3,21 +3,36 @@
 /// Slide layout types
 #[derive(Clone, Debug, Copy, PartialEq, Eq)]
 pub enum SlideLayout {
-    /// Title only (no content area)
-    TitleOnly,
+    /// Title slide (centered title + subtitle)
+    CenteredTitle,
     /// Title and content (bullets)
     TitleAndContent,
-    /// Title at top, content fills rest
-    TitleAndBigContent,
+    /// Two columns of content
+    TwoColumn,
+    /// Section divider (large title)
+    SectionHeader,
     /// Blank slide
     Blank,
-    /// Title centered on slide
-    CenteredTitle,
-    /// Two columns: title on left, content on right
-    TwoColumn,
+    /// Title only (no content area)
+    TitleOnly,
+    /// Title at top, content fills rest
+    TitleAndBigContent,
 }
 
 impl SlideLayout {
+    /// 1-based `slideLayoutN.xml` index on slide master 1.
+    pub fn layout_number(&self) -> usize {
+        match self {
+            SlideLayout::CenteredTitle => 1,
+            SlideLayout::TitleAndContent => 2,
+            SlideLayout::TwoColumn => 3,
+            SlideLayout::SectionHeader => 4,
+            SlideLayout::Blank => 5,
+            SlideLayout::TitleOnly => 6,
+            SlideLayout::TitleAndBigContent => 7,
+        }
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             SlideLayout::TitleOnly => "titleOnly",
@@ -26,7 +41,7 @@ impl SlideLayout {
             SlideLayout::Blank => "blank",
             SlideLayout::CenteredTitle => "centeredTitle",
             SlideLayout::TwoColumn => "twoColumn",
+            SlideLayout::SectionHeader => "sectionHeader",
         }
     }
 }
-

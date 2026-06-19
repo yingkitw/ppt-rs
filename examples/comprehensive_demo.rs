@@ -80,6 +80,62 @@ use ppt_rs::prelude::{
 };
 use ppt_rs::ToXml;
 use std::fs;
+use std::path::{Path, PathBuf};
+
+/// Resolve paths relative to the crate root so the example works from any cwd.
+fn project_path(relative: &str) -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join(relative)
+}
+
+/// Load sample images from `examples/assets/`, or fall back to an embedded PNG.
+fn load_stock_photos() -> Vec<(Vec<u8>, String, String)> {
+    const FALLBACK: &[u8] = include_bytes!("assets/diagram.png");
+    let assets_dir = project_path("examples/assets");
+    let mut stock_photos: Vec<(Vec<u8>, String, String)> = Vec::new();
+
+    if let Ok(entries) = fs::read_dir(&assets_dir) {
+        let mut files: Vec<_> = entries.flatten().collect();
+        files.sort_by_key(|e| e.file_name());
+
+        for entry in files {
+            let filename = entry.file_name();
+            let Some(filename) = filename.to_str() else {
+                continue;
+            };
+            if filename.ends_with(".txt") {
+                continue;
+            }
+            let path = entry.path();
+            let Some(ext) = path.extension() else {
+                continue;
+            };
+            let ext_str = ext.to_string_lossy().to_lowercase();
+            if ext_str != "jpg" && ext_str != "jpeg" && ext_str != "png" {
+                continue;
+            }
+            if let Ok(bytes) = fs::read(&path) {
+                let format = if ext_str == "png" { "PNG" } else { "JPEG" };
+                let size_kb = bytes.len() as f64 / 1024.0;
+                stock_photos.push((bytes, format.to_string(), filename.to_string()));
+                println!("   Loaded: {} ({:.1} KB)", filename, size_kb);
+            }
+        }
+    }
+
+    if stock_photos.is_empty() {
+        println!(
+            "   ⚠ No images in {}; using embedded fallback PNG",
+            assets_dir.display()
+        );
+        stock_photos.push((
+            FALLBACK.to_vec(),
+            "PNG".to_string(),
+            "embedded-diagram.png".to_string(),
+        ));
+    }
+
+    stock_photos
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("╔══════════════════════════════════════════════════════════════╗");
@@ -459,46 +515,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🖼️  Slide 13: Images with Shadow Effects");
 
     // Dynamically load optimized stock photos from assets folder
-    let assets_dir = "examples/assets";
-    let mut stock_photos: Vec<(Vec<u8>, String, String)> = Vec::new();
-
-    // Scan for optimized image files in assets folder
-    if let Ok(entries) = std::fs::read_dir(assets_dir) {
-        let mut files: Vec<_> = entries.flatten().collect();
-        files.sort_by_key(|e| e.file_name());
-
-        for entry in files {
-            if let Some(filename) = entry.file_name().to_str() {
-                // Skip text files
-                if filename.ends_with(".txt") {
-                    continue;
-                }
-
-                if let Ok(path) = entry.path().canonicalize() {
-                    if let Some(ext) = path.extension() {
-                        let ext_str = ext.to_string_lossy().to_lowercase();
-                        if ext_str == "jpg" || ext_str == "jpeg" || ext_str == "png" {
-                            if let Ok(bytes) = std::fs::read(&path) {
-                                let format = if ext_str == "png" { "PNG" } else { "JPEG" };
-                                let size_kb = bytes.len() as f64 / 1024.0;
-                                stock_photos.push((
-                                    bytes,
-                                    format.to_string(),
-                                    filename.to_string(),
-                                ));
-                                println!("   Loaded: {} ({:.1} KB)", filename, size_kb);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    let stock_photos = load_stock_photos();
 
     // Use first 3 photos, or repeat if fewer available
-    if stock_photos.is_empty() {
-        panic!("No stock photos found in examples/assets/");
-    }
     let photo_count = stock_photos.len();
     let photo1 = &stock_photos[0 % photo_count];
     let photo2 = &stock_photos[1 % photo_count];
@@ -1947,7 +1966,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let show_settings = SlideShowSettings::new()
         .show_type(ShowType::Speaker)
         .pen_color(PenColor::red())
-        .use_timings(true);
+        .use_timings(false);
     println!("   ├── Slide Show: Speaker mode, red pen, timings enabled");
     println!("   │   └── XML: {} bytes", show_settings.to_xml().len());
 
@@ -1976,15 +1995,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Generate PPTX with real integrated features
     // =========================================================================
     println!("\n📦 Generating PPTX with integrated features...");
+    let slide_count = slides.len();
     let pptx_data = create_pptx_with_settings(
         "PPTX-RS Element Showcase",
         &slides,
         Some(pres_settings),
     )?;
-    fs::write("comprehensive_demo.pptx", &pptx_data)?;
+    let output_path = project_path("comprehensive_demo.pptx");
+    fs::write(&output_path, &pptx_data)?;
     println!(
-        "   ✓ Created comprehensive_demo.pptx ({} slides, {} bytes)",
-        slides.len(),
+        "   ✓ Created {} ({} slides, {} bytes)",
+        output_path.display(),
+        slide_count,
         pptx_data.len()
     );
 
@@ -1993,7 +2015,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // =========================================================================
     println!("\n📖 Package Analysis (Read Capability):");
 
-    let package = Package::open("comprehensive_demo.pptx")?;
+    let package = Package::open(&output_path)?;
     let paths = package.part_paths();
 
     let slide_count = paths
@@ -2083,10 +2105,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   ├── AppPropertiesPart (metadata):");
     let mut app_props = AppPropertiesPart::new();
     app_props.set_company("Acme Corporation");
-    app_props.set_slides(slides.len() as u32);
+    app_props.set_slides(slide_count as u32);
     let app_xml = app_props.to_xml()?;
     println!("   │   ├── Company: Acme Corporation");
-    println!("   │   ├── Slides: {}", slides.len());
+    println!("   │   ├── Slides: {}", slide_count);
     println!("   │   └── XML size: {} bytes", app_xml.len());
 
     // MediaPart - Video/Audio formats
@@ -2481,8 +2503,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("║    ✓ Mixed-unit positioning (e.g. inches + percent)          ║");
     println!("╠══════════════════════════════════════════════════════════════╣");
     println!(
-        "║  Output: comprehensive_demo.pptx ({} slides, {} KB)         ║",
-        slides.len(),
+        "║  Output: {} ({} slides, {} KB)         ║",
+        output_path.file_name().unwrap().to_string_lossy(),
+        slide_count,
         pptx_data.len() / 1024
     );
     println!("╚══════════════════════════════════════════════════════════════╝");

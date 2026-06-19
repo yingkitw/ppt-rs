@@ -23,10 +23,10 @@ pub fn render_additional_content(xml: &mut String, content: &SlideContent, chart
 
     // Render images (actual picture elements, not placeholders)
     let image_start_id = 20 + content.shapes.len();
+    let image_rel_start = 2 + usize::from(content.notes.is_some());
     for (i, image) in content.images.iter().enumerate() {
         xml.push('\n');
-        // Use rel_id starting from 2 (rId1 is slideLayout)
-        let rel_id = i + 2;
+        let rel_id = image_rel_start + i;
         xml.push_str(&crate::generator::images_xml::generate_image_xml(
             image,
             image_start_id + i,

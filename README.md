@@ -8,7 +8,7 @@ While other Rust crates for PPTX generation are incomplete, broken, or abandoned
 
 **MCP:** Build with `--features mcp` and run **`ppt_mcp`** — a [Model Context Protocol](https://modelcontextprotocol.io) server ([rmcp](https://crates.io/crates/rmcp)) so Cursor, Claude Desktop, and other MCP clients can create, read, export, and validate `.pptx` via stdio. See [MCP server](#mcp-server-model-context-protocol).
 
-**NEW v0.2.17**: Advanced theme customization (embedded `theme1.xml`), performance optimizations for large decks, consolidated table formatting, and modular image effects.
+**NEW v0.2.19**: PowerPoint zero-repair compatibility gate — multiple slide layouts, template-based generation, chart Excel workbook embedding, handout master packaging, slide master completeness, and a structured `core::package_validation` API.
 
 ## Why ppt-rs?
 
@@ -17,6 +17,9 @@ While other Rust crates for PPTX generation are incomplete, broken, or abandoned
 - 🌐 **HTML to PPTX** - Convert HTML pages/snippets to PowerPoint with the `html2ppt` command or `Html2Ppt` API
 - 🎨 **Embedded themes** - Brand decks with custom colors and fonts via `PresentationTheme` (v0.2.16)
 - ⚡ **Large decks** - Lazy slide loading and optimized generation for 100+ slides (v0.2.17)
+- 🧩 **Templates & layouts** - Clone masters/theme/layouts from an existing deck (`--template`) and pick from 7 slide layouts per slide (v0.2.19)
+- 🛡️ **PowerPoint compat gate** - Structured `validate_package_bytes()` report + debug assert on every generated deck so files open without repair (v0.2.19)
+- 📊 **Editable charts** - Charts embed an Excel workbook (`ppt/embeddings/*.xlsx`) so they're editable in PowerPoint (v0.2.19)
 - 🔄 **Round-trip capable** - Export to Markdown, HTML, images (PNG/JPEG), compress PPTX files
 - ✅ **Actually works** - Generates valid PPTX files that open in all major presentation software
 - ✅ **Complete implementation** - Full ECMA-376 Office Open XML compliance
@@ -60,6 +63,37 @@ pptcli md2ppt slides.md --title "My Presentation"
 ```
 
 That's it! You now have a valid PowerPoint file that opens in PowerPoint, Google Slides, LibreOffice, and more.
+
+### Create from a Template (v0.2.19)
+
+Clone masters, layouts, theme, and table styles from an existing `.pptx` so new slides inherit the source deck's branding:
+
+```bash
+# CLI: use a template deck
+pptcli create output.pptx --title "Quarterly Review" --slides 8 --template brand.pptx
+```
+
+```rust
+use ppt_rs::generator::{create_pptx_with_template, SlideContent};
+use ppt_rs::SlideLayout;
+
+let slides = vec![
+    SlideContent::new("Cover").with_layout(SlideLayout::CenteredTitle),
+    SlideContent::new("Agenda").with_layout(SlideLayout::TitleAndContent),
+    SlideContent::new("Detail").with_layout(SlideLayout::TwoColumn),
+];
+
+// Masters/theme/layouts are copied from brand.pptx into output.pptx
+let pptx = create_pptx_with_template("Quarterly Review", &slides, "brand.pptx", None)?;
+std::fs::write("output.pptx", pptx)?;
+
+// Or via PresentationSettings:
+use ppt_rs::generator::{create_pptx_with_settings, PresentationSettings};
+let settings = PresentationSettings::new().template("brand.pptx");
+let pptx = create_pptx_with_settings("Quarterly Review", &slides, Some(settings))?;
+```
+
+`SlideLayout` variants (each maps to `slideLayoutN.xml` on slide master 1): `CenteredTitle` (1), `TitleAndContent` (2), `TwoColumn` (3), `SectionHeader` (4), `Blank` (5), `TitleOnly` (6), `TitleAndBigContent` (7). When a template has fewer layouts, the index falls back to layout 1.
 
 ### HTML to PowerPoint
 
@@ -208,6 +242,10 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 - **Images** - Embed from files, bytes, base64, URL, auto-detect format, 8 visual effects
 - **Themes** - Embedded `theme1.xml` with 7 presets and custom color/font schemes (v0.2.16)
 - **Media** - Video (mp4, webm) and audio (mp3, wav) embedding
+- **Layouts** - 7 slide layouts (Title, Title+Content, Two Column, Section Header, Blank, Title Only, Big Content) with per-slide `with_layout()` (v0.2.19)
+- **Templates** - `--template deck.pptx` CLI flag + `PptxTemplate`/`create_pptx_with_template` API to clone masters/theme/layouts from an existing file (v0.2.19)
+- **Charts (editable)** - Charts embed an Excel workbook so they're editable in PowerPoint, not cache-only XML (v0.2.19)
+- **Validation** - `core::package_validation` exposes `validate_package_bytes()` returning a structured `PackageValidationReport` (v0.2.19)
 - **Reading** - Parse and modify existing PPTX files
 - **Enhanced HTML Import** - Real image downloading, extended CSS, hyperlink handling
 - **Enhanced Markdown Import** - Real image URLs, task lists, strikethrough formatting
@@ -286,7 +324,6 @@ pptcli html2ppt input.html [output.pptx] [--title "Title"] [--max-slides N] [--m
 ```
 
 Options: `--no-images`, `--no-tables`, `--no-code` to disable specific content types.
-
 ### Validate PPTX Files
 
 Validate a PPTX file for ECMA-376 compliance:
@@ -296,10 +333,27 @@ pptcli validate presentation.pptx
 ```
 
 This checks:
+
 - ZIP archive integrity
 - Required XML files presence
 - XML validity
 - Relationships structure
+
+**Structured package validation (v0.2.19)** — run the same engine the generator self-checks with:
+
+```rust
+use ppt_rs::{validate_package_bytes, ValidationSeverity};
+
+let bytes = std::fs::read("presentation.pptx")?;
+let report = validate_package_bytes(&bytes);
+println!("{} error(s)", report.error_count());
+for issue in &report.issues {
+    println!("  [{:?}] {}", issue.severity, issue.message);
+}
+assert!(report.is_valid()); // true when there are no Error-severity findings
+```
+
+`PackageValidationReport` categorizes findings (`ValidationCategory`: MissingPart, Relationship, ContentType, Presentation, SlideMaster, Slide, Chart, Xml, Theme) and splits them by `ValidationSeverity` (Warning / Error). The legacy `validate_powerpoint_structure()` / `CompatReport` wrapper is kept for backward compatibility.
 
 ### Show Presentation Information
 
@@ -442,10 +496,10 @@ Add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-ppt-rs = "0.2.17"
+ppt-rs = "0.2.19"
 
 # Optional: MCP server types / embedding (library module `ppt_rs::mcp`)
-# ppt-rs = { version = "0.2.17", features = ["mcp"] }
+# ppt-rs = { version = "0.2.19", features = ["mcp"] }
 ```
 
 ## Examples
@@ -757,9 +811,10 @@ Unlike other Rust PPTX crates that:
 
 `ppt-rs`:
 - ✅ Generates **valid PPTX files** from day one
-- ✅ **Actively maintained** with comprehensive test coverage (980+ tests)
+- ✅ **Actively maintained** with comprehensive test coverage (1100+ tests)
 - ✅ **Complete XML structure** following ECMA-376 standard
-- ✅ **Validation tools** - Built-in validation command for quality assurance
+- ✅ **Validation tools** - Built-in validation command + structured `PackageValidationReport` API for quality assurance
+- ✅ **PowerPoint compat gate** - Every generated deck is self-validated in debug builds
 - ✅ **Alignment testing** - Framework for ensuring compatibility with python-pptx
 - ✅ **Production-ready** - used in real projects
 
@@ -767,7 +822,9 @@ Unlike other Rust PPTX crates that:
 
 ### Validation
 - Built-in validation command for ECMA-376 compliance checking
-- Comprehensive test suite (980+ tests, including `new_capabilities_test`, `theme_customization_test`, `memory_profile_test`)
+- Structured `core::package_validation` API (`validate_package_bytes` → `PackageValidationReport`)
+- Debug builds `debug_assert!` that every generated deck passes package validation
+- Comprehensive test suite (1100+ tests, including `package_validation_test`, `powerpoint_compat_test`, `layouts_packaging_test`, `repair_compare_test`)
 - Integration tests for end-to-end validation
 
 ### Alignment Testing
@@ -777,12 +834,12 @@ Unlike other Rust PPTX crates that:
 
 ## Technical Details
 
-- **Version**: 0.2.17
+- **Version**: 0.2.19
 - **Format**: Microsoft PowerPoint 2007+ (.pptx)
 - **Standard**: ECMA-376 Office Open XML
 - **Compatibility**: PowerPoint, LibreOffice, Google Slides, Keynote
 - **Architecture**: Modular design with clear separation of concerns
-- **Test Coverage**: 980+ tests covering all major features
+- **Test Coverage**: 1100+ tests covering all major features
 - **Performance**: ~1000 slides/sec; lazy loading for large decks; borrow-based `build()` API
 
 ## Templates
@@ -937,7 +994,7 @@ let positions = layouts::distribute_horizontal(3, 500000, 2000000);
 - **Transparency**: Alpha transparency for solid fills (0-100%)
 - **Connectors**: Straight, elbow, curved with arrow types (triangle, stealth, diamond, oval, open) and dash styles
 - **Tables**: Cell formatting, colors, alignment, borders
-- **Charts**: Bar, line, pie, area, scatter, doughnut, radar, and more
+- **Charts**: Bar, line, pie, area, scatter, doughnut, radar, and more; editable in PowerPoint via embedded Excel workbook (v0.2.19)
 - **Shapes**: 100+ shape types with fills, outlines, and text
 - **Animations**: 50+ animation effects (fade, fly, zoom, etc.)
 - **Transitions**: 27 slide transition effects

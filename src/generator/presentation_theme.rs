@@ -230,13 +230,16 @@ impl PresentationTheme {
         )
     }
 
-    /// Generate `ppt/theme/theme1.xml` content
+    /// Generate `ppt/theme/theme1.xml` content using the full Office theme template.
     pub fn to_theme_xml(&self) -> String {
+        if self.name == "Office Theme" && self.colors == ThemeColorScheme::office() {
+            return office_theme_xml().to_string();
+        }
+
         let c = &self.colors;
         let color_slot = |tag: &str, hex: &str| {
             format!(r#"<a:{tag}><a:srgbClr val="{hex}"/></a:{tag}>"#)
         };
-
         let colors_xml = [
             color_slot("dk1", &c.dk1),
             color_slot("lt1", &c.lt1),
@@ -251,60 +254,53 @@ impl PresentationTheme {
             color_slot("hlink", &c.hlink),
             color_slot("folHlink", &c.fol_hlink),
         ]
-        .join("\n");
+        .join("");
+        let scheme_name = escape_xml_attr(&self.name);
+        let clr_scheme = format!(r#"<a:clrScheme name="{scheme_name}">{colors_xml}</a:clrScheme>"#);
 
-        format!(
-            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="{name}">
-<a:themeElements>
-<a:clrScheme name="{scheme_name}">
-{colors_xml}
-</a:clrScheme>
-<a:fontScheme name="Office">
-<a:majorFont>
-<a:latin typeface="{major}"/>
-<a:ea typeface=""/>
-<a:cs typeface=""/>
-</a:majorFont>
-<a:minorFont>
-<a:latin typeface="{minor}"/>
-<a:ea typeface=""/>
-<a:cs typeface=""/>
-</a:minorFont>
-</a:fontScheme>
-<a:fmtScheme name="Office">
-<a:fillStyleLst>
-<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
-<a:gradFill rotWithShape="1"><a:gsLst><a:gs pos="0"><a:schemeClr val="phClr"><a:tint val="50000"/><a:satMod val="300000"/></a:schemeClr></a:gs><a:gs pos="35000"><a:schemeClr val="phClr"><a:tint val="37000"/><a:satMod val="300000"/></a:schemeClr></a:gs><a:gs pos="100000"><a:schemeClr val="phClr"><a:tint val="15000"/><a:satMod val="350000"/></a:schemeClr></a:gs></a:gsLst><a:lin ang="16200000" scaled="1"/></a:gradFill>
-<a:gradFill rotWithShape="1"><a:gsLst><a:gs pos="0"><a:schemeClr val="phClr"><a:shade val="51000"/><a:satMod val="130000"/></a:schemeClr></a:gs><a:gs pos="80000"><a:schemeClr val="phClr"><a:shade val="93000"/><a:satMod val="130000"/></a:schemeClr></a:gs><a:gs pos="100000"><a:schemeClr val="phClr"><a:shade val="94000"/><a:satMod val="135000"/></a:schemeClr></a:gs></a:gsLst><a:lin ang="16200000" scaled="0"/></a:gradFill>
-</a:fillStyleLst>
-<a:lnStyleLst>
-<a:ln w="9525" cap="flat" cmpd="sng" algn="ctr"><a:solidFill><a:schemeClr val="phClr"><a:shade val="95000"/><a:satMod val="105000"/></a:schemeClr></a:solidFill><a:prstDash val="solid"/></a:ln>
-<a:ln w="25400" cap="flat" cmpd="sng" algn="ctr"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:prstDash val="solid"/></a:ln>
-<a:ln w="38100" cap="flat" cmpd="sng" algn="ctr"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:prstDash val="solid"/></a:ln>
-</a:lnStyleLst>
-<a:effectStyleLst>
-<a:effectStyle><a:effectLst/></a:effectStyle>
-<a:effectStyle><a:effectLst/></a:effectStyle>
-<a:effectStyle><a:effectLst/></a:effectStyle>
-</a:effectStyleLst>
-<a:bgFillStyleLst>
-<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>
-<a:gradFill rotWithShape="1"><a:gsLst><a:gs pos="0"><a:schemeClr val="phClr"><a:tint val="40000"/><a:satMod val="350000"/></a:schemeClr></a:gs><a:gs pos="40000"><a:schemeClr val="phClr"><a:tint val="45000"/><a:shade val="99000"/><a:satMod val="350000"/></a:schemeClr></a:gs><a:gs pos="100000"><a:schemeClr val="phClr"><a:shade val="20000"/><a:satMod val="255000"/></a:schemeClr></a:gs></a:gsLst><a:path path="circle"><a:fillToRect l="50000" t="-80000" r="50000" b="180000"/></a:path></a:gradFill>
-<a:gradFill rotWithShape="1"><a:gsLst><a:gs pos="0"><a:schemeClr val="phClr"><a:tint val="80000"/><a:satMod val="300000"/></a:schemeClr></a:gs><a:gs pos="100000"><a:schemeClr val="phClr"><a:shade val="30000"/><a:satMod val="200000"/></a:schemeClr></a:gs></a:gsLst><a:path path="circle"><a:fillToRect l="50000" t="50000" r="50000" b="50000"/></a:path></a:gradFill>
-</a:bgFillStyleLst>
-</a:fmtScheme>
-</a:themeElements>
-<a:objectDefaults/>
-<a:extraClrSchemeLst/>
-</a:theme>"#,
-            name = escape_xml_attr(&self.name),
-            scheme_name = escape_xml_attr(&self.name),
-            colors_xml = colors_xml,
-            major = escape_xml_attr(&self.fonts.major),
-            minor = escape_xml_attr(&self.fonts.minor),
-        )
+        let mut xml = office_theme_xml().to_string();
+        if let (Some(start), Some(end)) = (
+            xml.find("<a:clrScheme"),
+            xml.find("</a:clrScheme>").map(|i| i + "</a:clrScheme>".len()),
+        ) {
+            xml.replace_range(start..end, &clr_scheme);
+        }
+
+        let theme_name = escape_xml_attr(&self.name);
+        if let Some(start) = xml.find(r#"name=""#) {
+            let name_start = start + 6;
+            if let Some(end) = xml[name_start..].find('"') {
+                xml.replace_range(name_start..name_start + end, &theme_name);
+            }
+        }
+
+        replace_font_latin(&mut xml, "majorFont", &self.fonts.major);
+        replace_font_latin(&mut xml, "minorFont", &self.fonts.minor);
+
+        xml
     }
+}
+
+fn replace_font_latin(xml: &mut String, font_tag: &str, typeface: &str) {
+    const LATIN_PREFIX: &str = r#"<a:latin typeface=""#;
+    let marker = format!("<a:{font_tag}>");
+    let Some(start) = xml.find(&marker) else {
+        return;
+    };
+    let section = &xml[start..];
+    let Some(rel) = section.find(LATIN_PREFIX) else {
+        return;
+    };
+    let abs = start + rel + LATIN_PREFIX.len();
+    if let Some(end) = xml[abs..].find('"') {
+        let escaped = escape_xml_attr(typeface);
+        xml.replace_range(abs..abs + end, &escaped);
+    }
+}
+
+/// Full Office theme XML extracted from a PowerPoint-compatible reference file.
+pub fn office_theme_xml() -> &'static str {
+    include_str!("office_theme.xml")
 }
 
 fn normalize_hex(hex: &str) -> String {

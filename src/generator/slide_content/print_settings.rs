@@ -194,51 +194,39 @@ impl PrintSettings {
         format!(r#"<p:prnPr {}/>"#, attrs.join(" "))
     }
 
-    /// Generate handout master XML
+    /// Generate handout master XML (PowerPoint-compatible structure)
     pub fn to_handout_master_xml(&self) -> String {
         let mut xml = String::from(
-            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#,
+            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:handoutMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"><p:cSld><p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>"#,
         );
-        xml.push_str(
-            r#"<p:handoutMaster xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">"#,
-        );
-        xml.push_str("<p:cSld><p:spTree>");
-        xml.push_str(r#"<p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>"#);
-        xml.push_str("<p:grpSpPr/>");
 
-        // Header placeholder
         if let Some(ref header) = self.header {
             xml.push_str(&format!(
-                r#"<p:sp><p:nvSpPr><p:cNvPr id="2" name="Header"/><p:cNvSpPr/><p:nvPr><p:ph type="hdr"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>{}</a:t></a:r></a:p></p:txBody></p:sp>"#,
+                r#"<p:sp><p:nvSpPr><p:cNvPr id="2" name="Header"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="hdr"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>{}</a:t></a:r></a:p></p:txBody></p:sp>"#,
                 xml_escape(header)
             ));
         }
 
-        // Footer placeholder
         if let Some(ref footer) = self.footer {
             xml.push_str(&format!(
-                r#"<p:sp><p:nvSpPr><p:cNvPr id="3" name="Footer"/><p:cNvSpPr/><p:nvPr><p:ph type="ftr"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>{}</a:t></a:r></a:p></p:txBody></p:sp>"#,
+                r#"<p:sp><p:nvSpPr><p:cNvPr id="3" name="Footer"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="ftr"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:r><a:t>{}</a:t></a:r></a:p></p:txBody></p:sp>"#,
                 xml_escape(footer)
             ));
         }
 
-        // Date placeholder
         if self.print_date {
             xml.push_str(
-                r#"<p:sp><p:nvSpPr><p:cNvPr id="4" name="Date"/><p:cNvSpPr/><p:nvPr><p:ph type="dt"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:fld id="{B6F15528-F159-4107-2D14-000000000000}" type="datetimeFigureOut"><a:t/></a:fld></a:p></p:txBody></p:sp>"#,
+                r#"<p:sp><p:nvSpPr><p:cNvPr id="4" name="Date"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="dt"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:fld id="{B6F15528-F159-4107-2D14-000000000000}" type="datetimeFigureOut"><a:t/></a:fld><a:endParaRPr/></a:p></p:txBody></p:sp>"#,
             );
         }
 
-        // Page number placeholder
         if self.print_page_numbers {
             xml.push_str(
-                r#"<p:sp><p:nvSpPr><p:cNvPr id="5" name="Slide Number"/><p:cNvSpPr/><p:nvPr><p:ph type="sldNum"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:fld id="{B6F15528-F159-4107-2D14-000000000001}" type="slidenum"><a:t/></a:fld></a:p></p:txBody></p:sp>"#,
+                r#"<p:sp><p:nvSpPr><p:cNvPr id="5" name="Slide Number"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="sldNum"/></p:nvPr></p:nvSpPr><p:spPr/><p:txBody><a:bodyPr/><a:lstStyle/><a:p><a:fld id="{B6F15528-F159-4107-2D14-000000000001}" type="slidenum"><a:t>‹#›</a:t></a:fld><a:endParaRPr/></a:p></p:txBody></p:sp>"#,
             );
         }
 
-        xml.push_str("</p:spTree></p:cSld>");
-        xml.push_str("<p:clrMap bg1=\"lt1\" tx1=\"dk1\" bg2=\"lt2\" tx2=\"dk2\" accent1=\"accent1\" accent2=\"accent2\" accent3=\"accent3\" accent4=\"accent4\" accent5=\"accent5\" accent6=\"accent6\" hlink=\"hlink\" folHlink=\"folHlink\"/>");
-        xml.push_str("</p:handoutMaster>");
+        xml.push_str(r#"</p:spTree></p:cSld><p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/></p:handoutMaster>"#);
         xml
     }
 }
@@ -358,10 +346,12 @@ mod tests {
 
     #[test]
     fn test_handout_master_xml_basic() {
-        let s = PrintSettings::new();
+        let s = PrintSettings::new().header("Title");
         let xml = s.to_handout_master_xml();
         assert!(xml.contains("<p:handoutMaster"));
         assert!(xml.contains("</p:handoutMaster>"));
+        assert!(xml.contains("<p:bg>"));
+        assert!(xml.contains("<a:spLocks noGrp=\"1\"/>"));
         assert!(xml.contains("<p:spTree>"));
     }
 

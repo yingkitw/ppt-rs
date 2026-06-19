@@ -208,6 +208,11 @@ impl SlideContent {
         self
     }
 
+    /// Alias for [`layout`](Self::layout) — per-slide layout selection.
+    pub fn with_layout(self, layout: SlideLayout) -> Self {
+        self.layout(layout)
+    }
+
     pub fn table(mut self, table: Table) -> Self {
         self.table = Some(table);
         self.has_table = true;

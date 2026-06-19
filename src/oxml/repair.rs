@@ -391,11 +391,15 @@ impl PptxRepair {
     fn check_slide_references(&mut self) {
         // Get slides from presentation.xml.rels
         let mut referenced_slides: HashSet<String> = HashSet::new();
+        let slide_rel_type = crate::parts::relationships::RelationshipType::Slide.uri();
 
         if let Some(rels_content) = self.package.get_part("ppt/_rels/presentation.xml.rels") {
             let xml_str = String::from_utf8_lossy(rels_content);
             for line in xml_str.lines() {
-                if line.contains("slide") && line.contains("Target=") {
+                if let Some(type_attr) = self.extract_attribute(line, "Type") {
+                    if type_attr != slide_rel_type {
+                        continue;
+                    }
                     if let Some(target) = self.extract_attribute(line, "Target") {
                         let full_path = if target.starts_with('/') {
                             target[1..].to_string()
@@ -761,12 +765,14 @@ impl PptxRepair {
     }
 
     fn infer_content_type(&self, path: &str) -> &'static str {
-        if path.contains("slide") && path.ends_with(".xml") {
-            "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
-        } else if path.contains("slideLayout") {
+        if path.contains("slideLayout") {
             "application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"
         } else if path.contains("slideMaster") {
             "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"
+        } else if path.contains("notesSlide") {
+            "application/vnd.openxmlformats-officedocument.presentationml.notesSlide+xml"
+        } else if path.starts_with("ppt/slides/slide") && path.ends_with(".xml") {
+            "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
         } else if path.contains("theme") {
             "application/vnd.openxmlformats-officedocument.theme+xml"
         } else if path.contains("presentation.xml") {
@@ -966,6 +972,10 @@ mod tests {
         assert_eq!(
             repair.infer_content_type("ppt/slides/slide1.xml"),
             "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
+        );
+        assert_eq!(
+            repair.infer_content_type("ppt/slideMasters/slideMaster1.xml"),
+            "application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"
         );
         assert_eq!(
             repair.infer_content_type("ppt/presentation.xml"),

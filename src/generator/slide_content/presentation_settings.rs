@@ -22,6 +22,8 @@ pub struct PresentationSettings {
     pub embedded_fonts: Option<EmbeddedFontList>,
     /// Digital signature (generates `_xmlsignatures/` parts in package)
     pub digital_signature: Option<DigitalSignature>,
+    /// Optional `.pptx` template path — clones masters/theme/layouts from an existing deck.
+    pub template_path: Option<String>,
 }
 
 impl PresentationSettings {
@@ -54,6 +56,11 @@ impl PresentationSettings {
         self
     }
 
+    pub fn template(mut self, path: impl Into<String>) -> Self {
+        self.template_path = Some(path.into());
+        self
+    }
+
     /// Check if any presentation-level settings are configured
     pub fn has_settings(&self) -> bool {
         self.theme.is_some()
@@ -61,6 +68,7 @@ impl PresentationSettings {
             || self.print.is_some()
             || self.embedded_fonts.is_some()
             || self.digital_signature.is_some()
+            || self.template_path.is_some()
     }
 }
 

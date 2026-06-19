@@ -103,6 +103,9 @@ fn chart_part_footer() -> &'static str {
 <c:dispBlanksAs val="gap"/>
 <c:showDLblsOverMax val="0"/>
 </c:chart>
+<c:externalData r:id="rId1">
+<c:autoUpdate val="0"/>
+</c:externalData>
 </c:chartSpace>"#
 }
 

@@ -36,6 +36,28 @@ pub fn estimate_slide_payload(slides: &[SlideContent]) -> usize {
     })
 }
 
+/// Pre-size the output ZIP buffer to reduce reallocations during generation.
+pub fn estimate_output_capacity(slide_count: usize, slides: Option<&[SlideContent]>) -> usize {
+    const BASE_BYTES: usize = 32_768;
+    const PER_SLIDE_BYTES: usize = 4_096;
+
+    let mut cap = BASE_BYTES + slide_count.saturating_mul(PER_SLIDE_BYTES);
+
+    if let Some(slides) = slides {
+        cap += estimate_slide_payload(slides);
+        for slide in slides {
+            cap += slide.charts.len().saturating_mul(8_192);
+            for image in &slide.images {
+                if let Some(bytes) = image.get_bytes() {
+                    cap += bytes.len();
+                }
+            }
+        }
+    }
+
+    cap.max(8_192)
+}
+
 /// Profile an eager (all-slides-in-memory) generation path.
 pub fn profile_eager_generation(title: &str, slides: Vec<SlideContent>) -> GenerationMetrics {
     let slide_count = slides.len();

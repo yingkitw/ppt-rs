@@ -58,7 +58,7 @@ pub fn create_slide_xml(slide_num: usize, title: &str) -> String {
 <a:lstStyle/>
 <a:p>
 <a:r>
-<a:rPr lang="en-US" smtClean="0"/>
+<a:rPr lang="en-US"/>
 <a:t>{slide_title}</a:t>
 </a:r>
 <a:endParaRPr lang="en-US"/>
@@ -82,6 +82,7 @@ pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent, 
         SlideLayout::CenteredTitle => layouts::create_centered_title_slide(content, chart_rids),
         SlideLayout::TitleAndBigContent => layouts::create_title_and_big_content_slide(content, chart_rids),
         SlideLayout::TwoColumn => layouts::create_two_column_slide(content, chart_rids),
+        SlideLayout::SectionHeader => layouts::create_section_header_slide(content, chart_rids),
         SlideLayout::TitleAndContent => layouts::create_title_and_content_slide(content, chart_rids),
     };
 

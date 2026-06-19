@@ -15,7 +15,7 @@ impl CreateCommand {
         output: &str,
         title: Option<&str>,
         slides: usize,
-        _template: Option<&str>,
+        template: Option<&str>,
     ) -> Result<(), String> {
         // Create output directory if needed
         if let Some(parent) = PathBuf::from(output).parent() {
@@ -27,9 +27,17 @@ impl CreateCommand {
 
         let title = title.unwrap_or("Presentation");
 
-        // Generate proper PPTX file
-        let pptx_data = generator::create_pptx(title, slides)
-            .map_err(|e| format!("Failed to generate PPTX: {e}"))?;
+        let pptx_data = if let Some(template_path) = template {
+            let slide_list: Vec<_> = (1..=slides)
+                .map(|i| generator::SlideContent::new(&format!("Slide {i}")).add_bullet("Content"))
+                .collect();
+            let settings = generator::PresentationSettings::new().template(template_path);
+            generator::create_pptx_with_settings(title, &slide_list, Some(settings))
+                .map_err(|e| format!("Failed to generate PPTX from template: {e}"))?
+        } else {
+            generator::create_pptx(title, slides)
+                .map_err(|e| format!("Failed to generate PPTX: {e}"))?
+        };
 
         // Write to file
         fs::write(output, pptx_data).map_err(|e| format!("Failed to write file: {e}"))?;

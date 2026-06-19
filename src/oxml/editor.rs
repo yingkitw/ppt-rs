@@ -9,6 +9,9 @@
 use super::slide::{ParsedSlide, SlideParser};
 use crate::exc::{messages, PptxError};
 use crate::generator::slide_content::SlideContent;
+use crate::generator::package_xml::{
+    create_presentation_rels_xml_full, slide_id_value, slide_rel_id,
+};
 use crate::generator::slide_xml::{create_slide_rels_xml, create_slide_xml_with_content};
 use crate::opc::Package;
 
@@ -159,6 +162,14 @@ impl PresentationEditor {
             .count()
     }
 
+    fn presentation_has_notes(xml: &str) -> bool {
+        xml.contains("<p:notesMasterIdLst>")
+    }
+
+    fn presentation_has_handout(xml: &str) -> bool {
+        xml.contains("<p:handoutMasterIdLst>")
+    }
+
     fn update_presentation_xml(&mut self, new_slide_count: usize) -> Result<(), PptxError> {
         if let Some(xml) = self.package.get_part_string("ppt/presentation.xml") {
             // Parse and update the presentation XML
@@ -175,8 +186,10 @@ impl PresentationEditor {
         slide_num: usize,
     ) -> Result<String, PptxError> {
         // Find </p:sldIdLst> and insert new slide reference before it
-        let slide_id = 256 + slide_num;
-        let r_id = slide_num + 2; // rId1=master, rId2=theme, rId3+=slides
+        let has_notes = Self::presentation_has_notes(xml);
+        let has_handout = Self::presentation_has_handout(xml);
+        let slide_id = slide_id_value(slide_num);
+        let r_id = slide_rel_id(slide_num, has_notes, has_handout);
 
         let new_slide_ref = format!("\n<p:sldId id=\"{slide_id}\" r:id=\"rId{r_id}\"/>");
 
@@ -209,9 +222,11 @@ impl PresentationEditor {
         xml: &str,
         slide_num: usize,
     ) -> Result<String, PptxError> {
-        let r_id = slide_num + 2;
+        let has_notes = Self::presentation_has_notes(xml);
+        let has_handout = Self::presentation_has_handout(xml);
+        let r_id = slide_rel_id(slide_num, has_notes, has_handout);
         let new_rel = format!(
-            "\n    <Relationship Id=\"rId{r_id}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide{slide_num}.xml\"/>"
+            "\n<Relationship Id=\"rId{r_id}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide{slide_num}.xml\"/>"
         );
 
         if let Some(pos) = xml.find("</Relationships>") {
@@ -267,27 +282,57 @@ impl PresentationEditor {
     }
 
     fn rebuild_presentation_xml(&mut self) -> Result<(), PptxError> {
+        let existing = self
+            .package
+            .get_part_string("ppt/presentation.xml")
+            .unwrap_or_default();
+        let has_notes = Self::presentation_has_notes(&existing);
+        let has_handout = Self::presentation_has_handout(&existing);
+
         let mut slide_refs = String::new();
         for i in 1..=self.slide_count {
-            let slide_id = 256 + i;
-            let r_id = i + 2;
+            let slide_id = slide_id_value(i);
+            let r_id = slide_rel_id(i, has_notes, has_handout);
             slide_refs.push_str(&format!(
                 "\n<p:sldId id=\"{slide_id}\" r:id=\"rId{r_id}\"/>"
             ));
         }
 
-        let xml = format!(
+        let mut xml = String::from(
             r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" saveSubsetFonts="1">
+<p:presentation xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" saveSubsetFonts="1" autoCompressPictures="0">
 <p:sldMasterIdLst>
 <p:sldMasterId id="2147483648" r:id="rId1"/>
-</p:sldMasterIdLst>
+</p:sldMasterIdLst>"#,
+        );
+
+        if has_notes {
+            xml.push_str(
+                r#"
+<p:notesMasterIdLst>
+<p:notesMasterId id="2147483650" r:id="rId6"/>
+</p:notesMasterIdLst>"#,
+            );
+        }
+
+        if has_handout {
+            let handout_rid = if has_notes { 7 } else { 6 };
+            xml.push_str(&format!(
+                r#"
+<p:handoutMasterIdLst>
+<p:handoutMasterId id="2147483651" r:id="rId{handout_rid}"/>
+</p:handoutMasterIdLst>"#
+            ));
+        }
+
+        xml.push_str(&format!(
+            r#"
 <p:sldIdLst>{slide_refs}
 </p:sldIdLst>
 <p:sldSz cx="9144000" cy="6858000" type="screen4x3"/>
 <p:notesSz cx="6858000" cy="9144000"/>
 </p:presentation>"#
-        );
+        ));
 
         self.package
             .add_part("ppt/presentation.xml".to_string(), xml.into_bytes());
@@ -295,21 +340,14 @@ impl PresentationEditor {
     }
 
     fn rebuild_presentation_rels(&mut self) -> Result<(), PptxError> {
-        let mut slide_rels = String::new();
-        for i in 1..=self.slide_count {
-            let r_id = i + 2;
-            slide_rels.push_str(&format!(
-                "\n    <Relationship Id=\"rId{r_id}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide\" Target=\"slides/slide{i}.xml\"/>"
-            ));
-        }
+        let existing = self
+            .package
+            .get_part_string("ppt/presentation.xml")
+            .unwrap_or_default();
+        let has_notes = Self::presentation_has_notes(&existing);
+        let has_handout = Self::presentation_has_handout(&existing);
 
-        let xml = format!(
-            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="slideMasters/slideMaster1.xml"/>
-    <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>{slide_rels}
-</Relationships>"#
-        );
+        let xml = create_presentation_rels_xml_full(self.slide_count, has_notes, has_handout);
 
         self.package.add_part(
             "ppt/_rels/presentation.xml.rels".to_string(),

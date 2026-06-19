@@ -1,5 +1,7 @@
 //! Common XML templates and utilities for slide generation
 
+use crate::generator::theme_xml::layout_rel_target;
+
 /// Standard slide header with background
 pub const SLIDE_HEADER: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
@@ -33,12 +35,20 @@ pub const SLIDE_FOOTER: &str = r#"
 </p:clrMapOvr>
 </p:sld>"#;
 
-/// Create slide relationships XML
+/// Create slide relationships XML (default layout 2 = Title and Content)
 pub fn create_slide_rels_xml() -> String {
-    r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+    create_slide_rels_xml_for_layout(2)
+}
+
+/// Create slide relationships XML for a specific layout part.
+pub fn create_slide_rels_xml_for_layout(layout_number: usize) -> String {
+    let layout_target = layout_rel_target(layout_number);
+    format!(
+        r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-    <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>
-</Relationships>"#.to_string()
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="{layout_target}"/>
+</Relationships>"#
+    )
 }
 
 /// Generate title shape XML

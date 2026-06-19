@@ -254,6 +254,7 @@ fn test_create_presentation_with_all_layouts() {
         SlideLayout::TitleAndContent,
         SlideLayout::TitleAndBigContent,
         SlideLayout::TwoColumn,
+        SlideLayout::SectionHeader,
         SlideLayout::Blank,
     ];
     

@@ -27,18 +27,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_bullet("Maximizes content space")
             .layout(SlideLayout::TitleAndBigContent),
 
-        // Slide 5: Two Column Layout
+        // Slide 5: Section Header (divider slide)
+        SlideContent::new("Section Two")
+            .title_size(48)
+            .title_bold(true)
+            .with_layout(SlideLayout::SectionHeader),
+
+        // Slide 6: Two Column Layout
         SlideContent::new("Two Column Layout")
             .add_bullet("Left column content")
             .add_bullet("Organized side by side")
             .add_bullet("Great for comparisons")
-            .layout(SlideLayout::TwoColumn),
+            .with_layout(SlideLayout::TwoColumn),
 
-        // Slide 6: Blank Slide
+        // Slide 7: Blank Slide
         SlideContent::new("")
-            .layout(SlideLayout::Blank),
+            .with_layout(SlideLayout::Blank),
 
-        // Slide 7: Summary with different formatting
+        // Slide 8: Summary with different formatting
         SlideContent::new("Summary")
             .title_size(48)
             .title_bold(true)
@@ -49,14 +55,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .add_bullet("• TitleAndContent - Standard")
             .add_bullet("• TitleAndBigContent - Large content")
             .add_bullet("• TwoColumn - Side by side")
+            .add_bullet("• SectionHeader - Section divider")
             .add_bullet("• Blank - Empty slide")
             .content_size(20)
-            .layout(SlideLayout::TitleAndContent),
+            .with_layout(SlideLayout::TitleAndContent),
     ];
 
     let pptx_data = create_pptx_with_content("Layout Demo Presentation", slides)?;
     std::fs::write("layout_demo.pptx", pptx_data)?;
-    println!("✓ Created layout_demo.pptx with 7 slides demonstrating different layouts");
+    println!("✓ Created layout_demo.pptx with 8 slides demonstrating all layout types");
 
     Ok(())
 }

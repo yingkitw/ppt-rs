@@ -57,7 +57,7 @@ Examples:
         slides: usize,
 
         /// Template file to use
-        #[arg(long, help = "Template PPTX file to use as base (not yet implemented)")]
+        #[arg(long, help = "Template PPTX file — clones masters, layouts, and theme from the file")]
         template: Option<String>,
     },
 

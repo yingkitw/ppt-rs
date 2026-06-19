@@ -1,7 +1,7 @@
 //! Slide layout implementations
 
 use crate::generator::slide_content::{SlideContent, BulletStyle, BulletPoint, BulletTextFormat};
-use crate::generator::package_xml::escape_xml;
+use crate::core::escape_xml;
 use crate::generator::slide::formatting::generate_text_props;
 use super::common::{SLIDE_HEADER, SLIDE_FOOTER, generate_title_shape};
 use crate::generator::layouts::ExtendedTextProps;
@@ -106,6 +106,34 @@ pub fn create_title_only_slide(content: &SlideContent, chart_rids: &[String]) ->
         8230200,  // width
         1143000,  // height
         "l",      // align left
+    );
+
+    let mut xml = format!("{}\n{}", SLIDE_HEADER, title_shape);
+    render_additional_content(&mut xml, content, chart_rids);
+    xml.push_str(SLIDE_FOOTER);
+    xml
+}
+
+/// Create a section header slide (large centered title)
+pub fn create_section_header_slide(content: &SlideContent, chart_rids: &[String]) -> String {
+    let title_size = content.title_size.unwrap_or(48) * 100;
+    let title_props = generate_text_props(
+        title_size,
+        true,
+        content.title_italic,
+        content.title_underline,
+        content.title_color.as_deref(),
+    );
+    let title_text = escape_xml(&content.title);
+
+    let title_shape = generate_title_shape(
+        &title_text,
+        &title_props,
+        457_200,
+        1_600_200,
+        8_229_600,
+        1_828_800,
+        "ctr",
     );
 
     let mut xml = format!("{}\n{}", SLIDE_HEADER, title_shape);

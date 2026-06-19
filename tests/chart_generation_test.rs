@@ -61,6 +61,29 @@ fn test_chart_generation() {
     archive.by_name("ppt/slides/slide1.xml").unwrap().read_to_string(&mut slide_xml).unwrap();
     assert!(slide_xml.contains("c:chart"), "Slide XML should contain chart element");
     assert!(slide_xml.contains("http://schemas.openxmlformats.org/drawingml/2006/chart"), "Slide XML should contain chart namespace");
+
+    // 5. Chart part must link to embedded workbook (PowerPoint requirement)
+    let mut chart_rels = String::new();
+    archive
+        .by_name("ppt/charts/_rels/chart1.xml.rels")
+        .expect("chart rels should exist")
+        .read_to_string(&mut chart_rels)
+        .unwrap();
+    assert!(
+        chart_rels.contains("relationships/package"),
+        "Chart rels should link to embedded Excel package"
+    );
+    archive
+        .by_name("ppt/embeddings/Microsoft_Excel_Sheet1.xlsx")
+        .expect("chart embedding xlsx should exist");
+
+    let mut chart_xml = String::new();
+    archive
+        .by_name("ppt/charts/chart1.xml")
+        .unwrap()
+        .read_to_string(&mut chart_xml)
+        .unwrap();
+    assert!(chart_xml.contains("<c:externalData"), "Chart should declare externalData");
     
     // Cleanup
     std::fs::remove_file(output).unwrap_or(());

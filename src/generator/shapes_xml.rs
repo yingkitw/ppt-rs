@@ -387,13 +387,13 @@ fn generate_text_xml_with_autofit(text: &Option<String>, width: u32, height: u32
                 format!(
                     r#"<p:txBody>
 <a:bodyPr wrap="square" rtlCol="0" anchor="{}" lIns="{}" tIns="{}" rIns="{}" bIns="{}">
-<a:normAutofit fontScale="100000" lnSpcReduction="0"/>
+<a:normAutofit/>
 </a:bodyPr>
 <a:lstStyle/>
 <a:p>
 <a:pPr algn="{}" marL="0" marR="0" indent="0"/>
 <a:r>
-<a:rPr lang="en-US" sz="{}" dirty="0" smtClean="0"><a:solidFill><a:srgbClr val="{}"/></a:solidFill></a:rPr>
+<a:rPr lang="en-US" sz="{}" dirty="0"><a:solidFill><a:srgbClr val="{}"/></a:solidFill></a:rPr>
 <a:t>{}</a:t>
 </a:r>
 </a:p>
@@ -415,7 +415,9 @@ fn generate_text_xml_with_autofit(text: &Option<String>, width: u32, height: u32
             r#"<p:txBody>
 <a:bodyPr/>
 <a:lstStyle/>
-<a:p/>
+<a:p>
+<a:endParaRPr/>
+</a:p>
 </p:txBody>"#.to_string()
         }
     }

@@ -33,8 +33,8 @@ The library employs a layered testing approach:
 
 | Test Type | Count | Purpose |
 |-----------|-------|---------|
-| Unit tests | 850+ | Individual module correctness |
-| Integration tests | 70+ | End-to-end workflows |
+| Unit tests | 690+ | Individual module correctness |
+| Integration tests | 420+ | End-to-end workflows |
 | Compatibility tests | 6 | PowerPoint/LibreOffice/Google Slides validation |
 | Doc tests | 50+ | API examples in documentation |
 
@@ -158,14 +158,19 @@ SlideContent::new("Title")
 
 #### SlideLayout
 
-| Layout | Description |
-|--------|-------------|
-| `TitleOnly` | Title at top only |
-| `CenteredTitle` | Centered title |
-| `TitleAndContent` | Title with bullets (default) |
-| `TitleAndBigContent` | Title with large content |
-| `TwoColumn` | Two-column layout |
-| `Blank` | Empty slide |
+Each variant maps to `slideLayoutN.xml` on slide master 1 (see `layout_number()`).
+
+| Layout | # | Description |
+|--------|---|-------------|
+| `CenteredTitle` | 1 | Centered title + subtitle |
+| `TitleAndContent` | 2 | Title with bullets (default) |
+| `TwoColumn` | 3 | Two-column layout |
+| `SectionHeader` | 4 | Section divider (large title) |
+| `Blank` | 5 | Empty slide |
+| `TitleOnly` | 6 | Title at top only |
+| `TitleAndBigContent` | 7 | Title at top, content fills rest |
+
+`STANDARD_LAYOUT_COUNT` (7) layouts are emitted on slide master 1.
 
 #### Shape
 
@@ -480,7 +485,7 @@ Code blocks use Solarized Dark theme:
 ### Repair Capability
 
 ```rust
-use ppt_rs::PptxRepair;
+use ppt_rs::oxml::repair::{PptxRepair, RepairIssue, RepairResult};
 
 let mut repair = PptxRepair::open("file.pptx")?;
 let issues = repair.validate();
@@ -660,10 +665,61 @@ let result = pres.compress("web_optimized.pptx", &options)?;
 - `CompressionOptions::maximum()` — All aggressive optimizations
 - `CompressionOptions::web()` — 5MB target, web-ready
 
+### Templates & Slide Layouts (v0.2.19)
+
+Clone masters, theme, layouts, and table styles from an existing `.pptx` template, and pick a layout per slide:
+
+```rust
+use ppt_rs::generator::{create_pptx_with_template, SlideContent, PresentationSettings, create_pptx_with_settings};
+use ppt_rs::SlideLayout;
+
+let slides = vec![
+    SlideContent::new("Cover").with_layout(SlideLayout::CenteredTitle),
+    SlideContent::new("Body").with_layout(SlideLayout::TitleAndContent),
+];
+
+// Dedicated helper
+let pptx = create_pptx_with_template("Deck", &slides, "brand.pptx", None)?;
+
+// Or via settings
+let settings = PresentationSettings::new().template("brand.pptx");
+let pptx = create_pptx_with_settings("Deck", &slides, Some(settings))?;
+```
+
+`PptxTemplate::load(path)` / `from_package(&pkg)` extract the template parts; `resolve_layout_number()` falls back to layout 1 when a template has fewer layouts than requested.
+
+CLI: `pptcli create output.pptx --title "Title" --slides 8 --template brand.pptx`
+
+### Package Validation (v0.2.19)
+
+Structured structural validation of any PPTX byte stream (the same engine the generator self-checks in debug builds):
+
+```rust
+use ppt_rs::{validate_package_bytes, ValidationSeverity};
+
+let bytes = std::fs::read("presentation.pptx")?;
+let report = validate_package_bytes(&bytes);
+for issue in &report.issues {
+    println!("[{:?}] {:?}: {}", issue.severity, issue.category, issue.message);
+}
+assert!(report.is_valid()); // true when no Error-severity findings
+```
+
+| Export | Purpose |
+|--------|---------|
+| `validate_package(archive)` | Validate an open `ZipArchive` |
+| `validate_package_bytes(&[u8])` | Validate a PPTX byte slice |
+| `PackageValidationReport` | Aggregated findings (`is_valid`, `error_count`, `error_messages`) |
+| `PackageValidationIssue` | Single finding: `category`, `severity`, `message`, `path` |
+| `ValidationCategory` | MissingPart, Relationship, ContentType, Presentation, SlideMaster, Slide, Chart, Xml, Theme |
+| `ValidationSeverity` | Warning, Error |
+| `REQUIRED_PACKAGE_PARTS` | Constant list of mandatory package parts |
+| `validate_powerpoint_structure()` / `CompatReport` | Legacy wrapper (delegates to package validation) |
+
 ## CLI Commands
 
 ```bash
-pptcli create <title> [output] [--slides N]         # Create presentation
+pptcli create <title> [output] [--slides N] [--template deck.pptx]  # Create presentation
 pptcli md2ppt <input.md> [output.pptx] [--title]    # Convert markdown
 pptcli html2ppt <input.html> [output.pptx] [--title] # Convert HTML (also `from-html`, `from-html-file`)
 pptcli pdf2ppt <input.pdf> [output.pptx]             # Convert PDF
@@ -689,7 +745,7 @@ pptcli repair <input.pptx> <output.pptx>            # Repair PPTX
 | File size overhead | ~10-15 KB base |
 | Generation speed | ~1000 slides/sec |
 | Memory usage | ~2 MB + content |
-| Test coverage | 850+ tests |
+| Test coverage | 1100+ tests |
 
 ## Error Handling
 
@@ -710,6 +766,7 @@ match create_pptx("title", 5) {
 
 | Version | Features | Significance |
 |---------|----------|--------------|
+| 0.2.19 | PowerPoint zero-repair compat gate: `core::package_validation` API, multiple slide layouts, template-based generation, chart Excel workbook embedding, handout master packaging, slide master completeness, rel ordering | **Compatibility milestone** — structured package validation + template/layouts so decks open in PowerPoint without repair |
 | 0.2.16 | Advanced theme customization: `PresentationTheme`, custom colors/fonts embedded in `theme1.xml` | **Theme milestone** — branded PPTX output with ECMA-376 color schemes and typefaces |
 | 0.2.14 | Enhanced HTML/Markdown: real images, task lists, strikethrough, extended CSS, interactive HTML export | **Content enhancement milestone** — real-world content support with images and advanced styling |
 | 0.2.13 | MCP server (8 tools), codebase cleanup, documentation refresh | **MCP integration milestone** — AI assistant integration via Model Context Protocol |

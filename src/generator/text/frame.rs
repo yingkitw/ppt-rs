@@ -79,7 +79,7 @@ impl TextFrame {
         
         // Add empty paragraph if none
         if self.paragraphs.is_empty() {
-            xml.push_str("<a:p/>");
+            xml.push_str("<a:p><a:endParaRPr/></a:p>");
         }
         
         xml.push_str("</p:txBody>");

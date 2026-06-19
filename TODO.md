@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.18
+**Tests**: 1100+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.19
 
 ## Active
 
@@ -13,23 +13,6 @@
 
 Ideas ranked by impact on real-world decks, round-trip fidelity, and API completeness.
 Items here graduate into **Backlog** when scoped for implementation.
-
-### Compatibility & Trust (highest priority)
-PowerPoint opening without repair is the #1 quality bar for a PPTX library.
-
-- [ ] **PowerPoint compatibility gate** — golden-reference PPTX comparison (e.g. python-pptx baseline), bisect variant generator, CI check that fails on structural drift
-- [ ] **Chart Excel workbook embedding** — package `ppt/embeddings/*.xlsx` + chart rels so charts are editable in PowerPoint (not cache-only XML)
-- [ ] **Handout master packaging** — emit handout master part + rels when `PrintSettings` uses handouts (today `prnPr` / handout XML exists but parts are not wired)
-- [ ] **Slide master completeness** — `p:txStyles` on slide master, full Office theme template, notes master theme parity
-- [ ] **Package relationship ordering** — align `presentation.xml.rels` part order with PowerPoint expectations (master → presProps → viewProps → theme → tableStyles → slides)
-
-### Layout & Structure
-Today most decks use a single blank layout; richer layouts unlock template-quality output.
-
-- [ ] **Multiple slide layouts** — Title, Title+Content, Two Column, Section Header, Blank (with correct `slideLayoutN.xml` + master rels)
-- [ ] **Per-slide layout selection** — `SlideContent::with_layout()` respected end-to-end in generator
-- [ ] **Template-based generation** — `--template deck.pptx` CLI flag + API to clone masters/theme from an existing file
-- [ ] **Slide footers & numbering** — date/time, slide number, footer text via slide master placeholders
 
 ### Content & Round-Trip
 Extend what can flow in and out without losing meaning.
@@ -58,21 +41,13 @@ Longer-horizon capabilities that broaden deployment options.
 
 ## Backlog (Prioritized)
 
-### P0 — Compatibility (from Proposed)
-- [ ] PowerPoint compatibility gate (golden reference + bisect CI)
-- [ ] Chart Excel workbook embedding
-- [ ] Handout master packaging when print handouts enabled
-- [ ] Slide master / theme / rel-order fixes for PowerPoint zero-repair open
-
-### P1 — High Value
+### P0 — High Value
 - [ ] Digital signatures (XML generation done; needs Content_Types + _rels wiring)
 - [ ] Embedded fonts in output (XML generation done; needs font data parts + rId wiring)
-- [ ] Multiple slide layouts + per-slide layout selection
-- [ ] Template-based generation (`--template` CLI + API)
 - [ ] Complete API documentation with examples
 - [ ] Wire `core::validation` into CLI validate + MCP `validate_pptx`
 
-### P2 — Medium Value
+### P1 — Medium Value
 - [ ] Ink annotations (XML generation done; needs ink part + relationship)
 - [ ] Speaker notes import from MD/HTML
 - [ ] Image alt text / accessibility metadata
@@ -80,7 +55,7 @@ Longer-horizon capabilities that broaden deployment options.
 - [ ] Benchmark suite (Criterion: generation, lazy loading, compression)
 - [ ] MCP tools: compress, repair, theme, export
 
-### P3 — Future
+### P2 — Future
 - [ ] PDF export without LibreOffice
 - [ ] WASM build target
 - [ ] PPTX semantic diff tool
@@ -112,6 +87,38 @@ Longer-horizon capabilities that broaden deployment options.
 - [x] Consider builder pattern consolidation for Shape/Table/Chart builders
 
 ## Completed
+
+<details>
+<summary>v0.2.19 — PowerPoint Zero-Repair Compatibility Gate</summary>
+
+Landed the full "Compatibility & Trust" and "Layout & Structure" proposed tracks so generated decks open in PowerPoint without a repair prompt.
+
+- **Package validation engine** (`src/core/package_validation/`):
+  - `validate_package()` / `validate_package_bytes()` returning a structured `PackageValidationReport`
+  - `PackageValidationIssue` with `ValidationCategory` (MissingPart, Relationship, ContentType, Presentation, SlideMaster, Slide, Chart, Xml, Theme) and `ValidationSeverity` (Warning / Error)
+  - `REQUIRED_PACKAGE_PARTS` constant drives missing-part checks
+  - Sub-modules: `rules`, `rels`, `context`, `report`
+  - Debug builds `debug_assert!` every generated deck passes validation (`builder::debug_assert_package_valid`)
+- **Legacy compat wrapper** (`src/core/powerpoint_compat.rs`):
+  - `validate_powerpoint_structure()` / `CompatReport` (delegates to package validation)
+- **Multiple slide layouts** (`src/generator/layout_parts.rs`):
+  - 7 layouts emitted on slide master 1 (`STANDARD_LAYOUT_COUNT = 7`)
+  - `SlideLayout::layout_number()` maps each variant to `slideLayoutN.xml`
+  - Footer / slide-number / date placeholders on the slide master
+- **Per-slide layout selection** — `SlideContent::with_layout()` respected end-to-end; layout index resolves against template layout count
+- **Template-based generation** (`src/generator/template.rs`):
+  - `PptxTemplate::load()` / `from_package()` clones theme / masters / layouts / tableStyles
+  - `create_pptx_with_template()`, `PresentationSettings::template(path)`
+  - CLI `pptcli create --template deck.pptx`
+- **Chart Excel workbook embedding** (`src/generator/charts/embedding.rs`):
+  - Packages `ppt/embeddings/Microsoft_Excel_SheetN.xlsx` + chart `rels` so charts are editable in PowerPoint
+- **Handout master packaging** — emits handout master part + rels when `PrintSettings` uses handouts
+- **Slide master completeness** — `p:txStyles`, full Office theme template, notes master theme parity
+- **Package relationship ordering** — `presentation.xml.rels` ordered master → presProps → viewProps → theme → tableStyles → slides (`create_presentation_rels_xml_full`)
+- **Auxiliary generators** — `media_registry`, `package_cache`, `estimate_output_capacity` for reuse / pre-sizing
+- **Tests**: `package_validation_test`, `powerpoint_compat_test`, `layouts_packaging_test`, `repair_compare_test`, `tests/common/`
+
+</details>
 
 <details>
 <summary>v0.2.18 — Validation, Messages & Builder Placement</summary>

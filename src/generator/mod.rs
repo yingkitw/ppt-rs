@@ -11,12 +11,17 @@ pub mod theme_xml;
 pub mod presentation_theme;
 pub mod props_xml;
 
+pub mod layout_parts;
+pub mod template;
+
 // Modular layout system
 pub mod layouts;
 
 // Builder and content modules
 pub mod builder;
 pub mod memory_profile;
+pub mod package_cache;
+pub mod media_registry;
 
 // Text module (modularized)
 pub mod text;
@@ -48,10 +53,12 @@ pub mod gradients;
 pub mod media;
 
 pub use builder::{
-    create_pptx, create_pptx_with_content, create_pptx_with_settings,
+    create_pptx, create_pptx_with_content, create_pptx_with_settings, create_pptx_with_template,
     create_pptx_to_writer, create_pptx_with_content_to_writer, create_pptx_lazy_to_writer,
     LazySlideSource,
 };
+pub use template::PptxTemplate;
+pub use layout_parts::STANDARD_LAYOUT_COUNT;
 pub use notes_xml::{create_notes_xml, create_notes_rels_xml, create_notes_master_xml, create_notes_master_rels_xml};
 pub use slide_content::{SlideContent, SlideLayout};
 pub use presentation_theme::{PresentationTheme, ThemeColorScheme, ThemeFonts};

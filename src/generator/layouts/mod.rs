@@ -26,6 +26,7 @@ pub fn create_slide_xml_for_layout(content: &SlideContent) -> String {
         SlideLayout::CenteredTitle => CenteredTitleLayout::generate(content),
         SlideLayout::TitleAndBigContent => TitleBigContentLayout::generate(content),
         SlideLayout::TwoColumn => TwoColumnLayout::generate(content),
+        SlideLayout::SectionHeader => CenteredTitleLayout::generate(content),
         SlideLayout::TitleAndContent => TitleContentLayout::generate(content),
     }
 }

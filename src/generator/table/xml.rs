@@ -30,14 +30,17 @@ pub fn generate_table_xml(table: &Table, shape_id: usize) -> String {
     writer.empty_element("a:ext", &[("cx", &width), ("cy", &height)]);
     writer.raw("</p:xfrm><a:graphic><a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/table\"><a:tbl><a:tblPr firstRow=\"1\" bandRow=\"1\"/><a:tblGrid>");
 
-    for col_width in &table.column_widths {
-        writer.empty_element("a:gridCol", &[("w", &col_width.to_string())]);
+    for (col_idx, col_width) in table.column_widths.iter().enumerate() {
+        let col_id = 20_000 + col_idx;
+        writer.raw(&format!(
+            r#"<a:gridCol w="{col_width}"><a:extLst><a:ext uri="{{9D8B030D-6E8A-4147-A177-3AD203B41FA5}}"><a16:colId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" val="{col_id}"/></a:ext></a:extLst></a:gridCol>"#
+        ));
     }
 
     writer.raw("</a:tblGrid>");
 
-    for row in &table.rows {
-        writer.raw(&generate_row_xml(row));
+    for (row_idx, row) in table.rows.iter().enumerate() {
+        writer.raw(&generate_row_xml(row, row_idx));
     }
 
     writer.raw("</a:tbl></a:graphicData></a:graphic>");
@@ -46,8 +49,9 @@ pub fn generate_table_xml(table: &Table, shape_id: usize) -> String {
 }
 
 /// Generate row XML
-fn generate_row_xml(row: &TableRow) -> String {
+fn generate_row_xml(row: &TableRow, row_idx: usize) -> String {
     let height = row.height.unwrap_or(400000).to_string();
+    let row_id = 10_000 + row_idx;
     let mut writer = XmlWriter::with_capacity(512);
     writer.start_element("a:tr", &[("h", &height)]);
 
@@ -55,6 +59,9 @@ fn generate_row_xml(row: &TableRow) -> String {
         writer.raw(&generate_cell_xml(cell));
     }
 
+    writer.raw(&format!(
+        r#"<a:extLst><a:ext uri="{{0D108BD9-81ED-4DB2-BD59-A6C34878D82A}}"><a16:rowId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" val="{row_id}"/></a:ext></a:extLst>"#
+    ));
     writer.end_element("a:tr");
     writer.finish()
 }
@@ -77,6 +84,8 @@ mod tests {
         assert!(xml.contains("a:tbl"));
         assert!(xml.contains("a:tr"));
         assert!(xml.contains("a:tc"));
+        assert!(xml.contains("a16:colId"));
+        assert!(xml.contains("a16:rowId"));
         assert!(xml.contains("<a:t>A</a:t>"));
         assert!(xml.contains("<a:t>B</a:t>"));
     }

@@ -3,7 +3,7 @@
 //! Handles inline markdown formatting (bold, italic, code) and
 //! generates corresponding PPTX XML text runs.
 
-use crate::generator::package_xml::escape_xml;
+use crate::core::escape_xml;
 
 /// A text segment with formatting
 #[derive(Debug, Clone)]

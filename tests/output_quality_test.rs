@@ -463,6 +463,7 @@ fn test_all_layouts_generate_valid_pptx() {
         SlideLayout::TitleAndContent,
         SlideLayout::TitleAndBigContent,
         SlideLayout::TwoColumn,
+        SlideLayout::SectionHeader,
         SlideLayout::Blank,
     ];
 

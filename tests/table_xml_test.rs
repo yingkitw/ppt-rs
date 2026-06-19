@@ -159,7 +159,8 @@ fn test_generate_table_cell_alignment_and_wrap() {
     let xml = generate_table_xml(&table, 1);
 
     assert!(xml.contains(r#"algn="l""#));
-    assert!(xml.contains(r#"wrap="none""#));
+    assert!(xml.contains("<a:bodyPr/>"));
+    assert!(!xml.contains(r#"wrap=""#));
     assert!(xml.contains(r#"anchor="b""#));
 }
 

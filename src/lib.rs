@@ -18,11 +18,16 @@
 //!
 //! # Module Organization
 //!
-//! - **core** - Core traits (`ToXml`, `Positioned`) and utilities
+//! - **core** - Core traits (`ToXml`, `Positioned`) and utilities (XML utils, dimensions, validation, package validation)
 //! - **elements** - Unified element types (Color, Position, Size, Transform)
 //! - **generator** - PPTX file generation with ZIP packaging and XML creation
 //! - **parts** - Package parts (SlidePart, ImagePart, ChartPart)
-//! - **integration** - High-level builders for presentations
+//! - **api** - High-level `Presentation` builder (create, save, import, export)
+//! - **prelude** - Simplified API: macros, unit helpers, shapes, colors, themes
+//! - **helpers** - Color / table / shape / extension helpers
+//! - **templates** - Pre-built presentation templates
+//! - **export** - Export to Markdown, HTML, images
+//! - **import** - PPTX import, HTML-to-PPTX
 //! - **opc** - Open Packaging Convention (ZIP) handling
 //! - **oxml** - Office XML parsing and manipulation
 //! - **exc** - Error types
@@ -54,9 +59,9 @@ pub use core::{ToXml, escape_xml};
 pub use elements::{Color, RgbColor, SchemeColor, Position, Size, Transform};
 pub use exc::{messages, PptxError, Result};
 pub use generator::{
-    create_pptx, create_pptx_with_content, create_pptx_with_settings,
+    create_pptx, create_pptx_with_content, create_pptx_with_settings, create_pptx_with_template,
     create_pptx_to_writer, create_pptx_with_content_to_writer, create_pptx_lazy_to_writer,
-    LazySlideSource,
+    LazySlideSource, PptxTemplate, STANDARD_LAYOUT_COUNT,
     SlideContent, SlideLayout,
     TextFormat, FormattedText,
     Table, TableRow, TableCell, TableBuilder,
@@ -80,7 +85,11 @@ pub use generator::{
     GradientFill, GradientType, GradientDirection, GradientStop, PresetGradients,
     Video, Audio, VideoFormat, AudioFormat, VideoOptions, AudioOptions,
 };
-pub use oxml::repair::{PptxRepair, RepairIssue, RepairResult};
+pub use core::{
+    validate_package, validate_package_bytes, validate_powerpoint_structure,
+    CompatReport, PackageValidationIssue, PackageValidationReport,
+    REQUIRED_PACKAGE_PARTS, ValidationCategory, ValidationSeverity,
+};
 
 // Export convenience types for new capabilities
 pub use import::html::{parse_html, parse_html_with_options, HtmlParseOptions, Html2Ppt};
@@ -112,4 +121,4 @@ pub use web2ppt::{
     html_to_pptx, html_to_pptx_with_options, url_to_pptx, url_to_pptx_with_options,
 };
 
-pub const VERSION: &str = "0.2.13";
+pub const VERSION: &str = "0.2.19";

@@ -25,7 +25,7 @@ pub fn generate_effect_xml(effect: &ImageEffect) -> String {
             r#"<a:outerShdw blurRad="40000" dist="20000" dir="5400000" rotWithShape="0"><a:srgbClr val="000000"><a:alpha val="40000"/></a:srgbClr></a:outerShdw>"#.to_string()
         }
         ImageEffect::Reflection => {
-            r#"<a:reflection blurRad="6350" stA="50000" endA="300" endPos="35000" dist="0" dir="5400000" sy="-100000" algn="bl" rotWithShape="0"/>"#.to_string()
+            r#"<a:reflection blurRad="6350" stA="50000" endA="300" endPos="35000" dir="5400000" sy="-100000" algn="bl" rotWithShape="0"/>"#.to_string()
         }
         ImageEffect::Glow => {
             r#"<a:glow rad="50800"><a:srgbClr val="FFD700"><a:alpha val="60000"/></a:srgbClr></a:glow>"#.to_string()
@@ -34,7 +34,7 @@ pub fn generate_effect_xml(effect: &ImageEffect) -> String {
         ImageEffect::InnerShadow => {
             r#"<a:innerShdw blurRad="40000" dist="20000" dir="2700000"><a:srgbClr val="000000"><a:alpha val="50000"/></a:srgbClr></a:innerShdw>"#.to_string()
         }
-        ImageEffect::Blur => r#"<a:blur rad="38100" grow="1"/>"#.to_string(),
+        ImageEffect::Blur => r#"<a:blur rad="38100"/>"#.to_string(),
     }
 }
 
@@ -46,10 +46,16 @@ pub fn generate_blip_fill_xml(rel_id: &str, crop: Option<&Crop>) -> String {
             let t = (crop.top * 100_000.0) as u32;
             let r = (crop.right * 100_000.0) as u32;
             let b = (crop.bottom * 100_000.0) as u32;
+            let mut attrs = String::new();
+            for (name, value) in [("l", l), ("t", t), ("r", r), ("b", b)] {
+                if value > 0 {
+                    attrs.push_str(&format!(r#" {name}="{value}""#));
+                }
+            }
             format!(
                 r#"<p:blipFill>
 <a:blip r:embed="{rel_id}"/>
-<a:srcRect l="{l}" t="{t}" r="{r}" b="{b}"/>
+<a:srcRect{attrs}/>
 <a:stretch>
 <a:fillRect/>
 </a:stretch>
