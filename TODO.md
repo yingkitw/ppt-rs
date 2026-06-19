@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.17
+**Tests**: 850+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.18
 
 ## Active
 
@@ -9,16 +9,83 @@
 - [ ] Update all examples to use new simplified API
 - [x] Update documentation with new API examples
 
+## Proposed Capabilities
+
+Ideas ranked by impact on real-world decks, round-trip fidelity, and API completeness.
+Items here graduate into **Backlog** when scoped for implementation.
+
+### Compatibility & Trust (highest priority)
+PowerPoint opening without repair is the #1 quality bar for a PPTX library.
+
+- [ ] **PowerPoint compatibility gate** — golden-reference PPTX comparison (e.g. python-pptx baseline), bisect variant generator, CI check that fails on structural drift
+- [ ] **Chart Excel workbook embedding** — package `ppt/embeddings/*.xlsx` + chart rels so charts are editable in PowerPoint (not cache-only XML)
+- [ ] **Handout master packaging** — emit handout master part + rels when `PrintSettings` uses handouts (today `prnPr` / handout XML exists but parts are not wired)
+- [ ] **Slide master completeness** — `p:txStyles` on slide master, full Office theme template, notes master theme parity
+- [ ] **Package relationship ordering** — align `presentation.xml.rels` part order with PowerPoint expectations (master → presProps → viewProps → theme → tableStyles → slides)
+
+### Layout & Structure
+Today most decks use a single blank layout; richer layouts unlock template-quality output.
+
+- [ ] **Multiple slide layouts** — Title, Title+Content, Two Column, Section Header, Blank (with correct `slideLayoutN.xml` + master rels)
+- [ ] **Per-slide layout selection** — `SlideContent::with_layout()` respected end-to-end in generator
+- [ ] **Template-based generation** — `--template deck.pptx` CLI flag + API to clone masters/theme from an existing file
+- [ ] **Slide footers & numbering** — date/time, slide number, footer text via slide master placeholders
+
+### Content & Round-Trip
+Extend what can flow in and out without losing meaning.
+
+- [ ] **Speaker notes import** — MD/HTML speaker-note syntax → `notesSlides` parts on generation
+- [ ] **Comments round-trip** — wire `Comment` / `SlideComments` into package parts (XML types exist)
+- [ ] **Image accessibility** — alt text / description on images (`descr` / `title` on `cNvPr`)
+- [ ] **Video & audio embedding** — complete media part packaging (types exist in `parts/media.rs`; needs generator wiring)
+- [ ] **Section-aware export** — preserve `SectionManager` sections in Markdown/HTML export
+
+### API & Tooling
+Make the library easier to adopt, debug, and automate.
+
+- [ ] **Structured validation CLI** — `pptcli validate` reports `core::validation::ValidationIssue` list (not just pass/fail)
+- [ ] **PresentationEditor enhancements** — duplicate slide, reorder slides, insert slide at index, batch replace
+- [ ] **Chart build-time validation** — category/series length checks via `core::validation` at `ChartBuilder::build()`
+- [ ] **PPTX semantic diff** — slide-level compare (title, bullets, images, charts) for review/CI
+- [ ] **MCP tool expansion** — `compress_pptx`, `repair_pptx`, `apply_theme`, `export_markdown` / `export_html`
+
+### Conversion & Platform
+Longer-horizon capabilities that broaden deployment options.
+
+- [ ] **PDF export without LibreOffice** — investigate pure-Rust or bundled conversion path (today requires `soffice`)
+- [ ] **WASM target** — browser-side generation for docs sites and SaaS embeds
+- [ ] **Batch / pipeline API** — directory of MD/HTML → deck-per-file with shared theme (extends `batch_generator` example)
+
 ## Backlog (Prioritized)
+
+### P0 — Compatibility (from Proposed)
+- [ ] PowerPoint compatibility gate (golden reference + bisect CI)
+- [ ] Chart Excel workbook embedding
+- [ ] Handout master packaging when print handouts enabled
+- [ ] Slide master / theme / rel-order fixes for PowerPoint zero-repair open
 
 ### P1 — High Value
 - [ ] Digital signatures (XML generation done; needs Content_Types + _rels wiring)
 - [ ] Embedded fonts in output (XML generation done; needs font data parts + rId wiring)
+- [ ] Multiple slide layouts + per-slide layout selection
+- [ ] Template-based generation (`--template` CLI + API)
 - [ ] Complete API documentation with examples
+- [ ] Wire `core::validation` into CLI validate + MCP `validate_pptx`
 
 ### P2 — Medium Value
 - [ ] Ink annotations (XML generation done; needs ink part + relationship)
-- [ ] Benchmark suite
+- [ ] Speaker notes import from MD/HTML
+- [ ] Image alt text / accessibility metadata
+- [ ] PresentationEditor: duplicate, reorder, insert slides
+- [ ] Benchmark suite (Criterion: generation, lazy loading, compression)
+- [ ] MCP tools: compress, repair, theme, export
+
+### P3 — Future
+- [ ] PDF export without LibreOffice
+- [ ] WASM build target
+- [ ] PPTX semantic diff tool
+- [ ] Section-aware Markdown/HTML export
+- [ ] REST/HTTP service wrapper (optional feature)
 
 
 ## Performance Targets
@@ -45,6 +112,17 @@
 - [x] Consider builder pattern consolidation for Shape/Table/Chart builders
 
 ## Completed
+
+<details>
+<summary>v0.2.18 — Validation, Messages & Builder Placement</summary>
+
+- **`core::validation`** — shared validators, `REQUIRED_PARTS_*` constants, `ValidationIssue`, XML well-formedness checks
+- **`exc::messages`** — unified error message formatting (`slide_not_found`, `missing_part`, etc.)
+- **`core::placement`** — `ElementPlacement` consolidated into `ChartBuilder`, `TableBuilder`, `ImageBuilder`
+- **Migrated consumers** — `oxml/repair`, `api`, `oxml/editor`, `oxml/presentation`, `parts/media`, integration/import tests
+- **Tests**: `tests/validation_test.rs`
+
+</details>
 
 <details>
 <summary>v0.2.17 — Performance Optimizations</summary>
