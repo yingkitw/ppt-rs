@@ -2,7 +2,7 @@
 //!
 //! High-level API for working with PowerPoint presentations.
 
-use crate::exc::{PptxError, Result};
+use crate::exc::{messages, PptxError, Result};
 use crate::export::html::export_to_html;
 use crate::generator::{create_pptx_with_settings, Image, PresentationSettings, PresentationTheme, SlideContent};
 use crate::import::import_pptx;
@@ -86,7 +86,9 @@ impl Presentation {
     /// Build the presentation as PPTX bytes
     pub fn build(&self) -> Result<Vec<u8>> {
         if self.slides.is_empty() {
-            return Err(PptxError::InvalidState("Presentation has no slides".into()));
+            return Err(PptxError::InvalidState(
+                messages::must_not_be_empty("presentation slides"),
+            ));
         }
         create_pptx_with_settings(&self.title, &self.slides, self.settings.clone())
             .map_err(|e| PptxError::Generic(e.to_string()))
@@ -95,7 +97,9 @@ impl Presentation {
     /// Consume the presentation and build PPTX bytes without cloning slide data.
     pub fn into_bytes(self) -> Result<Vec<u8>> {
         if self.slides.is_empty() {
-            return Err(PptxError::InvalidState("Presentation has no slides".into()));
+            return Err(PptxError::InvalidState(
+                messages::must_not_be_empty("presentation slides"),
+            ));
         }
         create_pptx_with_settings(&self.title, &self.slides, self.settings)
             .map_err(|e| PptxError::Generic(e.to_string()))
@@ -166,16 +170,16 @@ impl Presentation {
             Ok(output) => {
                 if !output.status.success() {
                     let stderr = String::from_utf8_lossy(&output.stderr);
-                    return Err(PptxError::Generic(format!(
-                        "LibreOffice conversion failed: {}",
-                        stderr
+                    return Err(PptxError::Generic(messages::command_failed(
+                        "LibreOffice conversion",
+                        &stderr,
                     )));
                 }
             }
             Err(e) => {
-                return Err(PptxError::Generic(format!(
-                    "Failed to execute libreoffice: {}",
-                    e
+                return Err(PptxError::Generic(messages::command_failed(
+                    "libreoffice",
+                    &e.to_string(),
                 )));
             }
         }
@@ -189,7 +193,7 @@ impl Presentation {
             std::fs::rename(&generated_pdf_path, output_path.as_ref())?;
             Ok(())
         } else {
-            Err(PptxError::Generic("PDF output file not found".to_string()))
+            Err(PptxError::Generic(messages::output_not_found("PDF output")))
         }
     }
 

@@ -280,42 +280,41 @@ fn test_create_presentation_with_all_layouts() {
 
 /// Validate PPTX structure (simulates validation command logic)
 fn validate_pptx_structure(data: &[u8]) -> Result<(), String> {
-    // Check ZIP validity
+    use ppt_rs::core::{check_required_parts, validate_well_formed_xml, REQUIRED_PARTS_MINIMAL};
+    use std::collections::HashSet;
+
     let cursor = Cursor::new(data);
     let mut archive = ZipArchive::new(cursor)
         .map_err(|e| format!("Invalid ZIP archive: {}", e))?;
-    
-    // Check required files
-    let required_files = vec![
-        "[Content_Types].xml",
-        "_rels/.rels",
-        "ppt/presentation.xml",
-        "docProps/core.xml",
-    ];
-    
-    for file in required_files {
-        archive.by_name(file)
-            .map_err(|_| format!("Missing required file: {}", file))?;
-    }
-    
-    // Check XML validity for key files
+
+    let mut found = HashSet::new();
     for i in 0..archive.len() {
-        let mut file = archive.by_index(i)
+        let file = archive
+            .by_index(i)
             .map_err(|e| format!("Failed to read archive entry: {}", e))?;
-        
+        found.insert(file.name().to_string());
+    }
+
+    for issue in check_required_parts(&found, REQUIRED_PARTS_MINIMAL) {
+        return Err(issue.message());
+    }
+
+    for i in 0..archive.len() {
+        let mut file = archive
+            .by_index(i)
+            .map_err(|e| format!("Failed to read archive entry: {}", e))?;
+
         let name = file.name().to_string();
         if name.ends_with(".xml") || name.ends_with(".rels") {
             let mut content = String::new();
             file.read_to_string(&mut content)
                 .map_err(|e| format!("Failed to read XML file {}: {}", name, e))?;
-            
-            // Basic XML validation
-            if content.trim().is_empty() {
-                return Err(format!("Empty XML file: {}", name));
-            }
+
+            validate_well_formed_xml(&content)
+                .map_err(|e| format!("{}: {}", name, e))?;
         }
     }
-    
+
     Ok(())
 }
 

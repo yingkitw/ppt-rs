@@ -3,7 +3,7 @@
 //! Represents embedded media (video/audio) in the presentation.
 
 use super::base::{ContentType, Part, PartType};
-use crate::exc::PptxError;
+use crate::exc::{messages, PptxError};
 
 /// Media format
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -119,7 +119,7 @@ impl MediaPart {
             .ok_or_else(|| PptxError::InvalidValue("No file extension".to_string()))?;
 
         let format = MediaFormat::from_extension(ext)
-            .ok_or_else(|| PptxError::InvalidValue(format!("Unsupported media format: {}", ext)))?;
+            .ok_or_else(|| PptxError::InvalidValue(messages::unsupported_media_format(ext)))?;
 
         Ok(Self::new(media_number, format, data))
     }

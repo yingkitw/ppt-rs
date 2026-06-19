@@ -1,5 +1,6 @@
 //! Table and TableBuilder for constructing tables
 
+use crate::core::ElementPlacement;
 use super::row::TableRow;
 
 /// Table definition with rows and positioning
@@ -69,8 +70,7 @@ impl Table {
 pub struct TableBuilder {
     column_widths: Vec<u32>,
     rows: Vec<TableRow>,
-    x: u32,
-    y: u32,
+    placement: ElementPlacement,
 }
 
 impl TableBuilder {
@@ -79,8 +79,7 @@ impl TableBuilder {
         TableBuilder {
             column_widths,
             rows: Vec::new(),
-            x: 0,
-            y: 0,
+            placement: ElementPlacement::new(),
         }
     }
 
@@ -92,8 +91,7 @@ impl TableBuilder {
 
     /// Set table position
     pub fn position(mut self, x: u32, y: u32) -> Self {
-        self.x = x;
-        self.y = y;
+        self.placement.set_position(x, y);
         self
     }
 
@@ -111,8 +109,8 @@ impl TableBuilder {
         Table {
             rows: self.rows,
             column_widths: self.column_widths,
-            x: self.x,
-            y: self.y,
+            x: self.placement.x,
+            y: self.placement.y,
         }
     }
 }

@@ -47,7 +47,7 @@ impl InkPen {
 
     /// Set opacity (0.0 - 1.0)
     pub fn opacity(mut self, opacity: f32) -> Self {
-        self.opacity = opacity.clamp(0.0, 1.0);
+        self.opacity = crate::core::clamp_unit_interval(opacity as f64) as f32;
         self
     }
 

@@ -7,7 +7,7 @@
 //! - Modify presentation properties
 
 use super::slide::{ParsedSlide, SlideParser};
-use crate::exc::PptxError;
+use crate::exc::{messages, PptxError};
 use crate::generator::slide_content::SlideContent;
 use crate::generator::slide_xml::{create_slide_rels_xml, create_slide_xml_with_content};
 use crate::opc::Package;
@@ -50,7 +50,7 @@ impl PresentationEditor {
         let xml = self
             .package
             .get_part(&path)
-            .ok_or_else(|| PptxError::NotFound(format!("Slide {index} not found")))?;
+            .ok_or_else(|| PptxError::NotFound(messages::slide_not_found(index)))?;
 
         let xml_str = String::from_utf8_lossy(xml);
         SlideParser::parse(&xml_str)
@@ -89,7 +89,7 @@ impl PresentationEditor {
     /// Update slide content at index
     pub fn update_slide(&mut self, index: usize, content: SlideContent) -> Result<(), PptxError> {
         if index >= self.slide_count {
-            return Err(PptxError::NotFound(format!("Slide {index} not found")));
+            return Err(PptxError::NotFound(messages::slide_not_found(index)));
         }
 
         let slide_num = index + 1;
@@ -103,7 +103,7 @@ impl PresentationEditor {
     /// Remove a slide by index
     pub fn remove_slide(&mut self, index: usize) -> Result<(), PptxError> {
         if index >= self.slide_count {
-            return Err(PptxError::NotFound(format!("Slide {index} not found")));
+            return Err(PptxError::NotFound(messages::slide_not_found(index)));
         }
 
         let slide_num = index + 1;

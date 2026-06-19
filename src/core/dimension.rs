@@ -57,7 +57,9 @@ impl Dimension {
             Dimension::Inches(v) => (v * EMU_PER_INCH) as u32,
             Dimension::Cm(v) => (v * EMU_PER_CM) as u32,
             Dimension::Pt(v) => (v * EMU_PER_PT) as u32,
-            Dimension::Ratio(r) => (r.clamp(0.0, 1.0) * reference_emu as f64) as u32,
+            Dimension::Ratio(r) => {
+                (crate::core::clamp_ratio(*r) * reference_emu as f64) as u32
+            }
         }
     }
 

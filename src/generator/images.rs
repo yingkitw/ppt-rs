@@ -3,7 +3,7 @@
 //! Handles image metadata, embedding, and XML generation
 
 use std::path::Path;
-use crate::core::{Positioned, ElementSized, Dimension};
+use crate::core::{Dimension, ElementPlacement, ElementSized, Positioned};
 
 /// Normalize format string and derive file extension
 fn format_and_ext(format: &str) -> (String, String) {
@@ -361,10 +361,7 @@ fn base64_decode(input: &str) -> Result<Vec<u8>, std::io::Error> {
 /// Image builder for fluent API
 pub struct ImageBuilder {
     filename: String,
-    width: u32,
-    height: u32,
-    x: u32,
-    y: u32,
+    placement: ElementPlacement,
     format: String,
     source: Option<ImageSource>,
     effects: Vec<ImageEffect>,
@@ -382,10 +379,7 @@ impl ImageBuilder {
 
         ImageBuilder {
             filename: filename.to_string(),
-            width,
-            height,
-            x: 0,
-            y: 0,
+            placement: ElementPlacement::new().with_size(width, height),
             format,
             source: Some(ImageSource::File(filename.to_string())),
             effects: Vec::new(),
@@ -402,16 +396,16 @@ impl ImageBuilder {
     /// let img = ImageBuilder::from_file("photo.jpg").build();
     /// ```
     pub fn from_file(filename: &str) -> Self {
-        const DEFAULT_SIZE: u32 = 1828800; // 2 inches in EMU
-        Self::new(filename, DEFAULT_SIZE, DEFAULT_SIZE)
+        let defaults = ElementPlacement::image_defaults();
+        Self::new(filename, defaults.width, defaults.height)
     }
     
     /// Create image builder from base64 data
     pub fn from_base64(data: &str, width: u32, height: u32, format: &str) -> Self {
         let (upper, ext) = format_and_ext(format);
         ImageBuilder {
-            filename: format!("image.{}", ext),
-            width, height, x: 0, y: 0,
+            filename: format!("image.{ext}"),
+            placement: ElementPlacement::new().with_size(width, height),
             format: upper,
             source: Some(ImageSource::Base64(data.to_string())),
             effects: Vec::new(),
@@ -428,16 +422,16 @@ impl ImageBuilder {
     /// let img = ImageBuilder::base64("iVBORw0KG...", "PNG").build();
     /// ```
     pub fn base64(data: &str, format: &str) -> Self {
-        const DEFAULT_SIZE: u32 = 1828800; // 2 inches in EMU
-        Self::from_base64(data, DEFAULT_SIZE, DEFAULT_SIZE, format)
+        let defaults = ElementPlacement::image_defaults();
+        Self::from_base64(data, defaults.width, defaults.height, format)
     }
     
     /// Create image builder from bytes
     pub fn from_bytes(data: Vec<u8>, width: u32, height: u32, format: &str) -> Self {
         let (upper, ext) = format_and_ext(format);
         ImageBuilder {
-            filename: format!("image.{}", ext),
-            width, height, x: 0, y: 0,
+            filename: format!("image.{ext}"),
+            placement: ElementPlacement::new().with_size(width, height),
             format: upper,
             source: Some(ImageSource::Bytes(data)),
             effects: Vec::new(),
@@ -455,8 +449,8 @@ impl ImageBuilder {
     /// let img = ImageBuilder::bytes(bytes, "JPEG").build();
     /// ```
     pub fn bytes(data: Vec<u8>, format: &str) -> Self {
-        const DEFAULT_SIZE: u32 = 1828800; // 2 inches in EMU
-        Self::from_bytes(data, DEFAULT_SIZE, DEFAULT_SIZE, format)
+        let defaults = ElementPlacement::image_defaults();
+        Self::from_bytes(data, defaults.width, defaults.height, format)
     }
     
     /// Auto-detect format from bytes and create image with default size
@@ -469,7 +463,7 @@ impl ImageBuilder {
     /// let img = ImageBuilder::auto(bytes).build();
     /// ```
     pub fn auto(data: Vec<u8>) -> Self {
-        const DEFAULT_SIZE: u32 = 1828800; // 2 inches in EMU
+        let defaults = ElementPlacement::image_defaults();
         
         // Detect format from magic bytes
         let format = if data.len() >= 4 {
@@ -486,13 +480,12 @@ impl ImageBuilder {
             "PNG"
         };
         
-        Self::from_bytes(data, DEFAULT_SIZE, DEFAULT_SIZE, format)
+        Self::from_bytes(data, defaults.width, defaults.height, format)
     }
 
     /// Set image position
     pub fn position(mut self, x: u32, y: u32) -> Self {
-        self.x = x;
-        self.y = y;
+        self.placement.set_position(x, y);
         self
     }
     
@@ -503,8 +496,7 @@ impl ImageBuilder {
     
     /// Set image size
     pub fn size(mut self, width: u32, height: u32) -> Self {
-        self.width = width;
-        self.height = height;
+        self.placement.set_size(width, height);
         self
     }
 
@@ -516,17 +508,17 @@ impl ImageBuilder {
 
     /// Scale to width (maintains aspect ratio)
     pub fn scale_to_width(mut self, width: u32) -> Self {
-        let ratio = self.width as f64 / self.height as f64;
-        self.width = width;
-        self.height = (width as f64 / ratio) as u32;
+        let ratio = self.placement.width as f64 / self.placement.height as f64;
+        self.placement.width = width;
+        self.placement.height = (width as f64 / ratio) as u32;
         self
     }
 
     /// Scale to height (maintains aspect ratio)
     pub fn scale_to_height(mut self, height: u32) -> Self {
-        let ratio = self.width as f64 / self.height as f64;
-        self.height = height;
-        self.width = (height as f64 * ratio) as u32;
+        let ratio = self.placement.width as f64 / self.placement.height as f64;
+        self.placement.height = height;
+        self.placement.width = (height as f64 * ratio) as u32;
         self
     }
     
@@ -576,10 +568,10 @@ impl ImageBuilder {
     pub fn build(self) -> Image {
         Image {
             filename: self.filename,
-            width: self.width,
-            height: self.height,
-            x: self.x,
-            y: self.y,
+            width: self.placement.width,
+            height: self.placement.height,
+            x: self.placement.x,
+            y: self.placement.y,
             format: self.format,
             source: self.source,
             crop: self.crop,
@@ -591,10 +583,10 @@ impl ImageBuilder {
     pub fn build_with_crop(self, left: f64, top: f64, right: f64, bottom: f64) -> Image {
         Image {
             filename: self.filename,
-            width: self.width,
-            height: self.height,
-            x: self.x,
-            y: self.y,
+            width: self.placement.width,
+            height: self.placement.height,
+            x: self.placement.x,
+            y: self.placement.y,
             format: self.format,
             source: self.source,
             crop: Some(Crop::new(left, top, right, bottom)),
@@ -606,10 +598,10 @@ impl ImageBuilder {
     pub fn build_with_shadow(self) -> Image {
         Image {
             filename: self.filename,
-            width: self.width,
-            height: self.height,
-            x: self.x,
-            y: self.y,
+            width: self.placement.width,
+            height: self.placement.height,
+            x: self.placement.x,
+            y: self.placement.y,
             format: self.format,
             source: self.source,
             crop: None,
@@ -621,10 +613,10 @@ impl ImageBuilder {
     pub fn build_with_reflection(self) -> Image {
         Image {
             filename: self.filename,
-            width: self.width,
-            height: self.height,
-            x: self.x,
-            y: self.y,
+            width: self.placement.width,
+            height: self.placement.height,
+            x: self.placement.x,
+            y: self.placement.y,
             format: self.format,
             source: self.source,
             crop: None,
@@ -636,10 +628,10 @@ impl ImageBuilder {
     pub fn build_with_effects(self) -> Image {
         Image {
             filename: self.filename,
-            width: self.width,
-            height: self.height,
-            x: self.x,
-            y: self.y,
+            width: self.placement.width,
+            height: self.placement.height,
+            x: self.placement.x,
+            y: self.placement.y,
             format: self.format,
             source: self.source,
             crop: None,
@@ -651,10 +643,10 @@ impl ImageBuilder {
     pub fn build_with_glow(self) -> Image {
         Image {
             filename: self.filename,
-            width: self.width,
-            height: self.height,
-            x: self.x,
-            y: self.y,
+            width: self.placement.width,
+            height: self.placement.height,
+            x: self.placement.x,
+            y: self.placement.y,
             format: self.format,
             source: self.source,
             crop: None,
@@ -666,10 +658,10 @@ impl ImageBuilder {
     pub fn build_with_soft_edges(self) -> Image {
         Image {
             filename: self.filename,
-            width: self.width,
-            height: self.height,
-            x: self.x,
-            y: self.y,
+            width: self.placement.width,
+            height: self.placement.height,
+            x: self.placement.x,
+            y: self.placement.y,
             format: self.format,
             source: self.source,
             crop: None,
@@ -681,10 +673,10 @@ impl ImageBuilder {
     pub fn build_with_inner_shadow(self) -> Image {
         Image {
             filename: self.filename,
-            width: self.width,
-            height: self.height,
-            x: self.x,
-            y: self.y,
+            width: self.placement.width,
+            height: self.placement.height,
+            x: self.placement.x,
+            y: self.placement.y,
             format: self.format,
             source: self.source,
             crop: None,
@@ -696,10 +688,10 @@ impl ImageBuilder {
     pub fn build_with_blur(self) -> Image {
         Image {
             filename: self.filename,
-            width: self.width,
-            height: self.height,
-            x: self.x,
-            y: self.y,
+            width: self.placement.width,
+            height: self.placement.height,
+            x: self.placement.x,
+            y: self.placement.y,
             format: self.format,
             source: self.source,
             crop: None,

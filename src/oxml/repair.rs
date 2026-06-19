@@ -7,6 +7,10 @@
 //! - Missing slide references
 //! - Corrupted package structure
 
+use crate::core::{
+    check_required_parts_with_descriptions, validate_well_formed_xml, ValidationIssue,
+    REQUIRED_PARTS_REPAIR,
+};
 use crate::exc::{PptxError, Result};
 use crate::opc::Package;
 use std::collections::HashSet;
@@ -163,17 +167,6 @@ pub struct PptxRepair {
 }
 
 impl PptxRepair {
-    /// Required parts in a valid PPTX file
-    const REQUIRED_PARTS: &'static [(&'static str, &'static str)] = &[
-        ("[Content_Types].xml", "Content types definition"),
-        ("_rels/.rels", "Package relationships"),
-        ("ppt/presentation.xml", "Presentation document"),
-        (
-            "ppt/_rels/presentation.xml.rels",
-            "Presentation relationships",
-        ),
-    ];
-
     /// Open a PPTX file for repair
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
         let package = Package::open(path)?;
@@ -271,11 +264,14 @@ impl PptxRepair {
     // Validation methods
 
     fn check_required_parts(&mut self) {
-        for (path, description) in Self::REQUIRED_PARTS {
-            if !self.package.has_part(path) {
+        for issue in check_required_parts_with_descriptions(
+            |path| self.package.has_part(path),
+            REQUIRED_PARTS_REPAIR,
+        ) {
+            if let ValidationIssue::MissingPart { path, description } = issue {
                 self.issues.push(RepairIssue::MissingPart {
-                    path: path.to_string(),
-                    description: description.to_string(),
+                    path,
+                    description: description.unwrap_or_default(),
                 });
             }
         }
@@ -301,47 +297,7 @@ impl PptxRepair {
     }
 
     fn validate_xml(&self, xml: &str) -> std::result::Result<(), String> {
-        // Check for XML declaration
-        let trimmed = xml.trim();
-        if trimmed.is_empty() {
-            return Err("Empty XML content".to_string());
-        }
-
-        // Basic well-formedness check
-        let depth = 0i32;
-        let mut in_tag = false;
-        let mut in_string = false;
-        let mut string_char = '"';
-
-        for ch in trimmed.chars() {
-            match ch {
-                '"' | '\'' if in_tag && !in_string => {
-                    in_string = true;
-                    string_char = ch;
-                }
-                c if in_string && c == string_char => {
-                    in_string = false;
-                }
-                '<' if !in_string => {
-                    in_tag = true;
-                }
-                '>' if !in_string => {
-                    in_tag = false;
-                }
-                '/' if in_tag && !in_string => {
-                    // Self-closing or end tag
-                }
-                _ => {}
-            }
-        }
-
-        // Try to use anyrepair for JSON-like content repair
-        // For XML, we do basic validation
-        if depth < 0 {
-            return Err("Unbalanced tags".to_string());
-        }
-
-        Ok(())
+        validate_well_formed_xml(xml).map_err(|e| e.to_string())
     }
 
     fn check_relationships(&mut self) {

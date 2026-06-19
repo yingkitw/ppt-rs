@@ -40,9 +40,9 @@
 - [x] Modularize image effects XML generation
 
 ### Refactoring Opportunities
-- [ ] Extract common validation patterns into `core::validation` module
-- [ ] Unify error message formatting across modules
-- [ ] Consider builder pattern consolidation for Shape/Table/Chart builders
+- [x] Extract common validation patterns into `core::validation` module
+- [x] Unify error message formatting across modules
+- [x] Consider builder pattern consolidation for Shape/Table/Chart builders
 
 ## Completed
 

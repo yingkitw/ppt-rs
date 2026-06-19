@@ -4,7 +4,7 @@
 
 use super::slide::{ParsedSlide, SlideParser};
 use super::xmlchemy::XmlParser;
-use crate::exc::PptxError;
+use crate::exc::{messages, PptxError};
 use crate::opc::Package;
 
 /// Parsed presentation metadata
@@ -74,12 +74,12 @@ impl PresentationReader {
         let path = self
             .slide_paths
             .get(index)
-            .ok_or_else(|| PptxError::NotFound(format!("Slide {index} not found")))?;
+            .ok_or_else(|| PptxError::NotFound(messages::slide_not_found(index)))?;
 
         let xml = self
             .package
             .get_part(path)
-            .ok_or_else(|| PptxError::NotFound(format!("Slide file not found: {path}")))?;
+            .ok_or_else(|| PptxError::NotFound(messages::slide_file_not_found(path)))?;
 
         let xml_str = String::from_utf8_lossy(xml);
         SlideParser::parse(&xml_str)

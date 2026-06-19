@@ -2,6 +2,9 @@
 
 use thiserror::Error;
 
+/// Unified error message formatting helpers.
+pub mod messages;
+
 /// Base error type for pptx library
 #[derive(Error, Debug)]
 pub enum PptxError {

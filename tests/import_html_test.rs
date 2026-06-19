@@ -8,8 +8,10 @@
 //! - Edge cases (empty input, nested elements, special characters)
 //! - PPTX structure validation
 
+use ppt_rs::core::{check_required_parts, REQUIRED_PARTS_MINIMAL};
 use ppt_rs::generator::create_pptx_with_content;
 use ppt_rs::import::{parse_html, parse_html_with_options, Html2Ppt, HtmlParseOptions};
+use std::collections::HashSet;
 use zip::ZipArchive;
 
 /// Helper: validate the structure of a generated PPTX
@@ -17,21 +19,14 @@ fn validate_pptx_structure(pptx_data: &[u8]) {
     let cursor = std::io::Cursor::new(pptx_data);
     let mut archive = ZipArchive::new(cursor).expect("Should be a valid ZIP archive");
 
-    let mut found = std::collections::HashSet::new();
+    let mut found = HashSet::new();
     for i in 0..archive.len() {
         let file = archive.by_index(i).expect("Should read entry");
         found.insert(file.name().to_string());
     }
 
-    assert!(
-        found.contains("[Content_Types].xml"),
-        "Missing [Content_Types].xml"
-    );
-    assert!(found.contains("_rels/.rels"), "Missing _rels/.rels");
-    assert!(
-        found.contains("ppt/presentation.xml"),
-        "Missing ppt/presentation.xml"
-    );
+    let issues = check_required_parts(&found, REQUIRED_PARTS_MINIMAL);
+    assert!(issues.is_empty(), "Missing parts: {:?}", issues);
 }
 
 fn parse_and_validate(html: &str) -> Vec<u8> {

@@ -1,7 +1,8 @@
 //! Chart builder for fluent API
 
-use super::types::ChartType;
+use crate::core::ElementPlacement;
 use super::data::{Chart, ChartSeries};
+use super::types::ChartType;
 
 /// Chart builder for fluent API
 pub struct ChartBuilder {
@@ -9,10 +10,7 @@ pub struct ChartBuilder {
     chart_type: ChartType,
     categories: Vec<String>,
     series: Vec<ChartSeries>,
-    x: u32,
-    y: u32,
-    width: u32,
-    height: u32,
+    placement: ElementPlacement,
 }
 
 impl ChartBuilder {
@@ -23,24 +21,19 @@ impl ChartBuilder {
             chart_type,
             categories: Vec::new(),
             series: Vec::new(),
-            x: 0,
-            y: 0,
-            width: 5000000,  // Default width (5 inches in EMU)
-            height: 3750000, // Default height (3.75 inches in EMU)
+            placement: ElementPlacement::chart_defaults(),
         }
     }
 
     /// Set chart position
     pub fn position(mut self, x: u32, y: u32) -> Self {
-        self.x = x;
-        self.y = y;
+        self.placement.set_position(x, y);
         self
     }
 
     /// Set chart size
     pub fn size(mut self, width: u32, height: u32) -> Self {
-        self.width = width;
-        self.height = height;
+        self.placement.set_size(width, height);
         self
     }
 
@@ -63,10 +56,10 @@ impl ChartBuilder {
             chart_type: self.chart_type,
             categories: self.categories,
             series: self.series,
-            x: self.x,
-            y: self.y,
-            width: self.width,
-            height: self.height,
+            x: self.placement.x,
+            y: self.placement.y,
+            width: self.placement.width,
+            height: self.placement.height,
         }
     }
 }
