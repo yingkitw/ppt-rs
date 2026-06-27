@@ -1,5 +1,7 @@
 //! Document properties XML generation
 
+use crate::generator::slide_content::SlideSize;
+
 /// Get current timestamp in ISO 8601 format (UTC)
 fn current_timestamp() -> String {
     let duration = std::time::SystemTime::now()
@@ -42,14 +44,14 @@ pub fn create_core_props_xml(title: &str) -> String {
 }
 
 /// Create app properties XML (docProps/app.xml)
-pub fn create_app_props_xml(slides: usize) -> String {
+pub fn create_app_props_xml(slides: usize, slide_size: SlideSize) -> String {
     format!(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
 <TotalTime>0</TotalTime>
 <Words>0</Words>
 <Application>pptx-rs</Application>
-<PresentationFormat>On-screen Show (4:3)</PresentationFormat>
+<PresentationFormat>{}</PresentationFormat>
 <Paragraphs>0</Paragraphs>
 <Slides>{slides}</Slides>
 <Notes>0</Notes>
@@ -60,6 +62,7 @@ pub fn create_app_props_xml(slides: usize) -> String {
 <SharedDoc>false</SharedDoc>
 <HyperlinksChanged>false</HyperlinksChanged>
 <AppVersion>1.0000</AppVersion>
-</Properties>"#
+</Properties>"#,
+        slide_size.app_presentation_format()
     )
 }
