@@ -82,7 +82,13 @@ pub fn create_presentation_rels_xml(slides: usize) -> String {
 }
 
 /// Create ppt/presentation.xml
-pub fn create_presentation_xml(_title: &str, slides: usize) -> String {
+pub fn create_presentation_xml(
+    _title: &str,
+    slides: usize,
+    slide_width: u32,
+    slide_height: u32,
+    slide_type: Option<&str>,
+) -> String {
     let mut xml = String::with_capacity(768 + slides * 48);
     xml.push_str(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -103,13 +109,16 @@ pub fn create_presentation_xml(_title: &str, slides: usize) -> String {
         xml.push_str("\"/>");
     }
 
-    xml.push_str(
-        r#"
-</p:sldIdLst>
-<p:sldSz cx="9144000" cy="6858000" type="screen4x3"/>
-<p:notesSz cx="6858000" cy="9144000"/>
-</p:presentation>"#,
-    );
+    xml.push_str("\n</p:sldIdLst>\n");
+    match slide_type {
+        Some(slide_type) => xml.push_str(&format!(
+            "<p:sldSz cx=\"{slide_width}\" cy=\"{slide_height}\" type=\"{slide_type}\"/>\n"
+        )),
+        None => xml.push_str(&format!(
+            "<p:sldSz cx=\"{slide_width}\" cy=\"{slide_height}\"/>\n"
+        )),
+    }
+    xml.push_str("<p:notesSz cx=\"6858000\" cy=\"9144000\"/>\n</p:presentation>");
     xml
 }
 

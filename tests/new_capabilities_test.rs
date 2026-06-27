@@ -284,7 +284,7 @@ fn test_presentation_rels_xml_slide_relationships() {
 
 #[test]
 fn test_presentation_xml_slide_id_list() {
-    let xml = create_presentation_xml("Title", 2);
+    let xml = create_presentation_xml("Title", 2, 9_144_000, 6_858_000, Some("screen4x3"));
     assert!(xml.contains(r#"id="257""#));
     assert!(xml.contains(r#"id="258""#));
     assert!(xml.contains(r#"r:id="rId3""#));

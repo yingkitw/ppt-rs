@@ -73,7 +73,7 @@ pub use generator::{
     PrintSettings, HandoutLayout, PrintColorMode, PrintWhat, Orientation,
     TableMergeMap, MergeRegion, CellMergeState,
     EmbeddedFontList, EmbeddedFont, FontStyle, FontCharset,
-    PresentationSettings,
+    PresentationSettings, SlideSize,
     PresentationTheme, ThemeColorScheme, ThemeFonts,
     Connector, ConnectorType, ConnectorLine, ArrowType, ArrowSize, ConnectionSite, LineDash,
     Hyperlink, HyperlinkAction,

@@ -1,9 +1,11 @@
 use ppt_rs::api::Presentation;
-use ppt_rs::generator::SlideContent;
+use ppt_rs::generator::{SlideContent, SlideSize};
 use ppt_rs::export::image_export::{ImageExportOptions, ImageFormat};
 use ppt_rs::opc::compress::{CompressionOptions, CompressionLevel};
 use std::path::Path;
 use std::fs;
+use std::io::{Cursor, Read};
+use zip::ZipArchive;
 
 #[test]
 fn test_html_export_api() {
@@ -105,6 +107,26 @@ fn test_from_pdf_api() {
             println!("Skipping PDF import test (pdftoppm required): {}", e);
         }
     }
+}
+
+#[test]
+fn test_presentation_api_exposes_widescreen_slide_size() {
+    let pptx_data = Presentation::new()
+        .title("Widescreen Export")
+        .slide_size(SlideSize::Widescreen16x9)
+        .add_slide(SlideContent::new("Slide 1"))
+        .build()
+        .unwrap();
+
+    let cursor = Cursor::new(&pptx_data);
+    let mut archive = ZipArchive::new(cursor).unwrap();
+
+    let mut presentation_xml = String::new();
+    archive.by_name("ppt/presentation.xml").unwrap()
+        .read_to_string(&mut presentation_xml).unwrap();
+
+    assert!(presentation_xml.contains("type=\"screen16x9\""));
+    assert!(presentation_xml.contains("cx=\"12192000\""));
 }
 
 #[test]

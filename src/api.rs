@@ -4,7 +4,10 @@
 
 use crate::exc::{messages, PptxError, Result};
 use crate::export::html::export_to_html;
-use crate::generator::{create_pptx_with_settings, Image, PresentationSettings, PresentationTheme, SlideContent};
+use crate::generator::{
+    create_pptx_with_settings, Image, PresentationSettings, PresentationTheme, SlideContent,
+    SlideSize,
+};
 use crate::import::import_pptx;
 use std::path::Path;
 use std::process::Command;
@@ -48,6 +51,12 @@ impl Presentation {
         self
     }
 
+    /// Set presentation-level settings
+    pub fn settings(mut self, settings: PresentationSettings) -> Self {
+        self.settings = Some(settings);
+        self
+    }
+
     /// Append slides from another presentation
     pub fn add_presentation(mut self, other: Presentation) -> Self {
         self.slides.extend(other.slides);
@@ -80,6 +89,13 @@ impl Presentation {
     /// Set presentation-level settings (theme, slide show, print, etc.)
     pub fn with_settings(mut self, settings: PresentationSettings) -> Self {
         self.settings = Some(settings);
+        self
+    }
+
+    /// Set the slide size for the generated deck (e.g. 4:3, 16:9, or custom)
+    pub fn slide_size(mut self, slide_size: SlideSize) -> Self {
+        let settings = self.settings.take().unwrap_or_default();
+        self.settings = Some(settings.slide_size(slide_size));
         self
     }
 
