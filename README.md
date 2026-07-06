@@ -1,5 +1,15 @@
 # ppt-rs
 
+[![Crates.io](https://img.shields.io/crates/v/ppt-rs)](https://crates.io/crates/ppt-rs)
+[![Docs.rs](https://docs.rs/ppt-rs/badge.svg)](https://docs.rs/ppt-rs)
+[![Crates.io Downloads](https://img.shields.io/crates/d/ppt-rs)](https://crates.io/crates/ppt-rs)
+[![License](https://img.shields.io/crates/l/ppt-rs)](https://github.com/yingkitw/ppt-rs/blob/main/LICENSE)
+[![Rust Edition](https://img.shields.io/badge/edition-2024-orange)](https://www.rust-lang.org/)
+[![GitHub Repo](https://img.shields.io/badge/github-yingkitw%2Fppt-rs-blue?logo=github)](https://github.com/yingkitw/ppt-rs)
+[![GitHub Stars](https://img.shields.io/github/stars/yingkitw/ppt-rs?style=social)](https://github.com/yingkitw/ppt-rs/stargazers)
+[![MCP Server](https://img.shields.io/badge/MCP-ppt__mcp-purple)](https://modelcontextprotocol.io)
+[![Related: xls-rs](https://img.shields.io/crates/v/xls-rs?label=xls-rs)](https://crates.io/crates/xls-rs)
+
 **The Rust library for generating PowerPoint presentations that actually works.**
 
 While other Rust crates for PPTX generation are incomplete, broken, or abandoned, `ppt-rs` generates **valid, production-ready PowerPoint files** that open correctly in PowerPoint, LibreOffice, Google Slides, and other Office applications.
