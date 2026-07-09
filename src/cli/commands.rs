@@ -177,120 +177,28 @@ impl InfoCommand {
 }
 
 impl ValidateCommand {
-    /// Validate a PPTX file for ECMA-376 compliance
+    /// Validate a PPTX file for ECMA-376 compliance using core package validation.
     pub fn execute(file: &str) -> Result<(), String> {
-        use std::io::Read;
-        use zip::ZipArchive;
-
         println!("Validating PPTX file: {file}");
         println!("{}", "=".repeat(60));
 
-        // Check file exists
-        let metadata = fs::metadata(file).map_err(|e| format!("File not found: {e}"))?;
+        let bytes = fs::read(file).map_err(|e| format!("Failed to read file: {e}"))?;
+        let report = crate::core::validate_package_bytes(&bytes);
 
-        if !metadata.is_file() {
-            return Err(format!("Path is not a file: {file}"));
-        }
-
-        // Try to open as ZIP archive
-        let file_handle = fs::File::open(file).map_err(|e| format!("Failed to open file: {e}"))?;
-
-        let mut archive =
-            ZipArchive::new(file_handle).map_err(|e| format!("Invalid ZIP archive: {e}"))?;
-
-        println!("✓ File is a valid ZIP archive");
-        println!("  Total entries: {}", archive.len());
-
-        // Check required files
-        let mut issues = Vec::new();
-        let mut found_files = std::collections::HashSet::new();
-
-        // Collect all file names
-        for i in 0..archive.len() {
-            let file = archive
-                .by_index(i)
-                .map_err(|e| format!("Failed to read archive entry: {e}"))?;
-            found_files.insert(file.name().to_string());
-        }
-
-        // Required files for PPTX
-        let required_files = vec![
-            "[Content_Types].xml",
-            "_rels/.rels",
-            "ppt/presentation.xml",
-            "docProps/core.xml",
-        ];
-
-        println!("\nChecking required files...");
-        for required in &required_files {
-            if found_files.contains(*required) {
-                println!("  ✓ {}", required);
-            } else {
-                println!("  ✗ {} (missing)", required);
-                issues.push(format!("Missing required file: {}", required));
-            }
-        }
-
-        // Check XML validity
-        println!("\nChecking XML validity...");
-        for i in 0..archive.len() {
-            let mut file = archive
-                .by_index(i)
-                .map_err(|e| format!("Failed to read archive entry: {e}"))?;
-
-            let name = file.name().to_string();
-            if name.ends_with(".xml") || name.ends_with(".rels") {
-                let mut content = String::new();
-                file.read_to_string(&mut content)
-                    .map_err(|e| format!("Failed to read XML file {}: {e}", name))?;
-
-                // Basic XML validation (check for well-formedness)
-                if content.trim().is_empty() {
-                    issues.push(format!("Empty XML file: {}", name));
-                    println!("  ⚠ {} (empty)", name);
-                } else if !content.contains("<?xml") && !name.ends_with(".rels") {
-                    // .rels files don't always have XML declaration
-                    if !name.ends_with(".rels") {
-                        issues.push(format!("XML file missing declaration: {}", name));
-                        println!("  ⚠ {} (missing XML declaration)", name);
-                    }
-                } else {
-                    // Check for basic XML structure
-                    if content.contains("<") && content.contains(">") {
-                        println!("  ✓ {} (valid XML)", name);
-                    } else {
-                        issues.push(format!("Invalid XML structure: {}", name));
-                        println!("  ✗ {} (invalid XML)", name);
-                    }
-                }
-            }
-        }
-
-        // Check relationships
-        println!("\nChecking relationships...");
-        if found_files.contains("_rels/.rels") {
-            println!("  ✓ Package relationships found");
-        } else {
-            issues.push("Missing package relationships".to_string());
-            println!("  ✗ Package relationships missing");
-        }
-
-        // Summary
-        println!("\n{}", "=".repeat(60));
-        if issues.is_empty() {
-            println!("✓ Validation PASSED");
-            println!("  File appears to be a valid PPTX file");
+        println!("  Total entries checked");
+        if report.is_valid() {
+            println!("\n✓ Validation PASSED");
+            println!("  File is a valid PPTX file");
             println!("  ECMA-376 compliance: OK");
+            Ok(())
         } else {
-            println!("✗ Validation FAILED");
-            println!("  Found {} issue(s):", issues.len());
-            for issue in &issues {
+            println!("\n✗ Validation FAILED");
+            println!("  Found {} issue(s):", report.error_count());
+            for issue in report.error_messages() {
                 println!("    - {}", issue);
             }
-            return Err(format!("Validation failed with {} issue(s)", issues.len()));
+            Err(format!("Validation failed with {} issue(s)", report.error_count()))
         }
-
-        Ok(())
     }
 }
 

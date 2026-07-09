@@ -132,6 +132,15 @@ impl EmbeddedFont {
             self.style.xml_element()
         )
     }
+
+    /// Relationship target relative to `ppt/`.
+    pub fn rel_target(&self) -> String {
+        format!(
+            "fonts/{}-{}.fntdata",
+            self.typeface.replace(' ', ""),
+            self.style.xml_element()
+        )
+    }
 }
 
 /// Manages all embedded fonts for a presentation
@@ -162,6 +171,16 @@ impl EmbeddedFontList {
 
     pub fn is_empty(&self) -> bool {
         self.fonts.is_empty()
+    }
+
+    /// Assign sequential `rIdN` relationship IDs to fonts that don't already
+    /// have one. `start` is the first relationship number to use.
+    pub fn assign_relationship_ids(&mut self, start: usize) {
+        for (i, font) in self.fonts.iter_mut().enumerate() {
+            if font.relationship_id.is_empty() {
+                font.relationship_id = format!("rId{}", start + i);
+            }
+        }
     }
 
     /// Total size of all font data

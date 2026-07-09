@@ -1,6 +1,6 @@
 [package]
 name = "ppt-rs"
-version = "0.2.19"
+version = "0.2.20"
 edition = "2024"
 authors = ["Ying Kit WONG"]
 description = "Create, read, and update PowerPoint 2007+ (.pptx) files with rich formatting, bullet styles, themes, and templates."
@@ -31,7 +31,7 @@ url = { version = "2.5", optional = true }
 # MCP dependencies (optional)
 serde = { version = "1", features = ["derive"], optional = true }
 serde_json = { version = "1", optional = true }
-rmcp = { version = "1.6", features = ["transport-io"], optional = true }
+rmcp = { version = "2.2", features = ["transport-io"], optional = true }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"], optional = true }
 
 [features]

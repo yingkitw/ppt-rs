@@ -1,7 +1,8 @@
 //! Package-level XML generation (content types, relationships, presentation)
 
-use crate::core::append_usize;
+use crate::core::{append_usize, escape_xml};
 use crate::generator::slide_content::presentation_settings::PresentationSettings;
+use crate::generator::slide_content::embedded_fonts::EmbeddedFontList;
 use crate::generator::charts::chart_embedding_filename;
 use crate::generator::layout_parts::append_layout_content_type_overrides;
 use crate::generator::layout_parts::STANDARD_LAYOUT_COUNT;
@@ -161,6 +162,22 @@ pub fn create_rels_xml() -> &'static str {
     PACKAGE_RELS_XML
 }
 
+/// Create _rels/.rels with an optional digital signature origin relationship.
+pub fn create_rels_xml_with_signature(has_signature: bool) -> String {
+    let mut xml = String::from(PACKAGE_RELS_XML);
+    if has_signature {
+        // Insert signature origin relationship before </Relationships>.
+        // The static XML contains rId1-rId3, so rId4 is the next free id.
+        if let Some(pos) = xml.rfind("</Relationships>") {
+            xml.insert_str(
+                pos,
+                r#"<Relationship Id="rId4" Type="http://schemas.openxmlformats.org/package/2006/relationships/digital-signature/origin" Target="_xmlsignatures/origin.sigs"/>"#,
+            );
+        }
+    }
+    xml
+}
+
 /// Create ppt/_rels/presentation.xml.rels
 pub fn create_presentation_rels_xml(slides: usize) -> String {
     create_presentation_rels_xml_full(slides, false, false)
@@ -222,6 +239,30 @@ pub fn create_presentation_rels_xml_full(
     xml.push_str("\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/tableStyles\" Target=\"tableStyles.xml\"/>");
 
     xml.push_str("\n</Relationships>");
+    xml
+}
+
+/// Create ppt/_rels/presentation.xml.rels including embedded font relationships.
+pub fn create_presentation_rels_xml_full_with_fonts(
+    slides: usize,
+    has_notes: bool,
+    has_handout: bool,
+    fonts: &EmbeddedFontList,
+) -> String {
+    let mut xml = create_presentation_rels_xml_full(slides, has_notes, has_handout);
+
+    for font in fonts.fonts() {
+        let target = font.rel_target();
+        xml.insert_str(
+            xml.rfind("</Relationships>").unwrap_or(xml.len()),
+            &format!(
+                r#"<Relationship Id="{}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/font" Target="{}"/>"#,
+                font.relationship_id,
+                escape_xml(&target),
+            ),
+        );
+    }
+
     xml
 }
 
@@ -325,6 +366,25 @@ pub fn create_presentation_xml(
     xml
 }
 
+/// Create ppt/presentation.xml including an embedded font list.
+pub fn create_presentation_xml_with_fonts(
+    title: &str,
+    slides: usize,
+    has_notes: bool,
+    has_handout: bool,
+    fonts: &EmbeddedFontList,
+) -> String {
+    let mut xml = create_presentation_xml(title, slides, has_notes, has_handout);
+    let font_xml = fonts.to_xml();
+    if !font_xml.is_empty() {
+        // Insert <p:embeddedFontLst> before the closing </p:presentation>.
+        if let Some(pos) = xml.rfind("</p:presentation>") {
+            xml.insert_str(pos, &font_xml);
+        }
+    }
+    xml
+}
+
 /// Create `[Content_Types].xml` with notes, charts, and optional handout master.
 pub fn create_content_types_xml_with_notes_and_charts(
     slides: usize,
@@ -375,6 +435,45 @@ pub fn create_content_types_xml_with_notes_and_charts(
     xml
 }
 
+/// Append the digital signature content type entries to an existing
+/// `[Content_Types].xml` string (inserted before `</Types>`).
+pub fn append_digital_signature_content_type(xml: &mut String) {
+    if let Some(pos) = xml.rfind("</Types>") {
+        xml.insert_str(
+            pos,
+            r#"<Default Extension="sigs" ContentType="application/vnd.openxmlformats-package.digital-signature-origin"/><Override PartName="/_xmlsignatures/sig1.xml" ContentType="application/vnd.openxmlformats-package.digital-signature-xmlsignature+xml"/>"#,
+        );
+    }
+}
+
+/// Append the embedded font content type default (`.fntdata`) to an existing
+/// `[Content_Types].xml` string (inserted before `</Types>`).
+pub fn append_embedded_font_content_type(xml: &mut String) {
+    if let Some(pos) = xml.rfind("</Types>") {
+        xml.insert_str(
+            pos,
+            r#"<Default Extension="fntdata" ContentType="application/x-fontdata"/>"#,
+        );
+    }
+}
+
+/// Append ink annotation content type overrides to an existing
+/// `[Content_Types].xml` string (inserted before `</Types>`).
+pub fn append_ink_content_types(xml: &mut String, ink_count: usize) {
+    if ink_count == 0 {
+        return;
+    }
+    if let Some(pos) = xml.rfind("</Types>") {
+        let mut overrides = String::with_capacity(ink_count * 140);
+        for i in 1..=ink_count {
+            overrides.push_str(&format!(
+                "\n<Override PartName=\"/ppt/ink/ink{i}.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.presentationml.ink+xml\"/>"
+            ));
+        }
+        xml.insert_str(pos, &overrides);
+    }
+}
+
 /// Handout master relationship XML (theme link).
 pub fn create_handout_master_rels_xml() -> String {
     r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -418,7 +517,7 @@ pub fn create_slide_rels_xml_extended(
     xml
 }
 
-/// Create slide relationship XML with notes, charts, and images
+/// Create slide relationship XML with notes, charts, images, and optional ink.
 pub fn create_slide_rels_xml_with_images(
     layout_number: usize,
     has_notes: bool,
@@ -426,10 +525,11 @@ pub fn create_slide_rels_xml_with_images(
     chart_rels: &[(String, String)],
     images: &[(usize, String)],
     hyperlink_rels: &[String],
+    ink_rel: Option<(usize, usize)>,
 ) -> String {
     let layout_target = layout_rel_target(layout_number);
     let mut xml = String::with_capacity(
-        512 + images.len() * 96 + chart_rels.len() * 96 + hyperlink_rels.len() * 160,
+        512 + images.len() * 96 + chart_rels.len() * 96 + hyperlink_rels.len() * 160 + 128,
     );
     xml.push_str(
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -465,6 +565,14 @@ pub fn create_slide_rels_xml_with_images(
         xml.push_str("\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart\" Target=\"");
         xml.push_str(target);
         xml.push_str("\"/>");
+    }
+
+    if let Some((rid, ink_num)) = ink_rel {
+        xml.push_str("\n<Relationship Id=\"rId");
+        append_usize(&mut xml, rid);
+        xml.push_str("\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/ink\" Target=\"../ink/ink");
+        append_usize(&mut xml, ink_num);
+        xml.push_str(".xml\"/>");
     }
 
     for rel in hyperlink_rels {

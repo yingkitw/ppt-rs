@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 1100+ passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.19
+**Tests**: 637 passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.20
 
 ## Active
 
@@ -17,9 +17,9 @@ Items here graduate into **Backlog** when scoped for implementation.
 ### Content & Round-Trip
 Extend what can flow in and out without losing meaning.
 
-- [ ] **Speaker notes import** — MD/HTML speaker-note syntax → `notesSlides` parts on generation
+- [x] **Speaker notes import** — MD/HTML speaker-note syntax → `notesSlides` parts on generation
 - [ ] **Comments round-trip** — wire `Comment` / `SlideComments` into package parts (XML types exist)
-- [ ] **Image accessibility** — alt text / description on images (`descr` / `title` on `cNvPr`)
+- [x] **Image accessibility** — alt text / description on images (`descr` / `title` on `cNvPr`)
 - [ ] **Video & audio embedding** — complete media part packaging (types exist in `parts/media.rs`; needs generator wiring)
 - [ ] **Section-aware export** — preserve `SectionManager` sections in Markdown/HTML export
 
@@ -27,7 +27,7 @@ Extend what can flow in and out without losing meaning.
 Make the library easier to adopt, debug, and automate.
 
 - [ ] **Structured validation CLI** — `pptcli validate` reports `core::validation::ValidationIssue` list (not just pass/fail)
-- [ ] **PresentationEditor enhancements** — duplicate slide, reorder slides, insert slide at index, batch replace
+- [x] **PresentationEditor enhancements** — duplicate slide, reorder slides, insert slide at index, batch replace
 - [ ] **Chart build-time validation** — category/series length checks via `core::validation` at `ChartBuilder::build()`
 - [ ] **PPTX semantic diff** — slide-level compare (title, bullets, images, charts) for review/CI
 - [ ] **MCP tool expansion** — `compress_pptx`, `repair_pptx`, `apply_theme`, `export_markdown` / `export_html`
@@ -42,16 +42,16 @@ Longer-horizon capabilities that broaden deployment options.
 ## Backlog (Prioritized)
 
 ### P0 — High Value
-- [ ] Digital signatures (XML generation done; needs Content_Types + _rels wiring)
-- [ ] Embedded fonts in output (XML generation done; needs font data parts + rId wiring)
+- [x] Digital signatures (XML generation done; needs Content_Types + _rels wiring)
+- [x] Embedded fonts in output (XML generation done; needs font data parts + rId wiring)
 - [ ] Complete API documentation with examples
-- [ ] Wire `core::validation` into CLI validate + MCP `validate_pptx`
+- [x] Wire `core::validation` into CLI validate + MCP `validate_pptx`
 
 ### P1 — Medium Value
-- [ ] Ink annotations (XML generation done; needs ink part + relationship)
-- [ ] Speaker notes import from MD/HTML
-- [ ] Image alt text / accessibility metadata
-- [ ] PresentationEditor: duplicate, reorder, insert slides
+- [x] Ink annotations (XML generation done; needs ink part + relationship)
+- [x] Speaker notes import from MD/HTML
+- [x] Image alt text / accessibility metadata
+- [x] PresentationEditor: duplicate, reorder, insert slides
 - [ ] Benchmark suite (Criterion: generation, lazy loading, compression)
 - [ ] MCP tools: compress, repair, theme, export
 

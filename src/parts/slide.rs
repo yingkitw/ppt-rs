@@ -118,7 +118,7 @@ impl Part for SlidePart {
 
         // Generate from content if available
         if let Some(ref content) = self.content {
-            let xml = create_slide_xml_with_content(self.slide_number, content, &[]);
+            let xml = create_slide_xml_with_content(self.slide_number, content, &[], None);
             return Ok(xml);
         }
 

@@ -75,15 +75,20 @@ pub fn create_slide_xml(slide_num: usize, title: &str) -> String {
 }
 
 /// Create slide XML with content based on layout
-pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent, chart_rids: &[String]) -> String {
+pub fn create_slide_xml_with_content(
+    _slide_num: usize,
+    content: &SlideContent,
+    chart_rids: &[String],
+    ink_rel_id: Option<&str>,
+) -> String {
     let mut xml = match content.layout {
-        SlideLayout::Blank => layouts::create_blank_slide(content, chart_rids),
-        SlideLayout::TitleOnly => layouts::create_title_only_slide(content, chart_rids),
-        SlideLayout::CenteredTitle => layouts::create_centered_title_slide(content, chart_rids),
-        SlideLayout::TitleAndBigContent => layouts::create_title_and_big_content_slide(content, chart_rids),
-        SlideLayout::TwoColumn => layouts::create_two_column_slide(content, chart_rids),
-        SlideLayout::SectionHeader => layouts::create_section_header_slide(content, chart_rids),
-        SlideLayout::TitleAndContent => layouts::create_title_and_content_slide(content, chart_rids),
+        SlideLayout::Blank => layouts::create_blank_slide(content, chart_rids, ink_rel_id),
+        SlideLayout::TitleOnly => layouts::create_title_only_slide(content, chart_rids, ink_rel_id),
+        SlideLayout::CenteredTitle => layouts::create_centered_title_slide(content, chart_rids, ink_rel_id),
+        SlideLayout::TitleAndBigContent => layouts::create_title_and_big_content_slide(content, chart_rids, ink_rel_id),
+        SlideLayout::TwoColumn => layouts::create_two_column_slide(content, chart_rids, ink_rel_id),
+        SlideLayout::SectionHeader => layouts::create_section_header_slide(content, chart_rids, ink_rel_id),
+        SlideLayout::TitleAndContent => layouts::create_title_and_content_slide(content, chart_rids, ink_rel_id),
     };
 
     // Inject transition if present
@@ -93,9 +98,6 @@ pub fn create_slide_xml_with_content(_slide_num: usize, content: &SlideContent, 
         xml.insert_str(pos, &transition_xml);
     }
 
-    // NOTE: Ink annotations require a separate ink part + relationship + content type;
-    // inline injection into spTree is not valid OOXML. Skipped until full pipeline.
-    
     xml
 }
 

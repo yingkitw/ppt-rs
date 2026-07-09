@@ -179,16 +179,16 @@ impl InkAnnotations {
         self.strokes.clear();
     }
 
-    /// Generate the ink XML for embedding in a slide's `<mc:AlternateContent>` block
-    pub fn to_xml(&self) -> String {
+    /// Generate the standalone ink part XML (`ppt/ink/inkN.xml`).
+    pub fn part_xml(&self) -> String {
         if self.strokes.is_empty() {
             return String::new();
         }
 
         let mut xml = String::from(
-            r#"<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><mc:Choice Requires="p14"><p:contentPart xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">"#,
+            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ink:ink xmlns:ink="http://www.w3.org/2003/InkML">"#,
         );
-        xml.push_str(r#"<ink:ink xmlns:ink="http://www.w3.org/2003/InkML">"#);
 
         // Brush definitions
         for (i, stroke) in self.strokes.iter().enumerate() {
@@ -198,7 +198,7 @@ impl InkAnnotations {
                 String::new()
             };
             xml.push_str(&format!(
-                "<ink:brush id=\"br{}\" color=\"#{}\" width=\"{}\" tip=\"{}\"{}/>\n",
+                "<ink:brush id=\"br{}\" color=\"#{}\" width=\"{}\" tip=\"{}\"{} />\n",
                 i, stroke.pen.color, stroke.pen.width, stroke.pen.tip.to_xml(), opacity_attr,
             ));
         }
@@ -209,8 +209,23 @@ impl InkAnnotations {
         }
 
         xml.push_str("</ink:ink>");
-        xml.push_str("</p:contentPart></mc:Choice></mc:AlternateContent>");
         xml
+    }
+
+    /// Generate the slide-level `<mc:AlternateContent>` reference to an ink part.
+    pub fn to_xml(&self) -> String {
+        if self.strokes.is_empty() {
+            return String::new();
+        }
+        format!(
+            r#"<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><mc:Choice Requires="p14"><p:contentPart xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="{}"/></mc:Choice></mc:AlternateContent>"#,
+            self.rel_id()
+        )
+    }
+
+    /// Default relationship id placeholder used by the slide-level reference.
+    pub fn rel_id(&self) -> String {
+        "rId5".to_string()
     }
 }
 
@@ -340,12 +355,15 @@ mod tests {
                 .add_point(0.0, 0.0)
                 .add_point(100.0, 100.0),
         );
-        let xml = ann.to_xml();
-        assert!(xml.contains("mc:AlternateContent"));
-        assert!(xml.contains("ink:ink"));
-        assert!(xml.contains("ink:brush"));
-        assert!(xml.contains("ink:trace"));
-        assert!(xml.contains("FF0000"));
+        let slide_xml = ann.to_xml();
+        assert!(slide_xml.contains("mc:AlternateContent"));
+        assert!(slide_xml.contains("p:contentPart"));
+
+        let part_xml = ann.part_xml();
+        assert!(part_xml.contains("ink:ink"));
+        assert!(part_xml.contains("ink:brush"));
+        assert!(part_xml.contains("ink:trace"));
+        assert!(part_xml.contains("FF0000"));
     }
 
     #[test]
@@ -356,7 +374,7 @@ mod tests {
                 .add_point(0.0, 0.0)
                 .add_point(500.0, 0.0),
         );
-        let xml = ann.to_xml();
+        let xml = ann.part_xml();
         assert!(xml.contains("FFFF00"));
         assert!(xml.contains("flat"));
         assert!(xml.contains("transparency"));

@@ -392,25 +392,20 @@ fn handle_merge_pptx(args: MergePptxArgs) -> CallToolResult {
 }
 
 fn handle_validate_pptx(path: &str) -> CallToolResult {
-    match crate::oxml::repair::PptxRepair::open(path) {
-        Ok(mut repair) => {
-            let issues = repair.validate();
-            if issues.is_empty() {
+    match std::fs::read(path) {
+        Ok(bytes) => {
+            let report = crate::core::validate_package_bytes(&bytes);
+            if report.is_valid() {
                 tool_text("Validation passed. No issues found.")
             } else {
-                let mut msgs = vec![format!("Found {} issue(s):", issues.len())];
-                for issue in &issues {
-                    let sev = match issue.severity() {
-                        3 => "critical",
-                        2 => "warning",
-                        _ => "info",
-                    };
-                    msgs.push(format!("  [{}] {}", sev, issue.description(),));
+                let mut msgs = vec![format!("Found {} issue(s):", report.error_count())];
+                for issue in report.error_messages() {
+                    msgs.push(format!("  [error] {issue}"));
                 }
                 tool_text(msgs.join("\n"))
             }
         }
-        Err(e) => tool_error(format!("Failed to open file: {}", e)),
+        Err(e) => tool_error(format!("Failed to read file: {}", e)),
     }
 }
 

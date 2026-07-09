@@ -3,13 +3,19 @@
 use crate::generator::shapes_xml::generate_shape_xml;
 use crate::generator::slide_content::SlideContent;
 
-/// Render additional content elements (shapes, images, code blocks, connectors, charts)
-pub fn render_additional_content(xml: &mut String, content: &SlideContent, chart_rids: &[String]) {
+/// Render additional content elements (shapes, images, code blocks, connectors, charts, ink)
+pub fn render_additional_content(
+    xml: &mut String,
+    content: &SlideContent,
+    chart_rids: &[String],
+    ink_rel_id: Option<&str>,
+) {
     let extra_elements = content.shapes.len()
         + content.images.len()
         + content.code_blocks.len()
         + content.connectors.len()
-        + content.charts.len().min(chart_rids.len());
+        + content.charts.len().min(chart_rids.len())
+        + ink_rel_id.map_or(0, |_| 1);
     if extra_elements > 0 {
         xml.reserve(extra_elements * 512);
     }
@@ -66,6 +72,17 @@ pub fn render_additional_content(xml: &mut String, content: &SlideContent, chart
                 chart,
                 r_id,
                 chart_start_id + i,
+            ));
+        }
+    }
+
+    // Render ink annotation reference
+    if let Some(rel_id) = ink_rel_id {
+        if content.ink_annotations.is_some() {
+            xml.push('\n');
+            xml.push_str(&format!(
+                r#"<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><mc:Choice Requires="p14"><p:contentPart xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="{}"/></mc:Choice></mc:AlternateContent>"#,
+                rel_id
             ));
         }
     }

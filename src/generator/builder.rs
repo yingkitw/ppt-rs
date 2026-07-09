@@ -9,9 +9,12 @@ use super::slide_content::SlideContent;
 use super::memory_profile::estimate_output_capacity;
 use super::package_cache::{self, print_affects_theme_parts};
 use super::package_xml::{
-    create_rels_xml, create_presentation_rels_xml_full, create_presentation_xml,
+    create_rels_xml_with_signature,
+    create_presentation_rels_xml_full, create_presentation_rels_xml_full_with_fonts,
+    create_presentation_xml, create_presentation_xml_with_fonts,
     create_content_types_xml_with_notes_and_charts,
-    content_types_opening,
+    content_types_opening, append_digital_signature_content_type,
+    append_embedded_font_content_type, table_styles_rel_id,
     create_pres_props_xml, create_view_props_xml, create_table_styles_xml,
     create_handout_master_rels_xml,
 };
@@ -181,7 +184,7 @@ pub fn create_pptx_with_settings(
     let mut zip = ZipWriter::new(cursor);
     let options = zip_options();
 
-    write_package_files(&mut zip, &options, title, slides.len(), Some(slides), settings.as_ref())?;
+    write_package_files(&mut zip, &options, title, slides.len(), Some(slides), settings)?;
 
     let cursor = zip.finish()?;
     let bytes = cursor.into_inner();
@@ -240,7 +243,7 @@ pub fn create_pptx_with_content_to_writer<W: Write + Seek>(
     let mut zip = ZipWriter::new(writer);
     let options = FileOptions::default();
 
-    write_package_files(&mut zip, &options, title, slides.len(), Some(slides), settings.as_ref())?;
+    write_package_files(&mut zip, &options, title, slides.len(), Some(slides), settings)?;
 
     Ok(zip.finish()?)
 }
@@ -348,7 +351,7 @@ pub fn create_pptx_lazy_to_writer<W: Write + Seek>(
     let mut zip = ZipWriter::new(writer);
     let options = FileOptions::default();
 
-    write_package_files_lazy(&mut zip, &options, title, slides.as_ref(), settings.as_ref())?;
+    write_package_files_lazy(&mut zip, &options, title, slides.as_ref(), settings)?;
 
     Ok(zip.finish()?)
 }
@@ -426,6 +429,37 @@ fn uses_handouts(settings: Option<&PresentationSettings>) -> bool {
         .unwrap_or(false)
 }
 
+/// Whether settings configure a digital signature package.
+fn has_digital_signature(settings: Option<&PresentationSettings>) -> bool {
+    settings
+        .and_then(|s| s.digital_signature.as_ref())
+        .is_some()
+}
+
+/// Whether settings configure embedded fonts.
+fn has_embedded_fonts(settings: Option<&PresentationSettings>) -> bool {
+    settings
+        .and_then(|s| s.embedded_fonts.as_ref())
+        .map(|f| !f.is_empty())
+        .unwrap_or(false)
+}
+
+/// Borrow embedded fonts from settings, if any.
+fn embedded_fonts(settings: Option<&PresentationSettings>) -> Option<&super::slide_content::embedded_fonts::EmbeddedFontList> {
+    settings.and_then(|s| s.embedded_fonts.as_ref())
+}
+
+/// Prepare settings by assigning relationship IDs to embedded fonts.
+/// Must be called after `has_notes` and `has_handout` are known.
+fn prepare_settings(settings: &mut Option<PresentationSettings>, slide_count: usize, has_notes: bool, has_handout: bool) {
+    if let Some(s) = settings {
+        if let Some(fonts) = s.embedded_fonts.as_mut() {
+            let first_rid = table_styles_rel_id(slide_count, has_notes, has_handout) + 1;
+            fonts.assign_relationship_ids(first_rid);
+        }
+    }
+}
+
 /// Collect slide titles for `docProps/app.xml` (eager version).
 ///
 /// Returns one title per slide, falling back to "Slide N" placeholders when no
@@ -476,18 +510,31 @@ fn write_content_types<W: Write + Seek>(
     custom_slides: Option<&[SlideContent]>,
     chart_info: &ChartInfo,
     has_handout: bool,
+    settings: Option<&PresentationSettings>,
 ) -> Result<()> {
     let media_exts = custom_slides
         .map(build_media_registry)
         .map(|registry| registry.extensions())
         .unwrap_or_default();
-    let content_types = create_content_types_xml_with_notes_and_charts(
+    let mut content_types = create_content_types_xml_with_notes_and_charts(
         slide_count,
         custom_slides,
         chart_info.total_charts,
         has_handout,
         &media_exts,
     );
+
+    if has_digital_signature(settings) {
+        append_digital_signature_content_type(&mut content_types);
+    }
+    if has_embedded_fonts(settings) {
+        append_embedded_font_content_type(&mut content_types);
+    }
+
+    let ink_count = custom_slides
+        .map(|slides| slides.iter().filter(|s| s.ink_annotations.is_some()).count())
+        .unwrap_or(0);
+    super::package_xml::append_ink_content_types(&mut content_types, ink_count);
 
     zip.start_file("[Content_Types].xml", *options)?;
     zip.write_all(content_types.as_bytes())?;
@@ -501,8 +548,13 @@ fn write_presentation_relationships<W: Write + Seek>(
     slide_count: usize,
     has_notes: bool,
     has_handout: bool,
+    settings: Option<&PresentationSettings>,
 ) -> Result<()> {
-    let pres_rels = create_presentation_rels_xml_full(slide_count, has_notes, has_handout);
+    let pres_rels = if let Some(fonts) = embedded_fonts(settings) {
+        create_presentation_rels_xml_full_with_fonts(slide_count, has_notes, has_handout, fonts)
+    } else {
+        create_presentation_rels_xml_full(slide_count, has_notes, has_handout)
+    };
 
     zip.start_file("ppt/_rels/presentation.xml.rels", *options)?;
     zip.write_all(pres_rels.as_bytes())?;
@@ -666,38 +718,44 @@ fn write_package_files<W: Write + Seek>(
     title: &str,
     slide_count: usize,
     custom_slides: Option<&[SlideContent]>,
-    settings: Option<&PresentationSettings>,
+    mut settings: Option<PresentationSettings>,
 ) -> Result<()> {
     let has_notes = custom_slides
         .map(|slides| slides.iter().any(|s| s.notes.is_some()))
         .unwrap_or(false);
-    let has_handout = uses_handouts(settings);
-    let template = load_template(settings)?;
+    let has_handout = uses_handouts(settings.as_ref());
+    prepare_settings(&mut settings, slide_count, has_notes, has_handout);
+    let has_signature = has_digital_signature(settings.as_ref());
+    let template = load_template(settings.as_ref())?;
 
     let chart_info = collect_chart_info(custom_slides);
 
     // 1. Content types
-    write_content_types(zip, options, slide_count, custom_slides, &chart_info, has_handout)?;
+    write_content_types(zip, options, slide_count, custom_slides, &chart_info, has_handout, settings.as_ref())?;
 
     // 2. Package relationships
-    let rels = create_rels_xml();
+    let rels = create_rels_xml_with_signature(has_signature);
     zip.start_file("_rels/.rels", *options)?;
     zip.write_all(rels.as_bytes())?;
 
     // 3. Presentation relationships
-    write_presentation_relationships(zip, options, slide_count, has_notes, has_handout)?;
+    write_presentation_relationships(zip, options, slide_count, has_notes, has_handout, settings.as_ref())?;
 
     // 4. Presentation document
-    let presentation = create_presentation_xml(title, slide_count, has_notes, has_handout);
+    let presentation = if let Some(fonts) = embedded_fonts(settings.as_ref()) {
+        create_presentation_xml_with_fonts(title, slide_count, has_notes, has_handout, fonts)
+    } else {
+        create_presentation_xml(title, slide_count, has_notes, has_handout)
+    };
     zip.start_file("ppt/presentation.xml", *options)?;
     zip.write_all(presentation.as_bytes())?;
 
     // 5. Standard package parts (presProps, viewProps, tableStyles)
-    write_standard_package_parts(zip, options, settings)?;
+    write_standard_package_parts(zip, options, settings.as_ref())?;
 
     // 6. Handout master (when printing handouts)
     if has_handout {
-        write_handout_master(zip, options, settings)?;
+        write_handout_master(zip, options, settings.as_ref())?;
     }
 
     // 7. Slides
@@ -720,7 +778,7 @@ fn write_package_files<W: Write + Seek>(
     }
 
     // 10. Theme and layouts
-    write_theme_and_layouts(zip, options, settings, template.as_ref())?;
+    write_theme_and_layouts(zip, options, settings.as_ref(), template.as_ref())?;
 
     // 11. Document properties
     let notes_count = custom_slides
@@ -737,6 +795,16 @@ fn write_package_files<W: Write + Seek>(
     // 13. Images
     write_images(zip, options, custom_slides)?;
 
+    // 14. Embedded font data parts
+    if let Some(fonts) = embedded_fonts(settings.as_ref()) {
+        write_embedded_font_parts(zip, options, fonts)?;
+    }
+
+    // 15. Digital signature package parts
+    if has_signature {
+        write_digital_signature_parts(zip, options, settings.as_ref())?;
+    }
+
     Ok(())
 }
 
@@ -746,7 +814,7 @@ fn write_package_files_lazy<W: Write + Seek>(
     options: &FileOptions,
     title: &str,
     slides: &dyn LazySlideSource,
-    settings: Option<&PresentationSettings>,
+    mut settings: Option<PresentationSettings>,
 ) -> Result<()> {
     let slide_count = slides.slide_count();
     let has_notes = (0..slide_count).any(|i| {
@@ -755,33 +823,39 @@ fn write_package_files_lazy<W: Write + Seek>(
             .map(|(notes, _)| notes)
             .unwrap_or(false)
     });
-    let has_handout = uses_handouts(settings);
-    let template = load_template(settings)?;
+    let has_handout = uses_handouts(settings.as_ref());
+    prepare_settings(&mut settings, slide_count, has_notes, has_handout);
+    let has_signature = has_digital_signature(settings.as_ref());
+    let template = load_template(settings.as_ref())?;
 
     let chart_info = collect_chart_info_lazy(slides);
 
     // 1. Content types (lazy version)
-    write_content_types_lazy(zip, options, slide_count, slides, &chart_info, has_handout)?;
+    write_content_types_lazy(zip, options, slide_count, slides, &chart_info, has_handout, settings.as_ref())?;
 
     // 2. Package relationships
-    let rels = create_rels_xml();
+    let rels = create_rels_xml_with_signature(has_signature);
     zip.start_file("_rels/.rels", *options)?;
     zip.write_all(rels.as_bytes())?;
 
     // 3. Presentation relationships
-    write_presentation_relationships(zip, options, slide_count, has_notes, has_handout)?;
+    write_presentation_relationships(zip, options, slide_count, has_notes, has_handout, settings.as_ref())?;
 
     // 4. Presentation document
-    let presentation = create_presentation_xml(title, slide_count, has_notes, has_handout);
+    let presentation = if let Some(fonts) = embedded_fonts(settings.as_ref()) {
+        create_presentation_xml_with_fonts(title, slide_count, has_notes, has_handout, fonts)
+    } else {
+        create_presentation_xml(title, slide_count, has_notes, has_handout)
+    };
     zip.start_file("ppt/presentation.xml", *options)?;
     zip.write_all(presentation.as_bytes())?;
 
     // 5. Standard package parts
-    write_standard_package_parts(zip, options, settings)?;
+    write_standard_package_parts(zip, options, settings.as_ref())?;
 
     // 6. Handout master
     if has_handout {
-        write_handout_master(zip, options, settings)?;
+        write_handout_master(zip, options, settings.as_ref())?;
     }
 
     // 7–8–12. Slides, relationships, and charts (single pass per slide)
@@ -800,7 +874,7 @@ fn write_package_files_lazy<W: Write + Seek>(
     }
 
     // 10. Theme and layouts
-    write_theme_and_layouts(zip, options, settings, template.as_ref())?;
+    write_theme_and_layouts(zip, options, settings.as_ref(), template.as_ref())?;
 
     // 11. Document properties
     let notes_count = (0..slide_count)
@@ -817,6 +891,16 @@ fn write_package_files_lazy<W: Write + Seek>(
     // 12. Images
     write_images_lazy(zip, options, slides)?;
 
+    // 13. Embedded font data parts
+    if let Some(fonts) = embedded_fonts(settings.as_ref()) {
+        write_embedded_font_parts(zip, options, fonts)?;
+    }
+
+    // 14. Digital signature package parts
+    if has_signature {
+        write_digital_signature_parts(zip, options, settings.as_ref())?;
+    }
+
     Ok(())
 }
 
@@ -828,12 +912,22 @@ fn write_content_types_lazy<W: Write + Seek>(
     slides: &dyn LazySlideSource,
     chart_info: &ChartInfo,
     has_handout: bool,
+    settings: Option<&PresentationSettings>,
 ) -> Result<()> {
     let notes_count = (0..slide_count)
         .filter(|i| {
             slides
                 .slide_features(*i)
                 .map(|(notes, _)| notes)
+                .unwrap_or(false)
+        })
+        .count();
+
+    let ink_count = (0..slide_count)
+        .filter(|i| {
+            slides
+                .generate_slide(*i)
+                .map(|s| s.ink_annotations.is_some())
                 .unwrap_or(false)
         })
         .count();
@@ -893,6 +987,16 @@ fn write_content_types_lazy<W: Write + Seek>(
 <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>"#,
     );
     super::layout_parts::append_layout_content_type_overrides(&mut content_types, STANDARD_LAYOUT_COUNT);
+
+    if has_digital_signature(settings) {
+        append_digital_signature_content_type(&mut content_types);
+    }
+    if has_embedded_fonts(settings) {
+        append_embedded_font_content_type(&mut content_types);
+    }
+
+    super::package_xml::append_ink_content_types(&mut content_types, ink_count);
+
     content_types.push_str("\n</Types>");
 
     zip.start_file("[Content_Types].xml", *options)?;
@@ -933,6 +1037,7 @@ fn write_slide_packages_lazy<W: Write + Seek>(
     let mut slide_path = String::with_capacity(48);
     let mut rels_path = String::with_capacity(56);
     let mut notes_part_num = 0usize;
+    let mut ink_part_num = 0usize;
 
     for i in 0..slides.slide_count() {
         let Some(slide) = slides.generate_slide(i) else {
@@ -949,7 +1054,26 @@ fn write_slide_packages_lazy<W: Write + Seek>(
             push_chart_rid(&mut chart_rids, start_rid + j);
         }
 
-        let slide_xml = create_slide_xml_with_content(slide_num, &slide, &chart_rids);
+        let ink_rel_id = if slide.ink_annotations.is_some() {
+            ink_part_num += 1;
+            let ink_xml = slide
+                .ink_annotations
+                .as_ref()
+                .expect("ink checked above")
+                .part_xml();
+            zip.start_file(format!("ppt/ink/ink{ink_part_num}.xml"), *options)?;
+            zip.write_all(ink_xml.as_bytes())?;
+            Some(format!("rId{}", start_rid + slide.charts.len()))
+        } else {
+            None
+        };
+
+        let slide_xml = create_slide_xml_with_content(
+            slide_num,
+            &slide,
+            &chart_rids,
+            ink_rel_id.as_deref(),
+        );
         set_slide_xml_path(&mut slide_path, slide_num);
         zip.start_file(&slide_path, *options)?;
         zip.write_all(slide_xml.as_bytes())?;
@@ -981,6 +1105,7 @@ fn write_slide_packages_lazy<W: Write + Seek>(
             chart_rels.push((rid, target));
         }
 
+        let ink_rel_tuple = ink_rel_id.map(|_| (start_rid + slide.charts.len(), ink_part_num));
         let slide_rels = super::package_xml::create_slide_rels_xml_with_images(
             layout_number,
             slide.notes.is_some(),
@@ -988,6 +1113,7 @@ fn write_slide_packages_lazy<W: Write + Seek>(
             &chart_rels,
             &images,
             &slide_hyperlink_relationships(&slide),
+            ink_rel_tuple,
         );
         set_slide_rels_path(&mut rels_path, slide_num);
         zip.start_file(&rels_path, *options)?;
@@ -1037,6 +1163,7 @@ fn write_slides<W: Write + Seek>(
     match custom_slides {
         Some(slides) => {
             let mut notes_part_num = 0usize;
+            let mut ink_part_num = 0usize;
             for (i, slide) in slides.iter().enumerate() {
                 let slide_num = i + 1;
 
@@ -1046,7 +1173,26 @@ fn write_slides<W: Write + Seek>(
                     push_chart_rid(&mut chart_rids, start_rid + j);
                 }
 
-                let slide_xml = create_slide_xml_with_content(slide_num, slide, &chart_rids);
+                let ink_rel_id = if slide.ink_annotations.is_some() {
+                    ink_part_num += 1;
+                    let ink_xml = slide
+                        .ink_annotations
+                        .as_ref()
+                        .expect("ink checked above")
+                        .part_xml();
+                    zip.start_file(format!("ppt/ink/ink{ink_part_num}.xml"), *options)?;
+                    zip.write_all(ink_xml.as_bytes())?;
+                    Some(format!("rId{}", start_rid + slide.charts.len()))
+                } else {
+                    None
+                };
+
+                let slide_xml = create_slide_xml_with_content(
+                    slide_num,
+                    slide,
+                    &chart_rids,
+                    ink_rel_id.as_deref(),
+                );
                 set_slide_xml_path(&mut zip_path, slide_num);
                 zip.start_file(&zip_path, *options)?;
                 zip.write_all(slide_xml.as_bytes())?;
@@ -1089,6 +1235,7 @@ fn write_slide_relationships_extended<W: Write + Seek>(
     match custom_slides {
         Some(slides) => {
             let mut zip_path = String::with_capacity(56);
+            let mut ink_part_num = 0usize;
             for (i, slide) in slides.iter().enumerate() {
                 let slide_num = i + 1;
                 let layout_number = resolve_layout_number(slide, template);
@@ -1116,6 +1263,13 @@ fn write_slide_relationships_extended<W: Write + Seek>(
                     chart_rels.push((rid, target));
                 }
 
+                let ink_rel_tuple = if slide.ink_annotations.is_some() {
+                    ink_part_num += 1;
+                    Some((start_rid + slide.charts.len(), ink_part_num))
+                } else {
+                    None
+                };
+
                 let slide_rels = super::package_xml::create_slide_rels_xml_with_images(
                     layout_number,
                     slide.notes.is_some(),
@@ -1123,6 +1277,7 @@ fn write_slide_relationships_extended<W: Write + Seek>(
                     &chart_rels,
                     &images,
                     &slide_hyperlink_relationships(slide),
+                    ink_rel_tuple,
                 );
                 set_slide_rels_path(&mut zip_path, slide_num);
                 zip.start_file(&zip_path, *options)?;
@@ -1182,6 +1337,19 @@ fn write_notes_relationships<W: Write + Seek>(
     Ok(())
 }
 
+/// Write embedded font data parts to `ppt/fonts/`.
+fn write_embedded_font_parts<W: Write + Seek>(
+    zip: &mut ZipWriter<W>,
+    options: &FileOptions,
+    fonts: &super::slide_content::embedded_fonts::EmbeddedFontList,
+) -> Result<()> {
+    for font in fonts.fonts() {
+        zip.start_file(font.part_name(), *options)?;
+        zip.write_all(&font.data)?;
+    }
+    Ok(())
+}
+
 /// Write image files to ppt/media/
 fn write_images<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
@@ -1196,6 +1364,26 @@ fn write_images<W: Write + Seek>(
             zip.write_all(bytes)?;
         }
     }
+    Ok(())
+}
+
+/// Write digital signature parts (`_xmlsignatures/`).
+fn write_digital_signature_parts<W: Write + Seek>(
+    zip: &mut ZipWriter<W>,
+    options: &FileOptions,
+    settings: Option<&PresentationSettings>,
+) -> Result<()> {
+    let signature = settings
+        .and_then(|s| s.digital_signature.as_ref())
+        .expect("digital signature parts requested but none configured");
+
+    // `origin.sigs` is the signature origin relationships part.
+    zip.start_file("_xmlsignatures/origin.sigs", *options)?;
+    zip.write_all(signature.to_origin_xml().as_bytes())?;
+
+    zip.start_file("_xmlsignatures/sig1.xml", *options)?;
+    zip.write_all(signature.to_signature_xml().as_bytes())?;
+
     Ok(())
 }
 
@@ -1217,7 +1405,7 @@ fn write_images_lazy<W: Write + Seek>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Cursor;
+    use std::io::{Cursor, Read};
 
     /// A simple test slide source that generates numbered slides
     struct TestSlideSource {
@@ -1260,6 +1448,109 @@ mod tests {
         let cursor = Cursor::new(buffer);
         let result = create_pptx_to_writer(cursor, "Test Presentation", 3);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_create_pptx_with_digital_signature() {
+        use crate::generator::slide_content::{DigitalSignature, SignerInfo};
+
+        let signature = DigitalSignature::new(SignerInfo::new("Alice"));
+        let settings = PresentationSettings::new().digital_signature(signature);
+        let bytes = create_pptx_with_settings("Signed", &[
+            SlideContent::new("Slide 1").add_bullet("Point 1"),
+        ], Some(settings)).unwrap();
+
+        let report = crate::core::validate_package_bytes(&bytes);
+        assert!(report.is_valid(), "signature package invalid: {:?}", report.issues);
+
+        let cursor = Cursor::new(bytes);
+        let mut archive = zip::ZipArchive::new(cursor).unwrap();
+        let names: std::collections::HashSet<String> = (0..archive.len())
+            .map(|i| archive.by_index(i).unwrap().name().to_string())
+            .collect();
+        assert!(names.contains("_xmlsignatures/origin.sigs"));
+        assert!(names.contains("_xmlsignatures/sig1.xml"));
+        assert!(names.contains("_rels/.rels"));
+    }
+
+    #[test]
+    fn test_create_pptx_with_embedded_fonts() {
+        use crate::generator::slide_content::{EmbeddedFont, EmbeddedFontList, FontStyle};
+
+        let mut fonts = EmbeddedFontList::new();
+        fonts.add(EmbeddedFont::new("Arial", FontStyle::Regular, vec![0u8; 20], ""));
+        let settings = PresentationSettings::new().embedded_fonts(fonts);
+
+        let bytes = create_pptx_with_settings("Font Demo", &[
+            SlideContent::new("Slide 1").add_bullet("Point 1"),
+        ], Some(settings)).unwrap();
+
+        let report = crate::core::validate_package_bytes(&bytes);
+        assert!(report.is_valid(), "embedded font package invalid: {:?}", report.issues);
+
+        let cursor = Cursor::new(bytes);
+        let mut archive = zip::ZipArchive::new(cursor).unwrap();
+        let names: std::collections::HashSet<String> = (0..archive.len())
+            .map(|i| archive.by_index(i).unwrap().name().to_string())
+            .collect();
+        assert!(names.contains("ppt/fonts/Arial-regular.fntdata"));
+
+        let mut rels = String::new();
+        archive.by_name("ppt/_rels/presentation.xml.rels").unwrap()
+            .read_to_string(&mut rels).unwrap();
+        assert!(rels.contains("relationships/font"));
+        assert!(rels.contains("fonts/Arial-regular.fntdata"));
+
+        let mut presentation = String::new();
+        archive.by_name("ppt/presentation.xml").unwrap()
+            .read_to_string(&mut presentation).unwrap();
+        assert!(presentation.contains("<p:embeddedFontLst>"));
+        assert!(presentation.contains("Arial"));
+    }
+
+    #[test]
+    fn test_create_pptx_with_ink_annotations() {
+        use crate::generator::slide_content::{InkAnnotations, InkPen, InkStroke};
+
+        let mut ink = InkAnnotations::new();
+        ink.add_stroke(
+            InkStroke::new(InkPen::red())
+                .add_point(100.0, 100.0)
+                .add_point(200.0, 200.0),
+        );
+
+        let bytes = create_pptx_with_content("Ink Demo", vec![
+            SlideContent::new("Slide 1").add_bullet("Point 1").with_ink(ink),
+        ])
+        .unwrap();
+
+        let report = crate::core::validate_package_bytes(&bytes);
+        assert!(report.is_valid(), "ink package invalid: {:?}", report.issues);
+
+        let cursor = Cursor::new(bytes);
+        let mut archive = zip::ZipArchive::new(cursor).unwrap();
+        let names: std::collections::HashSet<String> = (0..archive.len())
+            .map(|i| archive.by_index(i).unwrap().name().to_string())
+            .collect();
+        assert!(names.contains("ppt/ink/ink1.xml"));
+
+        let mut rels = String::new();
+        archive
+            .by_name("ppt/slides/_rels/slide1.xml.rels")
+            .unwrap()
+            .read_to_string(&mut rels)
+            .unwrap();
+        assert!(rels.contains("relationships/ink"));
+        assert!(rels.contains("../ink/ink1.xml"));
+
+        let mut slide = String::new();
+        archive
+            .by_name("ppt/slides/slide1.xml")
+            .unwrap()
+            .read_to_string(&mut slide)
+            .unwrap();
+        assert!(slide.contains("mc:AlternateContent"));
+        assert!(slide.contains("p:contentPart"));
     }
 
     #[test]

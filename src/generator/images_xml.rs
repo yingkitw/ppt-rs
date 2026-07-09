@@ -11,11 +11,16 @@ pub fn generate_image_xml(image: &Image, shape_id: usize, rel_id: usize) -> Stri
     let rel_id_str = format!("rId{rel_id}");
     let blip_fill = generate_blip_fill_xml(&rel_id_str, image.crop.as_ref());
     let effects_xml = generate_effect_list_xml(&image.effects);
+    let descr_attr = image
+        .alt_text
+        .as_ref()
+        .map(|alt| format!(r#" descr="{}""#, escape_xml(alt)))
+        .unwrap_or_default();
 
     format!(
         r#"<p:pic>
 <p:nvPicPr>
-<p:cNvPr id="{}" name="{}"/>
+<p:cNvPr id="{}" name="{}"{}/>
 <p:cNvPicPr>
 <a:picLocks noChangeAspect="1"/>
 </p:cNvPicPr>
@@ -35,6 +40,7 @@ pub fn generate_image_xml(image: &Image, shape_id: usize, rel_id: usize) -> Stri
 </p:pic>"#,
         shape_id,
         escape_xml(&image.filename),
+        descr_attr,
         blip_fill,
         image.x,
         image.y,
@@ -164,5 +170,23 @@ mod tests {
         let xml = generate_image_xml(&img, 1, 1);
         assert!(xml.contains("a:effectLst"));
         assert!(xml.contains("outerShdw"));
+    }
+
+    #[test]
+    fn test_generate_image_xml_with_alt_text() {
+        let img = Image::new("photo.png", 100, 100, "PNG")
+            .with_alt_text("A sample photo");
+        let xml = generate_image_xml(&img, 1, 1);
+
+        assert!(xml.contains(r#"descr="A sample photo""#));
+    }
+
+    #[test]
+    fn test_image_alt_text_is_escaped() {
+        let img = Image::new("photo.png", 100, 100, "PNG")
+            .with_alt_text("A & B");
+        let xml = generate_image_xml(&img, 1, 1);
+
+        assert!(xml.contains(r#"descr="A &amp; B""#));
     }
 }

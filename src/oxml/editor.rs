@@ -64,7 +64,7 @@ impl PresentationEditor {
         let new_index = self.slide_count + 1;
 
         // Generate slide XML
-        let slide_xml = create_slide_xml_with_content(new_index, &content, &[]);
+        let slide_xml = create_slide_xml_with_content(new_index, &content, &[], None);
         let slide_rels_xml = create_slide_rels_xml();
 
         // Add slide file
@@ -96,7 +96,7 @@ impl PresentationEditor {
         }
 
         let slide_num = index + 1;
-        let slide_xml = create_slide_xml_with_content(slide_num, &content, &[]);
+        let slide_xml = create_slide_xml_with_content(slide_num, &content, &[], None);
         let slide_path = format!("ppt/slides/slide{slide_num}.xml");
 
         self.package.add_part(slide_path, slide_xml.into_bytes());
@@ -127,6 +127,141 @@ impl PresentationEditor {
         self.slide_count -= 1;
 
         // Update presentation files
+        self.rebuild_presentation_xml()?;
+        self.rebuild_presentation_rels()?;
+        self.rebuild_content_types()?;
+
+        Ok(())
+    }
+
+    /// Duplicate an existing slide, inserting the copy immediately after the original.
+    pub fn duplicate_slide(&mut self, index: usize) -> Result<usize, PptxError> {
+        if index >= self.slide_count {
+            return Err(PptxError::NotFound(messages::slide_not_found(index)));
+        }
+
+        let slide_num = index + 1;
+        let new_index = index + 1;
+        let new_num = new_index + 1;
+
+        // Copy original slide content and relationships.
+        let slide_path = format!("ppt/slides/slide{slide_num}.xml");
+        let rels_path = format!("ppt/slides/_rels/slide{slide_num}.xml.rels");
+
+        let slide_data = self
+            .package
+            .get_part(&slide_path)
+            .ok_or_else(|| PptxError::NotFound(messages::slide_not_found(index)))?
+            .to_vec();
+        let rels_data = self
+            .package
+            .get_part(&rels_path)
+            .unwrap_or_default()
+            .to_vec();
+
+        // Shift slides after the original to make room for the duplicate.
+        for i in ((new_num + 1)..=(self.slide_count + 1)).rev() {
+            self.renumber_slide(i - 1, i)?;
+        }
+
+        // Insert duplicate at the newly vacated position.
+        self.package
+            .add_part(format!("ppt/slides/slide{new_num}.xml"), slide_data);
+        self.package
+            .add_part(format!("ppt/slides/_rels/slide{new_num}.xml.rels"), rels_data);
+
+        self.slide_count += 1;
+
+        self.rebuild_presentation_xml()?;
+        self.rebuild_presentation_rels()?;
+        self.rebuild_content_types()?;
+
+        Ok(new_index)
+    }
+
+    /// Insert a new slide at the specified index.
+    pub fn insert_slide(&mut self, index: usize, content: SlideContent) -> Result<usize, PptxError> {
+        if index > self.slide_count {
+            return Err(PptxError::NotFound(messages::slide_not_found(index)));
+        }
+
+        let new_num = index + 1;
+
+        // Shift slides at and after the insertion point upward.
+        for i in ((new_num + 1)..=(self.slide_count + 1)).rev() {
+            self.renumber_slide(i - 1, i)?;
+        }
+
+        // Generate and insert the new slide.
+        let slide_xml = create_slide_xml_with_content(new_num, &content, &[], None);
+        let slide_rels_xml = create_slide_rels_xml();
+
+        self.package
+            .add_part(format!("ppt/slides/slide{new_num}.xml"), slide_xml.into_bytes());
+        self.package.add_part(
+            format!("ppt/slides/_rels/slide{new_num}.xml.rels"),
+            slide_rels_xml.into_bytes(),
+        );
+
+        self.slide_count += 1;
+
+        self.rebuild_presentation_xml()?;
+        self.rebuild_presentation_rels()?;
+        self.rebuild_content_types()?;
+
+        Ok(index)
+    }
+
+    /// Reorder a slide from one position to another.
+    pub fn reorder_slide(&mut self, from_index: usize, to_index: usize) -> Result<(), PptxError> {
+        if from_index >= self.slide_count || to_index >= self.slide_count {
+            return Err(PptxError::NotFound(messages::slide_not_found(
+                from_index.max(to_index),
+            )));
+        }
+
+        if from_index == to_index {
+            return Ok(());
+        }
+
+        let from_num = from_index + 1;
+        let to_num = to_index + 1;
+
+        // Extract the slide being moved.
+        let temp_slide_path = "ppt/slides/_temp_slide.xml".to_string();
+        let temp_rels_path = "ppt/slides/_rels/_temp_slide.xml.rels".to_string();
+
+        if let Some(data) = self.package.remove_part(&format!("ppt/slides/slide{from_num}.xml")) {
+            self.package.add_part(temp_slide_path.clone(), data);
+        }
+        if let Some(data) =
+            self.package.remove_part(&format!("ppt/slides/_rels/slide{from_num}.xml.rels"))
+        {
+            self.package.add_part(temp_rels_path.clone(), data);
+        }
+
+        if from_index < to_index {
+            // Shift intermediate slides left.
+            for i in from_num..to_num {
+                self.renumber_slide(i + 1, i)?;
+            }
+        } else {
+            // Shift intermediate slides right.
+            for i in (to_num..from_num).rev() {
+                self.renumber_slide(i, i + 1)?;
+            }
+        }
+
+        // Place the moved slide at the target position.
+        if let Some(data) = self.package.remove_part(&temp_slide_path) {
+            self.package
+                .add_part(format!("ppt/slides/slide{to_num}.xml"), data);
+        }
+        if let Some(data) = self.package.remove_part(&temp_rels_path) {
+            self.package
+                .add_part(format!("ppt/slides/_rels/slide{to_num}.xml.rels"), data);
+        }
+
         self.rebuild_presentation_xml()?;
         self.rebuild_presentation_rels()?;
         self.rebuild_content_types()?;
@@ -443,5 +578,80 @@ mod tests {
 
         fs::remove_file("test_update.pptx").ok();
         fs::remove_file("test_update_modified.pptx").ok();
+    }
+
+    #[test]
+    fn test_duplicate_slide() {
+        let slides = vec![
+            SlideContent::new("Slide 1").add_bullet("one"),
+            SlideContent::new("Slide 2").add_bullet("two"),
+        ];
+        let pptx_data = create_pptx_with_content("Test", slides).unwrap();
+        fs::write("test_duplicate.pptx", &pptx_data).unwrap();
+
+        let mut editor = PresentationEditor::open("test_duplicate.pptx").unwrap();
+        let new_index = editor.duplicate_slide(0).unwrap();
+        assert_eq!(new_index, 1);
+        assert_eq!(editor.slide_count(), 3);
+
+        editor.save("test_duplicate_modified.pptx").unwrap();
+        let reader = PresentationReader::open("test_duplicate_modified.pptx").unwrap();
+        assert_eq!(reader.slide_count(), 3);
+
+        fs::remove_file("test_duplicate.pptx").ok();
+        fs::remove_file("test_duplicate_modified.pptx").ok();
+    }
+
+    #[test]
+    fn test_insert_slide() {
+        let slides = vec![
+            SlideContent::new("Slide 1").add_bullet("one"),
+            SlideContent::new("Slide 2").add_bullet("two"),
+        ];
+        let pptx_data = create_pptx_with_content("Test", slides).unwrap();
+        fs::write("test_insert.pptx", &pptx_data).unwrap();
+
+        let mut editor = PresentationEditor::open("test_insert.pptx").unwrap();
+        let inserted = editor
+            .insert_slide(1, SlideContent::new("Inserted").add_bullet("new"))
+            .unwrap();
+        assert_eq!(inserted, 1);
+        assert_eq!(editor.slide_count(), 3);
+
+        editor.save("test_insert_modified.pptx").unwrap();
+        let reader = PresentationReader::open("test_insert_modified.pptx").unwrap();
+        assert_eq!(reader.slide_count(), 3);
+        let titles: Vec<_> = (0..reader.slide_count())
+            .map(|i| reader.get_slide(i).unwrap().title.unwrap_or_default())
+            .collect();
+        assert_eq!(titles, vec!["Slide 1", "Inserted", "Slide 2"]);
+
+        fs::remove_file("test_insert.pptx").ok();
+        fs::remove_file("test_insert_modified.pptx").ok();
+    }
+
+    #[test]
+    fn test_reorder_slide() {
+        let slides = vec![
+            SlideContent::new("Slide A").add_bullet("a"),
+            SlideContent::new("Slide B").add_bullet("b"),
+            SlideContent::new("Slide C").add_bullet("c"),
+        ];
+        let pptx_data = create_pptx_with_content("Test", slides).unwrap();
+        fs::write("test_reorder.pptx", &pptx_data).unwrap();
+
+        let mut editor = PresentationEditor::open("test_reorder.pptx").unwrap();
+        editor.reorder_slide(2, 0).unwrap();
+        assert_eq!(editor.slide_count(), 3);
+
+        editor.save("test_reorder_modified.pptx").unwrap();
+        let reader = PresentationReader::open("test_reorder_modified.pptx").unwrap();
+        let titles: Vec<_> = (0..reader.slide_count())
+            .map(|i| reader.get_slide(i).unwrap().title.unwrap_or_default())
+            .collect();
+        assert_eq!(titles, vec!["Slide C", "Slide A", "Slide B"]);
+
+        fs::remove_file("test_reorder.pptx").ok();
+        fs::remove_file("test_reorder_modified.pptx").ok();
     }
 }

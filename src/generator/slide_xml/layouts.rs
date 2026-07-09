@@ -79,15 +79,23 @@ fn generate_bullet_paragraph_from_point(
 }
 
 /// Create a blank slide
-pub fn create_blank_slide(content: &SlideContent, chart_rids: &[String]) -> String {
+pub fn create_blank_slide(
+    content: &SlideContent,
+    chart_rids: &[String],
+    ink_rel_id: Option<&str>,
+) -> String {
     let mut xml = String::from(SLIDE_HEADER);
-    render_additional_content(&mut xml, content, chart_rids);
+    render_additional_content(&mut xml, content, chart_rids, ink_rel_id);
     xml.push_str(SLIDE_FOOTER);
     xml
 }
 
 /// Create a title-only slide
-pub fn create_title_only_slide(content: &SlideContent, chart_rids: &[String]) -> String {
+pub fn create_title_only_slide(
+    content: &SlideContent,
+    chart_rids: &[String],
+    ink_rel_id: Option<&str>,
+) -> String {
     let title_size = content.title_size.unwrap_or(44) * 100;
     let title_props = generate_text_props(
         title_size,
@@ -109,13 +117,17 @@ pub fn create_title_only_slide(content: &SlideContent, chart_rids: &[String]) ->
     );
 
     let mut xml = format!("{}\n{}", SLIDE_HEADER, title_shape);
-    render_additional_content(&mut xml, content, chart_rids);
+    render_additional_content(&mut xml, content, chart_rids, ink_rel_id);
     xml.push_str(SLIDE_FOOTER);
     xml
 }
 
 /// Create a section header slide (large centered title)
-pub fn create_section_header_slide(content: &SlideContent, chart_rids: &[String]) -> String {
+pub fn create_section_header_slide(
+    content: &SlideContent,
+    chart_rids: &[String],
+    ink_rel_id: Option<&str>,
+) -> String {
     let title_size = content.title_size.unwrap_or(48) * 100;
     let title_props = generate_text_props(
         title_size,
@@ -137,13 +149,17 @@ pub fn create_section_header_slide(content: &SlideContent, chart_rids: &[String]
     );
 
     let mut xml = format!("{}\n{}", SLIDE_HEADER, title_shape);
-    render_additional_content(&mut xml, content, chart_rids);
+    render_additional_content(&mut xml, content, chart_rids, ink_rel_id);
     xml.push_str(SLIDE_FOOTER);
     xml
 }
 
 /// Create a centered title slide
-pub fn create_centered_title_slide(content: &SlideContent, chart_rids: &[String]) -> String {
+pub fn create_centered_title_slide(
+    content: &SlideContent,
+    chart_rids: &[String],
+    ink_rel_id: Option<&str>,
+) -> String {
     let title_size = content.title_size.unwrap_or(54) * 100;
     let title_props = generate_text_props(
         title_size,
@@ -165,13 +181,17 @@ pub fn create_centered_title_slide(content: &SlideContent, chart_rids: &[String]
     );
 
     let mut xml = format!("{}\n{}", SLIDE_HEADER, title_shape);
-    render_additional_content(&mut xml, content, chart_rids);
+    render_additional_content(&mut xml, content, chart_rids, ink_rel_id);
     xml.push_str(SLIDE_FOOTER);
     xml
 }
 
 /// Create a title and big content slide
-pub fn create_title_and_big_content_slide(content: &SlideContent, chart_rids: &[String]) -> String {
+pub fn create_title_and_big_content_slide(
+    content: &SlideContent,
+    chart_rids: &[String],
+    ink_rel_id: Option<&str>,
+) -> String {
     let title_size = content.title_size.unwrap_or(44) * 100;
     let content_size = content.content_size.unwrap_or(28) * 100;
 
@@ -267,13 +287,17 @@ pub fn create_title_and_big_content_slide(content: &SlideContent, chart_rids: &[
         );
     }
 
-    render_additional_content(&mut xml, content, chart_rids);
+    render_additional_content(&mut xml, content, chart_rids, ink_rel_id);
     xml.push_str(SLIDE_FOOTER);
     xml
 }
 
 /// Create a two-column slide
-pub fn create_two_column_slide(content: &SlideContent, chart_rids: &[String]) -> String {
+pub fn create_two_column_slide(
+    content: &SlideContent,
+    chart_rids: &[String],
+    ink_rel_id: Option<&str>,
+) -> String {
     let title_size = content.title_size.unwrap_or(44) * 100;
     let content_size = content.content_size.unwrap_or(24) * 100;
 
@@ -415,13 +439,17 @@ pub fn create_two_column_slide(content: &SlideContent, chart_rids: &[String]) ->
         }
     }
 
-    render_additional_content(&mut xml, content, chart_rids);
+    render_additional_content(&mut xml, content, chart_rids, ink_rel_id);
     xml.push_str(SLIDE_FOOTER);
     xml
 }
 
 /// Create a title and content slide (most common layout)
-pub fn create_title_and_content_slide(content: &SlideContent, chart_rids: &[String]) -> String {
+pub fn create_title_and_content_slide(
+    content: &SlideContent,
+    chart_rids: &[String],
+    ink_rel_id: Option<&str>,
+) -> String {
     let title_size = content.title_size.unwrap_or(44) * 100;
     let content_size = content.content_size.unwrap_or(28) * 100;
 
@@ -522,7 +550,7 @@ pub fn create_title_and_content_slide(content: &SlideContent, chart_rids: &[Stri
     }
 
     // Render additional content (shapes, images, code blocks, connectors)
-    render_additional_content(&mut xml, content, chart_rids);
+    render_additional_content(&mut xml, content, chart_rids, ink_rel_id);
 
     xml.push_str(SLIDE_FOOTER);
     xml

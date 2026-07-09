@@ -84,6 +84,8 @@ pub struct Image {
     pub crop: Option<Crop>,
     /// Image effects
     pub effects: Vec<ImageEffect>,
+    /// Accessibility alt text (description)
+    pub alt_text: Option<String>,
 }
 
 impl Image {
@@ -99,6 +101,7 @@ impl Image {
             source: Some(ImageSource::File(filename.to_string())),
             crop: None,
             effects: Vec::new(),
+            alt_text: None,
         }
     }
 
@@ -127,6 +130,7 @@ impl Image {
             source: Some(ImageSource::File(path_str)),
             crop: None,
             effects: Vec::new(),
+            alt_text: None,
         })
     }
     
@@ -174,7 +178,14 @@ impl Image {
             source: Some(source),
             crop: None,
             effects: Vec::new(),
+            alt_text: None,
         }
+    }
+
+    /// Set accessibility alt text for the image.
+    pub fn with_alt_text(mut self, alt: &str) -> Self {
+        self.alt_text = Some(alt.to_string());
+        self
     }
     
     /// Get the image data as bytes (decodes base64 if needed)
@@ -576,6 +587,7 @@ impl ImageBuilder {
             source: self.source,
             crop: self.crop,
             effects: self.effects,
+            alt_text: None,
         }
     }
     
@@ -591,6 +603,7 @@ impl ImageBuilder {
             source: self.source,
             crop: Some(Crop::new(left, top, right, bottom)),
             effects: Vec::new(),
+            alt_text: None,
         }
     }
     
@@ -606,6 +619,7 @@ impl ImageBuilder {
             source: self.source,
             crop: None,
             effects: vec![ImageEffect::Shadow],
+            alt_text: None,
         }
     }
     
@@ -621,6 +635,7 @@ impl ImageBuilder {
             source: self.source,
             crop: None,
             effects: vec![ImageEffect::Reflection],
+            alt_text: None,
         }
     }
     
@@ -636,6 +651,7 @@ impl ImageBuilder {
             source: self.source,
             crop: None,
             effects: vec![ImageEffect::Shadow, ImageEffect::Reflection],
+            alt_text: None,
         }
     }
     
@@ -651,6 +667,7 @@ impl ImageBuilder {
             source: self.source,
             crop: None,
             effects: vec![ImageEffect::Glow],
+            alt_text: None,
         }
     }
     
@@ -666,6 +683,7 @@ impl ImageBuilder {
             source: self.source,
             crop: None,
             effects: vec![ImageEffect::SoftEdges],
+            alt_text: None,
         }
     }
     
@@ -681,6 +699,7 @@ impl ImageBuilder {
             source: self.source,
             crop: None,
             effects: vec![ImageEffect::InnerShadow],
+            alt_text: None,
         }
     }
     
@@ -696,6 +715,7 @@ impl ImageBuilder {
             source: self.source,
             crop: None,
             effects: vec![ImageEffect::Blur],
+            alt_text: None,
         }
     }
 }
