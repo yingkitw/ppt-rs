@@ -24,6 +24,9 @@ Examples:
   # Validate a PPTX file
   pptcli validate presentation.pptx
 
+  # Structured JSON report (CI-friendly)
+  pptcli validate presentation.pptx --json
+
   # Show presentation information
   pptcli info presentation.pptx"
 )]
@@ -131,16 +134,23 @@ Example:
 
     /// Validate a PPTX file
     #[command(long_about = "Validate a PPTX file structure and content.
-        
+
 Checks for:
 - Valid ZIP structure
 - Required parts (presentation.xml, slide masters, etc.)
-- Content types
-- Relationships")]
+- Content types and relationships
+- Presentation / slide / chart / theme consistency
+
+Prints a structured issue list (severity, category, path, message).
+Use --json for machine-readable output.")]
     Validate {
         /// PPTX file to validate
         #[arg(value_name = "FILE")]
         file: String,
+
+        /// Emit JSON instead of human-readable text
+        #[arg(long)]
+        json: bool,
     },
 
     /// Export presentation to other formats

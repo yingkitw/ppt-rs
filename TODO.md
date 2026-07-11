@@ -1,14 +1,16 @@
 # TODO - ppt-rs
 
-**Tests**: 637 passing | **Warnings**: 0 | **Clippy**: clean | **Version**: 0.2.20
+**Tests**: 690+ passing | **Warnings**: 0 | **Clippy**: clean (project defaults) | **Version**: 0.2.21
 
 ## Active
 
 - [x] Enhanced HTML & Markdown Features - Image handling, CSS parsing, export navigation (v0.2.14)
 - [x] HTML Parser Documentation - Comprehensive parser comparison guide
-- [ ] Update all examples to use new simplified API
+- [x] Update all examples to use new simplified API
 - [x] Update documentation with new API examples
-
+- [x] Lean audit: dead code removal + `escape_xml` hot-path optimization (v0.2.21)
+- [x] Complete API documentation with examples (`API_GUIDE.md` expanded)
+- [x] Structured validation CLI — severity/category/path report + `--json`
 ## Proposed Capabilities
 
 Ideas ranked by impact on real-world decks, round-trip fidelity, and API completeness.
@@ -26,7 +28,7 @@ Extend what can flow in and out without losing meaning.
 ### API & Tooling
 Make the library easier to adopt, debug, and automate.
 
-- [ ] **Structured validation CLI** — `pptcli validate` reports `core::validation::ValidationIssue` list (not just pass/fail)
+- [x] **Structured validation CLI** — `pptcli validate` reports structured issues (severity/category/path) + `--json`
 - [x] **PresentationEditor enhancements** — duplicate slide, reorder slides, insert slide at index, batch replace
 - [ ] **Chart build-time validation** — category/series length checks via `core::validation` at `ChartBuilder::build()`
 - [ ] **PPTX semantic diff** — slide-level compare (title, bullets, images, charts) for review/CI
@@ -44,8 +46,9 @@ Longer-horizon capabilities that broaden deployment options.
 ### P0 — High Value
 - [x] Digital signatures (XML generation done; needs Content_Types + _rels wiring)
 - [x] Embedded fonts in output (XML generation done; needs font data parts + rId wiring)
-- [ ] Complete API documentation with examples
+- [x] Complete API documentation with examples
 - [x] Wire `core::validation` into CLI validate + MCP `validate_pptx`
+- [x] Structured `pptcli validate` output (severity/category/path + `--json`)
 
 ### P1 — Medium Value
 - [x] Ink annotations (XML generation done; needs ink part + relationship)
@@ -87,6 +90,20 @@ Longer-horizon capabilities that broaden deployment options.
 - [x] Consider builder pattern consolidation for Shape/Table/Chart builders
 
 ## Completed
+
+<details>
+<summary>v0.2.21 — Lean Audit, API Docs & Structured Validate</summary>
+
+- **Dead code removed**: unused image placeholder / bullet paragraph helpers, unused Mermaid gradient/transparent shape builders, unused `DiagramElements.grouped`, stub `web2ppt` CLI handler, dead example helpers
+- **`escape_xml`**: single-pass with fast path for clean strings; new `append_escape_xml` for buffer writers (`XmlWriter` uses it)
+- **`XmlWriter`**: dropped unused indent fields
+- **Package validation**: removed duplicate unused `slide_parts` computation; `warning_count()` on reports
+- **Examples**: migrated to simplified API (`.fill(hex())` / `.stroke()` / `.text()`, `QuickTable`, `table_from_data`)
+- **API_GUIDE.md**: Presentation builder, charts, images, themes/templates, export/compression, editor, validation
+- **`pptcli validate`**: structured human report + `--json` for CI
+- Warnings cleared (lib + shared test helpers)
+
+</details>
 
 <details>
 <summary>v0.2.19 — PowerPoint Zero-Repair Compatibility Gate</summary>

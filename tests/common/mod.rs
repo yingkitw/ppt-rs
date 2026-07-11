@@ -1,5 +1,7 @@
 //! Shared helpers for integration tests.
 
+#![allow(dead_code)] // Helpers are selectively used by each integration test binary.
+
 use std::io::Cursor;
 
 use ppt_rs::core::{validate_package_bytes, PackageValidationReport, ValidationCategory};

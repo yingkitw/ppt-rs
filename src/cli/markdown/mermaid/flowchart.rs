@@ -205,7 +205,6 @@ pub fn generate_elements(flowchart: &Flowchart) -> DiagramElements {
             shapes,
             connectors,
             bounds: None,
-            grouped: false,
         };
     }
 
@@ -429,7 +428,6 @@ pub fn generate_elements(flowchart: &Flowchart) -> DiagramElements {
         shapes,
         connectors,
         bounds,
-        grouped: true, // Flowcharts should be grouped
     }
 }
 

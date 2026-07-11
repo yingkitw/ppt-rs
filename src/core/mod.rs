@@ -25,4 +25,4 @@ pub use validation::{
     validate_positive, validate_well_formed_xml, RequiredPart, ValidationIssue,
     REQUIRED_PARTS_MINIMAL, REQUIRED_PARTS_REPAIR,
 };
-pub use xml_utils::{append_i32, append_usize, escape_xml, XmlWriter};
+pub use xml_utils::{append_escape_xml, append_i32, append_usize, escape_xml, XmlWriter};

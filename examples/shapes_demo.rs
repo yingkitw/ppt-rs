@@ -4,11 +4,12 @@
 //! NEW: Demonstrates the flexible Dimension API for positioning and sizing.
 
 use ppt_rs::generator::{
-    Shape, ShapeType, ShapeFill, ShapeLine,
+    Shape, ShapeType,
     generate_shape_xml, generate_shapes_xml, generate_connector_xml,
     inches_to_emu, cm_to_emu,
 };
 use ppt_rs::core::Dimension;
+use ppt_rs::prelude::{hex, ShapeExt};
 
 fn main() {
     println!("╔════════════════════════════════════════════════════════════╗");
@@ -130,7 +131,7 @@ fn main() {
         inches_to_emu(1.0),
         inches_to_emu(3.0),
         inches_to_emu(2.0),
-    ).with_fill(ShapeFill::new("4472C4")); // Blue fill
+    ).fill(hex("4472C4")); // Blue fill
     
     let xml = generate_shape_xml(&filled_shape, 1);
     println!("   Generated XML ({} chars)", xml.len());
@@ -147,7 +148,7 @@ fn main() {
         inches_to_emu(1.0),
         inches_to_emu(2.0),
         inches_to_emu(2.0),
-    ).with_line(ShapeLine::new("FF0000", 25400)); // Red outline, 2pt
+    ).stroke(hex("FF0000"), 2.0); // Red outline, 2pt
     
     let xml = generate_shape_xml(&outlined_shape, 2);
     println!("   Generated XML ({} chars)", xml.len());
@@ -165,8 +166,8 @@ fn main() {
         cm_to_emu(8.0),
         cm_to_emu(4.0),
     )
-    .with_fill(ShapeFill::new("70AD47")) // Green fill
-    .with_text("Click Here!");
+    .fill(hex("70AD47")) // Green fill
+    .text("Click Here!");
     
     let xml = generate_shape_xml(&text_shape, 3);
     println!("   Generated XML ({} chars)", xml.len());
@@ -179,11 +180,11 @@ fn main() {
     
     let shapes = vec![
         Shape::new(ShapeType::Rectangle, 0, 0, 1000000, 500000)
-            .with_fill(ShapeFill::new("FF0000")),
+            .fill(hex("FF0000")),
         Shape::new(ShapeType::Ellipse, 1200000, 0, 500000, 500000)
-            .with_fill(ShapeFill::new("00FF00")),
+            .fill(hex("00FF00")),
         Shape::new(ShapeType::Triangle, 1900000, 0, 500000, 500000)
-            .with_fill(ShapeFill::new("0000FF")),
+            .fill(hex("0000FF")),
     ];
     
     let xml = generate_shapes_xml(&shapes, 10);
@@ -215,7 +216,7 @@ fn main() {
         ShapeType::Rectangle,
         Dimension::Ratio(0.1), Dimension::Ratio(0.2),   // 10% from left, 20% from top
         Dimension::Ratio(0.8), Dimension::Ratio(0.6),   // 80% wide, 60% tall
-    ).with_fill(ShapeFill::new("4472C4")).with_text("Ratio-based");
+    ).fill(hex("4472C4")).text("Ratio-based");
 
     let xml = generate_shape_xml(&ratio_shape, 20);
     println!("   Ratio-based shape: {}x{} EMU at ({}, {})",
@@ -227,7 +228,7 @@ fn main() {
         ShapeType::RoundedRectangle,
         Dimension::Inches(1.0), Dimension::Cm(3.0),     // 1 inch from left, 3cm from top
         Dimension::Ratio(0.5), Dimension::Inches(1.5),  // 50% slide width, 1.5 inches tall
-    ).with_fill(ShapeFill::new("70AD47")).with_text("Mixed units");
+    ).fill(hex("70AD47")).text("Mixed units");
 
     println!("   Mixed-unit shape: {}x{} EMU at ({}, {})",
         mixed_shape.width, mixed_shape.height, mixed_shape.x, mixed_shape.y);
@@ -236,8 +237,8 @@ fn main() {
     let fluent_shape = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
         .at(Dimension::percent(50.0), Dimension::percent(50.0))  // center of slide
         .with_dimensions(Dimension::Inches(2.0), Dimension::Inches(2.0))
-        .with_fill(ShapeFill::new("C0504D"))
-        .with_text("Centered");
+        .fill(hex("C0504D"))
+        .text("Centered");
 
     println!("   Fluent chained shape: {}x{} EMU at ({}, {})",
         fluent_shape.width, fluent_shape.height, fluent_shape.x, fluent_shape.y);
@@ -247,7 +248,7 @@ fn main() {
         ShapeType::Diamond,
         Dimension::percent(40.0), Dimension::percent(30.0),
         Dimension::percent(20.0), Dimension::percent(40.0),
-    ).with_fill(ShapeFill::new("8064A2"));
+    ).fill(hex("8064A2"));
 
     println!("   Percent-based shape: {}x{} EMU at ({}, {})",
         percent_shape.width, percent_shape.height, percent_shape.x, percent_shape.y);
@@ -257,7 +258,7 @@ fn main() {
         ShapeType::Rectangle,
         Dimension::Pt(72.0), Dimension::Pt(72.0),   // 1 inch = 72pt
         Dimension::Pt(360.0), Dimension::Pt(144.0), // 5 inches x 2 inches
-    ).with_fill(ShapeFill::new("F79646")).with_text("Points");
+    ).fill(hex("F79646")).text("Points");
 
     println!("   Point-based shape: {}x{} EMU at ({}, {})",
         pt_shape.width, pt_shape.height, pt_shape.x, pt_shape.y);

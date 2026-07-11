@@ -12,10 +12,10 @@
 
 use ppt_rs::generator::{
     create_pptx_with_content, SlideContent, SlideLayout,
-    Shape, ShapeType, ShapeFill, ShapeLine,
+    Shape, ShapeType,
 };
 use ppt_rs::core::{Dimension, FlexPosition, FlexSize, SLIDE_WIDTH_EMU, SLIDE_HEIGHT_EMU};
-use ppt_rs::prelude::shapes;
+use ppt_rs::prelude::{shapes, hex, ShapeExt};
 use std::fs;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -45,38 +45,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let emu_shape = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::Emu(457200), Dimension::Inches(1.5),
         Dimension::Emu(1371600), Dimension::Inches(0.8),
-    ).with_fill(ShapeFill::new("1565C0")).with_text("EMU");
+    ).fill(hex("1565C0")).text("EMU");
 
     let inch_shape = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::Inches(2.0), Dimension::Inches(1.5),
         Dimension::Inches(1.5), Dimension::Inches(0.8),
-    ).with_fill(ShapeFill::new("2E7D32")).with_text("Inches");
+    ).fill(hex("2E7D32")).text("Inches");
 
     let cm_shape = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::Cm(9.0), Dimension::Inches(1.5),
         Dimension::Cm(3.81), Dimension::Inches(0.8),
-    ).with_fill(ShapeFill::new("C62828")).with_text("Cm");
+    ).fill(hex("C62828")).text("Cm");
 
     let pt_shape = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::Pt(324.0), Dimension::Inches(1.5),
         Dimension::Pt(108.0), Dimension::Inches(0.8),
-    ).with_fill(ShapeFill::new("7B1FA2")).with_text("Pt");
+    ).fill(hex("7B1FA2")).text("Pt");
 
     let ratio_shape = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::Ratio(0.52), Dimension::Inches(1.5),
         Dimension::Ratio(0.15), Dimension::Inches(0.8),
-    ).with_fill(ShapeFill::new("EF6C00")).with_text("Ratio");
+    ).fill(hex("EF6C00")).text("Ratio");
 
     let pct_shape = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::percent(69.0), Dimension::Inches(1.5),
         Dimension::percent(15.0), Dimension::Inches(0.8),
-    ).with_fill(ShapeFill::new("00838F")).with_text("Percent");
+    ).fill(hex("00838F")).text("Percent");
 
     // Labels row
     let label = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::Inches(0.5), Dimension::Inches(0.8),
         Dimension::Inches(9.0), Dimension::Inches(0.5),
-    ).with_text("Each shape below uses a different unit type for X position:");
+    ).text("Each shape below uses a different unit type for X position:");
 
     slides.push(
         SlideContent::new("All Dimension Unit Types")
@@ -125,7 +125,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let shape = Shape::from_dimensions(ShapeType::RoundedRectangle,
                 Dimension::Ratio(x), Dimension::Ratio(y),
                 Dimension::Ratio(cell_w), Dimension::Ratio(cell_h),
-            ).with_fill(ShapeFill::new(colors[idx])).with_text(labels[idx]);
+            ).fill(hex(colors[idx])).text(labels[idx]);
             grid_slide = grid_slide.add_shape(shape);
         }
     }
@@ -141,25 +141,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let title_box = Shape::from_dimensions(ShapeType::RoundedRectangle,
         Dimension::Inches(0.5), Dimension::Inches(1.5),
         Dimension::Ratio(0.9), Dimension::Cm(2.0),
-    ).with_fill(ShapeFill::new("1F497D")).with_text("Inches X + Ratio Width + Cm Height");
+    ).fill(hex("1F497D")).text("Inches X + Ratio Width + Cm Height");
 
     // Content area: cm for position, pt for size
     let content_box = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::Cm(2.0), Dimension::Cm(6.0),
         Dimension::Pt(432.0), Dimension::Pt(108.0),  // 6in x 1.5in
-    ).with_fill(ShapeFill::new("2E7D32")).with_text("Cm position + Pt size");
+    ).fill(hex("2E7D32")).text("Cm position + Pt size");
 
     // Footer area: percent for everything
     let footer_box = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::percent(5.0), Dimension::percent(75.0),
         Dimension::percent(90.0), Dimension::percent(10.0),
-    ).with_fill(ShapeFill::new("C62828")).with_text("100% percent-based");
+    ).fill(hex("C62828")).text("100% percent-based");
 
     // Sidebar: EMU for position, inches for size
     let sidebar = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::Emu(8000000), Dimension::Inches(1.5),
         Dimension::Inches(1.0), Dimension::Ratio(0.6),
-    ).with_fill(ShapeFill::new("7B1FA2")).with_text("EMU + Inches + Ratio");
+    ).fill(hex("7B1FA2")).text("EMU + Inches + Ratio");
 
     slides.push(
         SlideContent::new("Mixed-Unit Positioning")
@@ -180,22 +180,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let shape1 = Shape::new(ShapeType::Ellipse, 0, 0, 0, 0)
         .at(Dimension::percent(10.0), Dimension::percent(25.0))
         .with_dimensions(Dimension::Inches(2.5), Dimension::Inches(2.5))
-        .with_fill(ShapeFill::new("1565C0"))
-        .with_text(".at() + .with_dimensions()");
+        .fill(hex("1565C0"))
+        .text(".at() + .with_dimensions()");
 
     let shape2 = Shape::new(ShapeType::RoundedRectangle, 0, 0, 0, 0)
         .at(Dimension::Inches(4.0), Dimension::Cm(5.0))
         .with_dimensions(Dimension::Ratio(0.3), Dimension::Inches(2.0))
-        .with_fill(ShapeFill::new("2E7D32"))
-        .with_line(ShapeLine::new("1B5E20", 25400))
-        .with_text("Chained with fill + line");
+        .fill(hex("2E7D32"))
+        .stroke(hex("1B5E20"), 2.0)
+        .text("Chained with fill + line");
 
     let shape3 = Shape::new(ShapeType::Star5, 0, 0, 0, 0)
         .at(Dimension::percent(70.0), Dimension::percent(55.0))
         .with_dimensions(Dimension::Inches(2.0), Dimension::Inches(2.0))
-        .with_fill(ShapeFill::new("FFC107"))
+        .fill(hex("FFC107"))
         .with_rotation(15)
-        .with_text("+ rotation");
+        .text("+ rotation");
 
     slides.push(
         SlideContent::new("Fluent .at() and .with_dimensions() Chaining")
@@ -215,19 +215,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dim_shape = shapes::dim(ShapeType::Diamond,
         Dimension::percent(5.0), Dimension::percent(25.0),
         Dimension::percent(25.0), Dimension::percent(35.0),
-    ).with_fill(ShapeFill::new("7B1FA2")).with_text("shapes::dim()");
+    ).fill(hex("7B1FA2")).text("shapes::dim()");
 
     // shapes::rect_ratio() — ratio-based rectangle
     let ratio_rect = shapes::rect_ratio(0.35, 0.25, 0.28, 0.35)
-        .with_fill(ShapeFill::new("EF6C00")).with_text("shapes::rect_ratio()");
+        .fill(hex("EF6C00")).text("shapes::rect_ratio()");
 
     // shapes::text_box_ratio() — ratio-based text box
     let ratio_text = shapes::text_box_ratio(0.68, 0.25, 0.28, 0.35, "shapes::text_box_ratio()")
-        .with_fill(ShapeFill::new("00838F"));
+        .fill(hex("00838F"));
 
     // Traditional shapes::rect() still works (inches)
     let inch_rect = shapes::rect(1.0, 5.0, 3.0, 1.0)
-        .with_fill(ShapeFill::new("A5A5A5")).with_text("shapes::rect() (inches)");
+        .fill(hex("A5A5A5")).text("shapes::rect() (inches)");
 
     slides.push(
         SlideContent::new("Prelude Shape Builders")
@@ -250,26 +250,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (hx, hy) = header_pos.to_emu();
     let (hw, hh) = header_size.to_emu();
     let header = Shape::new(ShapeType::RoundedRectangle, hx, hy, hw, hh)
-        .with_fill(ShapeFill::new("1F497D"))
-        .with_text("FlexPosition + FlexSize → header");
+        .fill(hex("1F497D"))
+        .text("FlexPosition + FlexSize → header");
 
     let body_pos = FlexPosition::new(Dimension::percent(5.0), Dimension::percent(35.0));
     let body_size = FlexSize::new(Dimension::percent(60.0), Dimension::percent(50.0));
     let (bx, by) = body_pos.to_emu();
     let (bw, bh) = body_size.to_emu();
     let body = Shape::new(ShapeType::Rectangle, bx, by, bw, bh)
-        .with_fill(ShapeFill::new("E8EAF6"))
-        .with_line(ShapeLine::new("3F51B5", 12700))
-        .with_text("Body area (60% x 50%)");
+        .fill(hex("E8EAF6"))
+        .stroke(hex("3F51B5"), 1.0)
+        .text("Body area (60% x 50%)");
 
     let sidebar_pos = FlexPosition::new(Dimension::percent(68.0), Dimension::percent(35.0));
     let sidebar_size = FlexSize::new(Dimension::percent(27.0), Dimension::percent(50.0));
     let (sx, sy) = sidebar_pos.to_emu();
     let (sw, sh) = sidebar_size.to_emu();
     let sidebar_shape = Shape::new(ShapeType::Rectangle, sx, sy, sw, sh)
-        .with_fill(ShapeFill::new("FFF3E0"))
-        .with_line(ShapeLine::new("EF6C00", 12700))
-        .with_text("Sidebar (27% x 50%)");
+        .fill(hex("FFF3E0"))
+        .stroke(hex("EF6C00"), 1.0)
+        .text("Sidebar (27% x 50%)");
 
     slides.push(
         SlideContent::new("FlexPosition & FlexSize — Reusable Layouts")
@@ -303,7 +303,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let card = Shape::from_dimensions(ShapeType::RoundedRectangle,
             Dimension::percent(x_pct), Dimension::percent(22.0),
             Dimension::percent(22.0), Dimension::percent(30.0),
-        ).with_fill(ShapeFill::new(kpi_colors[i])).with_text(kpi_labels[i]);
+        ).fill(hex(kpi_colors[i])).text(kpi_labels[i]);
         dashboard = dashboard.add_shape(card);
     }
 
@@ -311,9 +311,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let chart_area = Shape::from_dimensions(ShapeType::Rectangle,
         Dimension::percent(3.0), Dimension::percent(58.0),
         Dimension::percent(94.0), Dimension::percent(35.0),
-    ).with_fill(ShapeFill::new("ECEFF1"))
-     .with_line(ShapeLine::new("B0BEC5", 12700))
-     .with_text("Chart Area (94% x 35%)");
+    ).fill(hex("ECEFF1"))
+     .stroke(hex("B0BEC5"), 1.0)
+     .text("Chart Area (94% x 35%)");
     dashboard = dashboard.add_shape(chart_area);
 
     slides.push(dashboard);

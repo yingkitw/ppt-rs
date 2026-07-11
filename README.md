@@ -340,6 +340,7 @@ Validate a PPTX file for ECMA-376 compliance:
 
 ```bash
 pptcli validate presentation.pptx
+pptcli validate presentation.pptx --json   # CI-friendly structured report
 ```
 
 This checks:
@@ -513,6 +514,9 @@ ppt-rs = "0.2.19"
 ```
 
 ## Examples
+
+Full walkthrough of the simplified helpers, charts, themes, export, and validation:
+**[API_GUIDE.md](API_GUIDE.md)**.
 
 ### Tables
 

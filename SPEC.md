@@ -723,7 +723,7 @@ pptcli create <title> [output] [--slides N] [--template deck.pptx]  # Create pre
 pptcli md2ppt <input.md> [output.pptx] [--title]    # Convert markdown
 pptcli html2ppt <input.html> [output.pptx] [--title] # Convert HTML (also `from-html`, `from-html-file`)
 pptcli pdf2ppt <input.pdf> [output.pptx]             # Convert PDF
-pptcli validate <file.pptx>                          # Validate PPTX
+pptcli validate <file.pptx> [--json]                 # Validate PPTX (structured issues)
 pptcli info <file.pptx>                              # Show info
 pptcli repair <input.pptx> <output.pptx>            # Repair PPTX
 ```

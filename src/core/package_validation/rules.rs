@@ -170,11 +170,6 @@ fn check_presentation_structure<R: Read + Seek>(
         .map(|r| (r.id.as_str(), r.resolved.as_str()))
         .collect();
 
-    let slide_parts: usize = ctx
-        .names
-        .iter()
-        .filter(|n| is_slide_part(n))
-        .count();
     let sld_id_count = pres.matches("<p:sldId ").count();
 
     if sld_id_count > 0 {

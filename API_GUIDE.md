@@ -5,12 +5,20 @@ Complete guide to the simplified ppt-rs API for creating PowerPoint presentation
 ## Table of Contents
 
 1. [Quick Start](#quick-start)
-2. [HTML to PowerPoint](#html-to-powerpoint)
-3. [Shape Helpers](#shape-helpers)
-4. [Color API](#color-api)
-5. [Table API](#table-api)
-6. [Extension Methods](#extension-methods)
-7. [Complete Examples](#complete-examples)
+2. [Presentation Builder](#presentation-builder)
+3. [HTML to PowerPoint](#html-to-powerpoint)
+4. [Shape Helpers](#shape-helpers)
+5. [Color API](#color-api)
+6. [Table API](#table-api)
+7. [Charts](#charts)
+8. [Images](#images)
+9. [Themes & Templates](#themes--templates)
+10. [Export & Compression](#export--compression)
+11. [Editing Existing Decks](#editing-existing-decks)
+12. [Package Validation](#package-validation)
+13. [Extension Methods](#extension-methods)
+14. [Complete Examples](#complete-examples)
+15. [API Comparison](#api-comparison)
 
 ---
 
@@ -34,6 +42,49 @@ fn main() -> Result<()> {
     Ok(())
 }
 ```
+
+---
+
+## Presentation Builder
+
+High-level `Presentation` API for create → save → export workflows:
+
+```rust
+use ppt_rs::prelude::*;
+use ppt_rs::{Presentation, PresentationTheme};
+
+fn main() -> Result<()> {
+    Presentation::with_title("Q1 Review")
+        .with_theme(PresentationTheme::corporate())
+        .add_slide(
+            SlideContent::new("Highlights")
+                .add_bullet("Revenue up 15%")
+                .add_bullet("NPS at 72")
+        )
+        .add_slide(
+            SlideContent::new("Metrics")
+                .layout(SlideLayout::TitleOnly)
+                .add_shape(
+                    rect(1.0, 2.0, 3.0, 1.5)
+                        .fill(hex("1565C0"))
+                        .text("KPI")
+                )
+        )
+        .save("q1.pptx")?;
+    Ok(())
+}
+```
+
+Useful methods:
+
+| Method | Purpose |
+|--------|---------|
+| `Presentation::with_title` / `add_slide` | Build deck |
+| `.with_theme(PresentationTheme::…)` | Embed brand theme |
+| `.save(path)` | Write PPTX |
+| `.from_path(path)` | Open existing PPTX |
+| `.save_as_markdown` / `.save_as_html` | Round-trip export |
+| `.compress(path, &options)` | Shrink file size |
 
 ---
 
@@ -443,6 +494,148 @@ highlight_cell("Text", "#FF0000")     // Highlighted cell
 
 ---
 
+## Charts
+
+Charts embed an Excel workbook so values stay editable in PowerPoint.
+
+```rust
+use ppt_rs::generator::{ChartSeries, SlideContent, create_pptx_with_content};
+use ppt_rs::helpers::bar_chart;
+
+let chart = bar_chart("Quarterly Revenue")
+    .categories(vec!["Q1", "Q2", "Q3", "Q4"])
+    .add_series(ChartSeries::new("2025", vec![120.0, 145.0, 160.0, 190.0]))
+    .add_series(ChartSeries::new("2024", vec![100.0, 110.0, 130.0, 150.0]))
+    .build();
+
+let slides = vec![
+    SlideContent::new("Revenue")
+        .layout(SlideLayout::TitleOnly)
+        .add_chart(chart),
+];
+let pptx = create_pptx_with_content("Charts", slides)?;
+```
+
+Helpers: `bar_chart`, `line_chart`, `pie_chart`, `area_chart` (`ppt_rs::helpers`).  
+Or use `ChartBuilder::new(title, ChartType::…)` for the full type set.
+
+---
+
+## Images
+
+```rust
+use ppt_rs::prelude::*;
+use ppt_rs::generator::ImageBuilder;
+
+// From bytes / file, with effects and accessibility alt text
+let photo = std::fs::read("photo.jpg")?;
+let img = ImageBuilder::auto(photo)
+    .at(inches(1.0), inches(1.5))
+    .size(inches(4.0), inches(3.0))
+    .shadow()
+    .build()
+    .with_alt_text("Team photo at kickoff");
+
+let slides = vec![SlideContent::new("Gallery").add_image(img)];
+```
+
+Prelude shortcuts: `image(bytes)`, `image_file(path)`.  
+Effects on `ImageBuilder`: `.shadow()`, `.reflection()`, `.glow()`, `.soft_edges()`, `.blur()`, `.crop(…)`.
+
+---
+
+## Themes & Templates
+
+### Embedded themes
+
+```rust
+use ppt_rs::{Presentation, PresentationTheme};
+
+Presentation::with_title("Brand Deck")
+    .with_theme(PresentationTheme::modern()) // corporate, vibrant, dark, nature, tech, carbon
+    .add_slide(SlideContent::new("Hello"))
+    .save("branded.pptx")?;
+```
+
+### Clone from an existing deck
+
+```rust
+use ppt_rs::generator::{create_pptx_with_template, SlideContent};
+use ppt_rs::SlideLayout;
+
+let slides = vec![
+    SlideContent::new("Cover").with_layout(SlideLayout::CenteredTitle),
+    SlideContent::new("Agenda").with_layout(SlideLayout::TitleAndContent),
+];
+let pptx = create_pptx_with_template("Review", &slides, "brand.pptx", None)?;
+```
+
+CLI: `pptcli create out.pptx --template brand.pptx --title "Review"`
+
+Layouts (7 on slide master 1): `CenteredTitle`, `TitleAndContent`, `TitleOnly`, `TwoColumn`, `Blank`, and related variants via `SlideLayout`.
+
+---
+
+## Export & Compression
+
+```rust
+use ppt_rs::{Presentation, CompressionOptions, MarkdownOptions};
+
+let pres = Presentation::from_path("deck.pptx")?;
+
+// Markdown / HTML
+pres.save_as_markdown("deck.md")?;
+pres.save_as_markdown_with_options("deck.md", &MarkdownOptions::default())?;
+pres.save_as_html("deck.html")?;
+
+// Compress (web preset targets ~5MB)
+pres.compress("deck-web.pptx", &CompressionOptions::web())?;
+```
+
+Image export (PNG/JPEG) and PDF require LibreOffice (`soffice`).
+
+---
+
+## Editing Existing Decks
+
+```rust
+use ppt_rs::oxml::PresentationEditor;
+use ppt_rs::generator::SlideContent;
+
+let mut editor = PresentationEditor::open("deck.pptx")?;
+editor.duplicate_slide(0)?;           // copy first slide after itself
+editor.insert_slide(1, SlideContent::new("Inserted"))?;
+editor.reorder_slide(2, 0)?;          // move slide to front
+editor.save("deck-edited.pptx")?;
+```
+
+---
+
+## Package Validation
+
+Structured checks so decks open in PowerPoint without a repair prompt:
+
+```rust
+use ppt_rs::core::{validate_package_bytes, ValidationSeverity};
+
+let bytes = std::fs::read("deck.pptx")?;
+let report = validate_package_bytes(&bytes);
+
+if !report.is_valid() {
+    for issue in &report.issues {
+        if issue.severity == ValidationSeverity::Error {
+            eprintln!("{:?}: {}", issue.category, issue.message);
+        }
+    }
+}
+```
+
+CLI: `pptcli validate deck.pptx`  
+JSON: `pptcli validate deck.pptx --json`  
+Debug builds also `debug_assert!` every generated package.
+
+---
+
 ## Extension Methods
 
 Shorter, more intuitive method names for common operations.
@@ -637,13 +830,18 @@ let shape = rect(1.0, 2.0, 3.0, 1.5)
 1. **Use color aliases** - `red()` is clearer than `hex("FF0000")`
 2. **Adjust colors** - Use `.lighter()` and `.darker()` for color variations
 3. **QuickTable for flexibility** - Most powerful table creation method
-4. **Inches for dimensions** - More intuitive than EMUs
+4. **Inches for dimensions** - More intuitive than EMUs; use `Dimension::Ratio` / `percent` for responsive layouts
 5. **Chain methods** - Use fluent API for cleaner code
+6. **Validate before ship** - `validate_package_bytes` or `pptcli validate` catches packaging gaps
+7. **Theme once** - Prefer `PresentationTheme` / `--template` over hand-styling every shape
 
 ---
 
 ## See Also
 
-- [Examples](examples/) - Working code examples (including `html2ppt_demo.rs`, `html2ppt_comprehensive.rs`)
-- [API Reference](https://docs.rs/ppt-rs) - Complete API documentation
+- [Examples](examples/) - Working code (`simplified_api`, `color_and_table_demo`, `dimension_demo`, `theme_customization_test`)
+- [examples/README.md](examples/README.md) - Example index
+- [API Reference](https://docs.rs/ppt-rs) - Complete rustdoc
 - [SPEC.md](SPEC.md) - Technical specifications
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Module layout
+- [docs/index.html](docs/index.html) - Docs landing page

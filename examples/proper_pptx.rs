@@ -3,7 +3,7 @@
 //! Run with: cargo run --example proper_pptx
 
 use std::fs;
-use ppt_rs::prelude::{shapes, colors, ShapeFill};
+use ppt_rs::prelude::{shapes, colors, hex, ShapeExt};
 use ppt_rs::pptx;
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
@@ -37,14 +37,14 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .slide("Highlights", &["Revenue up 15%", "New customers: 500+", "Product launches: 3"])
         .shapes_slide("Key Metrics", vec![
             shapes::rect(1.0, 2.0, 2.0, 1.5)
-                .with_fill(ShapeFill::new(colors::CORPORATE_BLUE))
-                .with_text("Revenue"),
+                .fill(hex(colors::CORPORATE_BLUE))
+                .text("Revenue"),
             shapes::rect(4.0, 2.0, 2.0, 1.5)
-                .with_fill(ShapeFill::new(colors::CORPORATE_GREEN))
-                .with_text("Growth"),
+                .fill(hex(colors::CORPORATE_GREEN))
+                .text("Growth"),
             shapes::rect(7.0, 2.0, 2.0, 1.5)
-                .with_fill(ShapeFill::new(colors::CORPORATE_ORANGE))
-                .with_text("Users"),
+                .fill(hex(colors::CORPORATE_ORANGE))
+                .text("Users"),
         ])
         .slide("Next Quarter", &["Goals", "Initiatives", "Timeline"])
         .save("examples/output/report_proper.pptx")?;
@@ -69,14 +69,14 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         ])
         .shapes_slide("Rust Features", vec![
             shapes::circle(2.0, 2.5, 1.5)
-                .with_fill(ShapeFill::new(colors::ORANGE))
-                .with_text("Safe"),
+                .fill(hex(colors::ORANGE))
+                .text("Safe"),
             shapes::circle(5.0, 2.5, 1.5)
-                .with_fill(ShapeFill::new(colors::BLUE))
-                .with_text("Fast"),
+                .fill(hex(colors::BLUE))
+                .text("Fast"),
             shapes::circle(8.0, 2.5, 1.5)
-                .with_fill(ShapeFill::new(colors::GREEN))
-                .with_text("Concurrent"),
+                .fill(hex(colors::GREEN))
+                .text("Concurrent"),
         ])
         .slide("Getting Started", &[
             "Install rustup",

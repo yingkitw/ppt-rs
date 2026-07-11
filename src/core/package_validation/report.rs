@@ -83,6 +83,13 @@ impl PackageValidationReport {
             .count()
     }
 
+    pub fn warning_count(&self) -> usize {
+        self.issues
+            .iter()
+            .filter(|i| i.severity == ValidationSeverity::Warning)
+            .count()
+    }
+
     pub fn push(&mut self, issue: PackageValidationIssue) {
         self.issues.push(issue);
     }
@@ -107,5 +114,28 @@ impl PackageValidationReport {
         self.issues
             .iter()
             .filter(move |i| i.category == category)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn counts_errors_and_warnings() {
+        let mut report = PackageValidationReport::default();
+        report.push(PackageValidationIssue::error(
+            ValidationCategory::Presentation,
+            "bad",
+            Some("ppt/presentation.xml"),
+        ));
+        report.push(PackageValidationIssue::warning(
+            ValidationCategory::Theme,
+            "soft",
+            None,
+        ));
+        assert_eq!(report.error_count(), 1);
+        assert_eq!(report.warning_count(), 1);
+        assert!(!report.is_valid());
     }
 }

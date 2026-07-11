@@ -119,8 +119,6 @@ pub fn table_with_header(headers: &[&str], data_rows: usize) -> TableBuilder {
 /// Quick table builder for common patterns
 pub struct QuickTable {
     builder: TableBuilder,
-    #[allow(dead_code)]
-    cols: usize,
 }
 
 impl QuickTable {
@@ -130,7 +128,6 @@ impl QuickTable {
         let column_widths = vec![col_width; cols];
         Self {
             builder: TableBuilder::new(column_widths),
-            cols,
         }
     }
 
@@ -141,8 +138,7 @@ impl QuickTable {
             .map(|w| (w * 914400.0) as u32)
             .collect();
         Self {
-            builder: TableBuilder::new(column_widths.clone()),
-            cols: column_widths.len(),
+            builder: TableBuilder::new(column_widths),
         }
     }
 

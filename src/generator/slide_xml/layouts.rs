@@ -1,6 +1,6 @@
 //! Slide layout implementations
 
-use crate::generator::slide_content::{SlideContent, BulletStyle, BulletPoint, BulletTextFormat};
+use crate::generator::slide_content::{SlideContent, BulletPoint, BulletTextFormat};
 use crate::core::escape_xml;
 use crate::generator::slide::formatting::generate_text_props;
 use super::common::{SLIDE_HEADER, SLIDE_FOOTER, generate_title_shape};
@@ -29,28 +29,6 @@ fn generate_bullet_text_props(
     } else {
         default_props.to_xml()
     }
-}
-
-/// Generate a bullet paragraph with style
-#[allow(dead_code)]
-fn generate_bullet_paragraph(text: &str, level: u32, style: BulletStyle, text_props: &str) -> String {
-    let indent = 457200 + (level * 457200);
-    let margin_left = level * 457200 + indent;
-    let bullet_xml = style.to_xml();
-    
-    format!(
-        r#"
-<a:p>
-<a:pPr lvl="{}" marL="{}" indent="-{}">
-{}
-</a:pPr>
-<a:r>
-{}
-<a:t>{}</a:t>
-</a:r>
-</a:p>"#,
-        level, margin_left, indent, bullet_xml, text_props, escape_xml(text)
-    )
 }
 
 /// Generate a bullet paragraph from a BulletPoint with full formatting

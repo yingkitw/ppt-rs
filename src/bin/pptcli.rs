@@ -72,12 +72,16 @@ fn main() {
                 std::process::exit(1);
             }
         },
-        Commands::Validate { file } => match ValidateCommand::execute(&file) {
+        Commands::Validate { file, json } => match ValidateCommand::execute(&file, json) {
             Ok(_) => {
-                println!("\n✓ Validation completed successfully");
+                if !json {
+                    println!("\n✓ Validation completed successfully");
+                }
             }
             Err(e) => {
-                eprintln!("✗ Error: {e}");
+                if !json {
+                    eprintln!("✗ Error: {e}");
+                }
                 std::process::exit(1);
             }
         },
@@ -383,24 +387,4 @@ fn execute_web2ppt(
             std::process::exit(1);
         }
     }
-}
-
-#[cfg(not(feature = "web2ppt"))]
-#[allow(dead_code)]
-fn execute_web2ppt(
-    _url: String,
-    _output: String,
-    _title: Option<String>,
-    _max_slides: usize,
-    _max_bullets: usize,
-    _no_images: bool,
-    _no_tables: bool,
-    _no_code: bool,
-    _no_source_url: bool,
-    _timeout: u64,
-    _verbose: bool,
-) {
-    eprintln!("✗ web2ppt feature is not enabled.");
-    eprintln!("  Rebuild with: cargo build --features web2ppt");
-    std::process::exit(1);
 }

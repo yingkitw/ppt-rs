@@ -88,46 +88,6 @@ pub fn render_additional_content(
     }
 }
 
-/// Generate image placeholder XML
-#[allow(dead_code)]
-fn generate_image_placeholder(id: usize, image: &crate::generator::images::Image) -> String {
-    let filename = &image.filename;
-    let x = image.x;
-    let y = image.y;
-    let width = image.width;
-    let height = image.height;
-
-    format!(
-        r#"<p:sp>
-<p:nvSpPr>
-<p:cNvPr id="{id}" name="Image Placeholder: {filename}"/>
-<p:cNvSpPr/>
-<p:nvPr/>
-</p:nvSpPr>
-<p:spPr>
-<a:xfrm>
-<a:off x="{x}" y="{y}"/>
-<a:ext cx="{width}" cy="{height}"/>
-</a:xfrm>
-<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
-<a:solidFill><a:srgbClr val="E0E0E0"/></a:solidFill>
-<a:ln w="12700"><a:solidFill><a:srgbClr val="808080"/></a:solidFill></a:ln>
-</p:spPr>
-<p:txBody>
-<a:bodyPr wrap="square" rtlCol="0" anchor="ctr"/>
-<a:lstStyle/>
-<a:p>
-<a:pPr algn="ctr"/>
-<a:r>
-<a:rPr lang="en-US" sz="1400"/>
-<a:t>📷 {filename}</a:t>
-</a:r>
-</a:p>
-</p:txBody>
-</p:sp>"#
-    )
-}
-
 /// Generate code block XML with syntax highlighting
 fn generate_code_block(
     id: usize,

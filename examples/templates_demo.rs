@@ -269,8 +269,8 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     for (i, (x, y)) in grid_positions.iter().enumerate() {
         grid_shapes.push(
             shapes::rect_emu(*x, *y, 1400000, 900000)
-                .with_fill(ShapeFill::new(theme_colors[i]))
-                .with_text(&format!("Theme {}", i + 1))
+                .fill(hex(theme_colors[i]))
+                .text(&format!("Theme {}", i + 1))
         );
     }
 

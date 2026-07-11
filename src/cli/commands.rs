@@ -177,29 +177,113 @@ impl InfoCommand {
 }
 
 impl ValidateCommand {
-    /// Validate a PPTX file for ECMA-376 compliance using core package validation.
-    pub fn execute(file: &str) -> Result<(), String> {
-        println!("Validating PPTX file: {file}");
-        println!("{}", "=".repeat(60));
-
+    /// Validate a PPTX file and report structured package issues.
+    pub fn execute(file: &str, json: bool) -> Result<(), String> {
         let bytes = fs::read(file).map_err(|e| format!("Failed to read file: {e}"))?;
         let report = crate::core::validate_package_bytes(&bytes);
 
-        println!("  Total entries checked");
+        if json {
+            Self::print_json(file, &report);
+        } else {
+            Self::print_human(file, &report);
+        }
+
         if report.is_valid() {
-            println!("\n✓ Validation PASSED");
-            println!("  File is a valid PPTX file");
-            println!("  ECMA-376 compliance: OK");
             Ok(())
         } else {
-            println!("\n✗ Validation FAILED");
-            println!("  Found {} issue(s):", report.error_count());
-            for issue in report.error_messages() {
-                println!("    - {}", issue);
-            }
-            Err(format!("Validation failed with {} issue(s)", report.error_count()))
+            Err(format!(
+                "Validation failed with {} error(s), {} warning(s)",
+                report.error_count(),
+                report.warning_count()
+            ))
         }
     }
+
+    fn print_human(file: &str, report: &crate::core::PackageValidationReport) {
+        use crate::core::ValidationSeverity;
+
+        println!("Validating PPTX file: {file}");
+        println!("{}", "=".repeat(60));
+        println!(
+            "Summary: {} error(s), {} warning(s)",
+            report.error_count(),
+            report.warning_count()
+        );
+
+        if report.issues.is_empty() {
+            println!("\n✓ Validation PASSED — no issues found");
+            return;
+        }
+
+        println!();
+        for issue in &report.issues {
+            let severity = match issue.severity {
+                ValidationSeverity::Error => "ERROR",
+                ValidationSeverity::Warning => "WARNING",
+            };
+            let path = issue.path.as_deref().unwrap_or("-");
+            println!(
+                "[{severity}] {:?}  {path}",
+                issue.category
+            );
+            println!("  {}", issue.message);
+        }
+
+        if report.is_valid() {
+            println!("\n✓ Validation PASSED (warnings only)");
+        } else {
+            println!("\n✗ Validation FAILED");
+        }
+    }
+
+    fn print_json(file: &str, report: &crate::core::PackageValidationReport) {
+        use crate::core::ValidationSeverity;
+
+        println!("{{");
+        println!("  \"file\": {},", json_string(file));
+        println!("  \"valid\": {},", report.is_valid());
+        println!("  \"error_count\": {},", report.error_count());
+        println!("  \"warning_count\": {},", report.warning_count());
+        println!("  \"issues\": [");
+        for (i, issue) in report.issues.iter().enumerate() {
+            let severity = match issue.severity {
+                ValidationSeverity::Error => "error",
+                ValidationSeverity::Warning => "warning",
+            };
+            let path = issue
+                .path
+                .as_deref()
+                .map(json_string)
+                .unwrap_or_else(|| "null".to_string());
+            let comma = if i + 1 < report.issues.len() { "," } else { "" };
+            println!("    {{");
+            println!("      \"severity\": \"{severity}\",");
+            println!("      \"category\": \"{:?}\",", issue.category);
+            println!("      \"path\": {path},");
+            println!("      \"message\": {}", json_string(&issue.message));
+            println!("    }}{comma}");
+        }
+        println!("  ]");
+        println!("}}");
+    }
+}
+
+fn json_string(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push('"');
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if c.is_control() => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+    out
 }
 
 #[cfg(test)]

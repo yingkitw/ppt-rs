@@ -39,7 +39,7 @@
 //! - `<title>` → Presentation title (falls back to first `<h1>`)
 
 use crate::generator::{CodeBlock, SlideContent};
-use crate::generator::slide_content::{BulletPoint, BulletStyle, BulletTextFormat};
+use crate::generator::slide_content::{BulletPoint, BulletTextFormat};
 
 /// Options for HTML parsing
 #[derive(Clone, Debug)]
@@ -644,18 +644,6 @@ impl HtmlSlideParser {
     /// Return the current active style (top of the style stack)
     fn active_style(&self) -> Option<&InlineStyle> {
         self.style_stack.last()
-    }
-
-    /// Create a BulletPoint with the current active style applied
-    #[allow(dead_code)]
-    fn make_bullet(&self, text: &str, bullet_style: BulletStyle) -> BulletPoint {
-        let mut bp = BulletPoint::new(text).with_style(bullet_style);
-        if let Some(ref s) = self.active_style() {
-            if let Some(fmt) = s.to_bullet_format() {
-                bp = bp.with_format(fmt);
-            }
-        }
-        bp
     }
 
     fn parse(&mut self, events: &[HtmlEvent]) -> Result<Vec<SlideContent>, String> {
