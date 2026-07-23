@@ -98,6 +98,13 @@ pub use export::image_export::{
     ImageExportOptions, ImageFormat,
     export_to_images, export_slide_to_image, render_thumbnail
 };
+pub use export::slide_render::{render_to_pdf, render_to_pdf_bytes};
+
+#[cfg(feature = "pdf-native")]
+pub use export::pdf_export::{
+    export_to_pdf, export_to_pdf_bytes,
+    PdfExportOptions, PdfOrientation,
+};
 pub use opc::compress::{
     CompressionOptions, CompressionLevel, CompressionResult,
     compress_pptx, compress_pptx_in_memory, analyze_pptx

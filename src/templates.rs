@@ -156,21 +156,21 @@ pub fn business_proposal<'a>(
     // Executive Summary
     let mut summary = SlideContent::new("Executive Summary");
     for point in &content.executive_summary {
-        summary = summary.add_bullet(*point);
+        summary = summary.add_bullet(point);
     }
     slides.push(summary);
 
     // Problem Statement
     let mut problem = SlideContent::new("Problem Statement");
     for point in &content.problem {
-        problem = problem.add_bullet(*point);
+        problem = problem.add_bullet(point);
     }
     slides.push(problem);
 
     // Solution
     let mut solution = SlideContent::new("Proposed Solution");
     for point in &content.solution {
-        solution = solution.add_bullet(*point);
+        solution = solution.add_bullet(point);
     }
     slides.push(solution);
 
@@ -191,7 +191,7 @@ pub fn business_proposal<'a>(
     // Next Steps
     let mut next = SlideContent::new("Next Steps");
     for step in &content.next_steps {
-        next = next.add_bullet(*step);
+        next = next.add_bullet(step);
     }
     slides.push(next);
 
@@ -231,15 +231,15 @@ pub fn training_material<'a>(
     // Objectives
     let mut objectives = SlideContent::new("Learning Objectives");
     for obj in &content.objectives {
-        objectives = objectives.add_bullet(*obj);
+        objectives = objectives.add_bullet(obj);
     }
     slides.push(objectives);
 
     // Modules
     for (module_name, topics) in &content.modules {
-        let mut module = SlideContent::new(*module_name);
+        let mut module = SlideContent::new(module_name);
         for topic in topics {
-            module = module.add_bullet(*topic);
+            module = module.add_bullet(topic);
         }
         slides.push(module);
     }
@@ -247,14 +247,14 @@ pub fn training_material<'a>(
     // Exercises
     let mut exercises = SlideContent::new("Exercises");
     for ex in &content.exercises {
-        exercises = exercises.add_bullet(*ex);
+        exercises = exercises.add_bullet(ex);
     }
     slides.push(exercises);
 
     // Summary
     let mut summary = SlideContent::new("Summary");
     for point in &content.summary {
-        summary = summary.add_bullet(*point);
+        summary = summary.add_bullet(point);
     }
     slides.push(summary);
 
@@ -294,21 +294,21 @@ pub fn status_report<'a>(
     // Summary
     let mut summary = SlideContent::new("Executive Summary");
     for point in &content.summary {
-        summary = summary.add_bullet(*point);
+        summary = summary.add_bullet(point);
     }
     slides.push(summary);
 
     // Completed
     let mut completed = SlideContent::new("Completed ✓");
     for item in &content.completed {
-        completed = completed.add_bullet(*item);
+        completed = completed.add_bullet(item);
     }
     slides.push(completed);
 
     // In Progress
     let mut progress = SlideContent::new("In Progress");
     for item in &content.in_progress {
-        progress = progress.add_bullet(*item);
+        progress = progress.add_bullet(item);
     }
     slides.push(progress);
 
@@ -316,7 +316,7 @@ pub fn status_report<'a>(
     if !content.blocked.is_empty() {
         let mut blocked = SlideContent::new("Blocked / Risks");
         for item in &content.blocked {
-            blocked = blocked.add_bullet(*item);
+            blocked = blocked.add_bullet(item);
         }
         slides.push(blocked);
     }
@@ -324,7 +324,7 @@ pub fn status_report<'a>(
     // Next Week
     let mut next = SlideContent::new("Next Week");
     for item in &content.next_week {
-        next = next.add_bullet(*item);
+        next = next.add_bullet(item);
     }
     slides.push(next);
 
@@ -366,22 +366,22 @@ pub fn technical_doc<'a>(
     // Overview
     let mut overview = SlideContent::new("Overview");
     for point in &content.overview {
-        overview = overview.add_bullet(*point);
+        overview = overview.add_bullet(point);
     }
     slides.push(overview);
 
     // Architecture
     let mut arch = SlideContent::new("Architecture");
     for point in &content.architecture {
-        arch = arch.add_bullet(*point);
+        arch = arch.add_bullet(point);
     }
     slides.push(arch);
 
     // Components
     for (name, features) in &content.components {
-        let mut comp = SlideContent::new(*name);
+        let mut comp = SlideContent::new(name);
         for feature in features {
-            comp = comp.add_bullet(*feature);
+            comp = comp.add_bullet(feature);
         }
         slides.push(comp);
     }
@@ -398,7 +398,7 @@ pub fn technical_doc<'a>(
     // Best Practices
     let mut practices = SlideContent::new("Best Practices");
     for practice in &content.best_practices {
-        practices = practices.add_bullet(*practice);
+        practices = practices.add_bullet(practice);
     }
     slides.push(practices);
 
@@ -408,9 +408,9 @@ pub fn technical_doc<'a>(
 /// Create a simple presentation with just title and bullet slides
 pub fn simple(title: &str, slides: &[(&str, &[&str])]) -> Result<Vec<u8>> {
     let slide_contents: Vec<SlideContent> = slides.iter().map(|(slide_title, bullets)| {
-        let mut slide = SlideContent::new(*slide_title);
+        let mut slide = SlideContent::new(slide_title);
         for bullet in *bullets {
-            slide = slide.add_bullet(*bullet);
+            slide = slide.add_bullet(bullet);
         }
         slide
     }).collect();

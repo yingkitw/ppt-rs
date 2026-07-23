@@ -24,15 +24,13 @@ impl PptxTemplate {
     pub fn from_package(pkg: &Package) -> Result<Self> {
         let mut parts = HashMap::new();
         for path in pkg.part_paths() {
-            if path.starts_with("ppt/theme/")
+            if (path.starts_with("ppt/theme/")
                 || path.starts_with("ppt/slideMasters/")
                 || path.starts_with("ppt/slideLayouts/")
-                || path == "ppt/tableStyles.xml"
-            {
-                if let Some(data) = pkg.get_part(path) {
+                || path == "ppt/tableStyles.xml")
+                && let Some(data) = pkg.get_part(path) {
                     parts.insert(path.to_string(), data.to_vec());
                 }
-            }
         }
 
         if !parts.keys().any(|p| p.starts_with("ppt/slideMasters/")) {

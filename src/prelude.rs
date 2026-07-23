@@ -182,7 +182,7 @@ impl QuickPptx {
     pub fn slide(mut self, title: &str, bullets: &[&str]) -> Self {
         let mut slide = SlideContent::new(title);
         for bullet in bullets {
-            slide = slide.add_bullet(*bullet);
+            slide = slide.add_bullet(bullet);
         }
         self.slides.push(slide);
         self

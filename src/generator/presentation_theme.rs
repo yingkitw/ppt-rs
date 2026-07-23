@@ -162,6 +162,7 @@ impl PresentationTheme {
         self
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn from_palette(
         name: impl Into<String>,
         primary: &str,

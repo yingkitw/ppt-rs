@@ -720,6 +720,82 @@ impl ImageBuilder {
     }
 }
 
+/// Read image dimensions from file header bytes (PNG, JPEG, GIF, BMP, WebP).
+/// Returns (width, height, format_name) or None if unrecognized.
+fn read_image_dimensions(data: &[u8]) -> Option<(u32, u32, String)> {
+    if data.len() < 10 {
+        return None;
+    }
+    // PNG: 8-byte signature, then IHDR chunk with width/height as big-endian u32
+    if data.starts_with(&[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) && data.len() >= 24 {
+        let w = u32::from_be_bytes([data[16], data[17], data[18], data[19]]);
+        let h = u32::from_be_bytes([data[20], data[21], data[22], data[23]]);
+        return Some((w, h, "PNG".into()));
+    }
+    // JPEG: starts with FF D8, scan for SOF0/SOF2 marker
+    if data.starts_with(&[0xFF, 0xD8]) {
+        return read_jpeg_dimensions(data);
+    }
+    // GIF: "GIF87a" or "GIF89a", width/height as little-endian u16 at offset 6
+    if data.starts_with(b"GIF8") && data.len() >= 10 {
+        let w = u16::from_le_bytes([data[6], data[7]]) as u32;
+        let h = u16::from_le_bytes([data[8], data[9]]) as u32;
+        return Some((w, h, "GIF".into()));
+    }
+    // BMP: "BM", width/height as little-endian u32 at offset 18/22
+    if data.starts_with(b"BM") && data.len() >= 26 {
+        let w = u32::from_le_bytes([data[18], data[19], data[20], data[21]]);
+        let h = u32::from_le_bytes([data[22], data[23], data[24], data[25]]);
+        return Some((w, h, "BMP".into()));
+    }
+    // WebP: "RIFF....WEBP", VP8 chunk has dimensions
+    if data.len() >= 30 && &data[0..4] == b"RIFF" && &data[8..12] == b"WEBP" {
+        // VP8 lossy: width/height at offset 26/28 as little-endian u16
+        if &data[12..16] == b"VP8 " && data.len() >= 30 {
+            let w = u16::from_le_bytes([data[26], data[27]]) as u32 & 0x3FFF;
+            let h = u16::from_le_bytes([data[28], data[29]]) as u32 & 0x3FFF;
+            return Some((w, h, "WEBP".into()));
+        }
+        // VP8L lossless: dimensions encoded at offset 21
+        if &data[12..16] == b"VP8L" && data.len() >= 25 {
+            let b0 = data[21] as u32;
+            let b1 = data[22] as u32;
+            let b2 = data[23] as u32;
+            let b3 = data[24] as u32;
+            let bits = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
+            let w = (bits & 0x3FFF) + 1;
+            let h = ((bits >> 14) & 0x3FFF) + 1;
+            return Some((w, h, "WEBP".into()));
+        }
+    }
+    None
+}
+
+/// Scan JPEG markers to find SOF0/SOF2 frame with dimensions
+fn read_jpeg_dimensions(data: &[u8]) -> Option<(u32, u32, String)> {
+    let mut i = 2;
+    while i + 1 < data.len() {
+        if data[i] != 0xFF {
+            i += 1;
+            continue;
+        }
+        let marker = data[i + 1];
+        i += 2;
+        // SOF0 (0xC0) or SOF2 (0xC2): height at +3, width at +5 (big-endian u16)
+        if (marker == 0xC0 || marker == 0xC2) && i + 7 < data.len() {
+            let h = u16::from_be_bytes([data[i + 3], data[i + 4]]) as u32;
+            let w = u16::from_be_bytes([data[i + 5], data[i + 6]]) as u32;
+            return Some((w, h, "JPEG".into()));
+        }
+        // Skip non-SOF markers by reading segment length
+        if marker >= 0xC0 && marker != 0xD9 && marker != 0xDA && i + 1 < data.len() {
+            let len = u16::from_be_bytes([data[i], data[i + 1]]) as usize;
+            i += len;
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -897,80 +973,4 @@ mod tests {
         assert_eq!((w, h), (100, 200));
         assert_eq!(fmt, "BMP");
     }
-}
-
-/// Read image dimensions from file header bytes (PNG, JPEG, GIF, BMP, WebP).
-/// Returns (width, height, format_name) or None if unrecognized.
-fn read_image_dimensions(data: &[u8]) -> Option<(u32, u32, String)> {
-    if data.len() < 10 {
-        return None;
-    }
-    // PNG: 8-byte signature, then IHDR chunk with width/height as big-endian u32
-    if data.starts_with(&[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) && data.len() >= 24 {
-        let w = u32::from_be_bytes([data[16], data[17], data[18], data[19]]);
-        let h = u32::from_be_bytes([data[20], data[21], data[22], data[23]]);
-        return Some((w, h, "PNG".into()));
-    }
-    // JPEG: starts with FF D8, scan for SOF0/SOF2 marker
-    if data.starts_with(&[0xFF, 0xD8]) {
-        return read_jpeg_dimensions(data);
-    }
-    // GIF: "GIF87a" or "GIF89a", width/height as little-endian u16 at offset 6
-    if data.starts_with(b"GIF8") && data.len() >= 10 {
-        let w = u16::from_le_bytes([data[6], data[7]]) as u32;
-        let h = u16::from_le_bytes([data[8], data[9]]) as u32;
-        return Some((w, h, "GIF".into()));
-    }
-    // BMP: "BM", width/height as little-endian u32 at offset 18/22
-    if data.starts_with(b"BM") && data.len() >= 26 {
-        let w = u32::from_le_bytes([data[18], data[19], data[20], data[21]]);
-        let h = u32::from_le_bytes([data[22], data[23], data[24], data[25]]);
-        return Some((w, h, "BMP".into()));
-    }
-    // WebP: "RIFF....WEBP", VP8 chunk has dimensions
-    if data.len() >= 30 && &data[0..4] == b"RIFF" && &data[8..12] == b"WEBP" {
-        // VP8 lossy: width/height at offset 26/28 as little-endian u16
-        if &data[12..16] == b"VP8 " && data.len() >= 30 {
-            let w = u16::from_le_bytes([data[26], data[27]]) as u32 & 0x3FFF;
-            let h = u16::from_le_bytes([data[28], data[29]]) as u32 & 0x3FFF;
-            return Some((w, h, "WEBP".into()));
-        }
-        // VP8L lossless: dimensions encoded at offset 21
-        if &data[12..16] == b"VP8L" && data.len() >= 25 {
-            let b0 = data[21] as u32;
-            let b1 = data[22] as u32;
-            let b2 = data[23] as u32;
-            let b3 = data[24] as u32;
-            let bits = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
-            let w = (bits & 0x3FFF) + 1;
-            let h = ((bits >> 14) & 0x3FFF) + 1;
-            return Some((w, h, "WEBP".into()));
-        }
-    }
-    None
-}
-
-/// Scan JPEG markers to find SOF0/SOF2 frame with dimensions
-fn read_jpeg_dimensions(data: &[u8]) -> Option<(u32, u32, String)> {
-    let mut i = 2;
-    while i + 1 < data.len() {
-        if data[i] != 0xFF {
-            i += 1;
-            continue;
-        }
-        let marker = data[i + 1];
-        i += 2;
-        // SOF0 (0xC0) or SOF2 (0xC2): height at +3, width at +5 (big-endian u16)
-        if (marker == 0xC0 || marker == 0xC2) && i + 7 < data.len() {
-            let h = u16::from_be_bytes([data[i + 3], data[i + 4]]) as u32;
-            let w = u16::from_be_bytes([data[i + 5], data[i + 6]]) as u32;
-            return Some((w, h, "JPEG".into()));
-        }
-        // Skip non-SOF markers by reading segment length
-        if marker >= 0xC0 && marker != 0xD9 && marker != 0xDA && i + 1 < data.len() {
-            let len = u16::from_be_bytes([data[i], data[i + 1]]) as usize;
-            i += len;
-        }
-    }
-    None
 }

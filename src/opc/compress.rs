@@ -13,10 +13,12 @@ use std::path::Path;
 
 /// Compression level options
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Default)]
 pub enum CompressionLevel {
     /// Light compression - remove unused parts only
     Light,
     /// Medium compression - compress images slightly
+    #[default]
     Medium,
     /// Aggressive compression - maximize size reduction
     Aggressive,
@@ -24,11 +26,6 @@ pub enum CompressionLevel {
     Custom(u8), // JPEG quality 0-100
 }
 
-impl Default for CompressionLevel {
-    fn default() -> Self {
-        CompressionLevel::Medium
-    }
-}
 
 impl CompressionLevel {
     /// Get image quality for this level (for JPEG compression)
@@ -293,8 +290,8 @@ fn remove_unused_media(package: &mut Package) -> Result<usize> {
 
     // Find all media references in slide files
     for path in package.part_paths() {
-        if path.starts_with("ppt/slides/slide") && path.ends_with(".xml") {
-            if let Some(content) = package.get_part_string(&path) {
+        if path.starts_with("ppt/slides/slide") && path.ends_with(".xml")
+            && let Some(content) = package.get_part_string(path) {
                 // Look for media references like rId5, image1.png, etc.
                 for media_path in &media_paths {
                     let filename = Path::new(media_path)
@@ -306,7 +303,6 @@ fn remove_unused_media(package: &mut Package) -> Result<usize> {
                     }
                 }
             }
-        }
     }
 
     // Remove unreferenced media
@@ -390,11 +386,10 @@ fn minimize_xml(xml: &str) -> String {
             '<' if !in_string => {
                 in_tag = true;
                 // Remove whitespace before tag
-                if prev_char == ' ' || prev_char == '\n' || prev_char == '\t' {
-                    if !result.is_empty() {
+                if (prev_char == ' ' || prev_char == '\n' || prev_char == '\t')
+                    && !result.is_empty() {
                         result.pop();
                     }
-                }
                 result.push(ch);
             }
             '>' if !in_string => {

@@ -123,8 +123,7 @@ impl Part for SlidePart {
         }
 
         // Return minimal slide XML
-        Ok(format!(
-            r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        Ok(r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">
 <p:cSld>
 <p:spTree>
@@ -136,8 +135,7 @@ impl Part for SlidePart {
 <p:grpSpPr/>
 </p:spTree>
 </p:cSld>
-</p:sld>"#
-        ))
+</p:sld>"#.to_string())
     }
 
     fn from_xml(xml: &str) -> Result<Self, PptxError> {

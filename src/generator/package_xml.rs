@@ -278,14 +278,13 @@ pub fn create_pres_props_xml(settings: Option<&PresentationSettings>) -> String 
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentationPr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">"#,
     );
 
-    if let Some(s) = settings {
-        if let Some(ref show) = s.slide_show {
+    if let Some(s) = settings
+        && let Some(ref show) = s.slide_show {
             xml.push_str(&show.to_xml());
         }
         // Handout print preferences are expressed via the handout master part.
         // PowerPoint strips `<p:prnPr>` from presProps on repair when it is paired
         // with a packaged handout master, so we do not emit it during generation.
-    }
 
     xml.push_str(
         r#"<p:extLst><p:ext uri="{E76CE94A-603C-4142-B9EB-6D1370010A27}"><p14:discardImageEditData xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" val="0"/></p:ext><p:ext uri="{D31A062A-798A-4329-ABDD-BBA856620510}"><p14:defaultImageDpi xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" val="0"/></p:ext><p:ext uri="{FD5EFAAD-0ECE-453E-9831-46B23BE46B34}"><p15:chartTrackingRefBased xmlns:p15="http://schemas.microsoft.com/office/powerpoint/2012/main" val="0"/></p:ext></p:extLst></p:presentationPr>"#,
@@ -554,7 +553,7 @@ pub fn create_slide_rels_xml_with_images(
         append_usize(&mut xml, next_rid + i);
         xml.push_str("\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image\" Target=\"../media/image");
         append_usize(&mut xml, *image_num);
-        xml.push_str(".");
+        xml.push('.');
         xml.push_str(ext);
         xml.push_str("\"/>");
     }

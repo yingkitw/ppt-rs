@@ -67,7 +67,7 @@ fn create_text_formatting_table() -> Table {
     ];
 
     Table::new(
-        vec![vec![header_row], rows].concat(),
+        [vec![header_row], rows].concat(),
         vec![2000000, 3000000, 3000000],
         500000,
         1500000,
@@ -106,7 +106,7 @@ fn create_color_table() -> Table {
     ];
 
     Table::new(
-        vec![vec![header_row], rows].concat(),
+        [vec![header_row], rows].concat(),
         vec![2000000, 2000000, 4000000],
         500000,
         1500000,
@@ -145,7 +145,7 @@ fn create_font_table() -> Table {
     ];
 
     Table::new(
-        vec![vec![header_row], rows].concat(),
+        [vec![header_row], rows].concat(),
         vec![2000000, 2500000, 3500000],
         500000,
         1500000,
@@ -198,7 +198,7 @@ fn create_combined_table() -> Table {
     ];
 
     Table::new(
-        vec![vec![header_row], rows].concat(),
+        [vec![header_row], rows].concat(),
         vec![3000000, 5000000],
         500000,
         1500000,

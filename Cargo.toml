@@ -1,6 +1,6 @@
 [package]
 name = "ppt-rs"
-version = "0.2.22"
+version = "0.2.23"
 edition = "2024"
 authors = ["Ying Kit WONG"]
 description = "Create, read, and update PowerPoint 2007+ (.pptx) files with rich formatting, bullet styles, themes, and templates."
@@ -28,6 +28,9 @@ reqwest = { version = "0.11", features = ["blocking"], optional = true }
 scraper = { version = "0.18", optional = true }
 url = { version = "2.5", optional = true }
 
+# PDF export without LibreOffice (optional)
+pdfrs = { version = "0.1", default-features = false, optional = true }
+
 # MCP dependencies (optional)
 serde = { version = "1", features = ["derive"], optional = true }
 serde_json = { version = "1", optional = true }
@@ -35,10 +38,11 @@ rmcp = { version = "2.2", features = ["transport-io"], optional = true }
 tokio = { version = "1", features = ["rt-multi-thread", "macros"], optional = true }
 
 [features]
-default = []
-cli = ["clap", "pulldown-cmark", "syntect"]
+default = ["pdf-native"]
+cli = ["clap", "pulldown-cmark", "syntect", "pdf-native"]
 mcp = ["serde", "serde_json", "dep:rmcp", "dep:tokio"]
 web2ppt = ["reqwest", "scraper", "url"]
+pdf-native = ["dep:pdfrs"]
 
 [dev-dependencies]
 serde_json = "1"

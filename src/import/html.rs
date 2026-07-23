@@ -127,8 +127,8 @@ fn decode_entities(s: &str) -> String {
     let bytes = s.as_bytes();
     let mut i = 0;
     while i < bytes.len() {
-        if bytes[i] == b'&' {
-            if let Some(end) = s[i..].find(';') {
+        if bytes[i] == b'&'
+            && let Some(end) = s[i..].find(';') {
                 let entity = &s[i + 1..i + end];
                 let ch = match entity {
                     "amp" => Some('&'),
@@ -159,7 +159,6 @@ fn decode_entities(s: &str) -> String {
                     continue;
                 }
             }
-        }
         // Preserve full Unicode characters (not just ASCII bytes)
         let c = s[i..].chars().next().unwrap();
         out.push(c);
@@ -391,16 +390,14 @@ impl InlineStyle {
         if let Some(sz) = self.font_size {
             fmt = fmt.font_size(sz);
         }
-        if let Some(ref fw) = self.font_weight {
-            if is_font_weight_bold(fw) {
+        if let Some(ref fw) = self.font_weight
+            && is_font_weight_bold(fw) {
                 fmt = fmt.bold();
             }
-        }
-        if let Some(ref fs) = self.font_style {
-            if is_font_style_italic(fs) {
+        if let Some(ref fs) = self.font_style
+            && is_font_style_italic(fs) {
                 fmt = fmt.italic();
             }
-        }
         if let Some(ref td) = self.text_decoration {
             if td.contains("underline") {
                 fmt = fmt.underline();
@@ -493,7 +490,6 @@ fn tokenize_html(html: &str) -> Vec<HtmlEvent> {
 
             // Parse attributes
             let mut attrs: Vec<(String, String)> = Vec::new();
-            let mut self_closing = false;
 
             while i < len && chars[i] != '>' {
                 // Skip whitespace
@@ -504,7 +500,6 @@ fn tokenize_html(html: &str) -> Vec<HtmlEvent> {
                     break;
                 }
                 if chars[i] == '/' {
-                    self_closing = true;
                     i += 1;
                     continue;
                 }
@@ -555,17 +550,7 @@ fn tokenize_html(html: &str) -> Vec<HtmlEvent> {
             }
 
             if !tag_name.is_empty() {
-                let void_tags = [
-                    "area", "base", "br", "col", "embed", "hr", "img", "input",
-                    "link", "meta", "param", "source", "track", "wbr",
-                ];
-                let is_void = void_tags.contains(&tag_name.as_str());
-
-                if self_closing || is_void {
-                    events.push(HtmlEvent::OpenTag { name: tag_name, attrs });
-                } else {
-                    events.push(HtmlEvent::OpenTag { name: tag_name, attrs });
-                }
+                events.push(HtmlEvent::OpenTag { name: tag_name, attrs });
             }
         } else {
             // Text content
@@ -786,12 +771,12 @@ impl HtmlSlideParser {
                 let slide_title = if title.is_empty() { "Slide".to_string() } else { title };
                 let mut slide = SlideContent::new(&slide_title);
                 // Apply title-level styles from active style
-                if let Some(ref s) = self.active_style() {
+                if let Some(s) = self.active_style() {
                     if let Some(ref c) = s.color { slide = slide.title_color(c); }
                     if let Some(sz) = s.font_size { slide = slide.title_size(sz); }
-                    if let Some(ref fw) = s.font_weight { if is_font_weight_bold(fw) { slide = slide.title_bold(true); } }
-                    if let Some(ref fs) = s.font_style { if is_font_style_italic(fs) { slide = slide.title_italic(true); } }
-                    if let Some(ref td) = s.text_decoration { if td.contains("underline") { slide = slide.title_underline(true); } }
+                    if let Some(ref fw) = s.font_weight && is_font_weight_bold(fw) { slide = slide.title_bold(true); }
+                    if let Some(ref fs) = s.font_style && is_font_style_italic(fs) { slide = slide.title_italic(true); }
+                    if let Some(ref td) = s.text_decoration && td.contains("underline") { slide = slide.title_underline(true); }
                 }
                 self.current_slide = Some(slide);
             }
@@ -879,8 +864,6 @@ impl HtmlSlideParser {
             self.current_cell.push_str(text);
         } else if self.in_blockquote {
             self.blockquote_text.push_str(text);
-        } else if self.in_list {
-            self.text_buffer.push_str(text);
         } else {
             self.text_buffer.push_str(text);
         }
@@ -1050,15 +1033,14 @@ impl HtmlSlideParser {
         } else {
             // Try to load from local file path
             let path = Path::new(src);
-            if path.exists() {
-                if let Ok(bytes) = std::fs::read(path) {
+            if path.exists()
+                && let Ok(bytes) = std::fs::read(path) {
                     let img = ImageBuilder::auto(bytes)
                         .at(2000000, 2000000)
                         .size(5000000, 3000000)
                         .build();
                     return Some(img);
                 }
-            }
             None
         }
     }

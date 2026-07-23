@@ -27,7 +27,7 @@ pub struct XmlElement {
 impl XmlElement {
     /// Create a new XML element
     pub fn new(tag: &str) -> Self {
-        let local_name = tag.split(':').last().unwrap_or(tag).to_string();
+        let local_name = tag.split(':').next_back().unwrap_or(tag).to_string();
         XmlElement {
             tag: tag.to_string(),
             local_name,
@@ -40,7 +40,7 @@ impl XmlElement {
 
     /// Create element with namespace
     pub fn with_namespace(tag: &str, namespace: &str) -> Self {
-        let local_name = tag.split(':').last().unwrap_or(tag).to_string();
+        let local_name = tag.split(':').next_back().unwrap_or(tag).to_string();
         XmlElement {
             tag: tag.to_string(),
             local_name,

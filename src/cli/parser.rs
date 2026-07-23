@@ -157,9 +157,9 @@ Use --json for machine-readable output.")]
     #[command(long_about = "Export PPTX to PDF, HTML, or images.
 
 Formats:
-- pdf:  Requires LibreOffice installed
+- pdf:  Pure-Rust PDF engine (no external dependencies)
 - html: Self-contained HTML slideshow
-- png:  Requires LibreOffice and pdftoppm")]
+- png:  Requires pdftoppm (from poppler)")]
     Export {
         /// Input PPTX file
         #[arg(value_name = "INPUT")]

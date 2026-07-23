@@ -123,24 +123,24 @@ fn test_constants_have_valid_emu_values() {
     
     // Title positioning
     assert_eq!(TITLE_X, 457200, "TITLE_X should be 0.5 inches (457200 EMU)");
-    assert!(TITLE_Y > 0, "TITLE_Y should be positive");
+    const { assert!(TITLE_Y > 0, "TITLE_Y should be positive") };
     
     // Content positioning
     assert_eq!(CONTENT_X, TITLE_X, "CONTENT_X should match TITLE_X");
-    assert!(CONTENT_Y_START > TITLE_Y, "CONTENT_Y_START should be below TITLE_Y");
+    const { assert!(CONTENT_Y_START > TITLE_Y, "CONTENT_Y_START should be below TITLE_Y") };
     
     // Font sizes (in 100ths of points)
-    assert!(TITLE_FONT_SIZE > 0, "TITLE_FONT_SIZE should be positive");
-    assert!(CONTENT_FONT_SIZE > 0, "CONTENT_FONT_SIZE should be positive");
-    assert!(TITLE_FONT_SIZE > CONTENT_FONT_SIZE, "Title font should be larger than content");
+    const { assert!(TITLE_FONT_SIZE > 0, "TITLE_FONT_SIZE should be positive") };
+    const { assert!(CONTENT_FONT_SIZE > 0, "CONTENT_FONT_SIZE should be positive") };
+    const { assert!(TITLE_FONT_SIZE > CONTENT_FONT_SIZE, "Title font should be larger than content") };
 }
 
 #[test]
 fn test_constants_positioning_consistency() {
     // Verify positioning makes sense
-    assert!(TITLE_X + TITLE_WIDTH <= SLIDE_WIDTH, "Title should fit within slide width");
-    assert!(CONTENT_X + CONTENT_WIDTH <= SLIDE_WIDTH, "Content should fit within slide width");
-    assert!(TITLE_Y + TITLE_HEIGHT < CONTENT_Y_START, "Content should start below title");
+    const { assert!(TITLE_X + TITLE_WIDTH <= SLIDE_WIDTH, "Title should fit within slide width") };
+    const { assert!(CONTENT_X + CONTENT_WIDTH <= SLIDE_WIDTH, "Content should fit within slide width") };
+    const { assert!(TITLE_Y + TITLE_HEIGHT < CONTENT_Y_START, "Content should start below title") };
 }
 
 // ============================================================================
@@ -296,7 +296,7 @@ fn validate_pptx_structure(data: &[u8]) -> Result<(), String> {
         found.insert(file.name().to_string());
     }
 
-    for issue in check_required_parts(&found, REQUIRED_PARTS_MINIMAL) {
+    if let Some(issue) = check_required_parts(&found, REQUIRED_PARTS_MINIMAL).into_iter().next() {
         return Err(issue.message());
     }
 

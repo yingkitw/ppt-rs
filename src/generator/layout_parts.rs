@@ -7,6 +7,7 @@ use crate::generator::slide_content::print_settings::PrintSettings;
 /// Number of standard layouts emitted on slide master 1.
 pub const STANDARD_LAYOUT_COUNT: usize = 7;
 
+#[allow(clippy::too_many_arguments)]
 fn placeholder(id: u32, name: &str, ph_type: &str, ph_idx: Option<u32>, x: u32, y: u32, cx: u32, cy: u32) -> String {
     let idx_xml = ph_idx
         .map(|i| format!(r#" idx="{i}""#))

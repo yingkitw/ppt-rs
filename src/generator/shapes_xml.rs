@@ -575,7 +575,7 @@ mod tests {
     fn test_font_size_with_monospace_font() {
         // Monospace fonts have different width ratios
         let font_size = calculate_font_size_with_font("Code text here", 1_000_000, 500_000, Some("Consolas"));
-        assert!(font_size >= 600 && font_size <= 7200, "Font size should be in valid range");
+        assert!((600..=7200).contains(&font_size), "Font size should be in valid range");
     }
 
     #[test]

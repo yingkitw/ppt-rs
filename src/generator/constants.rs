@@ -166,7 +166,7 @@ mod tests {
         assert_eq!(TITLE_X, CONTENT_X);
         
         // Content should start below title
-        assert!(CONTENT_Y_START > TITLE_Y + TITLE_HEIGHT);
+        const { assert!(CONTENT_Y_START > TITLE_Y + TITLE_HEIGHT) };
     }
 }
 

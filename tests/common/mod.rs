@@ -39,20 +39,19 @@ pub fn list_parts(bytes: &[u8]) -> Vec<String> {
     let mut archive = ZipArchive::new(cursor).expect("valid zip");
     let mut names = Vec::new();
     for i in 0..archive.len() {
-        if let Ok(f) = archive.by_index(i) {
-            if !f.is_dir() {
+        if let Ok(f) = archive.by_index(i)
+            && !f.is_dir() {
                 names.push(f.name().to_string());
             }
-        }
     }
     names.sort();
     names
 }
 
 /// Return issues in a specific category (for focused rule tests).
-pub fn issues_in_category<'a>(
-    report: &'a PackageValidationReport,
+pub fn issues_in_category(
+    report: &PackageValidationReport,
     category: ValidationCategory,
-) -> Vec<&'a ppt_rs::core::PackageValidationIssue> {
+) -> Vec<&ppt_rs::core::PackageValidationIssue> {
     report.issues_in_category(category).collect()
 }

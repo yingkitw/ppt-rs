@@ -96,8 +96,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             if slide.notes.is_some() {
                 println!("         has speaker notes ✓");
             }
-            if slide.title_color.is_some() {
-                println!("         title color: {} ✓", slide.title_color.as_ref().unwrap());
+            if let Some(ref color) = slide.title_color {
+                println!("         title color: {} ✓", color);
             }
             // Count bullets with inline styles
             let styled = slide.bullets.iter().filter(|b| b.format.is_some()).count();
@@ -224,7 +224,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Output files in examples/output/:");
     for entry in fs::read_dir("examples/output")? {
         let entry = entry?;
-        if entry.path().extension().map_or(false, |e| e == "pptx") {
+        if entry.path().extension().is_some_and(|e| e == "pptx") {
             let name = entry.file_name().into_string().unwrap_or_default();
             if name.starts_with("comprehensive_") {
                 let size = entry.metadata()?.len();

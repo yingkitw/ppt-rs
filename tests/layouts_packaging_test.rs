@@ -171,7 +171,7 @@ fn all_seven_layouts_wired_in_slide_rels() {
     let slides: Vec<SlideContent> = ALL_LAYOUTS
         .iter()
         .map(|(layout, title)| {
-            SlideContent::new(*title)
+            SlideContent::new(title)
                 .add_bullet("Sample body")
                 .with_layout(*layout)
         })

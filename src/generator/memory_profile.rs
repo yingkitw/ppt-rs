@@ -18,11 +18,7 @@ pub struct GenerationMetrics {
 impl GenerationMetrics {
     /// Output size per slide in bytes.
     pub fn bytes_per_slide(&self) -> usize {
-        if self.slide_count == 0 {
-            0
-        } else {
-            self.output_bytes / self.slide_count
-        }
+        self.output_bytes.checked_div(self.slide_count).unwrap_or(0)
     }
 }
 

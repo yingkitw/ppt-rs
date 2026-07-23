@@ -137,16 +137,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("   ├── Title: {}", parsed.title.as_deref().unwrap_or("(none)"));
     println!("   └── Shapes: {}", parsed.shapes.len());
     
-    if let Some(shape) = parsed.shapes.first() {
-        if let Some(para) = shape.paragraphs.first() {
-            if let Some(run) = para.runs.first() {
+    if let Some(shape) = parsed.shapes.first()
+        && let Some(para) = shape.paragraphs.first()
+            && let Some(run) = para.runs.first() {
                 println!("\n   Text formatting detected:");
                 println!("   ├── Bold: {}", run.bold);
                 println!("   ├── Font size: {:?}", run.font_size);
                 println!("   └── Text: {}", run.text);
             }
-        }
-    }
 
     // Cleanup
     fs::remove_file("sample_presentation.pptx").ok();

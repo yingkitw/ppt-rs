@@ -169,11 +169,9 @@ fn test_table_with_styled_cells() {
 #[test]
 fn test_chart_data_structure() {
     // Chart data structure for future implementation
-    let chart_data = vec![
-        ("Category 1", 100),
+    let chart_data = [("Category 1", 100),
         ("Category 2", 200),
-        ("Category 3", 150),
-    ];
+        ("Category 3", 150)];
     
     assert_eq!(chart_data.len(), 3);
     assert_eq!(chart_data[0].1, 100);
@@ -181,20 +179,18 @@ fn test_chart_data_structure() {
 
 #[test]
 fn test_bar_chart_data() {
-    let categories = vec!["Q1", "Q2", "Q3", "Q4"];
-    let values = vec![100, 150, 200, 175];
+    let categories = ["Q1", "Q2", "Q3", "Q4"];
+    let values = [100, 150, 200, 175];
     
     assert_eq!(categories.len(), values.len());
 }
 
 #[test]
 fn test_pie_chart_data() {
-    let slices = vec![
-        ("Category A", 30),
+    let slices = [("Category A", 30),
         ("Category B", 25),
         ("Category C", 20),
-        ("Category D", 25),
-    ];
+        ("Category D", 25)];
     
     let total: u32 = slices.iter().map(|(_, v)| v).sum();
     assert_eq!(total, 100);
@@ -202,9 +198,9 @@ fn test_pie_chart_data() {
 
 #[test]
 fn test_line_chart_data() {
-    let months = vec!["Jan", "Feb", "Mar", "Apr", "May"];
-    let data_series1 = vec![10, 15, 12, 18, 20];
-    let data_series2 = vec![8, 12, 14, 16, 19];
+    let months = ["Jan", "Feb", "Mar", "Apr", "May"];
+    let data_series1 = [10, 15, 12, 18, 20];
+    let data_series2 = [8, 12, 14, 16, 19];
     
     assert_eq!(months.len(), data_series1.len());
     assert_eq!(data_series1.len(), data_series2.len());
@@ -212,12 +208,10 @@ fn test_line_chart_data() {
 
 #[test]
 fn test_scatter_chart_data() {
-    let points = vec![
-        (10, 20),
+    let points = [(10, 20),
         (15, 25),
         (20, 30),
-        (25, 35),
-    ];
+        (25, 35)];
     
     assert_eq!(points.len(), 4);
 }
@@ -250,11 +244,9 @@ fn test_image_metadata() {
 
 #[test]
 fn test_image_dimensions() {
-    let images = vec![
-        ("small.png", 640, 480),
+    let images = [("small.png", 640, 480),
         ("medium.jpg", 1280, 720),
-        ("large.png", 1920, 1080),
-    ];
+        ("large.png", 1920, 1080)];
     
     assert_eq!(images.len(), 3);
     assert!(images[2].1 > images[1].1);
@@ -275,7 +267,7 @@ fn test_image_aspect_ratios() {
 
 #[test]
 fn test_image_formats() {
-    let formats = vec!["PNG", "JPG", "GIF", "BMP", "TIFF"];
+    let formats = ["PNG", "JPG", "GIF", "BMP", "TIFF"];
     
     assert!(formats.contains(&"PNG"));
     assert!(formats.contains(&"JPG"));

@@ -129,11 +129,10 @@ impl Relationships {
         self.relationships
             .push(Relationship::new(id, rel_type, target));
         // Update next_id if needed
-        if let Some(num) = id.strip_prefix("rId").and_then(|s| s.parse::<u32>().ok()) {
-            if num >= self.next_id {
+        if let Some(num) = id.strip_prefix("rId").and_then(|s| s.parse::<u32>().ok())
+            && num >= self.next_id {
                 self.next_id = num + 1;
             }
-        }
     }
 
     /// Get relationship by ID

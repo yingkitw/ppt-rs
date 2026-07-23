@@ -77,15 +77,14 @@ pub fn render_additional_content(
     }
 
     // Render ink annotation reference
-    if let Some(rel_id) = ink_rel_id {
-        if content.ink_annotations.is_some() {
+    if let Some(rel_id) = ink_rel_id
+        && content.ink_annotations.is_some() {
             xml.push('\n');
             xml.push_str(&format!(
                 r#"<mc:AlternateContent xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"><mc:Choice Requires="p14"><p:contentPart xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="{}"/></mc:Choice></mc:AlternateContent>"#,
                 rel_id
             ));
         }
-    }
 }
 
 /// Generate code block XML with syntax highlighting

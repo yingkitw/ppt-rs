@@ -37,7 +37,7 @@ Make the library easier to adopt, debug, and automate.
 ### Conversion & Platform
 Longer-horizon capabilities that broaden deployment options.
 
-- [ ] **PDF export without LibreOffice** — investigate pure-Rust or bundled conversion path (today requires `soffice`)
+- [x] **PDF export without LibreOffice** — `pdfrs`-backed pure-Rust path (`pdf-native` feature, `save_as_pdf_via_pdfrs` / `to_pdf_bytes`)
 - [ ] **WASM target** — browser-side generation for docs sites and SaaS embeds
 - [ ] **Batch / pipeline API** — directory of MD/HTML → deck-per-file with shared theme (extends `batch_generator` example)
 
@@ -59,7 +59,7 @@ Longer-horizon capabilities that broaden deployment options.
 - [ ] MCP tools: compress, repair, theme, export
 
 ### P2 — Future
-- [ ] PDF export without LibreOffice
+- [x] PDF export without LibreOffice
 - [ ] WASM build target
 - [ ] PPTX semantic diff tool
 - [ ] Section-aware Markdown/HTML export

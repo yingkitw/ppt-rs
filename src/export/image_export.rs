@@ -12,8 +12,10 @@ use std::process::Command;
 
 /// Image format for export
 #[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Default)]
 pub enum ImageFormat {
     /// PNG format (lossless, good for graphics)
+    #[default]
     Png,
     /// JPEG format (lossy, good for photos)
     Jpeg,
@@ -37,11 +39,6 @@ impl ImageFormat {
     }
 }
 
-impl Default for ImageFormat {
-    fn default() -> Self {
-        ImageFormat::Png
-    }
-}
 
 /// Options for image export
 #[derive(Debug, Clone)]
@@ -196,8 +193,8 @@ pub fn export_slide_to_image<P: AsRef<Path>>(
     // Find the specific slide file
     let expected_name = format!("Slide{}.{}", slide_number, slide_options.format.extension());
     for path in paths {
-        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if name == expected_name || name.contains(&format!("Slide{}", slide_number)) {
+        if let Some(name) = path.file_name().and_then(|n| n.to_str())
+            && (name == expected_name || name.contains(&format!("Slide{}", slide_number))) {
                 // Rename to requested output path if different
                 if path != output_path.as_ref() {
                     std::fs::rename(&path, &output_path)?;
@@ -205,7 +202,6 @@ pub fn export_slide_to_image<P: AsRef<Path>>(
                 }
                 return Ok(path);
             }
-        }
     }
 
     Err(PptxError::Generic(String::from("Export failed")))
@@ -259,16 +255,14 @@ fn export_pptx_to_images<P: AsRef<Path>, Q: AsRef<Path>>(
     for entry in std::fs::read_dir(output_dir)? {
         let entry = entry?;
         let path = entry.path();
-        if let Some(file_ext) = path.extension().and_then(|e| e.to_str()) {
-            if file_ext.eq_ignore_ascii_case(ext) {
+        if let Some(file_ext) = path.extension().and_then(|e| e.to_str())
+            && file_ext.eq_ignore_ascii_case(ext) {
                 // Check if it is from our conversion
-                if let Some(name) = path.file_stem().and_then(|s| s.to_str()) {
-                    if name.starts_with(file_stem) || name.starts_with("Slide") {
+                if let Some(name) = path.file_stem().and_then(|s| s.to_str())
+                    && (name.starts_with(file_stem) || name.starts_with("Slide")) {
                         image_files.push(path);
                     }
-                }
             }
-        }
     }
 
     // Sort by slide number

@@ -219,6 +219,12 @@ pub struct CompatibilityTestSuite {
     output_dir: PathBuf,
 }
 
+impl Default for CompatibilityTestSuite {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CompatibilityTestSuite {
     /// Create a new test suite
     pub fn new() -> Self {

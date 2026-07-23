@@ -96,7 +96,7 @@ pub fn export_to_markdown_with_options(
         md.push_str("---\n");
         md.push_str(&format!("title: \"{}\"\n", escape_yaml(presentation.get_title())));
         md.push_str(&format!("slides: {}\n", presentation.slide_count()));
-        md.push_str(&format!("generator: ppt-rs\n"));
+        md.push_str("generator: ppt-rs\n");
         md.push_str("---\n\n");
     }
 
@@ -128,12 +128,11 @@ pub fn export_to_markdown_with_options(
         }
 
         // Table export (GFM format)
-        if options.use_gfm_tables && slide.has_table {
-            if let Some(table) = &slide.table {
+        if options.use_gfm_tables && slide.has_table
+            && let Some(table) = &slide.table {
                 md.push_str(&export_table_to_gfm(table));
                 md.push('\n');
             }
-        }
 
         // Images
         if options.include_images && !slide.images.is_empty() {
@@ -162,7 +161,7 @@ pub fn export_to_markdown_with_options(
         }
 
         // Speaker notes
-        let has_notes = slide.notes.as_ref().map_or(false, |n| !n.is_empty());
+        let has_notes = slide.notes.as_ref().is_some_and(|n| !n.is_empty());
         if options.include_notes && has_notes {
             md.push_str("**Notes:**\n\n");
             if let Some(notes) = &slide.notes {
@@ -188,7 +187,7 @@ fn export_table_to_gfm(table: &crate::generator::Table) -> String {
         md.push('\n');
 
         // Separator
-        md.push_str("|");
+        md.push('|');
         for _ in &first_row.cells {
             md.push_str(" --- |");
         }

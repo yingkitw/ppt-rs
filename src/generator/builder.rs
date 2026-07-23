@@ -75,11 +75,10 @@ fn build_media_registry_lazy(slides: &dyn LazySlideSource) -> MediaRegistry {
 fn slide_image_rel_targets(slide: &SlideContent, registry: &MediaRegistry) -> Vec<(usize, String)> {
     let mut images = Vec::with_capacity(slide.images.len());
     for image in &slide.images {
-        if let Some(bytes) = image.get_bytes() {
-            if let Some(num) = registry.lookup_number(&bytes, &image.extension()) {
+        if let Some(bytes) = image.get_bytes()
+            && let Some(num) = registry.lookup_number(&bytes, &image.extension()) {
                 images.push((num, image.extension()));
             }
-        }
     }
     images
 }
@@ -452,12 +451,11 @@ fn embedded_fonts(settings: Option<&PresentationSettings>) -> Option<&super::sli
 /// Prepare settings by assigning relationship IDs to embedded fonts.
 /// Must be called after `has_notes` and `has_handout` are known.
 fn prepare_settings(settings: &mut Option<PresentationSettings>, slide_count: usize, has_notes: bool, has_handout: bool) {
-    if let Some(s) = settings {
-        if let Some(fonts) = s.embedded_fonts.as_mut() {
+    if let Some(s) = settings
+        && let Some(fonts) = s.embedded_fonts.as_mut() {
             let first_rid = table_styles_rel_id(slide_count, has_notes, has_handout) + 1;
             fonts.assign_relationship_ids(first_rid);
         }
-    }
 }
 
 /// Collect slide titles for `docProps/app.xml` (eager version).
@@ -1039,7 +1037,7 @@ fn write_slide_packages_lazy<W: Write + Seek>(
     let mut notes_part_num = 0usize;
     let mut ink_part_num = 0usize;
 
-    for i in 0..slides.slide_count() {
+    for (i, &start_chart_idx) in slide_chart_start_indices.iter().enumerate() {
         let Some(slide) = slides.generate_slide(i) else {
             continue;
         };
@@ -1054,13 +1052,9 @@ fn write_slide_packages_lazy<W: Write + Seek>(
             push_chart_rid(&mut chart_rids, start_rid + j);
         }
 
-        let ink_rel_id = if slide.ink_annotations.is_some() {
+        let ink_rel_id = if let Some(ref ink) = slide.ink_annotations {
             ink_part_num += 1;
-            let ink_xml = slide
-                .ink_annotations
-                .as_ref()
-                .expect("ink checked above")
-                .part_xml();
+            let ink_xml = ink.part_xml();
             zip.start_file(format!("ppt/ink/ink{ink_part_num}.xml"), *options)?;
             zip.write_all(ink_xml.as_bytes())?;
             Some(format!("rId{}", start_rid + slide.charts.len()))
@@ -1093,7 +1087,6 @@ fn write_slide_packages_lazy<W: Write + Seek>(
         }
 
         let mut chart_rels = Vec::with_capacity(slide.charts.len());
-        let start_chart_idx = slide_chart_start_indices[i];
         for j in 0..slide.charts.len() {
             let mut rid = String::with_capacity(8);
             rid.push_str("rId");
@@ -1173,13 +1166,9 @@ fn write_slides<W: Write + Seek>(
                     push_chart_rid(&mut chart_rids, start_rid + j);
                 }
 
-                let ink_rel_id = if slide.ink_annotations.is_some() {
+                let ink_rel_id = if let Some(ref ink) = slide.ink_annotations {
                     ink_part_num += 1;
-                    let ink_xml = slide
-                        .ink_annotations
-                        .as_ref()
-                        .expect("ink checked above")
-                        .part_xml();
+                    let ink_xml = ink.part_xml();
                     zip.start_file(format!("ppt/ink/ink{ink_part_num}.xml"), *options)?;
                     zip.write_all(ink_xml.as_bytes())?;
                     Some(format!("rId{}", start_rid + slide.charts.len()))

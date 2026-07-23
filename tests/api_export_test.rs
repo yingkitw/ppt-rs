@@ -63,6 +63,40 @@ fn test_pdf_export_api() {
     }
 }
 
+#[cfg(feature = "pdf-native")]
+#[test]
+fn test_pdf_export_via_pdfrs_api() {
+    let pres = Presentation::new()
+        .title("PDF Native Test")
+        .add_slide(SlideContent::new("Slide 1").add_bullet("Bullet"));
+
+    let output_path = "test_export_native.pdf";
+    let options = ppt_rs::PdfExportOptions::new()
+        .with_frontmatter(false)
+        .with_notes(false);
+
+    pres.save_as_pdf_via_pdfrs(output_path, &options).unwrap();
+    assert!(Path::new(output_path).exists());
+    let bytes = fs::read(output_path).unwrap();
+    assert_eq!(&bytes[..5], b"%PDF-");
+    assert!(pdfrs::pdf::validate_pdf_bytes(&bytes).valid);
+    fs::remove_file(output_path).unwrap();
+}
+
+#[cfg(feature = "pdf-native")]
+#[test]
+fn test_to_pdf_bytes_api() {
+    let pres = Presentation::new()
+        .title("Bytes")
+        .add_slide(SlideContent::new("S1").add_bullet("Hi"));
+
+    let bytes = pres
+        .to_pdf_bytes(&ppt_rs::PdfExportOptions::default())
+        .unwrap();
+    assert_eq!(&bytes[..5], b"%PDF-");
+    assert!(pdfrs::pdf::validate_pdf_bytes(&bytes).valid);
+}
+
 #[test]
 fn test_png_export_api() {
     let pres = Presentation::new()

@@ -33,11 +33,10 @@ impl ArchiveParts {
         let mut archive = ZipArchive::new(cursor).expect("valid zip");
         let mut names = Vec::new();
         for i in 0..archive.len() {
-            if let Ok(f) = archive.by_index(i) {
-                if !f.is_dir() {
+            if let Ok(f) = archive.by_index(i)
+                && !f.is_dir() {
                     names.push(f.name().to_string());
                 }
-            }
         }
         Self { names }
     }
@@ -339,7 +338,7 @@ fn embedding_xlsx_is_non_empty_zip() {
     assert!(xlsx.len() > 100, "embedding should be a real xlsx blob");
 
     let inner = ZipArchive::new(Cursor::new(xlsx)).expect("xlsx is zip");
-    assert!(inner.len() > 0, "xlsx should contain workbook parts");
+    assert!(!inner.is_empty(), "xlsx should contain workbook parts");
 }
 
 // ---------------------------------------------------------------------------

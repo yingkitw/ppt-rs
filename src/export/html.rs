@@ -166,11 +166,10 @@ fn render_slide_with_options(slide: &SlideContent, index: usize, options: &HtmlE
     }
 
     // Speaker Notes
-    if options.include_notes {
-        if let Some(ref notes) = slide.notes {
+    if options.include_notes
+        && let Some(ref notes) = slide.notes {
             html.push_str(&format!("<div class=\"speaker-notes\"><strong>Notes:</strong> {}</div>\n", escape_html(notes)));
         }
-    }
 
     html.push_str("</div>\n"); // content
     html.push_str("</div>\n"); // slide

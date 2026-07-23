@@ -84,7 +84,6 @@ impl From<u32> for Dimension {
 /// Convenience: convert from f64 (treated as ratio if 0.0–1.0, else inches)
 /// This is intentionally NOT implemented to avoid ambiguity.
 /// Use the explicit constructors instead.
-
 /// Shorthand constructors for ergonomic API
 impl Dimension {
     /// Create from inches

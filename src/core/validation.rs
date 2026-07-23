@@ -7,7 +7,7 @@ use std::collections::HashSet;
 pub type RequiredPart = (&'static str, &'static str);
 
 /// Minimum parts required for a readable PPTX (used by CLI validate and tests).
-pub const REQUIRED_PARTS_MINIMAL: &[&'static str] = &[
+pub const REQUIRED_PARTS_MINIMAL: &[&str] = &[
     "[Content_Types].xml",
     "_rels/.rels",
     "ppt/presentation.xml",

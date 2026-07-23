@@ -15,9 +15,7 @@ use std::path::Path;
 
 #[test]
 fn test_slide_with_title_only() {
-    let slides = vec![
-        SlideContent::new("Title Only Slide"),
-    ];
+    let slides = [SlideContent::new("Title Only Slide")];
     
     assert_eq!(slides[0].title, "Title Only Slide");
     assert_eq!(slides[0].content.len(), 0);
@@ -225,22 +223,18 @@ fn test_slide_with_mixed_formatting() {
 
 #[test]
 fn test_single_slide_presentation() {
-    let slides = vec![
-        SlideContent::new("Only Slide")
-            .add_bullet("Content"),
-    ];
+    let slides = [SlideContent::new("Only Slide")
+            .add_bullet("Content")];
     
     assert_eq!(slides.len(), 1);
 }
 
 #[test]
 fn test_two_slide_presentation() {
-    let slides = vec![
-        SlideContent::new("Slide 1")
+    let slides = [SlideContent::new("Slide 1")
             .add_bullet("First"),
         SlideContent::new("Slide 2")
-            .add_bullet("Second"),
-    ];
+            .add_bullet("Second")];
     
     assert_eq!(slides.len(), 2);
     assert_eq!(slides[0].title, "Slide 1");
@@ -264,8 +258,7 @@ fn test_ten_slide_presentation() {
 
 #[test]
 fn test_presentation_with_varied_content() {
-    let slides = vec![
-        SlideContent::new("Title Slide")
+    let slides = [SlideContent::new("Title Slide")
             .title_size(60)
             .add_bullet("Subtitle"),
         SlideContent::new("Content Slide")
@@ -275,8 +268,7 @@ fn test_presentation_with_varied_content() {
         SlideContent::new("Conclusion")
             .title_bold(true)
             .content_bold(true)
-            .add_bullet("Summary"),
-    ];
+            .add_bullet("Summary")];
     
     assert_eq!(slides.len(), 3);
     assert_eq!(slides[0].title_size, Some(60));

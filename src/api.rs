@@ -125,81 +125,53 @@ impl Presentation {
         Ok(())
     }
 
-    /// Export the presentation to PDF using LibreOffice
+    /// Export the presentation to PDF using pure-Rust vector rendering.
     ///
-    /// Requires LibreOffice to be installed and available via `soffice` command.
-    /// On macOS, it also checks `/Applications/LibreOffice.app/Contents/MacOS/soffice`.
+    /// Each slide is rendered as a native PDF page with title, bullets,
+    /// and content drawn as vector text and graphics. No external binaries
+    /// (LibreOffice, Poppler, etc.) are required.
     pub fn save_as_pdf<P: AsRef<Path>>(&self, output_path: P) -> Result<()> {
-        // Create a temp file
-        let temp_dir = std::env::temp_dir();
-        let temp_filename = format!("ppt_rs_{}.pptx", uuid::Uuid::new_v4());
-        let temp_path = temp_dir.join(&temp_filename);
+        crate::export::slide_render::render_to_pdf(self, output_path)?;
+        Ok(())
+    }
 
-        // Save current presentation to temp file
-        self.save(&temp_path)?;
+    /// Export the presentation to PDF with custom options using the pure-Rust `pdfrs` engine.
+    ///
+    /// Like [`Presentation::save_as_pdf`] but allows customizing orientation,
+    /// font, font size, and which Markdown sections are included.
+    ///
+    /// # Arguments
+    /// * `output_path` - Path to the PDF file to write.
+    /// * `options` - [`crate::export::pdf_export::PdfExportOptions`] controlling
+    ///   orientation, font, font size, and which Markdown sections are included.
+    #[cfg(feature = "pdf-native")]
+    pub fn save_as_pdf_via_pdfrs<P: AsRef<Path>>(
+        &self,
+        output_path: P,
+        options: &crate::export::pdf_export::PdfExportOptions,
+    ) -> Result<()> {
+        crate::export::pdf_export::export_to_pdf(self, output_path, options)?;
+        Ok(())
+    }
 
-        // Try to find soffice
-        let soffice_cmd = if cfg!(target_os = "macos") {
-            if Path::new("/Applications/LibreOffice.app/Contents/MacOS/soffice").exists() {
-                "/Applications/LibreOffice.app/Contents/MacOS/soffice"
-            } else {
-                "soffice"
-            }
-        } else {
-            "soffice"
-        };
-
-        // Get output directory
-        let output_parent = output_path.as_ref().parent().unwrap_or(Path::new("."));
-
-        // Run conversion
-        // soffice --headless --convert-to pdf <temp_path> --outdir <output_dir>
-        let result = Command::new(soffice_cmd)
-            .arg("--headless")
-            .arg("--convert-to")
-            .arg("pdf")
-            .arg(&temp_path)
-            .arg("--outdir")
-            .arg(output_parent)
-            .output();
-
-        // Clean up temp file (ignore error)
-        let _ = std::fs::remove_file(&temp_path);
-
-        match result {
-            Ok(output) => {
-                if !output.status.success() {
-                    let stderr = String::from_utf8_lossy(&output.stderr);
-                    return Err(PptxError::Generic(messages::command_failed(
-                        "LibreOffice conversion",
-                        &stderr,
-                    )));
-                }
-            }
-            Err(e) => {
-                return Err(PptxError::Generic(messages::command_failed(
-                    "libreoffice",
-                    &e.to_string(),
-                )));
-            }
-        }
-
-        // LibreOffice creates file with same basename but .pdf extension in outdir
-        // The generated file will be temp_filename.pdf (since input was temp_filename.pptx)
-        let generated_pdf_name = temp_filename.replace(".pptx", ".pdf");
-        let generated_pdf_path = output_parent.join(&generated_pdf_name);
-
-        if generated_pdf_path.exists() {
-            std::fs::rename(&generated_pdf_path, output_path.as_ref())?;
-            Ok(())
-        } else {
-            Err(PptxError::Generic(messages::output_not_found("PDF output")))
-        }
+    /// Render the presentation to PDF bytes using the pure-Rust `pdfrs` engine.
+    ///
+    /// Returns the raw PDF byte buffer instead of writing to disk. Useful
+    /// for embedding in HTTP responses, mailing systems, or piping to other
+    /// tools.
+    ///
+    /// Requires the `pdf-native` Cargo feature.
+    #[cfg(feature = "pdf-native")]
+    pub fn to_pdf_bytes(
+        &self,
+        options: &crate::export::pdf_export::PdfExportOptions,
+    ) -> Result<Vec<u8>> {
+        crate::export::pdf_export::export_to_pdf_bytes(self, options)
     }
 
     /// Export slides to PNG images
     ///
-    /// Requires LibreOffice (for PDF conversion) and `pdftoppm` (from poppler).
+    /// Requires `pdftoppm` (from poppler) to be installed.
     /// Images will be named `slide-1.png`, `slide-2.png`, etc. in the output directory.
     pub fn save_as_png<P: AsRef<Path>>(&self, output_dir: P) -> Result<()> {
         let output_dir = output_dir.as_ref();
@@ -207,13 +179,14 @@ impl Presentation {
             std::fs::create_dir_all(output_dir)?;
         }
 
-        // Create temp PDF
+        // Create temp PDF using pure-Rust pdfrs engine
         let temp_dir = std::env::temp_dir();
         let temp_pdf_name = format!("ppt_rs_temp_{}.pdf", uuid::Uuid::new_v4());
         let temp_pdf_path = temp_dir.join(&temp_pdf_name);
 
-        // Convert to PDF first
-        self.save_as_pdf(&temp_pdf_path)?;
+        // Convert to PDF first (no LibreOffice needed)
+        let bytes = crate::export::slide_render::render_to_pdf_bytes(self)?;
+        std::fs::write(&temp_pdf_path, &bytes)?;
 
         // Convert PDF to PNGs using pdftoppm
         // pdftoppm -png <pdf_file> <image_prefix>
@@ -290,23 +263,20 @@ impl Presentation {
             let name = e.file_name().to_string_lossy().to_string();
             // Extract number from end
             // "page-1.png" -> 1
-            if let Some(start) = name.rfind('-') {
-                if let Some(end) = name.rfind('.') {
-                    if start < end {
-                        if let Ok(num) = name[start + 1..end].parse::<u32>() {
+            if let Some(start) = name.rfind('-')
+                && let Some(end) = name.rfind('.')
+                    && start < end
+                        && let Ok(num) = name[start + 1..end].parse::<u32>() {
                             return num;
                         }
-                    }
-                }
-            }
             0 // Fallback
         });
 
         for entry in entries {
             let path = entry.path();
-            if path.extension().map_or(false, |e| e == "png") {
+            if path.extension().is_some_and(|e| e == "png") {
                 // Create slide with full screen image
-                let image = Image::from_path(&path).map_err(|e| PptxError::Generic(e))?;
+                let image = Image::from_path(&path).map_err(PptxError::Generic)?;
 
                 // Add image to slide
                 // Use a default layout?
@@ -361,7 +331,7 @@ impl Presentation {
 
     /// Export slides to image files (PNG/JPEG)
     ///
-    /// Uses LibreOffice for rendering. Requires LibreOffice to be installed.
+    /// Uses LibreOffice for raster image rendering. Requires LibreOffice to be installed.
     ///
     /// # Arguments
     /// * `output_dir` - Directory to save images

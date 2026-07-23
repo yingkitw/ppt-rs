@@ -170,14 +170,13 @@ impl Part for PresentationPart {
 
         // Parse slide references
         for sld_id in root.find_all_descendants("sldId") {
-            if let (Some(id), Some(r_id)) = (sld_id.attr("id"), sld_id.attr("r:id")) {
-                if let Ok(id_num) = id.parse::<u32>() {
+            if let (Some(id), Some(r_id)) = (sld_id.attr("id"), sld_id.attr("r:id"))
+                && let Ok(id_num) = id.parse::<u32>() {
                     part.slide_refs.push(SlideRef {
                         id: id_num,
                         r_id: r_id.to_string(),
                     });
                 }
-            }
         }
 
         // Parse slide master reference

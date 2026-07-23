@@ -327,8 +327,8 @@ impl PptxRepair {
 
             // Parse relationships and check targets exist
             for line in xml_str.lines() {
-                if line.contains("Relationship") && line.contains("Target=") {
-                    if let Some(target) = self.extract_attribute(line, "Target") {
+                if line.contains("Relationship") && line.contains("Target=")
+                    && let Some(target) = self.extract_attribute(line, "Target") {
                         let rel_id = self.extract_attribute(line, "Id").unwrap_or_default();
 
                         // Skip external relationships
@@ -347,7 +347,6 @@ impl PptxRepair {
                             });
                         }
                     }
-                }
             }
         }
     }
@@ -364,8 +363,8 @@ impl PptxRepair {
     }
 
     fn resolve_path(&self, rels_path: &str, target: &str) -> String {
-        if target.starts_with('/') {
-            return target[1..].to_string();
+        if let Some(stripped) = target.strip_prefix('/') {
+            return stripped.to_string();
         }
 
         // Get directory of rels file
@@ -401,8 +400,8 @@ impl PptxRepair {
                         continue;
                     }
                     if let Some(target) = self.extract_attribute(line, "Target") {
-                        let full_path = if target.starts_with('/') {
-                            target[1..].to_string()
+                        let full_path = if let Some(stripped) = target.strip_prefix('/') {
+                            stripped.to_string()
                         } else {
                             format!("ppt/{}", target)
                         };
@@ -797,13 +796,12 @@ impl PptxRepair {
             };
 
             // Find first element and add namespace
-            if let Some(pos) = xml_str.find('>') {
-                if !xml_str[..pos].contains(ns_decl) {
+            if let Some(pos) = xml_str.find('>')
+                && !xml_str[..pos].contains(ns_decl) {
                     let repaired = format!("{} {}{}", &xml_str[..pos], ns_decl, &xml_str[pos..]);
                     self.package
                         .add_part(path.to_string(), repaired.into_bytes());
                 }
-            }
         }
         Ok(())
     }

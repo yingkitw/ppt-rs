@@ -63,7 +63,7 @@ fn create_employee_table() -> Table {
     ];
 
     Table::new(
-        vec![vec![header_row], rows].concat(),
+        [vec![header_row], rows].concat(),
         vec![2000000, 2500000, 1500000],
         500000,
         1500000,
@@ -107,7 +107,7 @@ fn create_sales_table() -> Table {
     ];
 
     Table::new(
-        vec![vec![header_row], rows].concat(),
+        [vec![header_row], rows].concat(),
         vec![2200000, 2000000, 1800000],
         500000,
         1500000,

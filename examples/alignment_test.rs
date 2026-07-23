@@ -6,7 +6,6 @@
 /// - Multiple slides
 /// - Text formatting
 /// - Basic slide structure
-
 use ppt_rs::generator::{SlideContent, create_pptx_with_content};
 use std::fs;
 
