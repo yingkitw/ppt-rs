@@ -34,7 +34,7 @@ impl ArchiveParts {
             if let Ok(f) = archive.by_index(i)
                 && !f.is_dir()
             {
-                names.push(f.name().to_string());
+                names.push(f.name().unwrap().to_string());
             }
         }
         Self { names }

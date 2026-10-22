@@ -26,11 +26,14 @@
 //! - **prelude** - Simplified API: macros, unit helpers, shapes, colors, themes
 //! - **helpers** - Color / table / shape / extension helpers
 //! - **templates** - Pre-built presentation templates
+//! - **cli** - Feature-gated command-line interface (feature = "cli")
 //! - **export** - Export to Markdown, HTML, images
 //! - **import** - PPTX import, HTML-to-PPTX
 //! - **diff** - Semantic slide-level comparison for review/CI
 //! - **pipeline** - Batch Markdown/HTML → `.pptx` conversion with shared theme/template
 //! - **http** - REST API for generation, validation, export, and diff (feature = "http")
+//! - **mcp** - Model Context Protocol server and tool router (feature = "mcp")
+//! - **web2ppt** - Feature-gated HTML/URL-to-PPTX conversion (feature = "web2ppt")
 //! - **opc** - Open Packaging Convention (ZIP) handling
 //! - **oxml** - Office XML parsing and manipulation
 //! - **exc** - Error types
@@ -73,10 +76,6 @@ pub use diff::{
     FieldChange, PresentationDiff, SlideChange, SlideSemantic, compare_pptx_paths,
     compare_presentations, slide_semantic,
 };
-pub use pipeline::{
-    BatchJob, BatchOptions, BatchResult, InputFormat, convert_file, detect_format,
-    discover_inputs, resolve_output_path, run_batch, run_directory,
-};
 pub use elements::{Color, Position, RgbColor, SchemeColor, Size, Transform};
 pub use exc::{PptxError, Result, messages};
 pub use generator::{
@@ -96,12 +95,18 @@ pub use generator::{
     create_pptx_to_writer, create_pptx_with_content, create_pptx_with_content_to_writer,
     create_pptx_with_settings, create_pptx_with_template,
 };
+pub use pipeline::{
+    BatchJob, BatchOptions, BatchResult, InputFormat, convert_file, detect_format, discover_inputs,
+    resolve_output_path, run_batch, run_directory,
+};
 
 // Export convenience types for new capabilities
+#[cfg(feature = "pdf-native")]
 pub use export::image_export::{
     ImageExportOptions, ImageFormat, export_slide_to_image, export_to_images, render_thumbnail,
 };
 pub use export::md::{MarkdownOptions, export_to_markdown, export_to_markdown_with_options};
+#[cfg(feature = "pdf-native")]
 pub use export::slide_render::{render_to_pdf, render_to_pdf_bytes};
 pub use import::html::{Html2Ppt, HtmlParseOptions, parse_html, parse_html_with_options};
 pub use oxml::extract_slide_texts_from_bytes;
@@ -132,4 +137,4 @@ pub use web2ppt::{
 #[cfg(feature = "web2md")]
 pub use web2ppt::{html_to_pptx_via_web2md, url_to_pptx_via_web2md};
 
-pub const VERSION: &str = "0.2.37";
+pub const VERSION: &str = "0.3.0";

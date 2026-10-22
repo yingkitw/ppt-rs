@@ -26,13 +26,15 @@ pub struct PackageContext {
 }
 
 impl PackageContext {
-    pub fn from_archive<R: Read + Seek>(archive: &mut ZipArchive<R>) -> Self {
+    pub fn from_archive<R: Read + Seek>(
+        archive: &mut ZipArchive<R>,
+    ) -> zip::result::ZipResult<Self> {
         let mut names = std::collections::HashSet::new();
         for i in 0..archive.len() {
             if let Ok(file) = archive.by_index(i)
                 && !file.is_dir()
             {
-                names.insert(file.name().to_string());
+                names.insert(file.name()?.into_owned());
             }
         }
 
@@ -57,7 +59,7 @@ impl PackageContext {
             }
         }
 
-        ctx
+        Ok(ctx)
     }
 
     pub fn has_part(&self, path: &str) -> bool {

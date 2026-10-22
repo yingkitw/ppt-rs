@@ -65,7 +65,7 @@ impl PptxValidator {
                 .by_index(i)
                 .map_err(|e| format!("Cannot read file index {}: {}", i, e))?;
             if !file.is_dir() {
-                found_files.push(file.name().to_string());
+                found_files.push(file.name().unwrap().to_string());
             }
         }
 
@@ -173,7 +173,7 @@ impl PptxValidator {
             let file = archive
                 .by_index(i)
                 .map_err(|e| format!("Cannot read file index {}: {}", i, e))?;
-            let name = file.name().to_string();
+            let name = file.name().unwrap().to_string();
             if name.starts_with("ppt/slides/slide") && name.ends_with(".xml") {
                 slides.push(name);
             }

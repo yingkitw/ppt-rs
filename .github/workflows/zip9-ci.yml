@@ -1,0 +1,60 @@
+name: ZIP 9 compatibility
+
+on:
+  push:
+    branches:
+      - epic-8056-ppt-zip9
+      - epic/8056-modules-wiring
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  CARGO_BUILD_JOBS: 2
+
+jobs:
+  tests:
+    name: Rust ${{ matrix.toolchain }} / ${{ matrix.feature_set }} tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: ["1.88.0", stable]
+        feature_set: [default, all-features]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - name: Run default-feature tests
+        if: matrix.feature_set == 'default'
+        run: cargo test --locked
+      - name: Run all-feature tests
+        if: matrix.feature_set == 'all-features'
+        run: cargo test --locked --all-features
+      - name: Check without default features
+        if: matrix.feature_set == 'default' && matrix.toolchain == 'stable'
+        run: cargo check --locked --no-default-features --lib
+
+  changed-rust-format:
+    name: Format changed Rust files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: "1.88.0"
+          components: rustfmt
+      - name: Check only changed Rust files
+        run: |
+          git fetch https://github.com/yingkitw/ppt-rs.git main
+          base="$(git merge-base FETCH_HEAD HEAD)"
+          git diff --name-only -z --diff-filter=ACMRT "$base" HEAD -- '*.rs' \
+            | xargs -0 -r rustfmt --check --edition 2024 --config skip_children=true

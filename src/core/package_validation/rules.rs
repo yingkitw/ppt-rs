@@ -29,8 +29,18 @@ pub const REQUIRED_PACKAGE_PARTS: &[&str] = &[
 
 /// Validate a PPTX archive using all structural rules.
 pub fn validate_package<R: Read + Seek>(archive: &mut ZipArchive<R>) -> PackageValidationReport {
-    let mut ctx = PackageContext::from_archive(archive);
     let mut report = PackageValidationReport::default();
+    let mut ctx = match PackageContext::from_archive(archive) {
+        Ok(ctx) => ctx,
+        Err(error) => {
+            report.push(PackageValidationIssue::error(
+                ValidationCategory::Xml,
+                format!("Invalid ZIP entry name: {error}"),
+                None,
+            ));
+            return report;
+        }
+    };
 
     check_required_parts(&ctx, &mut report);
     check_xml_parts(&mut ctx, archive, &mut report);

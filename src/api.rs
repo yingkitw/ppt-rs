@@ -192,6 +192,7 @@ impl Presentation {
     /// Each slide is rendered as a native PDF page with title, bullets,
     /// and content drawn as vector text and graphics. No external binaries
     /// (LibreOffice, Poppler, etc.) are required.
+    #[cfg(feature = "pdf-native")]
     pub fn save_as_pdf<P: AsRef<Path>>(&self, output_path: P) -> Result<()> {
         crate::export::slide_render::render_to_pdf(self, output_path)?;
         Ok(())
@@ -235,6 +236,7 @@ impl Presentation {
     ///
     /// Requires `pdftoppm` (from poppler) to be installed.
     /// Images will be named `slide-1.png`, `slide-2.png`, etc. in the output directory.
+    #[cfg(feature = "pdf-native")]
     pub fn save_as_png<P: AsRef<Path>>(&self, output_dir: P) -> Result<()> {
         let output_dir = output_dir.as_ref();
         if !output_dir.exists() {
@@ -403,6 +405,7 @@ impl Presentation {
     ///
     /// # Returns
     /// Vector of paths to generated image files
+    #[cfg(feature = "pdf-native")]
     pub fn save_as_images<P: AsRef<Path>>(
         &self,
         output_dir: P,
@@ -418,6 +421,7 @@ impl Presentation {
     /// * `slide_number` - 1-based slide number
     /// * `output_path` - Output file path
     /// * `options` - Image export options
+    #[cfg(feature = "pdf-native")]
     pub fn save_slide_as_image<P: AsRef<Path>>(
         &self,
         slide_number: usize,
@@ -433,6 +437,7 @@ impl Presentation {
     /// # Arguments
     /// * `output_path` - Output file path
     /// * `width` - Desired width in pixels
+    #[cfg(feature = "pdf-native")]
     pub fn save_thumbnail<P: AsRef<Path>>(
         &self,
         output_path: P,

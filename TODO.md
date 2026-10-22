@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 798 inline / 513 integration = 1311 total | **Warnings**: 0 (lib default features) | **Clippy**: clean with `--all-features --all-targets -- -D warnings` (v0.2.36) — lib, bins, tests, examples all green; safe to promote to a CI gate | **Version**: 0.2.37
+**Tests**: 798 inline / 518 integration = 1316 total | **Warnings**: 0 (lib default features) | **Clippy**: clean with `--all-features --all-targets -- -D warnings` (v0.2.36) — lib, bins, tests, examples all green; safe to promote to a CI gate | **Version**: 0.3.0
 
 ## Active
 

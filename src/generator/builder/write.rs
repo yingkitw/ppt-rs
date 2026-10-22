@@ -1,22 +1,13 @@
 //! Writes PPTX package parts into a ZIP archive (eager and lazy paths).
 
-use super::plan::{
-    build_media_registry, build_media_registry_lazy, collect_chart_info, collect_chart_info_lazy,
-    collect_slide_titles, collect_slide_titles_lazy, embedded_fonts, has_comment_authors,
-    has_digital_signature, has_embedded_fonts, prepare_settings, push_chart_rid,
-    load_template, resolve_layout_number, set_notes_part_path, set_slide_rels_path,
-    set_slide_xml_path,
-    slide_content_rel_start, slide_hyperlink_relationships, slide_image_rel_targets,
-    slide_media_plan, slide_media_rid_base, uses_handouts, ChartInfo,
-};
 use super::super::layout_parts::{STANDARD_LAYOUT_COUNT, create_slide_layout_xml};
 use super::super::media_registry::MediaRegistry;
 use super::super::notes_xml::*;
 use super::super::package_cache::{self, print_affects_theme_parts};
 use super::super::package_xml::{
     append_digital_signature_content_type, append_embedded_font_content_type,
-    create_content_types_xml_with_notes_and_charts,
-    create_handout_master_rels_xml, create_pres_props_xml, create_presentation_rels_xml_full,
+    create_content_types_xml_with_notes_and_charts, create_handout_master_rels_xml,
+    create_pres_props_xml, create_presentation_rels_xml_full,
     create_presentation_rels_xml_full_with_fonts, create_presentation_xml,
     create_presentation_xml_with_fonts, create_rels_xml_with_signature, create_table_styles_xml,
     create_view_props_xml,
@@ -24,27 +15,39 @@ use super::super::package_xml::{
 use super::super::props_xml::{create_app_props_xml, create_core_props_xml};
 use super::super::slide_content::SlideContent;
 use super::super::slide_content::presentation_settings::PresentationSettings;
-use super::super::slide_xml::{create_slide_rels_xml, create_slide_xml, create_slide_xml_with_content};
+use super::super::slide_xml::{
+    create_slide_rels_xml, create_slide_xml, create_slide_xml_with_content,
+};
 use super::super::template::PptxTemplate;
 use super::super::theme_xml::{
     create_layout_rels_xml, create_master_rels_xml, create_slide_master_xml, create_theme_xml,
 };
 use super::LazySlideSource;
+use super::plan::{
+    ChartInfo, build_media_registry, build_media_registry_lazy, collect_chart_info,
+    collect_chart_info_lazy, collect_slide_titles, collect_slide_titles_lazy, embedded_fonts,
+    has_comment_authors, has_digital_signature, has_embedded_fonts, load_template,
+    prepare_settings, push_chart_rid, resolve_layout_number, set_notes_part_path,
+    set_slide_rels_path, set_slide_xml_path, slide_content_rel_start,
+    slide_hyperlink_relationships, slide_image_rel_targets, slide_media_plan, slide_media_rid_base,
+    uses_handouts,
+};
 use crate::core::append_usize;
 use crate::exc::Result;
 use crate::generator::charts::{
-    chart_embedding_filename, create_chart_rels_xml, generate_chart_part_xml, reference_workbook_bytes,
+    chart_embedding_filename, create_chart_rels_xml, generate_chart_part_xml,
+    reference_workbook_bytes,
 };
 use crate::generator::presentation_theme::office_theme_xml;
 use std::io::{Seek, Write};
-use zip::write::FileOptions;
 use zip::ZipWriter;
+use zip::write::SimpleFileOptions;
 
 /// Write `[Content_Types].xml` (eager slice or lazy counts + shared registry).
 #[allow(clippy::too_many_arguments)] // ponytail: one writer beats two copy-paste paths
 fn write_content_types<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     slide_count: usize,
     custom_slides: Option<&[SlideContent]>,
     notes_count: usize,
@@ -90,7 +93,7 @@ fn write_content_types<W: Write + Seek>(
 /// Write presentation relationships in PowerPoint order.
 fn write_presentation_relationships<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     slide_count: usize,
     has_notes: bool,
     has_handout: bool,
@@ -117,7 +120,7 @@ fn write_presentation_relationships<W: Write + Seek>(
 /// Write presProps, viewProps, and tableStyles (always emitted).
 fn write_standard_package_parts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
     let pres_props = create_pres_props_xml(settings);
@@ -137,7 +140,7 @@ fn write_standard_package_parts<W: Write + Seek>(
 /// Write handout master when print settings use handouts.
 fn write_handout_master<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
     use crate::generator::slide_content::print_settings::PrintSettings;
@@ -162,7 +165,7 @@ fn write_handout_master<W: Write + Seek>(
 /// Write notes master files if needed
 fn write_notes_master<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
 ) -> Result<()> {
     let notes_master = create_notes_master_xml();
     zip.start_file("ppt/notesMasters/notesMaster1.xml", *options)?;
@@ -180,14 +183,20 @@ fn write_notes_master<W: Write + Seek>(
 /// Write theme and layout files
 fn write_theme_and_layouts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     settings: Option<&PresentationSettings>,
     template: Option<&PptxTemplate>,
 ) -> Result<()> {
     let print = settings.and_then(|s| s.print.as_ref());
 
     if let Some(tmpl) = template {
+        let replaces_theme = settings.is_some_and(|s| s.theme.is_some());
         for (path, data) in tmpl.parts() {
+            // Standard package parts are emitted elsewhere; never write a
+            // duplicate entry when cloning the template into the ZIP archive.
+            if path == "ppt/tableStyles.xml" || (replaces_theme && path == "ppt/theme/theme1.xml") {
+                continue;
+            }
             zip.start_file(path, *options)?;
             zip.write_all(data)?;
         }
@@ -248,7 +257,7 @@ fn write_theme_and_layouts<W: Write + Seek>(
 /// Write document properties
 fn write_document_properties<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     title: &str,
     slide_count: usize,
     notes_count: usize,
@@ -279,7 +288,7 @@ struct PackageCoreParams<'a> {
 /// Steps 2–4: `_rels/.rels`, presentation relationships, and `presentation.xml`.
 fn write_package_core<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     params: PackageCoreParams<'_>,
 ) -> Result<()> {
     let rels = create_rels_xml_with_signature(params.has_signature);
@@ -326,7 +335,7 @@ fn write_package_core<W: Write + Seek>(
 /// Steps 5–6: presProps/viewProps/tableStyles and optional handout master.
 fn write_package_masters<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     has_handout: bool,
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
@@ -340,7 +349,7 @@ fn write_package_masters<W: Write + Seek>(
 /// Steps 14–16: embedded fonts, digital signature, comment authors.
 fn write_package_optional_parts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     has_signature: bool,
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
@@ -360,7 +369,7 @@ fn write_package_optional_parts<W: Write + Seek>(
 /// Write all package files to the ZIP archive (eager version with Vec<SlideContent>)
 pub(crate) fn write_package_files<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     title: &str,
     slide_count: usize,
     custom_slides: Option<&[SlideContent]>,
@@ -375,11 +384,14 @@ pub(crate) fn write_package_files<W: Write + Seek>(
     let template = load_template(settings.as_ref())?;
 
     let chart_info = collect_chart_info(custom_slides);
-    let media_registry = custom_slides
-        .map(build_media_registry)
-        .unwrap_or_default();
+    let media_registry = custom_slides.map(build_media_registry).unwrap_or_default();
     let ink_count = custom_slides
-        .map(|slides| slides.iter().filter(|s| s.ink_annotations.is_some()).count())
+        .map(|slides| {
+            slides
+                .iter()
+                .filter(|s| s.ink_annotations.is_some())
+                .count()
+        })
         .unwrap_or(0);
     let comment_count = custom_slides
         .map(|slides| slides.iter().filter(|s| !s.comments.is_empty()).count())
@@ -458,7 +470,7 @@ pub(crate) fn write_package_files<W: Write + Seek>(
 /// Write all package files to the ZIP archive (lazy version with LazySlideSource)
 pub(crate) fn write_package_files_lazy<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     title: &str,
     slides: &dyn LazySlideSource,
     mut settings: Option<PresentationSettings>,
@@ -571,7 +583,7 @@ pub(crate) fn write_package_files_lazy<W: Write + Seek>(
 /// Write a chart part with rels and embedded Excel workbook.
 fn write_chart_package<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     chart_idx: usize,
     chart: &crate::generator::charts::Chart,
 ) -> Result<()> {
@@ -595,7 +607,7 @@ fn write_chart_package<W: Write + Seek>(
 /// Write slide XML, relationships, and chart parts in one pass (lazy version).
 fn write_slide_packages_lazy<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     slides: &dyn LazySlideSource,
     slide_chart_start_indices: &[usize],
     template: Option<&PptxTemplate>,
@@ -734,7 +746,7 @@ fn write_slide_packages_lazy<W: Write + Seek>(
 /// Write notes relationship files (lazy version)
 fn write_notes_relationships_lazy<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     slides: &dyn LazySlideSource,
 ) -> Result<()> {
     let mut notes_part_num = 0usize;
@@ -760,7 +772,7 @@ fn write_notes_relationships_lazy<W: Write + Seek>(
 /// Write slide XML files (eager version)
 fn write_slides<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     slide_count: usize,
     custom_slides: Option<&[SlideContent]>,
 ) -> Result<()> {
@@ -856,7 +868,7 @@ fn write_slides<W: Write + Seek>(
 /// Write slide relationship files with notes and charts (eager version)
 fn write_slide_relationships_extended<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     custom_slides: Option<&[SlideContent]>,
     slide_chart_start_indices: &[usize],
     slide_count: usize,
@@ -968,7 +980,7 @@ fn write_slide_relationships_extended<W: Write + Seek>(
 /// Write chart files (eager version)
 fn write_charts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     custom_slides: Option<&[SlideContent]>,
     slide_chart_start_indices: &[usize],
 ) -> Result<()> {
@@ -987,7 +999,7 @@ fn write_charts<W: Write + Seek>(
 /// Write notes relationship files (eager version)
 fn write_notes_relationships<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     custom_slides: Option<&[SlideContent]>,
 ) -> Result<()> {
     if let Some(slides) = custom_slides {
@@ -1011,7 +1023,7 @@ fn write_notes_relationships<W: Write + Seek>(
 /// Write embedded font data parts to `ppt/fonts/`.
 fn write_embedded_font_parts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     fonts: &super::super::slide_content::embedded_fonts::EmbeddedFontList,
 ) -> Result<()> {
     for font in fonts.fonts() {
@@ -1024,7 +1036,7 @@ fn write_embedded_font_parts<W: Write + Seek>(
 /// Write image files to ppt/media/
 fn write_images<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     custom_slides: Option<&[SlideContent]>,
 ) -> Result<()> {
     if let Some(slides) = custom_slides {
@@ -1042,7 +1054,7 @@ fn write_images<W: Write + Seek>(
 /// Write digital signature parts (`_xmlsignatures/`).
 fn write_digital_signature_parts<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     settings: Option<&PresentationSettings>,
 ) -> Result<()> {
     let signature = settings
@@ -1062,7 +1074,7 @@ fn write_digital_signature_parts<W: Write + Seek>(
 /// Write image files from a lazy slide source.
 fn write_images_lazy<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     slides: &dyn LazySlideSource,
 ) -> Result<()> {
     let registry = build_media_registry_lazy(slides);
@@ -1078,7 +1090,7 @@ fn write_images_lazy<W: Write + Seek>(
 /// Write video/audio parts (`ppt/media/mediaN.{ext}`).
 fn write_media_files<W: Write + Seek>(
     zip: &mut ZipWriter<W>,
-    options: &FileOptions,
+    options: &SimpleFileOptions,
     registry: &MediaRegistry,
 ) -> Result<()> {
     for (i, (bytes, ext)) in registry.media_files().iter().enumerate() {

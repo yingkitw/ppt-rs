@@ -12,7 +12,10 @@ use zip::ZipArchive;
 fn assert_valid_pptx(data: &[u8]) {
     let cursor = Cursor::new(data.to_vec());
     let zip = ZipArchive::new(cursor).expect("Should be valid ZIP");
-    let mut names: Vec<_> = zip.file_names().map(|s| s.to_string()).collect();
+    let mut names: Vec<_> = zip
+        .file_names()
+        .map(|name| name.unwrap().to_string())
+        .collect();
     names.sort();
     assert!(
         names.iter().any(|n| n.starts_with("ppt/slides/slide")),

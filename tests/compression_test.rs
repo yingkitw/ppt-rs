@@ -319,7 +319,7 @@ fn test_compression_removes_comments() {
     {
         let mut archive = ZipArchive::new(Cursor::new(&bytes)).expect("valid zip");
         for i in 0..archive.len() {
-            let name = archive.by_index(i).unwrap().name().to_string();
+            let name = archive.by_index(i).unwrap().name().unwrap().to_string();
             assert!(
                 !name.starts_with("ppt/comments/"),
                 "comment part left: {name}"

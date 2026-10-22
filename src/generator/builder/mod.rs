@@ -13,7 +13,7 @@ use super::slide_content::presentation_settings::PresentationSettings;
 use crate::exc::Result;
 use std::io::{Cursor, Seek, Write};
 use zip::ZipWriter;
-use zip::write::FileOptions;
+use zip::write::SimpleFileOptions;
 
 use plan::{debug_assert_package_valid, zip_options};
 use write::{write_package_files, write_package_files_lazy};
@@ -84,7 +84,7 @@ pub fn create_pptx_with_settings(
 /// ```
 pub fn create_pptx_to_writer<W: Write + Seek>(writer: W, title: &str, slides: usize) -> Result<W> {
     let mut zip = ZipWriter::new(writer);
-    let options = FileOptions::default();
+    let options = SimpleFileOptions::default();
 
     write_package_files(&mut zip, &options, title, slides, None, None)?;
 
@@ -112,7 +112,7 @@ pub fn create_pptx_with_content_to_writer<W: Write + Seek>(
     settings: Option<PresentationSettings>,
 ) -> Result<W> {
     let mut zip = ZipWriter::new(writer);
-    let options = FileOptions::default();
+    let options = SimpleFileOptions::default();
 
     write_package_files(
         &mut zip,
@@ -225,7 +225,7 @@ pub fn create_pptx_lazy_to_writer<W: Write + Seek>(
     settings: Option<PresentationSettings>,
 ) -> Result<W> {
     let mut zip = ZipWriter::new(writer);
-    let options = FileOptions::default();
+    let options = SimpleFileOptions::default();
 
     write_package_files_lazy(&mut zip, &options, title, slides.as_ref(), settings)?;
 
@@ -303,7 +303,7 @@ mod tests {
         let cursor = Cursor::new(bytes);
         let mut archive = zip::ZipArchive::new(cursor).unwrap();
         let names: std::collections::HashSet<String> = (0..archive.len())
-            .map(|i| archive.by_index(i).unwrap().name().to_string())
+            .map(|i| archive.by_index(i).unwrap().name().unwrap().to_string())
             .collect();
         assert!(names.contains("_xmlsignatures/origin.sigs"));
         assert!(names.contains("_xmlsignatures/sig1.xml"));
@@ -340,7 +340,7 @@ mod tests {
         let cursor = Cursor::new(bytes);
         let mut archive = zip::ZipArchive::new(cursor).unwrap();
         let names: std::collections::HashSet<String> = (0..archive.len())
-            .map(|i| archive.by_index(i).unwrap().name().to_string())
+            .map(|i| archive.by_index(i).unwrap().name().unwrap().to_string())
             .collect();
         assert!(names.contains("ppt/fonts/Arial-regular.fntdata"));
 
@@ -394,7 +394,7 @@ mod tests {
         let cursor = Cursor::new(bytes);
         let mut archive = zip::ZipArchive::new(cursor).unwrap();
         let names: std::collections::HashSet<String> = (0..archive.len())
-            .map(|i| archive.by_index(i).unwrap().name().to_string())
+            .map(|i| archive.by_index(i).unwrap().name().unwrap().to_string())
             .collect();
         assert!(names.contains("ppt/ink/ink1.xml"));
 

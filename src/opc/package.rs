@@ -36,9 +36,10 @@ impl Package {
             let mut file = archive.by_index(i)?;
 
             if !file.is_dir() {
+                let name = file.name()?.into_owned();
                 let mut content = Vec::new();
                 file.read_to_end(&mut content)?;
-                parts.insert(file.name().to_string(), content);
+                parts.insert(name, content);
             }
         }
 
@@ -57,7 +58,7 @@ impl Package {
         let mut archive = zip::ZipWriter::new(writer);
 
         for (path, content) in &self.parts {
-            let options = zip::write::FileOptions::default();
+            let options = zip::write::SimpleFileOptions::default();
             archive.start_file(path, options)?;
             std::io::Write::write_all(&mut archive, content)?;
         }

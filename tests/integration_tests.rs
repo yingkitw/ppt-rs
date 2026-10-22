@@ -331,7 +331,7 @@ fn validate_pptx_structure(data: &[u8]) -> Result<(), String> {
         let file = archive
             .by_index(i)
             .map_err(|e| format!("Failed to read archive entry: {}", e))?;
-        found.insert(file.name().to_string());
+        found.insert(file.name().unwrap().to_string());
     }
 
     if let Some(issue) = check_required_parts(&found, REQUIRED_PARTS_MINIMAL)
@@ -346,7 +346,7 @@ fn validate_pptx_structure(data: &[u8]) -> Result<(), String> {
             .by_index(i)
             .map_err(|e| format!("Failed to read archive entry: {}", e))?;
 
-        let name = file.name().to_string();
+        let name = file.name().unwrap().to_string();
         if name.ends_with(".xml") || name.ends_with(".rels") {
             let mut content = String::new();
             file.read_to_string(&mut content)

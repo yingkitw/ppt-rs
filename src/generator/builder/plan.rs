@@ -1,18 +1,18 @@
 //! Media registry, relationship planning, and chart metadata for PPTX assembly.
 
-use super::LazySlideSource;
 use super::super::media_registry::MediaRegistry;
 use super::super::package_xml::table_styles_rel_id;
 use super::super::slide_content::SlideContent;
 use super::super::template::PptxTemplate;
+use super::LazySlideSource;
 use crate::core::append_usize;
 use crate::exc::{PptxError, Result};
 use crate::generator::slide_content::presentation_settings::PresentationSettings;
 use crate::generator::slide_content::print_settings::PrintWhat;
-use zip::write::FileOptions;
+use zip::write::SimpleFileOptions;
 
-pub(crate) fn zip_options() -> FileOptions {
-    FileOptions::default()
+pub(crate) fn zip_options() -> SimpleFileOptions {
+    SimpleFileOptions::default()
 }
 
 /// First relationship id after layout (rId1) and optional notes slide.
@@ -68,7 +68,10 @@ pub(crate) fn build_media_registry_lazy(slides: &dyn LazySlideSource) -> MediaRe
     registry
 }
 
-pub(crate) fn slide_image_rel_targets(slide: &SlideContent, registry: &MediaRegistry) -> Vec<(usize, String)> {
+pub(crate) fn slide_image_rel_targets(
+    slide: &SlideContent,
+    registry: &MediaRegistry,
+) -> Vec<(usize, String)> {
     let mut images = Vec::with_capacity(slide.images.len());
     for image in &slide.images {
         if let Some(bytes) = image.get_bytes()
@@ -257,14 +260,19 @@ pub(crate) fn debug_assert_package_valid(bytes: &[u8]) {
 
 #[cfg(not(debug_assertions))]
 pub(crate) fn debug_assert_package_valid(_bytes: &[u8]) {}
-pub(crate) fn resolve_layout_number(slide: &SlideContent, template: Option<&PptxTemplate>) -> usize {
+pub(crate) fn resolve_layout_number(
+    slide: &SlideContent,
+    template: Option<&PptxTemplate>,
+) -> usize {
     let requested = slide.layout.layout_number();
     template
         .map(|t| t.resolve_layout_number(requested))
         .unwrap_or(requested)
 }
 
-pub(crate) fn load_template(settings: Option<&PresentationSettings>) -> Result<Option<PptxTemplate>> {
+pub(crate) fn load_template(
+    settings: Option<&PresentationSettings>,
+) -> Result<Option<PptxTemplate>> {
     if let Some(path) = settings.and_then(|s| s.template_path.as_deref()) {
         Ok(Some(PptxTemplate::load(path)?))
     } else {
@@ -386,7 +394,10 @@ pub(crate) fn prepare_settings(
 ///
 /// Returns one title per slide, falling back to "Slide N" placeholders when no
 /// custom slide content is available or a slide has an empty title.
-pub(crate) fn collect_slide_titles(custom_slides: Option<&[SlideContent]>, slide_count: usize) -> Vec<String> {
+pub(crate) fn collect_slide_titles(
+    custom_slides: Option<&[SlideContent]>,
+    slide_count: usize,
+) -> Vec<String> {
     match custom_slides {
         Some(slides) => slides
             .iter()
@@ -406,7 +417,10 @@ pub(crate) fn collect_slide_titles(custom_slides: Option<&[SlideContent]>, slide
 }
 
 /// Collect slide titles for `docProps/app.xml` (lazy version).
-pub(crate) fn collect_slide_titles_lazy(slides: &dyn LazySlideSource, slide_count: usize) -> Vec<String> {
+pub(crate) fn collect_slide_titles_lazy(
+    slides: &dyn LazySlideSource,
+    slide_count: usize,
+) -> Vec<String> {
     let mut titles = Vec::with_capacity(slide_count);
     for i in 0..slide_count {
         let title = slides

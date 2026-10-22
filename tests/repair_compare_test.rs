@@ -46,10 +46,10 @@ fn assert_packages_equal(a: &[u8], b: &[u8]) {
     let mut zb = ZipArchive::new(std::io::Cursor::new(b)).expect("open repaired zip");
 
     let names_a: HashSet<String> = (0..za.len())
-        .filter_map(|i| za.by_index(i).ok().map(|f| f.name().to_string()))
+        .filter_map(|i| za.by_index(i).ok().map(|f| f.name().unwrap().to_string()))
         .collect();
     let names_b: HashSet<String> = (0..zb.len())
-        .filter_map(|i| zb.by_index(i).ok().map(|f| f.name().to_string()))
+        .filter_map(|i| zb.by_index(i).ok().map(|f| f.name().unwrap().to_string()))
         .collect();
 
     assert_eq!(

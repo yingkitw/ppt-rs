@@ -1,7 +1,8 @@
 [package]
 name = "ppt-rs"
-version = "0.2.37"
+version = "0.3.0"
 edition = "2024"
+rust-version = "1.88"
 authors = ["Ying Kit WONG"]
 description = "Create, read, and update PowerPoint 2007+ (.pptx) files with rich formatting, bullet styles, themes, and templates."
 license = "Apache-2.0"
@@ -11,7 +12,7 @@ categories = ["text-processing", "parser-implementations"]
 readme = "README.md"
 
 [dependencies]
-zip = "0.6"
+zip = { version = "9.0.4", default-features = false, features = ["deflate"] }
 xml-rs = "0.8"
 uuid = { version = "1.24", features = ["v4"] }
 thiserror = "2.0"

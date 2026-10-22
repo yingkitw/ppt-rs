@@ -1,8 +1,7 @@
 //! Doc-sync checks: make documentation drift a `cargo test` failure.
 //!
-//! When these tests fail, update the DOC (AGENTS.md structure / TODO.md test
-//! counts) — not this file. AGENTS.md Step 9 (Update Documentation) is the
-//! workflow that keeps them green.
+//! When these tests fail, update the public module/MCP documentation or the
+//! TODO.md test counts — not this file.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -60,9 +59,17 @@ fn leading_int(text: &str, marker: &str) -> usize {
 }
 
 #[test]
-fn agents_md_structure_lists_every_module() {
+fn module_organization_documents_every_public_module() {
     let lib = read("src/lib.rs");
-    let agents = read("AGENTS.md");
+    let marker = "//! # Module Organization";
+    let start = lib
+        .find(marker)
+        .unwrap_or_else(|| panic!("src/lib.rs missing `{marker}` section"));
+    let module_docs = lib[start..]
+        .lines()
+        .take_while(|line| line.starts_with("//!"))
+        .collect::<Vec<_>>()
+        .join("\n");
     let missing: Vec<String> = lib
         .lines()
         .filter_map(|l| {
@@ -71,11 +78,11 @@ fn agents_md_structure_lists_every_module() {
                 .strip_suffix(';')
                 .map(str::to_owned)
         })
-        .filter(|m| !agents.contains(m))
+        .filter(|m| !module_docs.contains(m))
         .collect();
     assert!(
         missing.is_empty(),
-        "modules missing from the AGENTS.md project structure: {missing:?}"
+        "public modules missing from the Module Organization rustdoc: {missing:?}"
     );
 }
 
@@ -180,8 +187,7 @@ fn readme_install_versions_match_lib_version() {
 
 /// Count `#[tool]`-annotated methods on `PptMcp` — i.e. methods declared as
 /// `fn <ident>(` whose immediately preceding attribute block contains
-/// `#[tool(…)]`. The MCP tool count is a recurring drift hotspot (see
-/// MEMORY.md "CI gate vs honest claim drift" / "MCP tool count: 12").
+/// `#[tool(…)]`. The MCP tool list is documented in the README table.
 fn mcp_tool_count() -> usize {
     let mcp = read("src/mcp/mod.rs");
     let mut count = 0;
@@ -233,6 +239,44 @@ fn mcp_tool_count() -> usize {
     count
 }
 
+fn readme_mcp_tool_count() -> usize {
+    let readme = read("README.md");
+    let section = readme
+        .split_once("### Exposed tools")
+        .map(|(_, section)| section)
+        .unwrap_or_else(|| panic!("README.md missing `### Exposed tools` section"));
+    let mut table_started = false;
+    let mut names = Vec::new();
+    for line in section.lines().map(str::trim) {
+        if !table_started {
+            if line.starts_with("| Tool |") {
+                table_started = true;
+            }
+            continue;
+        }
+        if !line.starts_with('|') {
+            break;
+        }
+        if let Some(entry) = line.strip_prefix("| `") {
+            let end = entry
+                .find('`')
+                .unwrap_or_else(|| panic!("malformed README MCP tool row: {line}"));
+            names.push(&entry[..end]);
+        }
+    }
+    assert!(table_started, "README MCP tools table header is missing");
+    assert!(!names.is_empty(), "README MCP tools table is empty");
+    let mut unique = names.clone();
+    unique.sort_unstable();
+    unique.dedup();
+    assert_eq!(
+        unique.len(),
+        names.len(),
+        "README MCP tools table contains duplicate tool names"
+    );
+    names.len()
+}
+
 #[test]
 fn mcp_tools_are_documented_consistently() {
     let actual = mcp_tool_count();
@@ -240,27 +284,11 @@ fn mcp_tools_are_documented_consistently() {
         actual > 0,
         "could not detect any MCP tools in src/mcp/mod.rs — tool-marking convention changed?"
     );
-    // MEMORY records the current count as 12; bump both sides together if a
-    // tool is added/removed. The point of this gate is to make any drift
-    // between code and the MEMORY/README narrative a `cargo test` failure.
-    let mem = read("MEMORY.md");
-    // Look for the markdown section header `### MCP tool count: N (…)` —
-    // a literal digit must follow the colon, otherwise this gate will match
-    // its own description text ("MCP tool count: N" with the letter N).
-    let needle = "### MCP tool count: ";
-    if let Some(idx) = mem.find(needle) {
-        let after = &mem[idx + needle.len()..];
-        let claimed: usize = after
-            .chars()
-            .take_while(|c| c.is_ascii_digit())
-            .collect::<String>()
-            .parse()
-            .unwrap_or(0);
-        assert_eq!(
-            claimed, actual,
-            "MEMORY.md MCP tool count stale: code = {actual}, MEMORY says = {claimed}"
-        );
-    }
+    let documented = readme_mcp_tool_count();
+    assert_eq!(
+        documented, actual,
+        "README MCP tools table stale: code = {actual}, README lists = {documented}"
+    );
 }
 
 /// Extract the `pub enum Commands` variant names from `src/cli/parser.rs`.

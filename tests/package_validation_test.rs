@@ -18,9 +18,10 @@ use ppt_rs::generator::{
     ChartBuilder, ChartSeries, ChartType, Image, PresentationSettings, PrintSettings, PrintWhat,
     SlideContent, create_pptx, create_pptx_with_content, create_pptx_with_settings,
 };
+use ppt_rs::opc::Package;
 use zip::ZipArchive;
 use zip::ZipWriter;
-use zip::write::FileOptions;
+use zip::write::SimpleFileOptions;
 
 use common::{assert_package_file_valid, assert_package_valid, issues_in_category};
 
@@ -132,6 +133,140 @@ fn notes_handouts_and_images_pass_validation() {
     );
 }
 
+#[test]
+fn generated_presentation_preserves_media_and_relationships_in_zip() {
+    let image_bytes = include_bytes!("../examples/assets/diagram.png").to_vec();
+    let slides = vec![
+        SlideContent::new("Cover").add_image(Image::from_bytes(
+            image_bytes.clone(),
+            1_000_000,
+            1_000_000,
+            "png",
+        )),
+        SlideContent::new("Details").add_bullet("Second slide content"),
+    ];
+
+    let bytes = create_pptx_with_content("ZIP migration", slides).unwrap();
+    assert_package_valid(&bytes, "ZIP migration deck");
+
+    let mut archive = ZipArchive::new(Cursor::new(bytes)).expect("generated PPTX is a ZIP");
+    let slide_one = {
+        let mut part = archive
+            .by_name("ppt/slides/slide1.xml")
+            .expect("first slide is present");
+        let mut xml = String::new();
+        part.read_to_string(&mut xml).unwrap();
+        xml
+    };
+    let slide_two = {
+        let mut part = archive
+            .by_name("ppt/slides/slide2.xml")
+            .expect("second slide is present");
+        let mut xml = String::new();
+        part.read_to_string(&mut xml).unwrap();
+        xml
+    };
+    assert!(slide_one.contains("r:embed=\"rId2\""));
+    assert!(slide_two.contains("Second slide content"));
+
+    let rels = {
+        let mut part = archive
+            .by_name("ppt/slides/_rels/slide1.xml.rels")
+            .expect("image relationship part is present");
+        let mut xml = String::new();
+        part.read_to_string(&mut xml).unwrap();
+        xml
+    };
+    assert!(rels.contains("../media/image1.png"));
+
+    let mut image = Vec::new();
+    archive
+        .by_name("ppt/media/image1.png")
+        .expect("embedded image part is present")
+        .read_to_end(&mut image)
+        .unwrap();
+    assert_eq!(image, image_bytes);
+}
+
+#[test]
+fn opc_package_round_trip_preserves_nested_paths_and_binary_parts() {
+    let mut package = Package::new();
+    package.add_part(
+        "ppt/embeddings/workbook.bin".to_string(),
+        vec![0, 1, 2, 0xff, 0x80, 42],
+    );
+    package.add_part(
+        "ppt/slides/_rels/slide1.xml.rels".to_string(),
+        b"<Relationships/>".to_vec(),
+    );
+
+    let mut cursor = Cursor::new(Vec::new());
+    package
+        .save_writer(&mut cursor)
+        .expect("package serializes to ZIP");
+    let reopened = Package::open_reader(Cursor::new(cursor.into_inner()))
+        .expect("serialized package opens again");
+
+    assert_eq!(
+        reopened.get_part("ppt/embeddings/workbook.bin"),
+        Some(&[0, 1, 2, 0xff, 0x80, 42][..])
+    );
+    assert_eq!(
+        reopened.get_part("ppt/slides/_rels/slide1.xml.rels"),
+        Some(b"<Relationships/>".as_slice())
+    );
+}
+
+#[test]
+fn opc_package_rejects_truncated_zip_input() {
+    let mut package = Package::new();
+    package.add_part(
+        "ppt/presentation.xml".to_string(),
+        b"<p:presentation/>".to_vec(),
+    );
+    let mut cursor = Cursor::new(Vec::new());
+    package
+        .save_writer(&mut cursor)
+        .expect("package serializes to ZIP");
+    let mut truncated = cursor.into_inner();
+    truncated.truncate(truncated.len().saturating_sub(12));
+
+    assert!(
+        Package::open_reader(Cursor::new(truncated)).is_err(),
+        "a missing ZIP end-of-central-directory record must return an error"
+    );
+}
+
+#[test]
+fn opc_package_decodes_legacy_zip_filenames() {
+    let mut package = Package::new();
+    package.add_part("x".to_string(), b"part".to_vec());
+    let mut cursor = Cursor::new(Vec::new());
+    package.save_writer(&mut cursor).unwrap();
+    let mut bytes = cursor.into_inner();
+
+    let local_header = bytes
+        .windows(4)
+        .position(|signature| signature == b"PK\x03\x04")
+        .expect("local file header exists");
+    let local_name_len =
+        u16::from_le_bytes([bytes[local_header + 26], bytes[local_header + 27]]) as usize;
+    assert_eq!(local_name_len, 1);
+    bytes[local_header + 30] = 0x82; // CP437 e-acute.
+
+    let central_header = bytes
+        .windows(4)
+        .position(|signature| signature == b"PK\x01\x02")
+        .expect("central directory header exists");
+    let central_name_len =
+        u16::from_le_bytes([bytes[central_header + 28], bytes[central_header + 29]]) as usize;
+    assert_eq!(central_name_len, 1);
+    bytes[central_header + 46] = 0x82;
+
+    let reopened = Package::open_reader(Cursor::new(bytes)).unwrap();
+    assert_eq!(reopened.get_part("é"), Some(&b"part"[..]));
+}
+
 // ---------------------------------------------------------------------------
 // Rule-focused regressions
 // ---------------------------------------------------------------------------
@@ -142,11 +277,11 @@ fn broken_relationship_target_is_detected() {
     let mut out = Vec::new();
     {
         let mut zip = ZipWriter::new(Cursor::new(&mut out));
-        let options = FileOptions::default();
+        let options = SimpleFileOptions::default();
         let mut archive = ZipArchive::new(Cursor::new(&bytes)).unwrap();
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).unwrap();
-            let name = file.name().to_string();
+            let name = file.name().unwrap().to_string();
             let mut buf = Vec::new();
             file.read_to_end(&mut buf).unwrap();
             zip.start_file(&name, options).unwrap();

@@ -22,7 +22,7 @@ fn validate_pptx_structure(pptx_data: &[u8]) {
     let mut found = HashSet::new();
     for i in 0..archive.len() {
         let file = archive.by_index(i).expect("Should read entry");
-        found.insert(file.name().to_string());
+        found.insert(file.name().unwrap().to_string());
     }
 
     let issues = check_required_parts(&found, REQUIRED_PARTS_MINIMAL);
