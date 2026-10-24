@@ -6,12 +6,12 @@ This document explains the two HTML parsers available in ppt-rs and when to use 
 
 ppt-rs includes two distinct HTML parsers designed for different use cases:
 
-1. **Basic HTML Parser** (`src/import/html.rs`) - Simple, dependency-light parsing
+1. **Basic HTML Parser** (`src/import/html/`) - Simple, dependency-light parsing
 2. **Web Scraper Parser** (`src/web2ppt/parser.rs`) - Advanced web content extraction
 
 ## Basic HTML Parser (`import::html`)
 
-**Location:** `src/import/html.rs`
+**Location:** `src/import/html/` (`mod.rs` — `HtmlParseOptions` + `Html2Ppt`; `tokenizer.rs`, `style.rs`, `parser.rs` — split in v0.2.37)
 
 **Purpose:** Convert simple HTML strings directly to PowerPoint slides with minimal dependencies.
 

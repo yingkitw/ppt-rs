@@ -849,7 +849,7 @@ Unlike other Rust PPTX crates that:
 
 `ppt-rs`:
 - ✅ Generates **valid PPTX files** from day one
-- ✅ **Actively maintained** with comprehensive test coverage (1250+ tests)
+- ✅ **Actively maintained** with comprehensive test coverage (1300+ tests)
 - ✅ **Complete XML structure** following ECMA-376 standard
 - ✅ **Validation tools** - Built-in validation command + structured `PackageValidationReport` API for quality assurance
 - ✅ **PowerPoint compat gate** - Every generated deck is self-validated in debug builds
@@ -862,7 +862,7 @@ Unlike other Rust PPTX crates that:
 - Built-in validation command for ECMA-376 compliance checking
 - Structured `core::package_validation` API (`validate_package_bytes` → `PackageValidationReport`)
 - Debug builds `debug_assert!` that every generated deck passes package validation
-- Comprehensive test suite (1250+ tests, including `package_validation_test`, `powerpoint_compat_test`, `layouts_packaging_test`, `repair_compare_test`)
+- Comprehensive test suite (1300+ tests, including `package_validation_test`, `powerpoint_compat_test`, `layouts_packaging_test`, `repair_compare_test`, `proptest_generation_test`)
 - Integration tests for end-to-end validation
 
 ### Alignment Testing
@@ -877,7 +877,7 @@ Unlike other Rust PPTX crates that:
 - **Standard**: ECMA-376 Office Open XML
 - **Compatibility**: PowerPoint, LibreOffice, Google Slides, Keynote
 - **Architecture**: Modular design with clear separation of concerns
-- **Test Coverage**: 1250+ tests covering all major features
+- **Test Coverage**: 1300+ tests covering all major features
 - **Performance**: ~1000 slides/sec; lazy loading for large decks; borrow-based `build()` API
 
 ## Templates

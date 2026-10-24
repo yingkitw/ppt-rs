@@ -301,19 +301,19 @@ shape.fill(red()).stroke(black(), 12700).text("Hello");
 
 ## Testing Architecture
 
-The project employs a layered testing strategy with 1310 tests:
+The project employs a layered testing strategy with 1312 tests:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Integration Tests                        │
 │         (tests/ directory — full workflows)                 │
-│              513 tests, end-to-end validation               │
+│              514 tests, end-to-end validation               │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                    Unit Tests                               │
 │         (inline in src/ modules — per-component)            │
-│              772 tests, fast feedback                       │
+│              798 tests, fast feedback                       │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -325,16 +325,17 @@ The project employs a layered testing strategy with 1310 tests:
 ┌─────────────────────────────────────────────────────────────┐
 │                    Documentation Tests                      │
 │         (doctest — examples in doc comments)                │
-│              50+ tests, API examples validated              │
+│              45 tests, API examples validated               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Quality Gates
 
 - **100% test pass rate required** — no flaky tests
-- **Zero compiler warnings** — enforced in CI
-- **Clippy clean** — all lints addressed
-- **Generated PPTX validation** — `PptxValidator` checks structure
+- **Zero compiler warnings** — required before merge
+- **Clippy** — `cargo clippy --all-features --all-targets -- -D warnings`
+- **Doc drift** — `cargo test --test docs_sync`
+- **Generated PPTX validation** — `validate_package_bytes()` on generated decks (plus `tests/proptest_generation_test.rs` for random `SlideContent` decks)
 
 ### Running Tests
 
@@ -343,7 +344,8 @@ cargo test              # All tests
 cargo test --lib        # Unit tests only
 cargo test integration  # Integration tests
 cargo test --doc        # Doc tests
-cargo clippy            # Lint check
+cargo clippy --all-features --all-targets -- -D warnings
+cargo test --test docs_sync
 ```
 
 ## Performance Characteristics
@@ -501,11 +503,9 @@ src/
 ├── opc/                   # Open Packaging Convention (ZIP handling)
 ├── oxml/                  # Office XML parsing (reader, editor, parser, repair, comments import)
 ├── helpers/               # Simplified helpers
-│   ├── mod.rs
+│   ├── mod.rs             # rect(), circle(), ShapeExt extension methods
 │   ├── colors.rs          # 40+ color aliases, ColorValue
-│   ├── tables.rs          # QuickTable, table helpers
-│   ├── shapes.rs          # rect(), circle(), etc.
-│   └── ext.rs             # ShapeExt extension methods
+│   └── tables.rs          # QuickTable, table helpers
 ├── export/                # Export to HTML, Markdown, images
 ├── import/                # PPTX import, HTML-to-PPTX (`html/` = tokenizer + CSS + parser)
 ├── diff/                  # Semantic slide-level comparison (`compare_presentations`, v0.2.30)
@@ -654,7 +654,10 @@ Tables in PPTX follow a specific XML structure. The critical ordering is:
 ```
 ├── generator/          # Generator module
 │   ├── mod.rs          # Module exports
-│   ├── builder.rs      # PPTX creation functions
+│   ├── builder/        # PPTX creation (v0.2.37 split)
+│   │   ├── mod.rs      # create_pptx* public API, LazySlideSource
+│   │   ├── plan.rs     # Media registry + relationship planning
+│   │   └── write.rs    # ZIP part writers
 │   ├── slide_xml/      # Modular slide XML generation
 │   │   ├── mod.rs
 │   │   ├── common.rs
@@ -666,7 +669,34 @@ Tables in PPTX follow a specific XML structure. The critical ordering is:
 │   │   ├── bullet.rs
 │   │   ├── layout.rs
 │   │   ├── transition.rs
-│   │   └── code_block.rs
+│   │   ├── code_block.rs
+│   │   ├── comments.rs        # Review comments
+│   │   ├── sections.rs        # <p14:sectionLst> sections
+│   │   ├── table_merge.rs     # Cell merge state
+│   │   ├── embedded_fonts.rs
+│   │   ├── digital_signature.rs
+│   │   ├── ink_annotations.rs
+│   │   ├── presentation_settings.rs
+│   │   ├── print_settings.rs
+│   │   └── slide_show_settings.rs
+│   ├── slide/          # Slide-level formatting helpers
+│   │   ├── mod.rs
+│   │   └── formatting.rs
+│   ├── text/           # Text model + XML (ToXml)
+│   │   ├── mod.rs
+│   │   ├── run.rs
+│   │   ├── paragraph.rs
+│   │   ├── frame.rs
+│   │   ├── format.rs
+│   │   └── rtl.rs
+│   ├── layouts/        # Per-layout slide XML emitters
+│   │   ├── mod.rs
+│   │   ├── common.rs
+│   │   ├── blank.rs
+│   │   ├── centered_title.rs
+│   │   ├── title_content.rs
+│   │   ├── title_only.rs
+│   │   └── two_column.rs
 │   ├── charts/         # Chart module (v0.2.3; Excel embedding v0.2.19)
 │   │   ├── mod.rs
 │   │   ├── builder.rs
@@ -679,7 +709,10 @@ Tables in PPTX follow a specific XML structure. The critical ordering is:
 │   │   ├── cell.rs
 │   │   ├── row.rs
 │   │   ├── builder.rs
+│   │   ├── format.rs   # Cell formatting (TextFormat + merge attrs)
+│   │   ├── style.rs    # Header presets, table_from_string_rows
 │   │   └── xml.rs
+│   ├── constants.rs    # Shared generator constants
 │   ├── layout_parts.rs # slideLayoutN.xml + master footers (v0.2.19)
 │   ├── template.rs     # PptxTemplate — load masters/theme/layouts (v0.2.19)
 │   ├── package_cache.rs # Package byte cache / diff helpers (v0.2.19)
@@ -701,10 +734,18 @@ Tables in PPTX follow a specific XML structure. The critical ordering is:
 │   └── notes_xml.rs    # Notes XML
 ├── export/             # Export module (v0.2.2)
 │   ├── mod.rs
-│   ├── html.rs
-│   └── html_style.css
+│   ├── html.rs         # HTML export (+ html_*.css / html_navigation.js assets)
+│   ├── md.rs           # Markdown export
+│   ├── image_export.rs # PNG/JPEG via pdfrs + pdftoppm
+│   ├── pdf_export.rs   # PDF export (pdf-native feature)
+│   └── slide_render.rs # Shared slide rendering helpers
 ├── import/             # Import module (v0.2.2)
-│   └── mod.rs
+│   ├── mod.rs          # PPTX import (PresentationReader / import_pptx)
+│   └── html/           # HTML→PPTX parser (v0.2.37 split)
+│       ├── mod.rs      # HtmlParseOptions, Html2Ppt, parse_html*
+│       ├── tokenizer.rs
+│       ├── style.rs
+│       └── parser.rs
 ├── web2ppt/            # Web to PPT converter (feature-gated)
 │   ├── mod.rs
 │   ├── converter.rs
@@ -858,7 +899,7 @@ Effects are rendered in `<a:effectLst>` within `<p:spPr>`:
 
 - `src/generator/images.rs` - ImageEffect enum, ImageBuilder methods
 - `src/generator/images_xml.rs` - XML generation for effects
-- `src/generator/builder.rs` - Image extension collection and passing
+- `src/generator/builder/` - Image extension collection and passing (`plan.rs` registry, `write.rs` ZIP emission)
 - `src/generator/package_xml.rs` - Relationship generation with extensions
 
 ## Future Enhancements
@@ -877,5 +918,5 @@ Effects are rendered in `<a:effectLst>` within `<p:spPr>`:
 - [x] Embedded fonts in output (font data parts + rId wiring) (v0.2.20)
 - [x] Benchmark suite — Criterion suites for eager/lazy/compression (v0.2.32)
 - [ ] Fuzzing tests for PPTX parsing
-- [ ] Property-based testing
+- [x] Property-based testing — `tests/proptest_generation_test.rs`: random `SlideContent` decks must pass `validate_package_bytes` (v0.2.37)
 - [ ] Cross-platform testing (Windows, macOS, Linux)

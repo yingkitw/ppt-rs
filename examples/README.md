@@ -13,7 +13,7 @@ Demonstrates the enhanced Markdown-to-PowerPoint capabilities:
 
 **Generate:**
 ```bash
-cargo run --features cli -- from-md examples/markdown_features.md examples/output/markdown_features.pptx --title "Advanced Markdown"
+cargo run --features cli --bin pptcli -- md2ppt examples/markdown_features.md examples/output/markdown_features.pptx --title "Advanced Markdown"
 ```
 
 ### enhanced_markdown_features.rs
@@ -54,7 +54,7 @@ cargo run --example proper_pptx
 ### Generate the Markdown Example
 
 ```bash
-cargo run --features cli -- from-md examples/markdown_features.md examples/output/markdown_features.pptx --title "Advanced Markdown"
+cargo run --features cli --bin pptcli -- md2ppt examples/markdown_features.md examples/output/markdown_features.pptx --title "Advanced Markdown"
 ```
 
 This creates `examples/output/markdown_features.pptx`.
@@ -65,7 +65,7 @@ This creates `examples/output/markdown_features.pptx`.
 1. Create a `.md` file with your content
 2. Use `# Heading` for slide titles
 3. Use `- Bullet` for bullet points
-4. Run: `cargo run -- from-md your_file.md output.pptx`
+4. Run: `cargo run --features cli --bin pptcli -- md2ppt your_file.md output.pptx`
 
 #### Programmatically
 1. Use `SlideContent` builder

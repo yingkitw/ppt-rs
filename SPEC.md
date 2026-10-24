@@ -33,10 +33,10 @@ The library employs a layered testing approach:
 
 | Test Type | Count | Purpose |
 |-----------|-------|---------|
-| Unit tests | 797 | Individual module correctness |
-| Integration tests | 513 | End-to-end workflows |
+| Unit tests | 798 | Individual module correctness |
+| Integration tests | 514 | End-to-end workflows |
 | Compatibility tests | 6 | PowerPoint/LibreOffice/Google Slides validation |
-| Doc tests | 50+ | API examples in documentation |
+| Doc tests | 45 | API examples in documentation |
 
 ### Quality Gates
 - All tests must pass (100% required)
@@ -879,7 +879,7 @@ Run: `cargo run --features http --bin ppt_http [--host HOST] [--port PORT]` (def
 | File size overhead | ~10-15 KB base |
 | Generation speed | ~1000 slides/sec |
 | Memory usage | ~2 MB + content |
-| Test coverage | 1310 tests |
+| Test coverage | 1312 tests |
 
 ## Error Handling
 
