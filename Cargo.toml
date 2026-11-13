@@ -44,9 +44,13 @@ tokio = { version = "1.53", features = ["rt-multi-thread", "macros", "net"], opt
 axum = { version = "0.7", optional = true }
 base64 = { version = "0.22", optional = true }
 
+# Python / PyPI (optional)
+pyo3 = { version = "0.22", features = ["extension-module", "abi3-py39"], optional = true }
+
 [features]
 default = ["pdf-native"]
 cli = ["clap", "pulldown-cmark", "syntect", "pdf-native"]
+python = ["dep:pyo3", "pulldown-cmark"]
 mcp = ["serde", "serde_json", "dep:rmcp", "dep:tokio", "cli"]
 http = ["serde", "serde_json", "dep:tokio", "dep:axum", "dep:base64", "cli"]
 web2ppt = ["reqwest", "scraper"]
@@ -68,6 +72,7 @@ harness = false
 [lib]
 name = "ppt_rs"
 path = "src/lib.rs"
+crate-type = ["rlib", "cdylib"]
 
 [[bin]]
 name = "pptcli"

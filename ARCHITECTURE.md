@@ -63,7 +63,7 @@ Future work focuses on performance optimization and competitive intelligence see
 | Convert in | `import/`, `web2ppt/` | HTML basic parser under `import/html/` |
 | Convert out | `export/` | MD, HTML, PDF, images |
 | Compare | `diff/` | Semantic slide diff |
-| Automate | `cli/`, `mcp/`, `http/`, `pipeline/` | Feature-gated binaries |
+| Automate | `cli/`, `mcp/`, `http/`, `pipeline/`, `python.rs` | Feature-gated binaries + PyPI (`python`) |
 
 **Rule of thumb:** new generation features extend `slide_content` + `*_xml` emitters; do not grow `generator/builder/write.rs` — add planning helpers in `builder/plan.rs` instead.
 

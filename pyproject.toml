@@ -1,0 +1,49 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "ppt-rs"
+version = "0.2.37"
+description = "Pure Rust PowerPoint (.pptx) for Python — Markdown/HTML to slides, validation, text extraction"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Ying Kit WONG" }]
+requires-python = ">=3.9"
+keywords = ["powerpoint", "pptx", "openxml", "presentation", "markdown"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Rust",
+  "Topic :: Office/Business :: Office Suites",
+  "Topic :: Text Processing :: Markup",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+ppt-rs = "ppt_rs.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/yingkitw/ppt-rs"
+Documentation = "https://docs.rs/ppt-rs"
+Repository = "https://github.com/yingkitw/ppt-rs"
+Issues = "https://github.com/yingkitw/ppt-rs/issues"
+
+[tool.maturin]
+manifest-path = "Cargo.toml"
+python-source = "python"
+module-name = "ppt_rs._native"
+features = ["python"]
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]

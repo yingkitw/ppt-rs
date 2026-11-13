@@ -111,6 +111,23 @@ The library uses EMU (English Metric Units) internally:
 
 ## API Specification
 
+### Python (PyPI) — `pip install ppt-rs`
+
+Maturin mixed layout: Rust extension module `ppt_rs._native` + pure-Python package `ppt_rs`.
+
+| Function | Description |
+|----------|-------------|
+| `markdown_to_pptx(markdown, title=None)` | Markdown → `.pptx` bytes |
+| `html_to_pptx(html, title=None)` | HTML → `.pptx` bytes |
+| `create_presentation(title, slides)` | Programmatic slides (`dict` with `title`/`bullets` or `[title, bullets]`) |
+| `validate_pptx(data)` | `validate_package_bytes` report as `dict` |
+| `extract_text(data)` | Per-slide paragraph text |
+| `version()` | Crate version string |
+
+Console script: `ppt-rs md2ppt …`, `ppt-rs html2ppt …` (same names as Rust CLI subcommands).
+
+Build: `maturin build --release --features python`. Publish: GitHub Release + `.github/workflows/pypi.yml`.
+
 ### Prelude Module
 
 The prelude provides a simplified API:

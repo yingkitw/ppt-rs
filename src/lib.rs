@@ -39,7 +39,7 @@
 //! - **exc** - Error types
 
 pub mod api;
-#[cfg(feature = "cli")]
+#[cfg(any(feature = "cli", feature = "python"))]
 pub mod cli;
 pub mod core;
 pub mod diff;
@@ -64,6 +64,9 @@ pub mod http;
 
 #[cfg(feature = "web2ppt")]
 pub mod web2ppt;
+
+#[cfg(feature = "python")]
+pub mod python;
 
 pub use api::Presentation;
 pub use core::{

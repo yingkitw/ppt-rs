@@ -556,6 +556,34 @@ Enable the library integration with `features = ["mcp"]` when depending on `ppt-
 
 ## Installation
 
+### Python (PyPI)
+
+```bash
+pip install ppt-rs
+```
+
+```python
+import ppt_rs
+
+pptx = ppt_rs.markdown_to_pptx("# Hello\n- From pip\n", title="Demo")
+open("demo.pptx", "wb").write(pptx)
+
+# Or use the console entry point (after install)
+# ppt-rs md2ppt slides.md output.pptx
+```
+
+Develop from a git checkout:
+
+```bash
+pip install maturin
+maturin develop --features python
+pytest python/tests
+```
+
+Publish wheels: GitHub Release → `.github/workflows/pypi.yml` (set `PYPI_API_TOKEN`).
+
+### Rust (crates.io)
+
 Add to `Cargo.toml`:
 
 ```toml

@@ -13,6 +13,13 @@ MEMORY.md
 # Cargo mutants
 **/mutants.out*/
 
+# Python / maturin
+.venv/
+dist/
+*.egg-info/
+python/ppt_rs/*.so
+python/ppt_rs/_native*.so
+
 # IDE
 .idea/
 .vscode/

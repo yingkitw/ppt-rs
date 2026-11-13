@@ -2,7 +2,7 @@
 
 #[cfg(feature = "cli")]
 pub mod commands;
-#[cfg(feature = "cli")]
+#[cfg(any(feature = "cli", feature = "python"))]
 pub mod markdown;
 #[cfg(feature = "cli")]
 pub mod parser;
@@ -14,7 +14,7 @@ pub use commands::{
     BatchCommand, CreateCommand, DiffCommand, FromHtmlCommand, FromHtmlOptions,
     FromMarkdownCommand, InfoCommand, ValidateCommand,
 };
-#[cfg(feature = "cli")]
+#[cfg(any(feature = "cli", feature = "python"))]
 pub use markdown::parse_markdown;
 #[cfg(feature = "cli")]
 pub use parser::{Cli, Commands, ExportFormat};
