@@ -57,19 +57,19 @@ cargo install ppt-rs --features cli
 pptcli md2ppt slides.md team-update.pptx --title "Team Update"
 ```
 
-Example `slides.md`:
+Example `slides.md` ([`samples/readme-slides.md`](samples/readme-slides.md)) — tables, code, tasks, **inline formatting**, and an image:
 
-```markdown
-# Team update
-- Shipped markdown → PPTX in pure Rust
-- Opens in PowerPoint without repair
+See full sample: [`samples/readme-slides.md`](samples/readme-slides.md) (3 slides: title bullets, **table + Rust code + tasks**, image + feature list).
 
-# Q4 focus
-- Docs in Git
-- `cargo test` on every PR
-```
+**Output** — rendered by ppt-rs ([download `readme-slides.pptx`](samples/readme-slides.pptx)):
 
-Repository clone: [github.com/yingkitw/ppt-rs](https://github.com/yingkitw/ppt-rs). Optional [**`ppt_mcp`**](#mcp-server-model-context-protocol) runs the same conversion for AI assistants.
+<p align="center">
+  <img src="docs/assets/readme-slide-1.png" alt="Slide 1: title and bullets" width="320" />
+  <img src="docs/assets/readme-slide-2.png" alt="Slide 2: table, code, tasks" width="320" />
+  <img src="docs/assets/readme-slide-3.png" alt="Slide 3: bullets and image" width="320" />
+</p>
+
+Repository: [github.com/yingkitw/ppt-rs](https://github.com/yingkitw/ppt-rs). Optional [**`ppt_mcp`**](#mcp-server-model-context-protocol) runs the same conversion for AI assistants.
 
 ### How it compares
 

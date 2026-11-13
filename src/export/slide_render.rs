@@ -337,6 +337,50 @@ fn render_slide(
         }
     }
 
+    // Tables (preview / PDF — grid aligned with PPTX table content)
+    if let Some(table) = &slide.table {
+        let cols = table.column_count().max(1);
+        let table_width = page_w - 2.0 * margin;
+        let col_w = table_width / cols as f32;
+        let row_h = line_height * 1.35;
+        let max_chars = |w: f32| -> usize { ((w / (content_size * 0.45)).floor() as usize).max(4) };
+
+        for (ri, row) in table.rows.iter().enumerate() {
+            if y < margin + row_h {
+                break;
+            }
+            for (ci, cell) in row.cells.iter().enumerate() {
+                let x = margin + ci as f32 * col_w;
+                if ri == 0 {
+                    set_color(&mut cs, 0.86, 0.89, 0.94);
+                } else {
+                    set_color(&mut cs, 0.98, 0.98, 0.98);
+                }
+                draw_rect(&mut cs, x + 1.0, y - row_h + 2.0, col_w - 2.0, row_h - 2.0);
+                let limit = max_chars(col_w - 8.0);
+                let text: String = cell.text.chars().take(limit).collect();
+                let display = if cell.text.chars().count() > limit {
+                    format!("{text}…")
+                } else {
+                    text
+                };
+                draw_text_line(
+                    &mut cs,
+                    TextLine {
+                        text: &display,
+                        x: x + 6.0,
+                        y: y - row_h + 8.0,
+                        font_name: font_name(ri == 0, false),
+                        font_size: content_size * if ri == 0 { 0.95 } else { 0.9 },
+                        color: Rgb { r: cr, g: cg, b: cb },
+                    },
+                );
+            }
+            y -= row_h;
+        }
+        y -= line_height * 0.4;
+    }
+
     // Code blocks
     for code_block in &slide.code_blocks {
         if y < margin + line_height {

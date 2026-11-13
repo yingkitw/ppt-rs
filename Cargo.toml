@@ -113,6 +113,11 @@ name = "batch_generator"
 path = "examples/batch_generator.rs"
 required-features = ["cli"]
 
+[[example]]
+name = "readme_assets"
+path = "examples/readme_assets.rs"
+required-features = ["markdown"]
+
 [profile.release]
 opt-level = 3
 lto = true

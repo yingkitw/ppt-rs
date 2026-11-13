@@ -52,6 +52,12 @@ let md = std::fs::read_to_string("slides.md")?;
 let bytes = ppt_rs::markdown_to_pptx_bytes(&amp;md, "Team Update")?;
 std::fs::write("team-update.pptx", bytes)?;</code></pre>
   <p>CLI (from <a href="https://github.com/yingkitw/ppt-rs">the repo</a>): <code>cargo install ppt-rs --features cli</code> then <code>pptcli md2ppt slides.md</code></p>
+  <p>Sample output (from <a href="../samples/readme-slides.md">readme-slides.md</a>):</p>
+  <p align="center">
+    <img src="assets/readme-slide-1.png" alt="Title slide" width="280" />
+    <img src="assets/readme-slide-2.png" alt="Table, code, tasks" width="280" />
+    <img src="assets/readme-slide-3.png" alt="Image and bullets" width="280" />
+  </p>
 
   <h2>Why pure Rust?</h2>
   <ul class="compact">
