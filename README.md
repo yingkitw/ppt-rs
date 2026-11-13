@@ -9,16 +9,45 @@
 [![GitHub Stars](https://img.shields.io/github/stars/yingkitw/ppt-rs?style=social)](https://github.com/yingkitw/ppt-rs/stargazers)
 [![MCP Server](https://img.shields.io/badge/MCP-ppt__mcp-purple)](https://modelcontextprotocol.io)
 [![Related: xls-rs](https://img.shields.io/crates/v/xls-rs?label=xls-rs)](https://crates.io/crates/xls-rs)
+[![Pure Rust](https://img.shields.io/badge/runtime-pure%20Rust-orange?logo=rust)](https://www.rust-lang.org/)
 
-**The Rust library for generating PowerPoint presentations that actually works.**
+**Pure Rust** library and CLI for PowerPoint 2007+ (`.pptx`): create decks, import Markdown/HTML, edit existing files, export PDF/images, and validate packages — **no Python, Node.js, or LibreOffice** in the core path.
 
-While other Rust crates for PPTX generation are incomplete, broken, or abandoned, `ppt-rs` generates **valid, production-ready PowerPoint files** that open correctly in PowerPoint, LibreOffice, Google Slides, and other Office applications.
+**Docs:** [docs.rs/ppt-rs](https://docs.rs/ppt-rs) · **Guides:** [docs/index.html](docs/index.html) · **Repo:** [github.com/yingkitw/ppt-rs](https://github.com/yingkitw/ppt-rs) · **Excel sibling:** [`xls-rs`](https://crates.io/crates/xls-rs)
 
-**Related:** For Excel, see [`xls-rs`](https://crates.io/crates/xls-rs).
+### Create a deck (10 lines)
 
-**MCP:** Build with `--features mcp` and run **`ppt_mcp`** — a [Model Context Protocol](https://modelcontextprotocol.io) server ([rmcp](https://crates.io/crates/rmcp)) so Cursor, Claude Desktop, and other MCP clients can create, read, export, and validate `.pptx` via stdio. See [MCP server](#mcp-server-model-context-protocol).
+```rust
+use ppt_rs::prelude::*;
+use ppt_rs::pptx;
 
-**NEW v0.2.37**: modular `generator/builder/` and `import/html/` trees, unified package content-types writer, `ContentTypesPart::from_xml`, ARCHITECTURE capability map — lean packaging/import refactor with no public API break. **v0.2.36**: clippy `--all-features --all-targets -D warnings` green for the first time (lib + bins + tests + examples) — 53 mechanical/structural lints fixed (`collapsible_if`, `collapsible_match`, `useless_vec`, `len_zero`, `ptr_arg`). **v0.2.35**: full review-comments round-trip — `import_pptx` preserves authors and per-slide comments. **v0.2.34**: optional REST/HTTP server (`http` feature, `ppt_http` binary). **v0.2.30**: semantic slide-level diff (`pptcli diff`, MCP `diff_pptx`). **v0.2.24**: `web2md` bridge — HTML→Markdown→Slides pipeline via the `web2md` crate with a `--web2md` CLI flag on `web2ppt`. **v0.2.23**: pure-Rust PDF export via `pdfrs` (`pdf-native` feature, no LibreOffice dependency). **v0.2.19**: PowerPoint zero-repair compatibility gate — multiple slide layouts, template-based generation, chart Excel workbook embedding, handout master packaging, slide master completeness, and a structured `core::package_validation` API.
+fn main() -> ppt_rs::Result<()> {
+    let bytes = pptx!("Quarterly Update")
+        .slide("Welcome", &["Pure Rust PPTX", "Opens without repair"])
+        .slide("Metrics", &["Revenue +12%", "Shipped v0.2.37"])
+        .build()?;
+    std::fs::write("deck.pptx", bytes)?;
+    Ok(())
+}
+```
+
+Run: `cargo add ppt-rs` then paste the snippet, or `pptcli md2ppt slides.md` for Markdown-first workflows. Optional **`ppt_mcp`** (`--features mcp`) exposes the same workflows over [MCP](https://modelcontextprotocol.io) — see [MCP server](#mcp-server-model-context-protocol).
+
+### How it compares
+
+| | **ppt-rs** | [python-pptx](https://github.com/scanny/python-pptx) | [pptxgenjs](https://github.com/gitbrent/PptxGenJS) | Typical Rust `.pptx` crates |
+|---|:---:|:---:|:---:|:---:|
+| **Language / runtime** | Pure Rust | Python | Node / browser | Rust (often immature) |
+| **Valid PPTX + zero-repair gate** | Yes | Yes | Yes | Often broken or unmaintained |
+| **Markdown / HTML → slides** | CLI + API | Community tools | Limited | Rare |
+| **PDF export (no LibreOffice)** | `pdf-native` | No | No | No |
+| **MCP + HTTP server** | `ppt_mcp` / `ppt_http` | No | No | No |
+| **Round-trip import + edit** | Yes | Yes | Write-focused | Partial |
+| **1300+ automated tests** | Yes | Large ecosystem | Large ecosystem | Varies |
+
+`ppt-rs` targets **Rust-native** services, CLIs, and agents that need **production-grade OOXML** without pulling another language runtime — while staying close to python-pptx ergonomics for text frames, layouts, and charts.
+
+**Latest (v0.2.37):** lean `generator/builder/` / `import/html/` refactor, unified content-types writer, `ContentTypesPart::from_xml`. See [changelog notes](#what-makes-this-different) below for earlier milestones (MCP, HTTP, `web2md`, PDF, validation API).
 
 ## Why ppt-rs?
 

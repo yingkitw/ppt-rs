@@ -1,6 +1,9 @@
 //! PowerPoint (.pptx) file manipulation library
 //!
-//! A comprehensive Rust library for creating, reading, and updating PowerPoint 2007+ (.pptx) files.
+//! **Pure Rust** library for creating, reading, updating, and validating PowerPoint 2007+ (`.pptx`)
+//! files — ECMA-376 Office Open XML, with optional CLI, MCP, and HTTP surfaces.
+//!
+//! Full API reference: <https://docs.rs/ppt-rs>
 //!
 //! # Quick Start
 //!
