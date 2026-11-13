@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="ppt-rs — pure Rust library and CLI for PowerPoint (.pptx): create, import, edit, validate, export.">
+  <meta name="description" content="ppt-rs — pure Rust library and CLI for PowerPoint (.pptx): create, import, edit, validate, export. Source: https://github.com/yingkitw/ppt-rs">
   <meta name="keywords" content="rust, powerpoint, pptx, openxml, markdown, office, presentation">
+  <link rel="canonical" href="https://github.com/yingkitw/ppt-rs#documentation">
   <title>ppt-rs — Pure Rust PowerPoint (.pptx)</title>
   <style>
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1.25rem; color: #1a1a1a; line-height: 1.65; }
@@ -25,26 +26,32 @@
 </head>
 <body>
   <h1>ppt-rs</h1>
-  <p class="tagline"><span class="badge">Pure Rust</span> Create, read, update, and validate PowerPoint 2007+ (<code>.pptx</code>) — Markdown/HTML import, themes, charts, PDF export, MCP tools.</p>
+  <p class="tagline"><span class="badge">Markdown → PPTX</span> Pure Rust: write <code># slides</code> in Markdown, get PowerPoint — one API call or <code>pptcli md2ppt</code>.</p>
 
   <p class="badges">
-    <a href="https://docs.rs/ppt-rs"><img src="https://docs.rs/ppt-rs/badge.svg" alt="docs.rs"></a>
+    <a href="https://github.com/yingkitw/ppt-rs"><img src="https://img.shields.io/github/v/release/yingkitw/ppt-rs?logo=github&amp;label=GitHub" alt="GitHub releases"></a>
     <a href="https://crates.io/crates/ppt-rs"><img src="https://img.shields.io/crates/v/ppt-rs" alt="crates.io"></a>
-    <a href="https://github.com/yingkitw/ppt-rs"><img src="https://img.shields.io/github/stars/yingkitw/ppt-rs?style=social" alt="GitHub"></a>
+    <a href="https://pypi.org/project/ppt-rs/"><img src="https://img.shields.io/pypi/v/ppt-rs" alt="PyPI"></a>
+    <a href="https://docs.rs/ppt-rs"><img src="https://docs.rs/ppt-rs/badge.svg" alt="docs.rs"></a>
+    <a href="https://github.com/yingkitw/ppt-rs/blob/main/LICENSE"><img src="https://img.shields.io/github/license/yingkitw/ppt-rs" alt="Apache-2.0"></a>
   </p>
 
-  <h2>Create a deck in 10 lines</h2>
-  <pre><code>use ppt_rs::prelude::*;
-use ppt_rs::pptx;
+  <h2>Project home</h2>
+  <table>
+    <tbody>
+      <tr><th>Repository</th><td><a href="https://github.com/yingkitw/ppt-rs">github.com/yingkitw/ppt-rs</a></td></tr>
+      <tr><th>Issues</th><td><a href="https://github.com/yingkitw/ppt-rs/issues">Report bugs / ask questions</a></td></tr>
+      <tr><th>License</th><td><a href="https://github.com/yingkitw/ppt-rs/blob/main/LICENSE">Apache-2.0</a></td></tr>
+    </tbody>
+  </table>
 
-fn main() -&gt; ppt_rs::Result&lt;()&gt; {
-    let bytes = pptx!("Quarterly Update")
-        .slide("Welcome", &amp;["Pure Rust PPTX", "Opens without repair"])
-        .slide("Metrics", &amp;["Revenue +12%", "Shipped"])
-        .build()?;
-    std::fs::write("deck.pptx", bytes)?;
-    Ok(())
-}</code></pre>
+  <h2>Markdown → PowerPoint in Rust</h2>
+  <pre><code>// Cargo.toml: ppt-rs = { version = "0.2.37", features = ["markdown"] }
+
+let md = std::fs::read_to_string("slides.md")?;
+let bytes = ppt_rs::markdown_to_pptx_bytes(&amp;md, "Team Update")?;
+std::fs::write("team-update.pptx", bytes)?;</code></pre>
+  <p>CLI (from <a href="https://github.com/yingkitw/ppt-rs">the repo</a>): <code>cargo install ppt-rs --features cli</code> then <code>pptcli md2ppt slides.md</code></p>
 
   <h2>Why pure Rust?</h2>
   <ul class="compact">

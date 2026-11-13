@@ -3,21 +3,18 @@
 //! **Pure Rust** library for creating, reading, updating, and validating PowerPoint 2007+ (`.pptx`)
 //! files — ECMA-376 Office Open XML, with optional CLI, MCP, and HTTP surfaces.
 //!
-//! Full API reference: <https://docs.rs/ppt-rs>
+//! **Repository (source of truth):** <https://github.com/yingkitw/ppt-rs>  
+//! **API reference:** <https://docs.rs/ppt-rs> · **Issues:** <https://github.com/yingkitw/ppt-rs/issues>
 //!
-//! # Quick Start
+//! # Quick Start — Markdown → PowerPoint
 //!
 //! ```rust,no_run
-//! use ppt_rs::{create_pptx_with_content, SlideContent};
-//!
-//! let slides = vec![
-//!     SlideContent::new("Welcome")
-//!         .add_bullet("First point")
-//!         .add_bullet("Second point"),
-//! ];
-//! let pptx_data = create_pptx_with_content("My Presentation", slides).unwrap();
-//! std::fs::write("output.pptx", pptx_data).unwrap();
+//! let markdown = "# Kickoff\n- Agenda\n- Goals\n\n# Status\n- On track";
+//! let pptx = ppt_rs::markdown_to_pptx_bytes(markdown, "Kickoff").unwrap();
+//! std::fs::write("kickoff.pptx", pptx).unwrap();
 //! ```
+//!
+//! Enable the Markdown parser with `features = ["markdown"]` (or `cli` for `pptcli md2ppt`).
 //!
 //! # Module Organization
 //!
@@ -39,7 +36,7 @@
 //! - **exc** - Error types
 
 pub mod api;
-#[cfg(any(feature = "cli", feature = "python"))]
+#[cfg(any(feature = "cli", feature = "python", feature = "markdown"))]
 pub mod cli;
 pub mod core;
 pub mod diff;
@@ -69,6 +66,10 @@ pub mod web2ppt;
 pub mod python;
 
 pub use api::Presentation;
+#[cfg(any(feature = "cli", feature = "python", feature = "markdown"))]
+pub use api::markdown_to_pptx_bytes;
+#[cfg(any(feature = "cli", feature = "python", feature = "markdown"))]
+pub use cli::parse_markdown;
 pub use core::{
     CompatReport, PackageValidationIssue, PackageValidationReport, REQUIRED_PACKAGE_PARTS,
     ValidationCategory, ValidationSeverity, validate_package, validate_package_bytes,

@@ -5,12 +5,12 @@ build-backend = "maturin"
 [project]
 name = "ppt-rs"
 version = "0.2.37"
-description = "Pure Rust PowerPoint (.pptx) for Python — Markdown/HTML to slides, validation, text extraction"
+description = "Markdown → PowerPoint in pure Rust (Python bindings). pip install ppt-rs — same engine as https://github.com/yingkitw/ppt-rs"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Ying Kit WONG" }]
 requires-python = ">=3.9"
-keywords = ["powerpoint", "pptx", "openxml", "presentation", "markdown"]
+keywords = ["powerpoint", "pptx", "openxml", "presentation", "markdown", "rust"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
@@ -34,10 +34,13 @@ dev = ["pytest>=7.0"]
 ppt-rs = "ppt_rs.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/yingkitw/ppt-rs"
+Homepage = "https://github.com/yingkitw/ppt-rs#readme"
 Documentation = "https://docs.rs/ppt-rs"
 Repository = "https://github.com/yingkitw/ppt-rs"
-Issues = "https://github.com/yingkitw/ppt-rs/issues"
+"Source Code" = "https://github.com/yingkitw/ppt-rs"
+"Bug Tracker" = "https://github.com/yingkitw/ppt-rs/issues"
+Changelog = "https://github.com/yingkitw/ppt-rs/releases"
+"Rust crate" = "https://crates.io/crates/ppt-rs"
 
 [tool.maturin]
 manifest-path = "Cargo.toml"

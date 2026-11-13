@@ -1,37 +1,75 @@
 # ppt-rs
 
-[![Crates.io](https://img.shields.io/crates/v/ppt-rs)](https://crates.io/crates/ppt-rs)
+[![Crates.io](https://img.shields.io/crates/v/ppt-rs?label=crates.io)](https://crates.io/crates/ppt-rs)
+[![PyPI](https://img.shields.io/pypi/v/ppt-rs?label=PyPI)](https://pypi.org/project/ppt-rs/)
 [![Docs.rs](https://docs.rs/ppt-rs/badge.svg)](https://docs.rs/ppt-rs)
-[![Crates.io Downloads](https://img.shields.io/crates/d/ppt-rs)](https://crates.io/crates/ppt-rs)
-[![License](https://img.shields.io/crates/l/ppt-rs)](https://github.com/yingkitw/ppt-rs/blob/main/LICENSE)
-[![Rust Edition](https://img.shields.io/badge/edition-2024-orange)](https://www.rust-lang.org/)
-[![GitHub Repo](https://img.shields.io/badge/github-yingkitw%2Fppt-rs-blue?logo=github)](https://github.com/yingkitw/ppt-rs)
-[![GitHub Stars](https://img.shields.io/github/stars/yingkitw/ppt-rs?style=social)](https://github.com/yingkitw/ppt-rs/stargazers)
-[![MCP Server](https://img.shields.io/badge/MCP-ppt__mcp-purple)](https://modelcontextprotocol.io)
+[![License](https://img.shields.io/github/license/yingkitw/ppt-rs?label=Apache-2.0)](https://github.com/yingkitw/ppt-rs/blob/main/LICENSE)
+[![MSRV](https://img.shields.io/badge/MSRV-1.85-333?logo=rust)](https://github.com/yingkitw/ppt-rs/blob/main/Cargo.toml)
+[![Pure Rust](https://img.shields.io/badge/runtime-pure%20Rust-orange?logo=rust)](https://github.com/yingkitw/ppt-rs#readme)
+[![GitHub release](https://img.shields.io/github/v/release/yingkitw/ppt-rs?include_prereleases)](https://github.com/yingkitw/ppt-rs/releases)
+[![GitHub last commit](https://img.shields.io/github/last-commit/yingkitw/ppt-rs)](https://github.com/yingkitw/ppt-rs/commits/main/)
+[![MCP](https://img.shields.io/badge/MCP-ppt__mcp-purple)](https://github.com/yingkitw/ppt-rs#mcp-server-model-context-protocol)
 [![Related: xls-rs](https://img.shields.io/crates/v/xls-rs?label=xls-rs)](https://crates.io/crates/xls-rs)
-[![Pure Rust](https://img.shields.io/badge/runtime-pure%20Rust-orange?logo=rust)](https://www.rust-lang.org/)
 
-**Pure Rust** library and CLI for PowerPoint 2007+ (`.pptx`): create decks, import Markdown/HTML, edit existing files, export PDF/images, and validate packages — **no Python, Node.js, or LibreOffice** in the core path.
+> **Canonical repository:** [github.com/yingkitw/ppt-rs](https://github.com/yingkitw/ppt-rs) — source, issues, releases, and contribution guidelines. Crates.io and PyPI packages are built from this repo.
 
-**Docs:** [docs.rs/ppt-rs](https://docs.rs/ppt-rs) · **Guides:** [docs/index.html](docs/index.html) · **Repo:** [github.com/yingkitw/ppt-rs](https://github.com/yingkitw/ppt-rs) · **Excel sibling:** [`xls-rs`](https://crates.io/crates/xls-rs)
+**Markdown → PowerPoint in pure Rust.** Write `# slides` in a `.md` file, call one function or run `pptcli md2ppt`, and get a valid `.pptx` — no Python, Node.js, or LibreOffice in the pipeline. Also supports HTML import, edit round-trip, PDF export, and validation ([full feature list](#why-ppt-rs)).
 
-### Create a deck (10 lines)
+### Official links
+
+| Resource | URL |
+|----------|-----|
+| **Source (GitHub)** | https://github.com/yingkitw/ppt-rs |
+| **Issues & bugs** | https://github.com/yingkitw/ppt-rs/issues |
+| **Releases / changelog** | https://github.com/yingkitw/ppt-rs/releases |
+| **License** | [Apache-2.0](https://github.com/yingkitw/ppt-rs/blob/main/LICENSE) |
+| **Rust install** | `cargo add ppt-rs` → [crates.io/crates/ppt-rs](https://crates.io/crates/ppt-rs) |
+| **Python install** | `pip install ppt-rs` → [pypi.org/project/ppt-rs](https://pypi.org/project/ppt-rs/) |
+| **API reference** | [docs.rs/ppt-rs](https://docs.rs/ppt-rs) |
+| **Guides (in repo)** | [docs/index.html](docs/index.html) |
+| **Version** | `0.2.37` (see [Cargo.toml](Cargo.toml) / [releases](https://github.com/yingkitw/ppt-rs/releases)) |
+| **Quality bar** | 1300+ automated tests · `validate_package_bytes()` zero-repair gate |
+
+## Markdown → PowerPoint in Rust
+
+**The workflow we optimize for:** keep slides in Git as Markdown, compile to `.pptx` in CI or locally.
+
+| Step | What you do |
+|------|-------------|
+| 1 | Write `slides.md` (`#` = new slide, `-` = bullets) |
+| 2 | **Rust API** — `markdown_to_pptx_bytes(&md, "Title")` with feature `markdown` |
+| 3 | **CLI** — `pptcli md2ppt slides.md` (feature `cli`, install `pptcli`) |
 
 ```rust
-use ppt_rs::prelude::*;
-use ppt_rs::pptx;
+// Cargo.toml: ppt-rs = { version = "0.2.37", features = ["markdown"] }
 
 fn main() -> ppt_rs::Result<()> {
-    let bytes = pptx!("Quarterly Update")
-        .slide("Welcome", &["Pure Rust PPTX", "Opens without repair"])
-        .slide("Metrics", &["Revenue +12%", "Shipped v0.2.37"])
-        .build()?;
-    std::fs::write("deck.pptx", bytes)?;
+    let md = std::fs::read_to_string("slides.md")?;
+    let bytes = ppt_rs::markdown_to_pptx_bytes(&md, "Team Update")?;
+    std::fs::write("team-update.pptx", bytes)?;
     Ok(())
 }
 ```
 
-Run: `cargo add ppt-rs` then paste the snippet, or `pptcli md2ppt slides.md` for Markdown-first workflows. Optional **`ppt_mcp`** (`--features mcp`) exposes the same workflows over [MCP](https://modelcontextprotocol.io) — see [MCP server](#mcp-server-model-context-protocol).
+```bash
+# Same file, no Rust code — install CLI once:
+cargo install ppt-rs --features cli
+pptcli md2ppt slides.md team-update.pptx --title "Team Update"
+```
+
+Example `slides.md`:
+
+```markdown
+# Team update
+- Shipped markdown → PPTX in pure Rust
+- Opens in PowerPoint without repair
+
+# Q4 focus
+- Docs in Git
+- `cargo test` on every PR
+```
+
+Repository clone: [github.com/yingkitw/ppt-rs](https://github.com/yingkitw/ppt-rs). Optional [**`ppt_mcp`**](#mcp-server-model-context-protocol) runs the same conversion for AI assistants.
 
 ### How it compares
 
@@ -43,7 +81,7 @@ Run: `cargo add ppt-rs` then paste the snippet, or `pptcli md2ppt slides.md` for
 | **PDF export (no LibreOffice)** | `pdf-native` | No | No | No |
 | **MCP + HTTP server** | `ppt_mcp` / `ppt_http` | No | No | No |
 | **Round-trip import + edit** | Yes | Yes | Write-focused | Partial |
-| **1300+ automated tests** | Yes | Large ecosystem | Large ecosystem | Varies |
+| **1300+ automated tests** | Yes ([source](https://github.com/yingkitw/ppt-rs)) | Large ecosystem | Large ecosystem | Varies |
 
 `ppt-rs` targets **Rust-native** services, CLIs, and agents that need **production-grade OOXML** without pulling another language runtime — while staying close to python-pptx ergonomics for text frames, layouts, and charts.
 
@@ -71,9 +109,9 @@ Run: `cargo add ppt-rs` then paste the snippet, or `pptcli md2ppt slides.md` for
 
 ## Quick Start
 
-### Markdown to PowerPoint (Recommended)
+> **Start here:** [Markdown → PowerPoint in Rust](#markdown--powerpoint-in-rust) (API + CLI). The steps below expand on the same flow.
 
-The easiest way to create presentations: write Markdown, get PowerPoint.
+### Markdown to PowerPoint (detail)
 
 **1. Create a Markdown file:**
 
@@ -584,14 +622,16 @@ Publish wheels: GitHub Release → `.github/workflows/pypi.yml` (set `PYPI_API_T
 
 ### Rust (crates.io)
 
-Add to `Cargo.toml`:
+Markdown → PowerPoint (recommended):
 
 ```toml
 [dependencies]
-ppt-rs = "0.2.37"
+ppt-rs = { version = "0.2.37", features = ["markdown"] }
+```
 
-# Optional: MCP server types / embedding (library module `ppt_rs::mcp`)
-# ppt-rs = { version = "0.2.37", features = ["mcp"] }
+```toml
+# CLI binary (md2ppt, html2ppt, …): cargo install ppt-rs --features cli
+# MCP / HTTP: features = ["mcp"] or ["http"]
 ```
 
 ## Examples

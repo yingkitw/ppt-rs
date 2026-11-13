@@ -4,14 +4,17 @@ version = "0.2.37"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Ying Kit WONG"]
-description = "Pure Rust library and CLI to create, read, update, and validate PowerPoint 2007+ (.pptx) — Markdown/HTML import, themes, charts, PDF export, MCP."
+description = "Markdown → PowerPoint in pure Rust: create, read, update, and validate .pptx (CLI md2ppt, library API, optional MCP)."
 license = "Apache-2.0"
 repository = "https://github.com/yingkitw/ppt-rs"
-homepage = "https://github.com/yingkitw/ppt-rs"
+homepage = "https://github.com/yingkitw/ppt-rs#readme"
 documentation = "https://docs.rs/ppt-rs"
 keywords = ["powerpoint", "pptx", "openxml", "presentation", "markdown"]
 categories = ["text-processing", "parser-implementations", "command-line-utilities"]
 readme = "README.md"
+
+[package.metadata.docs.rs]
+all-features = true
 
 [dependencies]
 zip = "0.6"
@@ -50,6 +53,7 @@ pyo3 = { version = "0.22", features = ["extension-module", "abi3-py39"], optiona
 [features]
 default = ["pdf-native"]
 cli = ["clap", "pulldown-cmark", "syntect", "pdf-native"]
+markdown = ["pulldown-cmark"]
 python = ["dep:pyo3", "pulldown-cmark"]
 mcp = ["serde", "serde_json", "dep:rmcp", "dep:tokio", "cli"]
 http = ["serde", "serde_json", "dep:tokio", "dep:axum", "dep:base64", "cli"]

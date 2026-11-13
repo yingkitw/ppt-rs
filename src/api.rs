@@ -499,6 +499,32 @@ impl Presentation {
     }
 }
 
+/// Convert a Markdown string to PowerPoint (`.pptx`) bytes in pure Rust.
+///
+/// Each `# Heading` starts a new slide; bullets, tables, and fenced code are supported
+/// (same grammar as `pptcli md2ppt`). Requires Cargo feature **`markdown`** (or `cli`).
+///
+/// # Example
+///
+/// ```rust,no_run
+/// # fn main() -> ppt_rs::Result<()> {
+/// let md = "# Quarterly Review\n- Revenue up 12%\n\n# Next steps\n- Ship v0.2.37";
+/// let bytes = ppt_rs::markdown_to_pptx_bytes(md, "Quarterly Review")?;
+/// std::fs::write("review.pptx", bytes)?;
+/// # Ok(())
+/// # }
+/// ```
+#[cfg(any(feature = "cli", feature = "python", feature = "markdown"))]
+pub fn markdown_to_pptx_bytes(markdown: &str, title: &str) -> Result<Vec<u8>> {
+    let slides = crate::cli::parse_markdown(markdown).map_err(PptxError::Generic)?;
+    if slides.is_empty() {
+        return Err(PptxError::InvalidValue(
+            "Markdown produced no slides".to_string(),
+        ));
+    }
+    crate::generator::create_pptx_with_content(title, slides)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -518,5 +544,13 @@ mod tests {
 
         let result = pres.build();
         assert!(result.is_ok());
+    }
+
+    #[cfg(any(feature = "cli", feature = "markdown"))]
+    #[test]
+    fn markdown_to_pptx_bytes_produces_zip() {
+        let md = "# Deck\n- Point one\n\n# Close\n- Done";
+        let bytes = super::markdown_to_pptx_bytes(md, "Deck").unwrap();
+        assert!(bytes.starts_with(b"PK"));
     }
 }

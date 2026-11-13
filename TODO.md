@@ -1,6 +1,6 @@
 # TODO - ppt-rs
 
-**Tests**: 798 inline / 514 integration = 1312 total | **Warnings**: 0 (lib default features) | **Clippy**: `--all-features --all-targets -- -D warnings` green — lib, bins, tests, examples | **Version**: 0.2.37
+**Tests**: 799 inline / 514 integration = 1312 total | **Warnings**: 0 (lib default features) | **Clippy**: `--all-features --all-targets -- -D warnings` green — lib, bins, tests, examples | **Version**: 0.2.37
 
 ## Active
 
