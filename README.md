@@ -618,7 +618,7 @@ maturin develop --features python
 pytest python/tests
 ```
 
-Publish wheels: GitHub Release → `.github/workflows/pypi.yml` (set `PYPI_API_TOKEN`).
+Publish wheels manually: `maturin build --release --features python -o dist`, then `maturin upload` (PyPI token in env).
 
 ### Rust (crates.io)
 

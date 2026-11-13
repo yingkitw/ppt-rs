@@ -126,7 +126,7 @@ Maturin mixed layout: Rust extension module `ppt_rs._native` + pure-Python packa
 
 Console script: `ppt-rs md2ppt …`, `ppt-rs html2ppt …` (same names as Rust CLI subcommands).
 
-Build: `maturin build --release --features python`. Publish: GitHub Release + `.github/workflows/pypi.yml`.
+Build: `maturin build --release --features python`. Publish: `maturin upload` after building wheels/sdist (no GitHub Actions).
 
 ### Prelude Module
 
