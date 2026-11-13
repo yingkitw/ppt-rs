@@ -26,3 +26,11 @@ pub use parser::parse;
 pub fn parse_markdown(content: &str) -> Result<Vec<crate::generator::SlideContent>, String> {
     parser::parse(content)
 }
+
+/// Parse markdown from a file path (resolves relative image URLs)
+pub fn parse_markdown_file(
+    content: &str,
+    path: &std::path::Path,
+) -> Result<Vec<crate::generator::SlideContent>, String> {
+    parser::parse_with_base(content, path.parent())
+}

@@ -65,7 +65,7 @@ impl FromMarkdownCommand {
             fs::read_to_string(input).map_err(|e| format!("Failed to read markdown file: {e}"))?;
 
         // Parse markdown into slides using enhanced parser
-        let slides = super::markdown::parse_markdown(&md_content)?;
+        let slides = super::markdown::parse_markdown_file(&md_content, Path::new(input))?;
 
         if slides.is_empty() {
             return Err("No slides found in markdown file".to_string());

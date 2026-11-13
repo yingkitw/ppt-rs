@@ -57,6 +57,8 @@ pub struct SlideContent {
     pub ink_annotations: Option<InkAnnotations>,
     /// Review comments on the slide (packaged as `ppt/comments/commentN.xml`)
     pub comments: SlideComments,
+    /// Body placeholder Y (EMU) after auto-stacking table / code / bullets
+    pub content_body_y: Option<u32>,
 }
 
 impl SlideContent {
@@ -92,6 +94,56 @@ impl SlideContent {
             code_blocks: Vec::new(),
             ink_annotations: None,
             comments: SlideComments::default(),
+            content_body_y: None,
+        }
+    }
+
+    /// Stack table, syntax-highlighted code blocks, bullet body, and images vertically.
+    pub fn layout_stacked_content(&mut self) {
+        const GAP: u32 = 100_000;
+        const CODE_LINE_EMU: i64 = 300_000;
+        const DEFAULT_BODY_Y: u32 = 1_600_200;
+
+        let mut y = if let Some(ref table) = self.table {
+            table.y + table.height() + GAP
+        } else if !self.code_blocks.is_empty() {
+            1_800_000
+        } else {
+            DEFAULT_BODY_Y
+        };
+
+        let has_body = !self.bullets.is_empty() || !self.content.is_empty();
+        let cap_code = has_body && self.table.is_some();
+        for code in &mut self.code_blocks {
+            let mut lines = code.code.lines().count().max(1);
+            if cap_code {
+                lines = lines.min(5);
+            }
+            let height = (lines as i64 * CODE_LINE_EMU).clamp(600_000, 2_000_000);
+            code.x = 500_000;
+            code.width = 8_000_000;
+            code.y = y as i64;
+            code.height = height;
+            y += height as u32 + GAP;
+        }
+
+        if has_body && (self.table.is_some() || !self.code_blocks.is_empty()) {
+            self.content_body_y = Some(y);
+            let lines = self.bullets.len().max(self.content.len()) as u32;
+            y += lines * 380_000 + GAP;
+        }
+
+        for image in &mut self.images {
+            if self.table.is_none() && self.code_blocks.is_empty() && self.content_body_y.is_none()
+            {
+                let lines = self.bullets.len().max(self.content.len()) as u32;
+                image.y = DEFAULT_BODY_Y + lines * 380_000 + GAP;
+            } else {
+                image.y = y;
+            }
+            if image.x == 0 {
+                image.x = 2_000_000;
+            }
         }
     }
 

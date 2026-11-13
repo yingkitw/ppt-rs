@@ -16,7 +16,8 @@ fn main() -> Result<(), PptxError> {
 
     let md = std::fs::read_to_string(&md_path)
         .map_err(|e| PptxError::Io(e))?;
-    let slides = ppt_rs::parse_markdown(&md).map_err(PptxError::Generic)?;
+    let slides = ppt_rs::cli::markdown::parse_markdown_file(&md, &md_path)
+        .map_err(PptxError::Generic)?;
 
     let mut pres = Presentation::with_title("ppt-rs sample");
     for slide in slides {

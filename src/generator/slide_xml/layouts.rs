@@ -7,35 +7,8 @@ use super::content::render_additional_content;
 use crate::core::escape_xml;
 use crate::generator::layouts::ExtendedTextProps;
 use crate::generator::media::MediaRelIds;
-use crate::generator::slide::formatting::generate_text_props;
-use crate::generator::slide_content::{BulletPoint, BulletTextFormat, SlideContent};
-
-/// Generate text properties XML for a bullet, merging slide defaults with bullet-specific format
-fn generate_bullet_text_props(
-    default_props: &ExtendedTextProps,
-    bullet_format: Option<&BulletTextFormat>,
-) -> String {
-    if let Some(fmt) = bullet_format {
-        let props = ExtendedTextProps {
-            size: fmt.font_size.map(|s| s * 100).unwrap_or(default_props.size),
-            bold: fmt.bold || default_props.bold,
-            italic: fmt.italic || default_props.italic,
-            underline: fmt.underline || default_props.underline,
-            strikethrough: fmt.strikethrough,
-            subscript: fmt.subscript,
-            superscript: fmt.superscript,
-            color: fmt.color.clone().or_else(|| default_props.color.clone()),
-            highlight: fmt.highlight.clone(),
-            font_family: fmt
-                .font_family
-                .clone()
-                .or_else(|| default_props.font_family.clone()),
-        };
-        props.to_xml()
-    } else {
-        default_props.to_xml()
-    }
-}
+use crate::generator::slide::formatting::{generate_rich_text_runs, generate_text_props};
+use crate::generator::slide_content::{BulletPoint, SlideContent};
 
 /// Generate a bullet paragraph from a BulletPoint with full formatting
 fn generate_bullet_paragraph_from_point(
@@ -45,7 +18,14 @@ fn generate_bullet_paragraph_from_point(
     let indent = 457200 + (bullet.level * 457200);
     let margin_left = bullet.level * 457200 + indent;
     let bullet_xml = bullet.style.to_xml();
-    let text_props = generate_bullet_text_props(default_props, bullet.format.as_ref());
+
+    let rich_runs = generate_rich_text_runs(
+        &bullet.text,
+        default_props.size,
+        default_props.bold,
+        default_props.italic,
+        default_props.color.as_deref(),
+    );
 
     format!(
         r#"
@@ -53,18 +33,75 @@ fn generate_bullet_paragraph_from_point(
 <a:pPr lvl="{}" marL="{}" indent="-{}">
 {}
 </a:pPr>
-<a:r>
 {}
-<a:t>{}</a:t>
-</a:r>
 </a:p>"#,
         bullet.level,
         margin_left,
         indent,
         bullet_xml,
-        text_props,
-        escape_xml(&bullet.text)
+        rich_runs
     )
+}
+
+fn body_placeholder_geometry(content: &SlideContent) -> (u32, u32) {
+    let y = content.content_body_y.unwrap_or(1_600_200);
+    let height = (6_200_000u32).saturating_sub(y).max(800_000);
+    (y, height)
+}
+
+fn push_body_bullets(
+    xml: &mut String,
+    content: &SlideContent,
+    shape_id: u32,
+    y: u32,
+    height: u32,
+) {
+    let content_size = content.content_size.unwrap_or(28) * 100;
+    let default_props = ExtendedTextProps::with_basic(
+        content_size,
+        content.content_bold,
+        content.content_italic,
+        false,
+        content.content_color.as_deref(),
+    );
+
+    xml.push_str(&format!(
+        r#"
+<p:sp>
+<p:nvSpPr>
+<p:cNvPr id="{shape_id}" name="Content"/>
+<p:cNvSpPr txBox="1"/>
+<p:nvPr><p:ph type="body" idx="1"/></p:nvPr>
+</p:nvSpPr>
+<p:spPr>
+<a:xfrm>
+<a:off x="457200" y="{y}"/>
+<a:ext cx="8230200" cy="{height}"/>
+</a:xfrm>
+<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+<a:noFill/>
+</p:spPr>
+<p:txBody>
+<a:bodyPr wrap="square" rtlCol="0"/>
+<a:lstStyle/>"#
+    ));
+
+    if !content.bullets.is_empty() {
+        for bullet in &content.bullets {
+            xml.push_str(&generate_bullet_paragraph_from_point(bullet, &default_props));
+        }
+    } else {
+        for bullet in &content.content {
+            let bp = BulletPoint::new(bullet).with_style(content.bullet_style);
+            xml.push_str(&generate_bullet_paragraph_from_point(&bp, &default_props));
+        }
+    }
+
+    xml.push_str(
+        r#"
+</p:txBody>
+</p:sp>"#,
+    );
 }
 
 /// Create a blank slide
@@ -451,7 +488,6 @@ pub fn create_title_and_content_slide(
     media_rids: &[MediaRelIds],
 ) -> String {
     let title_size = content.title_size.unwrap_or(44) * 100;
-    let content_size = content.content_size.unwrap_or(28) * 100;
 
     let title_props = generate_text_props(
         title_size,
@@ -495,61 +531,14 @@ pub fn create_title_and_content_slide(
 </p:sp>"#
     ));
 
-    // Render table if present
     if let Some(ref table) = content.table {
         xml.push('\n');
         xml.push_str(&crate::generator::table::generate_table_xml(table, 3));
-    } else if !content.bullets.is_empty() || !content.content.is_empty() {
-        // Render bullets if no table — fill the layout's body placeholder idx="1"
-        xml.push_str(
-            r#"
-<p:sp>
-<p:nvSpPr>
-<p:cNvPr id="3" name="Content"/>
-<p:cNvSpPr txBox="1"/>
-<p:nvPr><p:ph type="body" idx="1"/></p:nvPr>
-</p:nvSpPr>
-<p:spPr>
-<a:xfrm>
-<a:off x="457200" y="1600200"/>
-<a:ext cx="8230200" cy="4572000"/>
-</a:xfrm>
-<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
-<a:noFill/>
-</p:spPr>
-<p:txBody>
-<a:bodyPr wrap="square" rtlCol="0"/>
-<a:lstStyle/>"#,
-        );
+    }
 
-        let default_props = ExtendedTextProps::with_basic(
-            content_size,
-            content.content_bold,
-            content.content_italic,
-            false,
-            content.content_color.as_deref(),
-        );
-
-        // Use styled bullets if available, otherwise use plain content
-        if !content.bullets.is_empty() {
-            for bullet in &content.bullets {
-                xml.push_str(&generate_bullet_paragraph_from_point(
-                    bullet,
-                    &default_props,
-                ));
-            }
-        } else {
-            for bullet in &content.content {
-                let bp = BulletPoint::new(bullet).with_style(content.bullet_style);
-                xml.push_str(&generate_bullet_paragraph_from_point(&bp, &default_props));
-            }
-        }
-
-        xml.push_str(
-            r#"
-</p:txBody>
-</p:sp>"#,
-        );
+    if !content.bullets.is_empty() || !content.content.is_empty() {
+        let (body_y, body_h) = body_placeholder_geometry(content);
+        push_body_bullets(&mut xml, content, 3, body_y, body_h);
     }
 
     // Render additional content (shapes, images, code blocks, connectors)

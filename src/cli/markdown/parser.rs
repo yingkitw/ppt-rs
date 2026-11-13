@@ -10,7 +10,15 @@ use crate::generator::{CodeBlock, Shape, ShapeFill, ShapeType, SlideContent};
 
 /// Parse markdown content into slides
 pub fn parse(content: &str) -> Result<Vec<SlideContent>, String> {
-    let mut parser = MarkdownParser::new();
+    parse_with_base(content, None)
+}
+
+/// Parse markdown with optional base directory for relative image paths
+pub fn parse_with_base(
+    content: &str,
+    base_dir: Option<&std::path::Path>,
+) -> Result<Vec<SlideContent>, String> {
+    let mut parser = MarkdownParser::new(base_dir);
     parser.parse(content)
 }
 
@@ -48,13 +56,16 @@ struct MarkdownParser {
     in_blockquote: bool,
     blockquote_text: String,
     // Image state
-    pending_image: Option<(String, String)>,
+    pending_image_url: Option<String>,
+    pending_image_alt: String,
+    in_image: bool,
+    base_dir: Option<std::path::PathBuf>,
     // Task list state
     current_task_checked: bool,
 }
 
 impl MarkdownParser {
-    fn new() -> Self {
+    fn new(base_dir: Option<&std::path::Path>) -> Self {
         Self {
             slides: Vec::new(),
             current_slide: None,
@@ -75,7 +86,10 @@ impl MarkdownParser {
             is_strikethrough: false,
             in_blockquote: false,
             blockquote_text: String::new(),
-            pending_image: None,
+            pending_image_url: None,
+            pending_image_alt: String::new(),
+            in_image: false,
+            base_dir: base_dir.map(std::path::Path::to_path_buf),
             current_task_checked: false,
         }
     }
@@ -257,10 +271,14 @@ impl MarkdownParser {
             Event::Start(Tag::Image {
                 dest_url, title, ..
             }) => {
-                self.pending_image = Some((dest_url.to_string(), title.to_string()));
+                self.in_image = true;
+                self.pending_image_url = Some(dest_url.to_string());
+                self.pending_image_alt = title.to_string();
             }
             Event::End(TagEnd::Image) => {
-                if let Some((url, alt)) = self.pending_image.take() {
+                self.in_image = false;
+                if let Some(url) = self.pending_image_url.take() {
+                    let alt = std::mem::take(&mut self.pending_image_alt);
                     self.add_image_placeholder(&url, &alt);
                 }
             }
@@ -276,7 +294,11 @@ impl MarkdownParser {
 
             // Text content
             Event::Text(text) => {
-                self.push_text(&text);
+                if self.in_image {
+                    self.pending_image_alt.push_str(&text);
+                } else {
+                    self.push_text(&text);
+                }
             }
             Event::SoftBreak | Event::HardBreak => {
                 self.push_text(" ");
@@ -555,10 +577,19 @@ impl MarkdownParser {
             }
             None
         } else {
-            // Try to load from local file path
-            let path = Path::new(url);
+            // Try to load from local file path (resolve relative to markdown file dir)
+            let path = {
+                let p = Path::new(url);
+                if p.is_absolute() {
+                    p.to_path_buf()
+                } else if let Some(ref base) = self.base_dir {
+                    base.join(p)
+                } else {
+                    p.to_path_buf()
+                }
+            };
             if path.exists()
-                && let Ok(bytes) = std::fs::read(path) {
+                && let Ok(bytes) = std::fs::read(&path) {
                     let img = ImageBuilder::auto(bytes)
                         .at(2000000, 2000000)
                         .size(5000000, 3000000)
@@ -591,7 +622,8 @@ impl MarkdownParser {
     fn finalize_current_slide(&mut self) {
         self.flush_list_items();
 
-        if let Some(slide) = self.current_slide.take() {
+        if let Some(mut slide) = self.current_slide.take() {
+            slide.layout_stacked_content();
             self.slides.push(slide);
         }
     }

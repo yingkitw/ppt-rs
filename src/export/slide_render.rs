@@ -11,6 +11,7 @@
 
 use crate::api::Presentation;
 use crate::exc::{PptxError, Result};
+use crate::generator::slide::formatting::parse_inline_formatting;
 use crate::generator::slide_content::{BulletStyle, SlideContent, SlideLayout};
 
 use pdfrs::pdf_generator::{PageLayout, PdfGenerator};
@@ -19,12 +20,14 @@ const FONT_HELVETICA: &str = "Helvetica";
 const FONT_HELVETICA_BOLD: &str = "Helvetica-Bold";
 const FONT_HELVETICA_OBLIQUE: &str = "Helvetica-Oblique";
 const FONT_HELVETICA_BOLD_OBLIQUE: &str = "Helvetica-BoldOblique";
+const FONT_COURIER: &str = "Courier";
 
 struct FontIds {
     helvetica: u32,
     helvetica_bold: u32,
     helvetica_oblique: u32,
     helvetica_bold_oblique: u32,
+    courier: u32,
 }
 
 fn add_fonts(generator: &mut PdfGenerator) -> FontIds {
@@ -44,11 +47,16 @@ fn add_fonts(generator: &mut PdfGenerator) -> FontIds {
         "<< /Type /Font\n/Subtype /Type1\n/BaseFont /{}\n>>\n",
         FONT_HELVETICA_BOLD_OBLIQUE
     ));
+    let courier = generator.add_object(format!(
+        "<< /Type /Font\n/Subtype /Type1\n/BaseFont /{}\n>>\n",
+        FONT_COURIER
+    ));
     FontIds {
         helvetica,
         helvetica_bold,
         helvetica_oblique,
         helvetica_bold_oblique,
+        courier,
     }
 }
 
@@ -101,6 +109,7 @@ struct TextLine<'a> {
     color: Rgb,
 }
 
+#[derive(Clone, Copy)]
 struct Rgb {
     r: f32,
     g: f32,
@@ -118,9 +127,73 @@ fn draw_text_line(out: &mut Vec<u8>, line: TextLine<'_>) {
     out.extend_from_slice(b"ET\n");
 }
 
-fn approx_text_width(text: &str, font_size: f32) -> f32 {
+fn approx_text_width(text: &str, font_size: f32, monospace: bool) -> f32 {
     let char_count = text.chars().count() as f32;
-    char_count * font_size * 0.5
+    let factor = if monospace { 0.6 } else { 0.52 };
+    char_count * font_size * factor
+}
+
+fn draw_plain_text_line(
+    cs: &mut Vec<u8>,
+    text: &str,
+    x: f32,
+    y: f32,
+    font_size: f32,
+    bold: bool,
+    italic: bool,
+    color: Rgb,
+) {
+    if text.is_empty() {
+        return;
+    }
+    draw_text_line(
+        cs,
+        TextLine {
+            text,
+            x,
+            y,
+            font_name: font_name(bold, italic),
+            font_size,
+            color,
+        },
+    );
+}
+
+fn draw_markdown_line(
+    cs: &mut Vec<u8>,
+    text: &str,
+    mut x: f32,
+    y: f32,
+    font_size: f32,
+    base_bold: bool,
+    base_italic: bool,
+    color: Rgb,
+) {
+    for segment in parse_inline_formatting(text) {
+        let bold = base_bold || segment.bold;
+        let italic = base_italic || segment.italic;
+        let font = if segment.code {
+            FONT_COURIER
+        } else {
+            font_name(bold, italic)
+        };
+        draw_text_line(
+            cs,
+            TextLine {
+                text: &segment.text,
+                x,
+                y,
+                font_name: font,
+                font_size: if segment.code {
+                    font_size * 0.95
+                } else {
+                    font_size
+                },
+                color,
+            },
+        );
+        x += approx_text_width(&segment.text, font_size, segment.code);
+    }
 }
 
 fn bullet_prefix(style: BulletStyle, index: u32) -> String {
@@ -195,7 +268,7 @@ fn render_slide(
 
     match slide.layout {
         SlideLayout::CenteredTitle | SlideLayout::SectionHeader => {
-            let tw = approx_text_width(&slide.title, title_size);
+            let tw = approx_text_width(&slide.title, title_size, false);
             let tx = (page_w - tw) / 2.0;
                         draw_text_line(&mut cs, TextLine {
                         text: &slide.title,
@@ -250,94 +323,9 @@ fn render_slide(
         SlideLayout::CenteredTitle | SlideLayout::SectionHeader
     );
 
-    if !slide.bullets.is_empty() {
-        let mut numbered = 0u32;
-        for bp in &slide.bullets {
-            if y < margin + line_height {
-                break;
-            }
+  let body_color = Rgb { r: cr, g: cg, b: cb };
 
-            let prefix = bullet_prefix(bp.style, numbered);
-            let indent = (bp.level as f32) * 20.0;
-            let bx = margin + indent;
-
-            let fmt = bp.format.as_ref();
-            let b_bold = content_bold || fmt.is_some_and(|f| f.bold);
-            let b_italic = content_italic || fmt.is_some_and(|f| f.italic);
-            let (btr, btg, btb) = fmt
-                .and_then(|f| f.color.as_deref())
-                .map(hex_to_rgb)
-                .unwrap_or((cr, cg, cb));
-            let b_size = fmt
-                .and_then(|f| f.font_size)
-                .map(|s| s as f32 * 0.75)
-                .unwrap_or(content_size);
-
-            if !prefix.is_empty() {
-                                draw_text_line(&mut cs, TextLine {
-                            text: &prefix,
-                            x: bx,
-                            y,
-                            font_name: font_name(b_bold, b_italic),
-                            font_size: b_size,
-                            color: Rgb { r: btr, g: btg, b: btb },
-                    });
-            }
-
-            let text_x = bx + if prefix.is_empty() { 0.0 } else { 20.0 };
-            let text = &bp.text;
-                        draw_text_line(&mut cs, TextLine {
-                        text,
-                        x: text_x,
-                        y,
-                        font_name: font_name(b_bold, b_italic),
-                        font_size: b_size,
-                        color: Rgb { r: btr, g: btg, b: btb },
-                });
-
-            y -= line_height;
-            if matches!(
-                bp.style,
-                BulletStyle::Number
-                    | BulletStyle::LetterLower
-                    | BulletStyle::LetterUpper
-                    | BulletStyle::RomanLower
-                    | BulletStyle::RomanUpper
-            ) {
-                numbered += 1;
-            }
-        }
-    } else if !slide.content.is_empty() {
-        for line in &slide.content {
-            if y < margin + line_height {
-                break;
-            }
-            if is_centered {
-                let tw = approx_text_width(line, content_size);
-                let tx = (page_w - tw) / 2.0;
-                                draw_text_line(&mut cs, TextLine {
-                            text: line,
-                            x: tx,
-                            y,
-                            font_name: font_name(content_bold, content_italic),
-                            font_size: content_size,
-                            color: Rgb { r: cr, g: cg, b: cb },
-                    });
-            } else {
-                                draw_text_line(&mut cs, TextLine {
-                            text: line,
-                            x: margin,
-                            y,
-                            font_name: font_name(content_bold, content_italic),
-                            font_size: content_size,
-                            color: Rgb { r: cr, g: cg, b: cb },
-                    });
-            }
-            y -= line_height;
-        }
-    }
-
-    // Tables (preview / PDF — grid aligned with PPTX table content)
+    // Tables first (match PPTX / markdown order)
     if let Some(table) = &slide.table {
         let cols = table.column_count().max(1);
         let table_width = page_w - 2.0 * margin;
@@ -381,14 +369,23 @@ fn render_slide(
         y -= line_height * 0.4;
     }
 
-    // Code blocks
     for code_block in &slide.code_blocks {
         if y < margin + line_height {
             break;
         }
         let code_size = content_size * 0.85;
         let code_line_h = code_size * 1.4;
-        let code_bg_h = (code_block.code.lines().count() as f32 + 1.0) * code_line_h;
+        let line_cap = if slide.table.is_some() && !slide.bullets.is_empty() {
+            5usize
+        } else {
+            usize::MAX
+        };
+        let code_lines: Vec<&str> = code_block
+            .code
+            .lines()
+            .take(line_cap)
+            .collect();
+        let code_bg_h = (code_lines.len() as f32 + 1.0) * code_line_h;
 
         // Background
         set_color(&mut cs, 0.95, 0.95, 0.95);
@@ -402,26 +399,170 @@ fn render_slide(
 
         // Code text
         y -= code_line_h;
-        for line in code_block.code.lines() {
+        for line in &code_lines {
             if y < margin {
                 break;
             }
-                        draw_text_line(&mut cs, TextLine {
-                        text: line,
-                        x: margin + 8.0,
-                        y,
-                        font_name: "Courier",
-                        font_size: code_size,
-                        color: Rgb { r: 0.1, g: 0.1, b: 0.1 },
-                });
+            draw_plain_text_line(
+                &mut cs,
+                line,
+                margin + 8.0,
+                y,
+                code_size,
+                false,
+                false,
+                Rgb { r: 0.1, g: 0.1, b: 0.1 },
+            );
             y -= code_line_h;
         }
         y -= line_height * 0.5;
     }
 
+    if !slide.bullets.is_empty() {
+        let mut numbered = 0u32;
+        for bp in &slide.bullets {
+            if y < margin + line_height {
+                break;
+            }
+
+            let prefix = bullet_prefix(bp.style, numbered);
+            let indent = (bp.level as f32) * 20.0;
+            let bx = margin + indent;
+
+            let fmt = bp.format.as_ref();
+            let b_bold = content_bold || fmt.is_some_and(|f| f.bold);
+            let b_italic = content_italic || fmt.is_some_and(|f| f.italic);
+            let (btr, btg, btb) = fmt
+                .and_then(|f| f.color.as_deref())
+                .map(hex_to_rgb)
+                .unwrap_or((cr, cg, cb));
+            let b_size = fmt
+                .and_then(|f| f.font_size)
+                .map(|s| s as f32 * 0.75)
+                .unwrap_or(content_size);
+            let bullet_color = Rgb { r: btr, g: btg, b: btb };
+
+            if !prefix.is_empty() {
+                draw_plain_text_line(
+                    &mut cs,
+                    &prefix,
+                    bx,
+                    y,
+                    b_size,
+                    b_bold,
+                    b_italic,
+                    bullet_color,
+                );
+            }
+
+            let text_x = bx + if prefix.is_empty() { 0.0 } else { 20.0 };
+            draw_markdown_line(
+                &mut cs,
+                &bp.text,
+                text_x,
+                y,
+                b_size,
+                b_bold,
+                b_italic,
+                bullet_color,
+            );
+
+            y -= line_height;
+            if matches!(
+                bp.style,
+                BulletStyle::Number
+                    | BulletStyle::LetterLower
+                    | BulletStyle::LetterUpper
+                    | BulletStyle::RomanLower
+                    | BulletStyle::RomanUpper
+            ) {
+                numbered += 1;
+            }
+        }
+    } else if !slide.content.is_empty() {
+        for line in &slide.content {
+            if y < margin + line_height {
+                break;
+            }
+            if is_centered {
+                let tw = approx_text_width(line, content_size, false);
+                let tx = (page_w - tw) / 2.0;
+                draw_markdown_line(
+                    &mut cs,
+                    line,
+                    tx,
+                    y,
+                    content_size,
+                    content_bold,
+                    content_italic,
+                    body_color,
+                );
+            } else {
+                draw_markdown_line(
+                    &mut cs,
+                    line,
+                    margin,
+                    y,
+                    content_size,
+                    content_bold,
+                    content_italic,
+                    body_color,
+                );
+            }
+            y -= line_height;
+        }
+    }
+
+    for image in &slide.images {
+        if y < margin + 60.0 {
+            break;
+        }
+        let img_h = 120.0;
+        let img_w = page_w - 2.0 * margin;
+        set_color(&mut cs, 0.92, 0.92, 0.92);
+        draw_rect(&mut cs, margin, y - img_h, img_w, img_h);
+        set_color(&mut cs, 0.45, 0.45, 0.45);
+        draw_rect(&mut cs, margin, y - img_h, img_w, img_h);
+        cs.extend_from_slice(b"S\n");
+        let label = image.alt_text.as_deref().unwrap_or(&image.filename);
+        draw_plain_text_line(
+            &mut cs,
+            label,
+            margin + 12.0,
+            y - img_h / 2.0 - content_size * 0.35,
+            content_size * 0.9,
+            false,
+            false,
+            Rgb { r: 0.35, g: 0.35, b: 0.35 },
+        );
+        y -= img_h + line_height * 0.5;
+    }
+
+    for shape in &slide.shapes {
+        if y < margin + 40.0 {
+            break;
+        }
+        if let Some(ref text) = shape.text {
+            let sh = 80.0;
+            set_color(&mut cs, 0.9, 0.9, 0.9);
+            draw_rect(&mut cs, margin, y - sh, page_w - 2.0 * margin, sh);
+            draw_plain_text_line(
+                &mut cs,
+                text,
+                margin + 8.0,
+                y - sh + 24.0,
+                content_size * 0.85,
+                false,
+                false,
+                body_color,
+            );
+            y -= sh + line_height * 0.3;
+        }
+    }
+
     // Slide number footer
     let footer = format!("{} / {}", slide_num, total);
-    let fw = approx_text_width(&footer, 10.0);
+    let fw = approx_text_width(&footer, 10.0, false);
         draw_text_line(&mut cs, TextLine {
                 text: &footer,
                 x: (page_w - fw) / 2.0,
@@ -454,6 +595,7 @@ fn add_page(
              /{} {} 0 R \
              /{} {} 0 R \
              /{} {} 0 R \
+             /{} {} 0 R \
          >> >>\n\
          >>\n",
         pages_obj_id,
@@ -468,6 +610,8 @@ fn add_page(
         font_ids.helvetica_oblique,
         FONT_HELVETICA_BOLD_OBLIQUE,
         font_ids.helvetica_bold_oblique,
+        FONT_COURIER,
+        font_ids.courier,
     );
     generator.add_object(page_dict)
 }

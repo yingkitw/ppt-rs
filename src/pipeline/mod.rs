@@ -168,8 +168,7 @@ fn parse_slides(
 fn parse_markdown_slides(content: &str, path: &Path) -> Result<Vec<SlideContent>> {
     #[cfg(feature = "cli")]
     {
-        let _ = path;
-        crate::cli::parse_markdown(content).map_err(PptxError::Generic)
+        crate::cli::markdown::parse_markdown_file(content, path).map_err(PptxError::Generic)
     }
     #[cfg(not(feature = "cli"))]
     {
