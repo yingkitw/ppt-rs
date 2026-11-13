@@ -17,6 +17,8 @@ MEMORY.md
 .venv/
 dist/
 *.egg-info/
+__pycache__/
+*.pyc
 python/ppt_rs/*.so
 python/ppt_rs/_native*.so
 
