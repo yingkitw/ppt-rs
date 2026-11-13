@@ -5,7 +5,7 @@
 | `readme-slides.md` | Markdown used in the README workflow example |
 | `readme-slides.pptx` | Generated deck (regenerate with `pptcli md2ppt`) |
 
-Three-slide showcase: title bullets, table + syntax-highlighted Rust + task list, bullets + embedded image.
+Three-slide showcase: title bullets, table + syntax-highlighted Rust + task list, bullets + photo from `examples/assets/` (same stock images as `comprehensive_demo`).
 
 Regenerate README previews (**use this** — renders from Markdown in memory so tables + code show correctly; `pptcli export` re-imports and drops code blocks):
 

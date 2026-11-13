@@ -29,4 +29,4 @@ fn main() -> ppt_rs::Result<()> {
 - Themes, charts, templates, MCP `ppt_mcp`
 - Round-trip import and text-frame editing
 
-![Architecture diagram](../examples/assets/diagram.png)
+![Flower (comprehensive demo asset)](../examples/assets/flower.jpg)

@@ -141,8 +141,12 @@ impl SlideContent {
             } else {
                 image.y = y;
             }
-            if image.x == 0 {
-                image.x = 2_000_000;
+            if image.width < 6_000_000 {
+                image.width = 6_858_000;
+                image.height = 3_857_250;
+            }
+            if image.x == 0 || image.x == 2_000_000 {
+                image.x = 1_143_000;
             }
         }
     }

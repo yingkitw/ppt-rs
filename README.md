@@ -59,7 +59,7 @@ pptcli md2ppt slides.md team-update.pptx --title "Team Update"
 
 Example `slides.md` ([`samples/readme-slides.md`](samples/readme-slides.md)) — tables, code, tasks, **inline formatting**, and an image:
 
-See full sample: [`samples/readme-slides.md`](samples/readme-slides.md) (3 slides: title bullets, **table + Rust code + tasks**, image + feature list).
+See full sample: [`samples/readme-slides.md`](samples/readme-slides.md) (3 slides: title bullets, **table + Rust code + tasks**, bullets + photo from `comprehensive_demo` assets).
 
 **Output** — rendered by ppt-rs ([download `readme-slides.pptx`](samples/readme-slides.pptx)):
 

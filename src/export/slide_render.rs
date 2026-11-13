@@ -11,9 +11,12 @@
 
 use crate::api::Presentation;
 use crate::exc::{PptxError, Result};
+use crate::generator::images::ImageSource;
 use crate::generator::slide::formatting::parse_inline_formatting;
 use crate::generator::slide_content::{BulletStyle, SlideContent, SlideLayout};
+use crate::generator::Image;
 
+use pdfrs::image::{self, ImageInfo, create_image_content_stream, create_image_object};
 use pdfrs::pdf_generator::{PageLayout, PdfGenerator};
 
 const FONT_HELVETICA: &str = "Helvetica";
@@ -213,6 +216,39 @@ fn bullet_prefix(style: BulletStyle, index: u32) -> String {
     }
 }
 
+struct SlideRenderOutput {
+    content: Vec<u8>,
+    images: Vec<(String, ImageInfo)>,
+}
+
+fn resolve_image_bytes(image: &Image) -> Option<Vec<u8>> {
+    match image.source.as_ref()? {
+        ImageSource::Bytes(b) => Some(b.clone()),
+        ImageSource::File(p) => std::fs::read(p).ok(),
+        ImageSource::Base64(_) => None,
+        #[cfg(feature = "web2ppt")]
+        ImageSource::Url(_) => None,
+    }
+}
+
+fn image_info_from_bytes(bytes: &[u8], alt: Option<String>) -> Option<ImageInfo> {
+    let suffix = if image::detect_image_format(bytes).ok()? == pdfrs::image::ImageFormat::Png {
+        "png"
+    } else {
+        "jpg"
+    };
+    let tmp = std::env::temp_dir().join(format!(
+        "ppt_rs_img_{}.{}",
+        uuid::Uuid::new_v4(),
+        suffix
+    ));
+    std::fs::write(&tmp, bytes).ok()?;
+    let path = tmp.to_string_lossy();
+    let info = image::load_image_with_alt_text(&path, alt).ok();
+    let _ = std::fs::remove_file(&tmp);
+    info
+}
+
 fn to_roman(mut num: u32) -> String {
     let pairs = [
         (1000, "M"),
@@ -244,8 +280,9 @@ fn render_slide(
     slide_num: usize,
     total: usize,
     layout: &PageLayout,
-) -> Vec<u8> {
+) -> SlideRenderOutput {
     let mut cs = Vec::with_capacity(2048);
+    let mut page_images: Vec<(String, ImageInfo)> = Vec::new();
     let page_w = layout.width;
     let page_h = layout.height;
     let margin = 54.0;
@@ -517,13 +554,24 @@ fn render_slide(
         if y < margin + 60.0 {
             break;
         }
+        let max_w = page_w - 2.0 * margin;
+        let max_h = (y - margin - 20.0).max(60.0);
+        if let Some(bytes) = resolve_image_bytes(image)
+            && let Some(info) =
+                image_info_from_bytes(&bytes, image.alt_text.clone())
+        {
+            let (dw, dh) = image::scale_to_fit(info.width, info.height, max_w, max_h);
+            let name = format!("Im{}", page_images.len() + 1);
+            let x = margin + (max_w - dw) / 2.0;
+            let y_bottom = y - dh;
+            cs.extend_from_slice(&create_image_content_stream(x, y_bottom, dw, dh, &name));
+            page_images.push((name, info));
+            y = y_bottom - line_height * 0.4;
+            continue;
+        }
         let img_h = 120.0;
-        let img_w = page_w - 2.0 * margin;
         set_color(&mut cs, 0.92, 0.92, 0.92);
-        draw_rect(&mut cs, margin, y - img_h, img_w, img_h);
-        set_color(&mut cs, 0.45, 0.45, 0.45);
-        draw_rect(&mut cs, margin, y - img_h, img_w, img_h);
-        cs.extend_from_slice(b"S\n");
+        draw_rect(&mut cs, margin, y - img_h, max_w, img_h);
         let label = image.alt_text.as_deref().unwrap_or(&image.filename);
         draw_plain_text_line(
             &mut cs,
@@ -572,18 +620,33 @@ fn render_slide(
                 color: Rgb { r: 0.5, g: 0.5, b: 0.5 },
         });
 
-    cs
+    SlideRenderOutput {
+        content: cs,
+        images: page_images,
+    }
 }
 
 fn add_page(
     generator: &mut PdfGenerator,
-    content: Vec<u8>,
+    output: SlideRenderOutput,
     layout: &PageLayout,
     font_ids: &FontIds,
     pages_obj_id: u32,
-) -> u32 {
-    let dict = format!("<< /Length {} >>\n", content.len());
-    let content_id = generator.add_stream_object(dict, content);
+) -> Result<u32> {
+    let dict = format!("<< /Length {} >>\n", output.content.len());
+    let content_id = generator.add_stream_object(dict, output.content);
+
+    let mut xobject_parts = Vec::new();
+    for (name, info) in &output.images {
+        let id = create_image_object(generator, info.clone())
+            .map_err(|e| PptxError::Generic(format!("PDF image embed failed: {e}")))?;
+        xobject_parts.push(format!("/{} {} 0 R", name, id));
+    }
+    let xobject_resource = if xobject_parts.is_empty() {
+        String::new()
+    } else {
+        format!(" /XObject << {} >>", xobject_parts.join(" "))
+    };
 
     let page_dict = format!(
         "<< /Type /Page\n\
@@ -596,7 +659,7 @@ fn add_page(
              /{} {} 0 R \
              /{} {} 0 R \
              /{} {} 0 R \
-         >> >>\n\
+         >>{}>>\n\
          >>\n",
         pages_obj_id,
         layout.width,
@@ -612,8 +675,9 @@ fn add_page(
         font_ids.helvetica_bold_oblique,
         FONT_COURIER,
         font_ids.courier,
+        xobject_resource,
     );
-    generator.add_object(page_dict)
+    Ok(generator.add_object(page_dict))
 }
 
 /// Render a presentation to PDF bytes using vector PDF operators.
@@ -633,13 +697,17 @@ pub fn render_to_pdf_bytes(presentation: &Presentation) -> Result<Vec<u8>> {
     let font_ids = add_fonts(&mut generator);
 
     let total = slides.len();
-    let per_page_objects = 2u32;
-    let pages_obj_id = generator.next_id + per_page_objects * total as u32;
+    let outputs: Vec<SlideRenderOutput> = slides
+        .iter()
+        .enumerate()
+        .map(|(i, slide)| render_slide(slide, i + 1, total, &layout))
+        .collect();
+    let image_xobjects: u32 = outputs.iter().map(|o| o.images.len() as u32).sum();
+    let pages_obj_id = generator.next_id + total as u32 * 2 + image_xobjects;
 
     let mut page_ids = Vec::with_capacity(total);
-    for (i, slide) in slides.iter().enumerate() {
-        let content = render_slide(slide, i + 1, total, &layout);
-        let page_id = add_page(&mut generator, content, &layout, &font_ids, pages_obj_id);
+    for output in outputs {
+        let page_id = add_page(&mut generator, output, &layout, &font_ids, pages_obj_id)?;
         page_ids.push(page_id);
     }
 

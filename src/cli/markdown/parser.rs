@@ -557,7 +557,7 @@ impl MarkdownParser {
     }
 
     /// Load an image from URL or local file path
-    fn load_image(&self, url: &str, _alt: &str) -> Option<crate::generator::Image> {
+    fn load_image(&self, url: &str, alt: &str) -> Option<crate::generator::Image> {
         use crate::generator::ImageBuilder;
         use std::path::Path;
 
@@ -590,10 +590,18 @@ impl MarkdownParser {
             };
             if path.exists()
                 && let Ok(bytes) = std::fs::read(&path) {
-                    let img = ImageBuilder::auto(bytes)
-                        .at(2000000, 2000000)
-                        .size(5000000, 3000000)
+                    let mut img = ImageBuilder::auto(bytes)
+                        .at(1_143_000, 3_500_000)
+                        .size(6_858_000, 3_857_250)
                         .build();
+                    if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
+                        img.filename = name.to_string();
+                    }
+                    img.alt_text = if alt.is_empty() {
+                        None
+                    } else {
+                        Some(alt.to_string())
+                    };
                     return Some(img);
                 }
             None
