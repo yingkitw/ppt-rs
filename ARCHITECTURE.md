@@ -285,7 +285,7 @@ The project employs a layered testing strategy with 1313 tests:
 ┌─────────────────────────────────────────────────────────────┐
 │                    Documentation Tests                      │
 │         (doctest — examples in doc comments)                │
-│              46 tests, API examples validated               │
+│              45 tests, API examples validated               │
 └─────────────────────────────────────────────────────────────┘
 ```
 

@@ -1,7 +1,7 @@
 slide: 1
 title: Welcome to html2ppt
 bullets:
-- **Bold** and *italic* and **also bold** and *also italic* text.
+- Bold and italic and also bold and also italic text.
 - Visit Example website for details.
 - Line one
 Line two
@@ -21,11 +21,11 @@ bullets:
 slide: 3
 title: Lists & Sections
 bullets:
-- **Fruits**
+- Fruits
 - Apples
 - Bananas
 - Cherries
-- **Steps**
+- Steps
 - First step
 - Second step
 - Third step
@@ -36,19 +36,20 @@ slide: 4
 title: Heading Levels
 bullets:
 - Sub-headings render as bold bullet points:
-- **Level 2 Heading**
+- Level 2 Heading
 - Content under level 2.
-- **Level 3 Heading**
+- Level 3 Heading
 - Content under level 3.
-- **Level 4 Heading**
+- Level 4 Heading
 - Content under level 4.
-- **Level 5 Heading**
+- Level 5 Heading
 - Content under level 5.
-- **Level 6 Heading**
+- Level 6 Heading
 
 slide: 5
 title: Data Tables
 bullets:
+- Financial results for Q1 through Q3.
 table:
 | Quarter | Revenue | Costs | Profit |
 | Q1 | $100K | $60K | $40K |
@@ -63,10 +64,10 @@ bullets:
 slide: 7
 title: Formatting Combinations
 bullets:
-- Text with **bold**, *italic*, and ***bold italic*** combined.
+- Text with bold, italic, and bold italic combined.
 - Inline code snippets in paragraphs.
 - A link with bold text in context.
-- Green text with **bigger bold** inside.
+- Green text with bigger bold inside.
 
 slide: 8
 title: Images & Entities

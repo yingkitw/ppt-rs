@@ -36,7 +36,7 @@ The library employs a layered testing approach:
 | Unit tests | 799 | Individual module correctness |
 | Integration tests | 514 | End-to-end workflows |
 | Compatibility tests | 6 | PowerPoint/LibreOffice/Google Slides validation |
-| Doc tests | 46 | API examples in documentation |
+| Doc tests | 45 | API examples in documentation |
 
 ### Quality Gates
 - All tests must pass (100% required)

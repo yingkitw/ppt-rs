@@ -531,12 +531,16 @@ pub fn create_title_and_content_slide(
 </p:sp>"#
     ));
 
+    let has_body = !content.bullets.is_empty() || !content.content.is_empty();
     if let Some(ref table) = content.table {
         xml.push('\n');
-        xml.push_str(&crate::generator::table::generate_table_xml(table, 3));
+        xml.push_str(&crate::generator::table::generate_table_xml(
+            table,
+            if has_body { 4 } else { 3 },
+        ));
     }
 
-    if !content.bullets.is_empty() || !content.content.is_empty() {
+    if has_body {
         let (body_y, body_h) = body_placeholder_geometry(content);
         push_body_bullets(&mut xml, content, 3, body_y, body_h);
     }

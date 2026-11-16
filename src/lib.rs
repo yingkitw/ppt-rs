@@ -9,9 +9,12 @@
 //! # Quick Start — Markdown → PowerPoint
 //!
 //! ```rust,no_run
+//! # #[cfg(feature = "markdown")]
+//! # {
 //! let markdown = "# Kickoff\n- Agenda\n- Goals\n\n# Status\n- On track";
 //! let pptx = ppt_rs::markdown_to_pptx_bytes(markdown, "Kickoff").unwrap();
 //! std::fs::write("kickoff.pptx", pptx).unwrap();
+//! # }
 //! ```
 //!
 //! Enable the Markdown parser with `features = ["markdown"]` (or `cli` for `pptcli md2ppt`).
