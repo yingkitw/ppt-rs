@@ -1,8 +1,7 @@
 [package]
 name = "ppt-rs"
-version = "0.2.37"
-edition = "2024"
-rust-version = "1.85"
+version = "0.2.38"
+edition = "2021"
 authors = ["Ying Kit WONG"]
 description = "Markdown → PowerPoint in pure Rust: create, read, update, and validate .pptx (CLI md2ppt, library API, optional MCP)."
 license = "Apache-2.0"

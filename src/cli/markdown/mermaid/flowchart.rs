@@ -68,10 +68,11 @@ pub fn parse(code: &str) -> Flowchart {
             let (from_id, from_node) = parse_node_def(&from_part);
             if let Some(node) = from_node {
                 nodes.entry(from_id.clone()).or_insert(node);
-                if let Some(ref mut sg) = current_subgraph
-                    && !sg.nodes.contains(&from_id) {
+                if let Some(ref mut sg) = current_subgraph {
+                    if !sg.nodes.contains(&from_id) {
                         sg.nodes.push(from_id.clone());
                     }
+                }
             }
 
             // Parse to node (may have label on arrow)
@@ -79,10 +80,11 @@ pub fn parse(code: &str) -> Flowchart {
             let (to_id, to_node) = parse_node_def(&to_part_clean);
             if let Some(node) = to_node {
                 nodes.entry(to_id.clone()).or_insert(node);
-                if let Some(ref mut sg) = current_subgraph
-                    && !sg.nodes.contains(&to_id) {
+                if let Some(ref mut sg) = current_subgraph {
+                    if !sg.nodes.contains(&to_id) {
                         sg.nodes.push(to_id.clone());
                     }
+                }
             }
 
             connections.push(FlowConnection {
@@ -96,10 +98,11 @@ pub fn parse(code: &str) -> Flowchart {
             let (id, node) = parse_node_def(line);
             if let Some(n) = node {
                 nodes.entry(id.clone()).or_insert(n);
-                if let Some(ref mut sg) = current_subgraph
-                    && !sg.nodes.contains(&id) {
+                if let Some(ref mut sg) = current_subgraph {
+                    if !sg.nodes.contains(&id) {
                         sg.nodes.push(id);
                     }
+                }
             }
         }
     }
@@ -142,12 +145,13 @@ fn parse_arrow_and_rest(s: &str) -> (ArrowStyle, String) {
 
 /// Extract arrow label like |text|
 fn extract_arrow_label(s: &str) -> (String, Option<String>) {
-    if let Some(start) = s.find('|')
-        && let Some(end) = s[start + 1..].find('|') {
+    if let Some(start) = s.find('|') {
+        if let Some(end) = s[start + 1..].find('|') {
             let label = s[start + 1..start + 1 + end].to_string();
             let rest = s[start + 2 + end..].trim().to_string();
             return (rest, Some(label));
         }
+    }
     (s.to_string(), None)
 }
 

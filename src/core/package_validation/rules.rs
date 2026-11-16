@@ -92,14 +92,14 @@ fn check_xml_parts<R: Read + Seek>(
         .collect();
 
     for path in xml_parts {
-        if let Some(content) = ctx.read_part(archive, &path)
-            && let Err(e) = validate_well_formed_xml(&content)
-        {
-            report.push(PackageValidationIssue::error(
-                ValidationCategory::Xml,
-                e.to_string(),
-                Some(&path),
-            ));
+        if let Some(content) = ctx.read_part(archive, &path) {
+            if let Err(e) = validate_well_formed_xml(&content) {
+                report.push(PackageValidationIssue::error(
+                    ValidationCategory::Xml,
+                    e.to_string(),
+                    Some(&path),
+                ));
+            }
         }
     }
 }
@@ -245,9 +245,10 @@ fn validate_presentation_rel_order(
 
     let slide_pos = rels_xml.find("slides/slide");
     let pres_props_pos = rels_xml.find("presProps");
-    if let (Some(s), Some(p)) = (slide_pos, pres_props_pos)
-        && s > p
-    {
+    if matches!(
+        (slide_pos, pres_props_pos),
+        (Some(s), Some(p)) if s > p
+    ) {
         report.push(PackageValidationIssue::error(
             ValidationCategory::Relationship,
             "Slide relationships should appear before presProps in presentation.xml.rels",
@@ -257,9 +258,10 @@ fn validate_presentation_rel_order(
 
     let table_pos = rels_xml.find("tableStyles");
     let theme_pos = rels_xml.find("theme/theme1");
-    if let (Some(t), Some(tb)) = (theme_pos, table_pos)
-        && t > tb
-    {
+    if matches!(
+        (theme_pos, table_pos),
+        (Some(t), Some(tb)) if t > tb
+    ) {
         report.push(PackageValidationIssue::error(
             ValidationCategory::Relationship,
             "theme should appear before tableStyles in presentation.xml.rels",
@@ -338,18 +340,17 @@ fn check_theme<R: Read + Seek>(
     report: &mut PackageValidationReport,
 ) {
     let mut buf = Vec::new();
-    if let Ok(mut file) = archive.by_name("ppt/theme/theme1.xml")
-        && file.read_to_end(&mut buf).is_ok()
-        && buf.len() < 7000
-    {
-        report.push(PackageValidationIssue::error(
-            ValidationCategory::Theme,
-            format!(
-                "Theme part too small ({} bytes); PowerPoint expects full Office theme",
-                buf.len()
-            ),
-            Some("ppt/theme/theme1.xml"),
-        ));
+    if let Ok(mut file) = archive.by_name("ppt/theme/theme1.xml") {
+        if file.read_to_end(&mut buf).is_ok() && buf.len() < 7000 {
+            report.push(PackageValidationIssue::error(
+                ValidationCategory::Theme,
+                format!(
+                    "Theme part too small ({} bytes); PowerPoint expects full Office theme",
+                    buf.len()
+                ),
+                Some("ppt/theme/theme1.xml"),
+            ));
+        }
     }
     let _ = ctx;
 }
@@ -387,14 +388,14 @@ fn check_chart_packages<R: Read + Seek>(
             ));
         }
 
-        if let Some(chart_xml) = ctx.read_part(archive, &chart_path)
-            && !chart_xml.contains("<c:externalData")
-        {
-            report.push(PackageValidationIssue::error(
-                ValidationCategory::Chart,
-                format!("{chart_path} missing c:externalData"),
-                Some(&chart_path),
-            ));
+        if let Some(chart_xml) = ctx.read_part(archive, &chart_path) {
+            if !chart_xml.contains("<c:externalData") {
+                report.push(PackageValidationIssue::error(
+                    ValidationCategory::Chart,
+                    format!("{chart_path} missing c:externalData"),
+                    Some(&chart_path),
+                ));
+            }
         }
 
         let idx = chart_path
@@ -481,14 +482,14 @@ fn check_handout_package<R: Read + Seek>(
         return;
     }
 
-    if let Some(pres_props) = ctx.read_part(archive, "ppt/presProps.xml")
-        && pres_props.contains("<p:prnPr")
-    {
-        report.push(PackageValidationIssue::error(
-            ValidationCategory::Presentation,
-            "presProps.xml must not contain p:prnPr when a handout master is packaged",
-            Some("ppt/presProps.xml"),
-        ));
+    if let Some(pres_props) = ctx.read_part(archive, "ppt/presProps.xml") {
+        if pres_props.contains("<p:prnPr") {
+            report.push(PackageValidationIssue::error(
+                ValidationCategory::Presentation,
+                "presProps.xml must not contain p:prnPr when a handout master is packaged",
+                Some("ppt/presProps.xml"),
+            ));
+        }
     }
 
     let handout_rels = ctx.relationships("ppt/handoutMasters/_rels/handoutMaster1.xml.rels");
@@ -503,14 +504,14 @@ fn check_handout_package<R: Read + Seek>(
         ));
     }
 
-    if let Some(handout) = ctx.read_part(archive, "ppt/handoutMasters/handoutMaster1.xml")
-        && !handout.contains("<p:bg>")
-    {
-        report.push(PackageValidationIssue::error(
-            ValidationCategory::SlideMaster,
-            "handout master missing slide background",
-            Some("ppt/handoutMasters/handoutMaster1.xml"),
-        ));
+    if let Some(handout) = ctx.read_part(archive, "ppt/handoutMasters/handoutMaster1.xml") {
+        if !handout.contains("<p:bg>") {
+            report.push(PackageValidationIssue::error(
+                ValidationCategory::SlideMaster,
+                "handout master missing slide background",
+                Some("ppt/handoutMasters/handoutMaster1.xml"),
+            ));
+        }
     }
 }
 
@@ -535,14 +536,14 @@ fn check_notes_master<R: Read + Seek>(
         ));
     }
 
-    if let Some(notes) = ctx.read_part(archive, "ppt/notesMasters/notesMaster1.xml")
-        && !notes.contains("<p:bg>")
-    {
-        report.push(PackageValidationIssue::error(
-            ValidationCategory::SlideMaster,
-            "notes master missing slide background",
-            Some("ppt/notesMasters/notesMaster1.xml"),
-        ));
+    if let Some(notes) = ctx.read_part(archive, "ppt/notesMasters/notesMaster1.xml") {
+        if !notes.contains("<p:bg>") {
+            report.push(PackageValidationIssue::error(
+                ValidationCategory::SlideMaster,
+                "notes master missing slide background",
+                Some("ppt/notesMasters/notesMaster1.xml"),
+            ));
+        }
     }
 }
 

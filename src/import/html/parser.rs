@@ -238,20 +238,20 @@ impl HtmlSlideParser {
                     if let Some(sz) = s.font_size {
                         slide = slide.title_size(sz);
                     }
-                    if let Some(ref fw) = s.font_weight
-                        && is_font_weight_bold(fw)
-                    {
-                        slide = slide.title_bold(true);
+                    if let Some(ref fw) = s.font_weight {
+                        if is_font_weight_bold(fw) {
+                            slide = slide.title_bold(true);
+                        }
                     }
-                    if let Some(ref fs) = s.font_style
-                        && is_font_style_italic(fs)
-                    {
-                        slide = slide.title_italic(true);
+                    if let Some(ref fs) = s.font_style {
+                        if is_font_style_italic(fs) {
+                            slide = slide.title_italic(true);
+                        }
                     }
-                    if let Some(ref td) = s.text_decoration
-                        && td.contains("underline")
-                    {
-                        slide = slide.title_underline(true);
+                    if let Some(ref td) = s.text_decoration {
+                        if td.contains("underline") {
+                            slide = slide.title_underline(true);
+                        }
                     }
                 }
                 self.current_slide = Some(slide);
@@ -515,14 +515,14 @@ impl HtmlSlideParser {
         } else {
             // Try to load from local file path
             let path = Path::new(src);
-            if path.exists()
-                && let Ok(bytes) = std::fs::read(path)
-            {
-                let img = ImageBuilder::auto(bytes)
-                    .at(2000000, 2000000)
-                    .size(5000000, 3000000)
-                    .build();
-                return Some(img);
+            if path.exists() {
+                if let Ok(bytes) = std::fs::read(path) {
+                    let img = ImageBuilder::auto(bytes)
+                        .at(2000000, 2000000)
+                        .size(5000000, 3000000)
+                        .build();
+                    return Some(img);
+                }
             }
             None
         }

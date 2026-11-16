@@ -167,12 +167,11 @@ pub fn export_to_markdown_with_options(
         }
 
         // Table export (GFM format)
-        if options.use_gfm_tables
-            && slide.has_table
-            && let Some(table) = &slide.table
-        {
-            md.push_str(&export_table_to_gfm(table));
-            md.push('\n');
+        if options.use_gfm_tables && slide.has_table {
+            if let Some(table) = &slide.table {
+                md.push_str(&export_table_to_gfm(table));
+                md.push('\n');
+            }
         }
 
         // Images

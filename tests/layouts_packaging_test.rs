@@ -37,7 +37,8 @@ fn read_part(bytes: &[u8], path: &str) -> String {
 fn part_exists(bytes: &[u8], path: &str) -> bool {
     let cursor = Cursor::new(bytes);
     let mut archive = ZipArchive::new(cursor).unwrap();
-    archive.by_name(path).is_ok()
+    let exists = archive.by_name(path).is_ok();
+    exists
 }
 
 #[test]

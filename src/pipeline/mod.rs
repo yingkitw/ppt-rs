@@ -195,10 +195,11 @@ pub fn convert_file(
     let title = default_title(job);
     let output = resolve_output_path(job, options);
 
-    if let Some(parent) = output.parent()
-        && !parent.as_os_str().is_empty() {
+    if let Some(parent) = output.parent() {
+        if !parent.as_os_str().is_empty() {
             std::fs::create_dir_all(parent)?;
         }
+    }
 
     let settings = build_settings(options);
     let bytes = create_pptx_with_settings(&title, &slides, Some(settings))?;

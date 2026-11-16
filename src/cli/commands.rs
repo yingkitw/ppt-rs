@@ -2,7 +2,7 @@
 
 use crate::generator;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct CreateCommand;
 pub struct FromMarkdownCommand;
@@ -31,11 +31,12 @@ impl CreateCommand {
         template: Option<&str>,
     ) -> Result<(), String> {
         // Create output directory if needed
-        if let Some(parent) = PathBuf::from(output).parent()
-            && !parent.as_os_str().is_empty() {
+        if let Some(parent) = PathBuf::from(output).parent() {
+            if !parent.as_os_str().is_empty() {
                 fs::create_dir_all(parent)
                     .map_err(|e| format!("Failed to create directory: {e}"))?;
             }
+        }
 
         let title = title.unwrap_or("Presentation");
 
@@ -72,11 +73,12 @@ impl FromMarkdownCommand {
         }
 
         // Create output directory if needed
-        if let Some(parent) = PathBuf::from(output).parent()
-            && !parent.as_os_str().is_empty() {
+        if let Some(parent) = PathBuf::from(output).parent() {
+            if !parent.as_os_str().is_empty() {
                 fs::create_dir_all(parent)
                     .map_err(|e| format!("Failed to create directory: {e}"))?;
             }
+        }
 
         let title = title.unwrap_or("Presentation from Markdown");
 
@@ -123,11 +125,12 @@ impl FromHtmlCommand {
         }
 
         // Create output directory if needed
-        if let Some(parent) = PathBuf::from(output).parent()
-            && !parent.as_os_str().is_empty() {
+        if let Some(parent) = PathBuf::from(output).parent() {
+            if !parent.as_os_str().is_empty() {
                 fs::create_dir_all(parent)
                     .map_err(|e| format!("Failed to create directory: {e}"))?;
             }
+        }
 
         let title = title.unwrap_or("Presentation from HTML");
 
@@ -163,15 +166,16 @@ impl InfoCommand {
         println!("Is file:  {is_file}");
 
         // Try to read and parse as XML
-        if let Ok(content) = fs::read_to_string(file)
-            && content.starts_with("<?xml") {
+        if let Ok(content) = fs::read_to_string(file) {
+            if content.starts_with("<?xml") {
                 println!("\nPresentation Information");
                 println!("========================");
-                if let Some(title_start) = content.find("<title>")
-                    && let Some(title_end) = content[title_start + 7..].find("</title>") {
+                if let Some(title_start) = content.find("<title>") {
+                    if let Some(title_end) = content[title_start + 7..].find("</title>") {
                         let title = &content[title_start + 7..title_start + 7 + title_end];
                         println!("Title: {title}");
                     }
+                }
                 if let Some(slides_start) = content.find("count=\"") {
                     let search_from = slides_start + 7;
                     if let Some(slides_end) = content[search_from..].find("\"") {
@@ -180,6 +184,7 @@ impl InfoCommand {
                     }
                 }
             }
+        }
 
         Ok(())
     }

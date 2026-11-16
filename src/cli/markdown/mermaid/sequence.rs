@@ -30,8 +30,8 @@ pub fn generate_shapes(code: &str) -> Vec<Shape> {
         // Parse message
         else if line.contains("->>") || line.contains("-->>") {
             let arrow = if line.contains("-->>") { "-->>" } else { "->>" };
-            if let Some((from_part, rest)) = line.split_once(arrow)
-                && let Some((to_part, msg)) = rest.split_once(':') {
+            if let Some((from_part, rest)) = line.split_once(arrow) {
+                if let Some((to_part, msg)) = rest.split_once(':') {
                     let from = from_part.trim().to_string();
                     let to = to_part.trim().to_string();
                     let text = msg.trim().to_string();
@@ -47,6 +47,7 @@ pub fn generate_shapes(code: &str) -> Vec<Shape> {
 
                     messages.push((from, to, text));
                 }
+            }
         }
     }
 

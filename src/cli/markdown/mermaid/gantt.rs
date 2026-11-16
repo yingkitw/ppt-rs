@@ -31,10 +31,12 @@ pub fn generate_shapes(code: &str) -> Vec<Shape> {
         } else if line.contains(':')
             && !line.starts_with("dateFormat")
             && !line.starts_with("axisFormat")
-            && let Some((task_name, _rest)) = line.split_once(':') {
+        {
+            if let Some((task_name, _rest)) = line.split_once(':') {
                 let duration = 3u32;
                 current_tasks.push((task_name.trim().to_string(), duration));
             }
+        }
     }
 
     if !current_section.is_empty() {

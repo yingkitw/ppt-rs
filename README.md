@@ -27,7 +27,7 @@
 | **Python install** | `pip install ppt-rs` → [pypi.org/project/ppt-rs](https://pypi.org/project/ppt-rs/) |
 | **API reference** | [docs.rs/ppt-rs](https://docs.rs/ppt-rs) |
 | **Guides (in repo)** | [docs/index.html](docs/index.html) |
-| **Version** | `0.2.37` (see [Cargo.toml](Cargo.toml) / [releases](https://github.com/yingkitw/ppt-rs/releases)) |
+| **Version** | `0.2.38` (see [Cargo.toml](Cargo.toml) / [releases](https://github.com/yingkitw/ppt-rs/releases)) |
 | **Quality bar** | 1300+ automated tests · `validate_package_bytes()` zero-repair gate |
 
 ## Markdown → PowerPoint in Rust
@@ -41,7 +41,7 @@
 | 3 | **CLI** — `pptcli md2ppt slides.md` (feature `cli`, install `pptcli`) |
 
 ```rust
-// Cargo.toml: ppt-rs = { version = "0.2.37", features = ["markdown"] }
+// Cargo.toml: ppt-rs = { version = "0.2.38", features = ["markdown"] }
 
 fn main() -> ppt_rs::Result<()> {
     let md = std::fs::read_to_string("slides.md")?;
@@ -85,7 +85,7 @@ Repository: [github.com/yingkitw/ppt-rs](https://github.com/yingkitw/ppt-rs). Op
 
 `ppt-rs` targets **Rust-native** services, CLIs, and agents that need **production-grade OOXML** without pulling another language runtime — while staying close to python-pptx ergonomics for text frames, layouts, and charts.
 
-**Latest (v0.2.37):** lean `generator/builder/` / `import/html/` refactor, unified content-types writer, `ContentTypesPart::from_xml`. See [changelog notes](#what-makes-this-different) below for earlier milestones (MCP, HTTP, `web2md`, PDF, validation API).
+**Latest (v0.2.38):** PyPI packaging via PyO3 bindings (`pip install ppt_rs`, maturin), promoted Markdown→PPTX workflow, Rust 2021 edition. See [changelog notes](#what-makes-this-different) below for earlier milestones (MCP, HTTP, `web2md`, PDF, validation API).
 
 ## Why ppt-rs?
 
@@ -626,7 +626,7 @@ Markdown → PowerPoint (recommended):
 
 ```toml
 [dependencies]
-ppt-rs = { version = "0.2.37", features = ["markdown"] }
+ppt-rs = { version = "0.2.38", features = ["markdown"] }
 ```
 
 ```toml
@@ -969,7 +969,7 @@ Unlike other Rust PPTX crates that:
 
 ## Technical Details
 
-- **Version**: 0.2.37
+- **Version**: 0.2.38
 - **Format**: Microsoft PowerPoint 2007+ (.pptx)
 - **Standard**: ECMA-376 Office Open XML
 - **Compatibility**: PowerPoint, LibreOffice, Google Slides, Keynote

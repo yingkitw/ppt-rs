@@ -41,10 +41,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Check for presentation.xml
     if let Some(pres_content) = package.get_part("ppt/presentation.xml") {
         println!("\n✓ presentation.xml found ({} bytes)", pres_content.len());
-        if let Ok(content_str) = std::str::from_utf8(pres_content)
-            && content_str.contains("<p:sldIdLst>")
-        {
-            println!("  - Contains slide list");
+        if let Ok(content_str) = std::str::from_utf8(pres_content) {
+            if content_str.contains("<p:sldIdLst>") {
+                println!("  - Contains slide list");
+            }
         }
     }
 
@@ -63,10 +63,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Check for core properties
     if let Some(core_content) = package.get_part("docProps/core.xml") {
         println!("\n✓ docProps/core.xml found ({} bytes)", core_content.len());
-        if let Ok(content_str) = std::str::from_utf8(core_content)
-            && content_str.contains("<dc:title>")
-        {
-            println!("  - Contains title metadata");
+        if let Ok(content_str) = std::str::from_utf8(core_content) {
+            if content_str.contains("<dc:title>") {
+                println!("  - Contains title metadata");
+            }
         }
     }
 

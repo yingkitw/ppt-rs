@@ -6,50 +6,10 @@ The PPTX library is organized into several layers that handle different aspects 
 
 ## Current Focus (v0.2.x)
 
-The project has completed several major phases:
-
-1. **API Simplification** (v0.2.11) — Helper pattern for common operations
-   - Color helpers: `red()`, `material_blue()`, `corporate_blue()`
-   - Table helpers: `simple_table()`, `table_from_data()`, `QuickTable`
-   - Extension traits: `.fill()`, `.stroke()`, `.text()` on `Shape`
-
-2. **Export & Compression** (v0.2.12) — Full round-trip capabilities
-   - Markdown export with `MarkdownOptions`
-   - Image export (PNG/JPEG via pure-Rust PDF render + `pdftoppm`)
-   - PPTX compression with `CompressionOptions`
-
-3. **MCP Server** (v0.2.13) — AI assistant integration
-   - `ppt_mcp` binary with 12 tools via Model Context Protocol
-   - Create, read, export, validate, and merge presentations
-
-4. **Enhanced HTML & Markdown** (v0.2.14) — Real-world content support
-   - Enhanced Markdown: Real images, task lists, strikethrough formatting
-   - Enhanced HTML: Extended CSS, real image downloading, hyperlink handling
-   - Enhanced HTML Export: Interactive navigation, speaker notes, keyboard controls
-   - HTML Parser Documentation: Comprehensive parser comparison guide
-
-5. **PowerPoint Zero-Repair Compatibility Gate** (v0.2.19) — Generated decks open without repair
-   - `core::package_validation` — structured `validate_package_bytes()` → `PackageValidationReport` with `ValidationCategory` / `ValidationSeverity`; debug builds self-check every generated deck
-   - Multiple slide layouts — 7 layouts on slide master 1 (`layout_parts.rs`), per-slide `SlideContent::with_layout()`
-   - Template-based generation — `PptxTemplate` / `create_pptx_with_template` / `PresentationSettings::template` / CLI `--template`
-   - Chart Excel workbook embedding — `ppt/embeddings/Microsoft_Excel_SheetN.xlsx` so charts are editable
-   - Handout master packaging, slide master `p:txStyles`, notes master theme parity, presentation rel ordering
-
-6. **Editor, Validation CLI & Wiring** (v0.2.20) — Programmatic editing and agent loop
-   - `PresentationEditor` (`oxml/editor.rs`) — duplicate, reorder, insert slide at index, batch replace
-   - Core validation integrated into `pptcli validate`; rmcp upgraded
-   - Embedded fonts + ink annotations wired into the generator; digital signatures packaged
-   - Review comments packaged (`ppt/comments/commentN.xml`, `ppt/commentAuthors.xml`) from `SlideContent::add_comment` + presentation comment authors
-
-7. **Lean Audit & Structured Validate** (v0.2.21) — Quality pass
-   - Dead code removal, `escape_xml` hot-path, `XmlWriter` cleanup
-   - `pptcli validate` structured human report + `--json`; warnings cleared
-
-8. **PDF Native & Web2MD Bridge** (v0.2.23–v0.2.24) — Platform reach
-   - Pure-Rust PDF export via `pdfrs` (`pdf-native` feature) — no LibreOffice dependency
-   - `web2md` bridge — HTML→Markdown→Slides pipeline with `--web2md` CLI flag
-
-Future work focuses on performance optimization and competitive intelligence seeding. WASM is out of scope. REST/HTTP API, semantic diff, batch/pipeline API, Criterion benchmarks, CLI/MCP export parity, comments round-trip, video/audio embedding, and section-aware export shipped in v0.2.27–v0.2.34.
+Per-version capabilities are tracked in `SPEC.md` (Version History) and `git log`
+— this document describes structure, not history. WASM is out of scope; future
+work focuses on performance optimization and competitive-intelligence seeding
+(see `TODO.md`).
 
 ## Capability map (navigation)
 
@@ -301,7 +261,7 @@ shape.fill(red()).stroke(black(), 12700).text("Hello");
 
 ## Testing Architecture
 
-The project employs a layered testing strategy with 1312 tests:
+The project employs a layered testing strategy with 1313 tests:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -313,7 +273,7 @@ The project employs a layered testing strategy with 1312 tests:
 ┌─────────────────────────────────────────────────────────────┐
 │                    Unit Tests                               │
 │         (inline in src/ modules — per-component)            │
-│              798 tests, fast feedback                       │
+│              799 tests, fast feedback                       │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -325,7 +285,7 @@ The project employs a layered testing strategy with 1312 tests:
 ┌─────────────────────────────────────────────────────────────┐
 │                    Documentation Tests                      │
 │         (doctest — examples in doc comments)                │
-│              45 tests, API examples validated               │
+│              46 tests, API examples validated               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -651,110 +611,9 @@ Tables in PPTX follow a specific XML structure. The critical ordering is:
 
 ## Generator Module Structure
 
-```
-├── generator/          # Generator module
-│   ├── mod.rs          # Module exports
-│   ├── builder/        # PPTX creation (v0.2.37 split)
-│   │   ├── mod.rs      # create_pptx* public API, LazySlideSource
-│   │   ├── plan.rs     # Media registry + relationship planning
-│   │   └── write.rs    # ZIP part writers
-│   ├── slide_xml/      # Modular slide XML generation
-│   │   ├── mod.rs
-│   │   ├── common.rs
-│   │   ├── layouts.rs
-│   │   └── content.rs
-│   ├── slide_content/  # Slide content types (v0.2.x)
-│   │   ├── mod.rs
-│   │   ├── content.rs
-│   │   ├── bullet.rs
-│   │   ├── layout.rs
-│   │   ├── transition.rs
-│   │   ├── code_block.rs
-│   │   ├── comments.rs        # Review comments
-│   │   ├── sections.rs        # <p14:sectionLst> sections
-│   │   ├── table_merge.rs     # Cell merge state
-│   │   ├── embedded_fonts.rs
-│   │   ├── digital_signature.rs
-│   │   ├── ink_annotations.rs
-│   │   ├── presentation_settings.rs
-│   │   ├── print_settings.rs
-│   │   └── slide_show_settings.rs
-│   ├── slide/          # Slide-level formatting helpers
-│   │   ├── mod.rs
-│   │   └── formatting.rs
-│   ├── text/           # Text model + XML (ToXml)
-│   │   ├── mod.rs
-│   │   ├── run.rs
-│   │   ├── paragraph.rs
-│   │   ├── frame.rs
-│   │   ├── format.rs
-│   │   └── rtl.rs
-│   ├── layouts/        # Per-layout slide XML emitters
-│   │   ├── mod.rs
-│   │   ├── common.rs
-│   │   ├── blank.rs
-│   │   ├── centered_title.rs
-│   │   ├── title_content.rs
-│   │   ├── title_only.rs
-│   │   └── two_column.rs
-│   ├── charts/         # Chart module (v0.2.3; Excel embedding v0.2.19)
-│   │   ├── mod.rs
-│   │   ├── builder.rs
-│   │   ├── data.rs
-│   │   ├── types.rs
-│   │   ├── xml.rs
-│   │   └── embedding.rs  # Embedded workbook + chart rels (v0.2.19)
-│   ├── table/          # Modular table module
-│   │   ├── mod.rs
-│   │   ├── cell.rs
-│   │   ├── row.rs
-│   │   ├── builder.rs
-│   │   ├── format.rs   # Cell formatting (TextFormat + merge attrs)
-│   │   ├── style.rs    # Header presets, table_from_string_rows
-│   │   └── xml.rs
-│   ├── constants.rs    # Shared generator constants
-│   ├── layout_parts.rs # slideLayoutN.xml + master footers (v0.2.19)
-│   ├── template.rs     # PptxTemplate — load masters/theme/layouts (v0.2.19)
-│   ├── package_cache.rs # Package byte cache / diff helpers (v0.2.19)
-│   ├── media_registry.rs # Media de-duplication registry (v0.2.19)
-│   ├── memory_profile.rs # Generation metrics + capacity estimation
-│   ├── shapes.rs       # Shape types
-│   ├── shapes_xml.rs   # Shape XML generation
-│   ├── images.rs       # Image types
-│   ├── image_effects.rs # Modular image effects XML
-│   ├── images_xml.rs   # Image XML generation
-│   ├── connectors.rs   # Connector shapes
-│   ├── hyperlinks.rs   # Hyperlink support
-│   ├── gradients.rs    # Gradient fills
-│   ├── media.rs        # Video/audio
-│   ├── package_xml.rs  # Package-level XML (rels/presProps/viewProps/tableStyles/handout master)
-│   ├── presentation_theme.rs # Customizable theme colors/fonts
-│   ├── theme_xml.rs    # Theme XML generation
-│   ├── props_xml.rs    # Properties XML
-│   └── notes_xml.rs    # Notes XML
-├── export/             # Export module (v0.2.2)
-│   ├── mod.rs
-│   ├── html.rs         # HTML export (+ html_*.css / html_navigation.js assets)
-│   ├── md.rs           # Markdown export
-│   ├── image_export.rs # PNG/JPEG via pdfrs + pdftoppm
-│   ├── pdf_export.rs   # PDF export (pdf-native feature)
-│   └── slide_render.rs # Shared slide rendering helpers
-├── import/             # Import module (v0.2.2)
-│   ├── mod.rs          # PPTX import (PresentationReader / import_pptx)
-│   └── html/           # HTML→PPTX parser (v0.2.37 split)
-│       ├── mod.rs      # HtmlParseOptions, Html2Ppt, parse_html*
-│       ├── tokenizer.rs
-│       ├── style.rs
-│       └── parser.rs
-├── web2ppt/            # Web to PPT converter (feature-gated)
-│   ├── mod.rs
-│   ├── converter.rs
-│   ├── config.rs
-│   ├── fetcher.rs
-│   ├── parser.rs
-│   └── web2md_bridge.rs  # HTML→Markdown→Slides bridge (v0.2.24, `web2md` feature)
-├── cli/                # CLI module
-```
+File-level layout changes too often to duplicate here — see the `generator/`
+subtree under [File Organization](#file-organization) and `ls src/generator/`
+for ground truth.
 
 ## CLI Module Structure
 

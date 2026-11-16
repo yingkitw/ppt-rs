@@ -284,10 +284,10 @@ pub fn create_pres_props_xml(settings: Option<&PresentationSettings>) -> String 
         r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentationPr xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main">"#,
     );
 
-    if let Some(s) = settings
-        && let Some(ref show) = s.slide_show
-    {
-        xml.push_str(&show.to_xml());
+    if let Some(s) = settings {
+        if let Some(ref show) = s.slide_show {
+            xml.push_str(&show.to_xml());
+        }
     }
     // Handout print preferences are expressed via the handout master part.
     // PowerPoint strips `<p:prnPr>` from presProps on repair when it is paired

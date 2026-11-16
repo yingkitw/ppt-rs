@@ -194,29 +194,33 @@ impl WebParser {
     /// Extract page title
     fn extract_title(&self, document: &Html) -> String {
         // Try <title> tag first
-        if let Ok(selector) = Selector::parse("title")
-            && let Some(element) = document.select(&selector).next() {
+        if let Ok(selector) = Selector::parse("title") {
+            if let Some(element) = document.select(&selector).next() {
                 let title = element.text().collect::<String>().trim().to_string();
                 if !title.is_empty() {
                     return title;
                 }
             }
+        }
 
         // Try h1
-        if let Ok(selector) = Selector::parse("h1")
-            && let Some(element) = document.select(&selector).next() {
+        if let Ok(selector) = Selector::parse("h1") {
+            if let Some(element) = document.select(&selector).next() {
                 let title = element.text().collect::<String>().trim().to_string();
                 if !title.is_empty() {
                     return title;
                 }
             }
+        }
 
         // Try og:title
-        if let Ok(selector) = Selector::parse("meta[property='og:title']")
-            && let Some(element) = document.select(&selector).next()
-                && let Some(content) = element.value().attr("content") {
+        if let Ok(selector) = Selector::parse("meta[property='og:title']") {
+            if let Some(element) = document.select(&selector).next() {
+                if let Some(content) = element.value().attr("content") {
                     return content.trim().to_string();
                 }
+            }
+        }
 
         "Untitled".to_string()
     }
@@ -224,24 +228,28 @@ impl WebParser {
     /// Extract meta description
     fn extract_meta_description(&self, document: &Html) -> Option<String> {
         // Try meta description
-        if let Ok(selector) = Selector::parse("meta[name='description']")
-            && let Some(element) = document.select(&selector).next()
-                && let Some(content) = element.value().attr("content") {
+        if let Ok(selector) = Selector::parse("meta[name='description']") {
+            if let Some(element) = document.select(&selector).next() {
+                if let Some(content) = element.value().attr("content") {
                     let desc = content.trim().to_string();
                     if !desc.is_empty() {
                         return Some(desc);
                     }
                 }
+            }
+        }
 
         // Try og:description
-        if let Ok(selector) = Selector::parse("meta[property='og:description']")
-            && let Some(element) = document.select(&selector).next()
-                && let Some(content) = element.value().attr("content") {
+        if let Ok(selector) = Selector::parse("meta[property='og:description']") {
+            if let Some(element) = document.select(&selector).next() {
+                if let Some(content) = element.value().attr("content") {
                     let desc = content.trim().to_string();
                     if !desc.is_empty() {
                         return Some(desc);
                     }
                 }
+            }
+        }
 
         None
     }
@@ -270,8 +278,8 @@ impl WebParser {
         let mut main_element: Option<ElementRef> = None;
 
         for selector_str in &main_selectors {
-            if let Ok(selector) = Selector::parse(selector_str)
-                && let Some(element) = document.select(&selector).next() {
+            if let Ok(selector) = Selector::parse(selector_str) {
+                if let Some(element) = document.select(&selector).next() {
                     // Check if this element has meaningful content
                     let text_len: usize = element.text().collect::<String>().len();
                     if text_len > 100 {
@@ -279,6 +287,7 @@ impl WebParser {
                         break;
                     }
                 }
+            }
         }
 
         let main = main_element.ok_or(Web2PptError::NoContent)?;
@@ -372,8 +381,8 @@ impl WebParser {
                 return; // Don't recurse into code blocks
             }
             "img" => {
-                if self.config.include_images
-                    && let Some(src) = element.value().attr("src") {
+                if self.config.include_images {
+                    if let Some(src) = element.value().attr("src") {
                         let alt = element.value().attr("alt").unwrap_or("").to_string();
                         if !src.starts_with("data:") && !alt.is_empty() {
                             content.images.push((src.to_string(), alt.clone()));
@@ -386,6 +395,7 @@ impl WebParser {
                             ));
                         }
                     }
+                }
             }
             "table" => {
                 if self.config.include_tables {
@@ -393,16 +403,15 @@ impl WebParser {
                 }
                 return; // Don't recurse into tables
             }
-            "a" => {
+            "a" if self.config.extract_links => {
                 // Extract important links
-                if self.config.extract_links
-                    && let Some(href) = element.value().attr("href") {
-                        let text = self.clean_text(element);
-                        if !text.is_empty() && text.len() > 5 && href.starts_with("http") {
-                            // Only add standalone links, not inline ones
-                            // This is handled by not recursing for links with substantial text
-                        }
+                if let Some(href) = element.value().attr("href") {
+                    let text = self.clean_text(element);
+                    if !text.is_empty() && text.len() > 5 && href.starts_with("http") {
+                        // Only add standalone links, not inline ones
+                        // This is handled by not recursing for links with substantial text
                     }
+                }
             }
             _ => {}
         }

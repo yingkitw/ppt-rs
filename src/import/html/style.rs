@@ -7,37 +7,37 @@ pub(crate) fn decode_entities(s: &str) -> String {
     let bytes = s.as_bytes();
     let mut i = 0;
     while i < bytes.len() {
-        if bytes[i] == b'&'
-            && let Some(end) = s[i..].find(';')
-        {
-            let entity = &s[i + 1..i + end];
-            let ch = match entity {
-                "amp" => Some('&'),
-                "lt" => Some('<'),
-                "gt" => Some('>'),
-                "quot" => Some('"'),
-                "apos" | "#39" | "#x27" => Some('\''),
-                "nbsp" => Some('\u{00a0}'),
-                "#x2018" => Some('\u{2018}'),
-                "#x2019" => Some('\u{2019}'),
-                "#x201c" => Some('\u{201c}'),
-                "#x201d" => Some('\u{201d}'),
-                "#x2014" => Some('\u{2014}'),
-                "#x2013" => Some('\u{2013}'),
-                _ => {
-                    if let Some(hex) = entity.strip_prefix("#x") {
-                        u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
-                    } else if let Some(num) = entity.strip_prefix('#') {
-                        num.parse::<u32>().ok().and_then(char::from_u32)
-                    } else {
-                        None
+        if bytes[i] == b'&' {
+            if let Some(end) = s[i..].find(';') {
+                let entity = &s[i + 1..i + end];
+                let ch = match entity {
+                    "amp" => Some('&'),
+                    "lt" => Some('<'),
+                    "gt" => Some('>'),
+                    "quot" => Some('"'),
+                    "apos" | "#39" | "#x27" => Some('\''),
+                    "nbsp" => Some('\u{00a0}'),
+                    "#x2018" => Some('\u{2018}'),
+                    "#x2019" => Some('\u{2019}'),
+                    "#x201c" => Some('\u{201c}'),
+                    "#x201d" => Some('\u{201d}'),
+                    "#x2014" => Some('\u{2014}'),
+                    "#x2013" => Some('\u{2013}'),
+                    _ => {
+                        if let Some(hex) = entity.strip_prefix("#x") {
+                            u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
+                        } else if let Some(num) = entity.strip_prefix('#') {
+                            num.parse::<u32>().ok().and_then(char::from_u32)
+                        } else {
+                            None
+                        }
                     }
+                };
+                if let Some(c) = ch {
+                    out.push(c);
+                    i = i + end + 1;
+                    continue;
                 }
-            };
-            if let Some(c) = ch {
-                out.push(c);
-                i = i + end + 1;
-                continue;
             }
         }
         // Preserve full Unicode characters (not just ASCII bytes)
@@ -254,15 +254,15 @@ impl InlineStyle {
         if let Some(sz) = self.font_size {
             fmt = fmt.font_size(sz);
         }
-        if let Some(ref fw) = self.font_weight
-            && is_font_weight_bold(fw)
-        {
-            fmt = fmt.bold();
+        if let Some(ref fw) = self.font_weight {
+            if is_font_weight_bold(fw) {
+                fmt = fmt.bold();
+            }
         }
-        if let Some(ref fs) = self.font_style
-            && is_font_style_italic(fs)
-        {
-            fmt = fmt.italic();
+        if let Some(ref fs) = self.font_style {
+            if is_font_style_italic(fs) {
+                fmt = fmt.italic();
+            }
         }
         if let Some(ref td) = self.text_decoration {
             if td.contains("underline") {

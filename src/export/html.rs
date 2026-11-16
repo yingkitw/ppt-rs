@@ -202,13 +202,13 @@ fn render_slide_with_options(
     }
 
     // Speaker Notes
-    if options.include_notes
-        && let Some(ref notes) = slide.notes
-    {
-        html.push_str(&format!(
-            "<div class=\"speaker-notes\"><strong>Notes:</strong> {}</div>\n",
-            escape_html(notes)
-        ));
+    if options.include_notes {
+        if let Some(ref notes) = slide.notes {
+            html.push_str(&format!(
+                "<div class=\"speaker-notes\"><strong>Notes:</strong> {}</div>\n",
+                escape_html(notes)
+            ));
+        }
     }
 
     html.push_str("</div>\n"); // content

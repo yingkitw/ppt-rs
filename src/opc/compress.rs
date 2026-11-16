@@ -301,17 +301,17 @@ fn remove_unused_media(package: &mut Package) -> Result<usize> {
     for path in package.part_paths() {
         let is_slide_xml = path.starts_with("ppt/slides/slide") && path.ends_with(".xml");
         let is_slide_rels = path.starts_with("ppt/slides/_rels/") && path.ends_with(".rels");
-        if (is_slide_xml || is_slide_rels)
-            && let Some(content) = package.get_part_string(path)
-        {
-            // Look for media references like rId5, image1.png, etc.
-            for media_path in &media_paths {
-                let filename = Path::new(media_path)
-                    .file_name()
-                    .and_then(|n| n.to_str())
-                    .unwrap_or("");
-                if content.contains(filename) || content.contains(&media_path[4..]) {
-                    referenced.insert(media_path.clone());
+        if is_slide_xml || is_slide_rels {
+            if let Some(content) = package.get_part_string(path) {
+                // Look for media references like rId5, image1.png, etc.
+                for media_path in &media_paths {
+                    let filename = Path::new(media_path)
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("");
+                    if content.contains(filename) || content.contains(&media_path[4..]) {
+                        referenced.insert(media_path.clone());
+                    }
                 }
             }
         }

@@ -33,10 +33,10 @@ The library employs a layered testing approach:
 
 | Test Type | Count | Purpose |
 |-----------|-------|---------|
-| Unit tests | 798 | Individual module correctness |
+| Unit tests | 799 | Individual module correctness |
 | Integration tests | 514 | End-to-end workflows |
 | Compatibility tests | 6 | PowerPoint/LibreOffice/Google Slides validation |
-| Doc tests | 45 | API examples in documentation |
+| Doc tests | 46 | API examples in documentation |
 
 ### Quality Gates
 - All tests must pass (100% required)
@@ -896,7 +896,7 @@ Run: `cargo run --features http --bin ppt_http [--host HOST] [--port PORT]` (def
 | File size overhead | ~10-15 KB base |
 | Generation speed | ~1000 slides/sec |
 | Memory usage | ~2 MB + content |
-| Test coverage | 1312 tests |
+| Test coverage | 1313 tests |
 
 ## Error Handling
 
@@ -917,6 +917,7 @@ match create_pptx("title", 5) {
 
 | Version | Features | Significance |
 |---------|----------|--------------|
+| 0.2.38 | PyPI packaging — PyO3 bindings (`ppt_rs` Python module, `python` Cargo feature), `python/` package with maturin build config; Markdown→PPTX promoted to primary workflow; Rust 2021 edition | **Distribution milestone** — `pip install ppt_rs` alongside the Rust crate |
 | 0.2.37 | Split `generator/builder/` (`plan`, `write`, public API) and `import/html/` (`tokenizer`, `style`, `parser`); ARCHITECTURE capability map + MCP tool count (12); unified `write_content_types` / `PackageCoreParams` (removed duplicate lazy content-types path); `ContentTypesPart::from_xml`; lean `InlineStyle` (drop unused CSS fields); HTML unit tests colocated with modules | **Maintainability milestone** — smaller generator/import modules and DRY packaging without changing `create_pptx*` / `parse_html` / `Html2Ppt` surfaces |
 | 0.2.36 | Clippy `--all-features --all-targets -D warnings` green (lib + bins + tests + examples); `useless_vec` → array literals in CLI tests, `len_zero` → `!is_empty()` in markdown tests, `ptr_arg` (`&PathBuf` → `&Path`) in media tests; `extract_slide_texts_from_bytes(&bytes)` per-slide text helper, `PresentationReader::open_bytes(&[u8])` byte-buffer import; **layout placeholder XML** — generated slides now emit `<p:ph type="title"/>` / `<p:ph type="body" idx="N"/>` so PowerPoint recognizes the title/body as filling the layout's intended slots (python-pptx parity); **TextFrame runtime editing API** — `PresentationEditor::shape_has_text_frame` / `set_shape_text` / `add_paragraph` / `add_paragraph_with_format` / `set_title_text` / `shape_paragraphs` + `ParsedShape::has_text_frame()` predicate (python-pptx `tf.text = …` / `tf.add_paragraph()` / `p.level` / `p.font.bold` parity; **Chart customization** — `ChartBuilder::legend(LegendConfig)` (show/position), `value_axis` / `category_axis` (AxisConfig — min/max/major_unit/minor_unit/log_scale/number_format/tick_label_size_pt/tick_label_bold/tick_label_rotation_deg), `data_labels(DataLabelsConfig)` (show_value/show_category_name/show_percentage/show_series_name/position) — python-pptx + pptxgenjs parity (full axis/label/legend control) | **Chart milestone** — every chart ships tunable: legend (show/position), axes (min/max/log scale/number format/rotation), data labels (show value/percentage/category name + position); `validate_package_bytes` regression guard on top |
 | 0.2.35 | Comment import — `PresentationReader::comment_authors()` / `slide_comments()` wired through `import_pptx` for full comments round-trip | **Round-trip milestone** — review comments survive import and re-export |

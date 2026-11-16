@@ -325,10 +325,11 @@ impl Presentation {
             let name = e.file_name().to_string_lossy().to_string();
             // Extract number from end
             // "page-1.png" -> 1
-            if let Some(start) = name.rfind('-')
-                && let Some(end) = name.rfind('.')
-                && start < end
-                && let Ok(num) = name[start + 1..end].parse::<u32>()
+            if let Some(num) = name
+                .rfind('-')
+                .zip(name.rfind('.'))
+                .filter(|&(s, e)| s < e)
+                .and_then(|(s, e)| name[s + 1..e].parse::<u32>().ok())
             {
                 return num;
             }

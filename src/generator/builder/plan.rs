@@ -71,10 +71,10 @@ pub(crate) fn build_media_registry_lazy(slides: &dyn LazySlideSource) -> MediaRe
 pub(crate) fn slide_image_rel_targets(slide: &SlideContent, registry: &MediaRegistry) -> Vec<(usize, String)> {
     let mut images = Vec::with_capacity(slide.images.len());
     for image in &slide.images {
-        if let Some(bytes) = image.get_bytes()
-            && let Some(num) = registry.lookup_number(&bytes, &image.extension())
-        {
-            images.push((num, image.extension()));
+        if let Some(bytes) = image.get_bytes() {
+            if let Some(num) = registry.lookup_number(&bytes, &image.extension()) {
+                images.push((num, image.extension()));
+            }
         }
     }
     images
@@ -374,11 +374,11 @@ pub(crate) fn prepare_settings(
     has_notes: bool,
     has_handout: bool,
 ) {
-    if let Some(s) = settings
-        && let Some(fonts) = s.embedded_fonts.as_mut()
-    {
-        let first_rid = table_styles_rel_id(slide_count, has_notes, has_handout) + 1;
-        fonts.assign_relationship_ids(first_rid);
+    if let Some(s) = settings {
+        if let Some(fonts) = s.embedded_fonts.as_mut() {
+            let first_rid = table_styles_rel_id(slide_count, has_notes, has_handout) + 1;
+            fonts.assign_relationship_ids(first_rid);
+        }
     }
 }
 

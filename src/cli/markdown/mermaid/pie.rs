@@ -8,13 +8,14 @@ pub fn parse(code: &str) -> Vec<(String, f64)> {
 
     for line in code.lines().skip(1) {
         let line = line.trim();
-        if line.contains(':') && !line.starts_with("title")
-            && let Some((label, value)) = line.split_once(':') {
+        if line.contains(':') && !line.starts_with("title") {
+            if let Some((label, value)) = line.split_once(':') {
                 let label = label.trim().trim_matches('"').to_string();
                 if let Ok(val) = value.trim().parse::<f64>() {
                     slices.push((label, val));
                 }
             }
+        }
     }
 
     slices

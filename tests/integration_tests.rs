@@ -102,7 +102,7 @@ fn test_constants_are_used_in_generated_xml() {
                 || content.contains(&SLIDE_WIDTH.to_string()),
             "Slide width constant should be used"
         );
-    }
+    };
 }
 
 #[test]
@@ -232,7 +232,7 @@ fn test_generated_pptx_has_correct_metadata() {
             content.contains(title) || content.contains("dc:title"),
             "Core properties should contain title"
         );
-    }
+    };
 }
 
 // ============================================================================

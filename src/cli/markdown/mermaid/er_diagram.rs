@@ -59,10 +59,11 @@ pub fn generate_elements(code: &str) -> DiagramElements {
             }
         } else if line == "}" {
             current_entity.clear();
-        } else if !current_entity.is_empty() && !line.is_empty()
-            && let Some(attrs) = entities.get_mut(&current_entity) {
+        } else if !current_entity.is_empty() && !line.is_empty() {
+            if let Some(attrs) = entities.get_mut(&current_entity) {
                 attrs.push(line.to_string());
             }
+        }
     }
 
     // Layout parameters

@@ -246,14 +246,15 @@ impl PresentationReader {
                     if rel_type.contains("/slide")
                         && !rel_type.contains("Layout")
                         && !rel_type.contains("Master")
-                        && let (Some(id), Some(target)) = (rel.attr("Id"), rel.attr("Target"))
                     {
-                        let full_path = if let Some(stripped) = target.strip_prefix('/') {
-                            stripped.to_string()
-                        } else {
-                            format!("ppt/{target}")
-                        };
-                        slide_rels.push((id.to_string(), full_path));
+                        if let (Some(id), Some(target)) = (rel.attr("Id"), rel.attr("Target")) {
+                            let full_path = if let Some(stripped) = target.strip_prefix('/') {
+                                stripped.to_string()
+                            } else {
+                                format!("ppt/{target}")
+                            };
+                            slide_rels.push((id.to_string(), full_path));
+                        }
                     }
                 }
 

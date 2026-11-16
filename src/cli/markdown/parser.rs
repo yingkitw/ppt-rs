@@ -245,25 +245,28 @@ impl MarkdownParser {
                 let html_str = html.to_string();
                 if html_str.contains("<mark>") || html_str.contains("<ins>") {
                     // Highlight syntax: ==text== or <ins>text</ins>
-                    if let Some(start) = html_str.find(">")
-                        && let Some(end) = html_str.find("</") {
+                    if let Some(start) = html_str.find(">") {
+                        if let Some(end) = html_str.find("</") {
                             let text = &html_str[start + 1..end];
                             self.push_text(&format!("=={}==", text));
                         }
+                    }
                 } else if html_str.contains("<sub>") {
                     // Subscript
-                    if let Some(start) = html_str.find(">")
-                        && let Some(end) = html_str.find("</") {
+                    if let Some(start) = html_str.find(">") {
+                        if let Some(end) = html_str.find("</") {
                             let text = &html_str[start + 1..end];
                             self.push_text(&format!("~{}~", text));
                         }
+                    }
                 } else if html_str.contains("<sup>") {
                     // Superscript
-                    if let Some(start) = html_str.find(">")
-                        && let Some(end) = html_str.find("</") {
+                    if let Some(start) = html_str.find(">") {
+                        if let Some(end) = html_str.find("</") {
                             let text = &html_str[start + 1..end];
                             self.push_text(&format!("^{}^", text));
                         }
+                    }
                 }
             }
 
@@ -588,8 +591,8 @@ impl MarkdownParser {
                     p.to_path_buf()
                 }
             };
-            if path.exists()
-                && let Ok(bytes) = std::fs::read(&path) {
+            if path.exists() {
+                if let Ok(bytes) = std::fs::read(&path) {
                     let mut img = ImageBuilder::auto(bytes)
                         .at(1_143_000, 3_500_000)
                         .size(6_858_000, 3_857_250)
@@ -604,6 +607,7 @@ impl MarkdownParser {
                     };
                     return Some(img);
                 }
+            }
             None
         }
     }

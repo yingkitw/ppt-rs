@@ -16,10 +16,11 @@ fn truncate_text(text: &str, max_len: usize) -> String {
     }
 
     // Try to break at word boundary
-    if let Some(last_space) = text[..end].rfind(' ')
-        && last_space > max_len / 2 {
+    if let Some(last_space) = text[..end].rfind(' ') {
+        if last_space > max_len / 2 {
             end = last_space;
         }
+    }
 
     format!("{}...", &text[..end].trim_end())
 }
@@ -257,10 +258,11 @@ impl Web2Ppt {
             match &block.content_type {
                 ContentType::Title | ContentType::Heading(_) => {
                     // Save current slide if it has content
-                    if let Some(slide) = current_slide.take()
-                        && bullet_count > 0 {
+                    if let Some(slide) = current_slide.take() {
+                        if bullet_count > 0 {
                             slides.push(slide);
                         }
+                    }
 
                     // Start new slide
                     current_slide =
@@ -299,30 +301,33 @@ impl Web2Ppt {
                         );
                     }
 
-                    if let Some(ref mut slide) = current_slide
-                        && bullet_count < self.config.max_bullets_per_slide {
+                    if let Some(ref mut slide) = current_slide {
+                        if bullet_count < self.config.max_bullets_per_slide {
                             let text = truncate_text(&block.text, 180);
                             *slide = slide.clone().add_bullet(&format!("• {}", text));
                             bullet_count += 1;
                         }
+                    }
                 }
                 ContentType::Quote => {
-                    if let Some(ref mut slide) = current_slide
-                        && bullet_count < self.config.max_bullets_per_slide {
+                    if let Some(ref mut slide) = current_slide {
+                        if bullet_count < self.config.max_bullets_per_slide {
                             let text = truncate_text(&block.text, 180);
                             *slide = slide.clone().add_bullet(&format!("\"{}\"", text));
                             bullet_count += 1;
                         }
+                    }
                 }
                 _ => {}
             }
         }
 
         // Save last slide
-        if let Some(slide) = current_slide
-            && bullet_count > 0 {
+        if let Some(slide) = current_slide {
+            if bullet_count > 0 {
                 slides.push(slide);
             }
+        }
 
         Ok(())
     }

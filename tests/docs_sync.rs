@@ -142,21 +142,22 @@ fn readme_install_versions() -> Vec<String> {
     while let Some(idx) = rest.find("ppt-rs = ") {
         let after = &rest[idx + "ppt-rs = ".len()..];
         let after = after.trim_start();
-        if let Some(stripped) = after.strip_prefix('"')
-            && let Some(end) = stripped.find('"')
-        {
-            out.push(stripped[..end].to_owned());
-            rest = &rest[idx + "ppt-rs = ".len() + (after.len() - stripped.len()) + end + 1..];
-            continue;
-        }
-        if let Some(stripped) = after.strip_prefix('{')
-            && let Some(v_idx) = stripped.find("version = \"")
-        {
-            let v_after = &stripped[v_idx + "version = \"".len()..];
-            if let Some(end) = v_after.find('"') {
-                out.push(v_after[..end].to_owned());
+        if let Some(stripped) = after.strip_prefix('"') {
+            if let Some(end) = stripped.find('"') {
+                out.push(stripped[..end].to_owned());
                 rest = &rest[idx + "ppt-rs = ".len() + (after.len() - stripped.len()) + end + 1..];
                 continue;
+            }
+        }
+        if let Some(stripped) = after.strip_prefix('{') {
+            if let Some(v_idx) = stripped.find("version = \"") {
+                let v_after = &stripped[v_idx + "version = \"".len()..];
+                if let Some(end) = v_after.find('"') {
+                    out.push(v_after[..end].to_owned());
+                    rest =
+                        &rest[idx + "ppt-rs = ".len() + (after.len() - stripped.len()) + end + 1..];
+                    continue;
+                }
             }
         }
         rest = &rest[idx + "ppt-rs = ".len()..];
@@ -286,13 +287,14 @@ fn cli_command_variants() -> Vec<String> {
             && !trimmed.is_empty()
             && !trimmed.starts_with("//")
             && !trimmed.starts_with('#')
-            && let Some(t) = trimmed.strip_suffix('{')
         {
-            let ident = t.split_whitespace().next().unwrap_or("");
-            if !ident.is_empty() {
-                let first = ident.chars().next().unwrap();
-                if first.is_ascii_uppercase() {
-                    variants.push(ident.to_owned());
+            if let Some(t) = trimmed.strip_suffix('{') {
+                let ident = t.split_whitespace().next().unwrap_or("");
+                if !ident.is_empty() {
+                    let first = ident.chars().next().unwrap();
+                    if first.is_ascii_uppercase() {
+                        variants.push(ident.to_owned());
+                    }
                 }
             }
         }

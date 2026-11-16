@@ -556,18 +556,19 @@ fn render_slide(
         }
         let max_w = page_w - 2.0 * margin;
         let max_h = (y - margin - 20.0).max(60.0);
-        if let Some(bytes) = resolve_image_bytes(image)
-            && let Some(info) =
+        if let Some(bytes) = resolve_image_bytes(image) {
+            if let Some(info) =
                 image_info_from_bytes(&bytes, image.alt_text.clone())
-        {
-            let (dw, dh) = image::scale_to_fit(info.width, info.height, max_w, max_h);
-            let name = format!("Im{}", page_images.len() + 1);
-            let x = margin + (max_w - dw) / 2.0;
-            let y_bottom = y - dh;
-            cs.extend_from_slice(&create_image_content_stream(x, y_bottom, dw, dh, &name));
-            page_images.push((name, info));
-            y = y_bottom - line_height * 0.4;
-            continue;
+            {
+                let (dw, dh) = image::scale_to_fit(info.width, info.height, max_w, max_h);
+                let name = format!("Im{}", page_images.len() + 1);
+                let x = margin + (max_w - dw) / 2.0;
+                let y_bottom = y - dh;
+                cs.extend_from_slice(&create_image_content_stream(x, y_bottom, dw, dh, &name));
+                page_images.push((name, info));
+                y = y_bottom - line_height * 0.4;
+                continue;
+            }
         }
         let img_h = 120.0;
         set_color(&mut cs, 0.92, 0.92, 0.92);
